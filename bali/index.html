@@ -362,6 +362,8 @@
       document.getElementById('bpClass').textContent = v.label;
       document.getElementById('bpSub').textContent = 'Denpasar, Bali · ' + durLabel(d) + ' · ' + v.area + ' base · ' + fmtIDR(t.idr) + ' IDR/day';
       try { localStorage.setItem('tripos_plan', JSON.stringify(sel)); } catch (err) {}
+      /* if already signed in, persist the (possibly changed) answers right away */
+      if (window.tripAuth && window.tripAuth.savePlan) window.tripAuth.savePlan();
     }
 
     document.getElementById('ckReset').addEventListener('click', function () {

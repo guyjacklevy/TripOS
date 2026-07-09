@@ -67,18 +67,29 @@ if (!CONFIGURED) {
       : '✓ Check your inbox — tap the link to unlock your plan.';
   });
 
-  /* ── save the wizard's plan to the user's account ── */
+  /* ── save the wizard's plan to the user's account ──
+   * Upsert (not insert) keyed on (user_id, destination): fires safely
+   * on every auth event and re-runs when the visitor edits answers,
+   * always updating the single row instead of piling up duplicates. */
+  let savingPlan = false;
   async function savePlan() {
+    if (savingPlan || !user) return;
     let plan;
     try { plan = JSON.parse(localStorage.getItem('tripos_plan') || 'null'); } catch (_) { plan = null; }
-    if (!plan || !user) return;
-    await sb.from('trips').insert({
-      user_id: user.id,
-      destination: 'bali',
-      vibe: plan.vibe || null,
-      duration_days: plan.dur != null ? parseInt(plan.dur, 10) : null,
-      budget_tier: plan.tier || null
-    });
+    if (!plan) return;
+    savingPlan = true;
+    try {
+      const { error } = await sb.from('trips').upsert({
+        user_id: user.id,
+        destination: 'bali',
+        vibe: plan.vibe || null,
+        duration_days: plan.dur != null ? parseInt(plan.dur, 10) : null,
+        budget_tier: plan.tier || null
+      }, { onConflict: 'user_id,destination' });
+      if (error) console.error('[TripOS] Could not save plan:', error.message);
+    } finally {
+      savingPlan = false;
+    }
   }
 
   /* ── nav pill reflects login state ── */
@@ -144,5 +155,5 @@ if (!CONFIGURED) {
     });
   })();
 
-  window.tripAuth = { ready: true, open: openModal, client: sb };
+  window.tripAuth = { ready: true, open: openModal, client: sb, savePlan: savePlan };
 }
