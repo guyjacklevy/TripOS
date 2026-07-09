@@ -181,6 +181,7 @@ section { padding: 56px 0; }
 .nav-auth:hover { color: var(--teal); }
 
 /* ─── auth modal ─── */
+.auth-modal[hidden] { display: none; }
 .auth-modal {
   position: fixed;
   inset: 0;
