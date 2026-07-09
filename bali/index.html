@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TripOS — everything you need to know about Bali</title>
+  <meta name="description" content="Everything you need to know about Bali — before you go and while you're there. TripOS is the destination intelligence OS for slowmads. Free, no signup.">
+  <meta property="og:title" content="TripOS — Bali, decoded">
+  <meta property="og:description" content="Plan the trip, find the places, know what things cost. Free, no signup.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2242%22 fill=%22%223dffd0%22/></svg>">
+  <link rel="stylesheet" href="../shared/tripos.css">
+</head>
+<body class="has-flightbar">
+  <div class="cosmos"></div>
+
+  <!-- ─── flight progress — plane flies YOU → DPS as you scroll ─── -->
+  <div class="flightbar" aria-hidden="true">
+    <span class="fb-code">YOU</span>
+    <div class="fb-track">
+      <div class="fb-fill" id="fbFill"></div>
+      <span class="fb-plane" id="fbPlane">✈</span>
+    </div>
+    <span class="fb-code fb-dest">DPS</span>
+    <span class="fb-stage" id="fbStage">BOARDING</span>
+  </div>
+
+  <div class="wrap">
+    <nav class="nav">
+      <a class="brand" href="../"><span class="orb planet-teal"></span>TripOS</a>
+      <a class="nav-cta" href="https://script.google.com/macros/s/AKfycbyexYOb-iVfy7En78sBXDcmRUH5LJJwb_BDRjJ2gHjbxuzY2u8BjzhbO9nBmA_KCaMr/exec">Open app</a>
+    </nav>
+
+    <!-- ─── stage 01 · boarding call ─── -->
+    <header class="hero" data-stage="BOARDING">
+      <div class="stage-tag"><span class="stage-num">01</span> Boarding call</div>
+      <h1>Your flight to <span class="glow">Bali</span> is now boarding.</h1>
+      <p class="sub">Everything you need to know — before you go and while you're there. TripOS is the destination brain that plans your trip, guides your days, and tells you exactly how long the island can keep you.</p>
+      <p class="boarding-call">Gate 7 · Seat: window · <span class="blink">Final call</span></p>
+      <a class="btn btn-primary" href="https://script.google.com/macros/s/AKfycbyexYOb-iVfy7En78sBXDcmRUH5LJJwb_BDRjJ2gHjbxuzY2u8BjzhbO9nBmA_KCaMr/exec">Board TripOS — it's free</a>
+      <p class="note">No signup. No install. Works on any phone.</p>
+      <div class="stats">
+        <div class="stat"><strong data-count="5">5</strong><span>areas decoded</span></div>
+        <div class="stat"><strong data-count="7">7</strong><span>place categories</span></div>
+        <div class="stat"><strong data-count="5" data-suffix="s">5s</strong><span>to log a spend</span></div>
+        <div class="stat"><strong data-count="0">0</strong><span>signups. ever.</span></div>
+      </div>
+    </header>
+
+    <div class="hook reveal">
+      First, a quick stop at the concierge desk. Three questions and Bali starts adapting to you —
+      <span class="hook-arrow">↓</span>
+    </div>
+
+    <!-- ─── stage 02 · check-in — the concierge builds your plan ─── -->
+    <section data-stage="CHECK-IN">
+      <div class="sec-head reveal">
+        <div class="stage-tag"><span class="stage-num">02</span> Check-in</div>
+        <h2>The concierge is asking.</h2>
+        <p>Answer three questions. TripOS builds a Bali plan that's yours — not a listicle.</p>
+      </div>
+      <div class="card checkin reveal" id="checkin">
+        <div class="ck-step" data-ck="vibe">
+          <p class="ck-q">What's your vibe?</p>
+          <div class="ck-opts">
+            <button type="button" class="ck-opt" data-k="vibe" data-v="nomad">🧑‍💻 Digital nomad</button>
+            <button type="button" class="ck-opt" data-k="vibe" data-v="surf">🏄 Surf</button>
+            <button type="button" class="ck-opt" data-k="vibe" data-v="wellness">🧘 Wellness</button>
+            <button type="button" class="ck-opt" data-k="vibe" data-v="party">🎉 Party</button>
+          </div>
+        </div>
+        <div class="ck-step" data-ck="dur" hidden>
+          <p class="ck-q">How long are you staying?</p>
+          <div class="ck-opts">
+            <button type="button" class="ck-opt" data-k="dur" data-v="14">✈️ 2 weeks</button>
+            <button type="button" class="ck-opt" data-k="dur" data-v="30">🌙 1 month</button>
+            <button type="button" class="ck-opt" data-k="dur" data-v="90">🌴 3+ months</button>
+            <button type="button" class="ck-opt" data-k="dur" data-v="0">🌀 Open-ended</button>
+          </div>
+        </div>
+        <div class="ck-step" data-ck="tier" hidden>
+          <p class="ck-q">Budget tier?</p>
+          <div class="ck-opts">
+            <button type="button" class="ck-opt" data-k="tier" data-v="back">🎒 Backpacker</button>
+            <button type="button" class="ck-opt" data-k="tier" data-v="comf">😌 Comfortable</button>
+            <button type="button" class="ck-opt" data-k="tier" data-v="prem">🥂 Premium</button>
+          </div>
+        </div>
+
+        <div class="ck-build" id="ckBuild" hidden>
+          <div class="ck-term" id="ckTerm"></div>
+          <div class="ck-bar"><div class="ck-bar-fill" id="ckBarFill"></div></div>
+        </div>
+
+        <div class="ck-plan" id="ckPlan" hidden>
+          <div class="plan-head">TripOS Concierge · plan generated for you</div>
+          <h3 id="planTitle"></h3>
+          <p class="plan-base" id="planBase"></p>
+          <div class="plan-lock-wrap">
+            <ul class="plan-list locked" id="planList"></ul>
+            <div class="plan-lock">
+              <span class="plan-lock-ico">🔒</span>
+              <p><strong>Your full plan is ready</strong> — curated picks, daily budget, packing list and the best month to come.</p>
+              <a class="btn btn-primary" data-auth-gate href="https://script.google.com/macros/s/AKfycbyexYOb-iVfy7En78sBXDcmRUH5LJJwb_BDRjJ2gHjbxuzY2u8BjzhbO9nBmA_KCaMr/exec">Unlock it free in TripOS</a>
+              <p class="note">Opens instantly — your plan travels with you.</p>
+            </div>
+          </div>
+          <a class="ck-reset" id="ckReset">↺ change my answers</a>
+        </div>
+
+        <div class="ck-dots" id="ckDots"><span class="on"></span><span></span><span></span></div>
+      </div>
+    </section>
+
+    <div class="hook reveal">
+      Checked in. Cabin doors closing — take one last look at how you used to plan trips —
+      <span class="hook-arrow">↓</span>
+    </div>
+
+    <!-- ─── stage 03 · takeoff ─── -->
+    <section data-stage="TAKEOFF">
+      <div class="sec-head reveal">
+        <div class="stage-tag"><span class="stage-num">03</span> Takeoff</div>
+        <h2>You're leaving all of this on the ground.</h2>
+        <p>47 Instagram saves. 3 Facebook group screenshots. A half-finished spreadsheet. Sound familiar?</p>
+      </div>
+      <div class="card pain-card reveal">
+        <span class="orb planet-amber"></span>
+        <div>
+          <h3>Your research is everywhere</h3>
+          <p>Instagram, TikTok, Reddit, Facebook groups, six open tabs. Hundreds of fragments, zero picture. Nobody just tells you what this place is and how it works.</p>
+        </div>
+      </div>
+      <div class="card pain-card reveal">
+        <span class="orb planet-pink"></span>
+        <div>
+          <h3>You don't know what anything costs</h3>
+          <p>Is 350k fair for a massage? Is 8.5M a good deal on a villa? Without local benchmarks you overpay for weeks — and can't answer the only question that matters: how long can I stay?</p>
+        </div>
+      </div>
+      <div class="card pain-card reveal">
+        <span class="orb planet-purple"></span>
+        <div>
+          <h3>The great place amnesia</h3>
+          <p>Someone tells you about a perfect cliff café in Bingin. Two days later it's gone — a blurry memory in a sea of screenshots and half-saved pins.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="hook reveal">
+      Wheels up. Here's what flying with a destination brain feels like —
+      <span class="hook-arrow">↓</span>
+    </div>
+
+    <!-- ─── stage 04 · cruising ─── -->
+    <section data-stage="CRUISING">
+      <div class="sec-head reveal">
+        <div class="stage-tag"><span class="stage-num">04</span> Cruising altitude</div>
+        <h2>One brain for the whole trip.</h2>
+        <p>TripOS guides you from “I'm going to Bali” to “I live here now” — in three phases.</p>
+      </div>
+      <div class="features">
+        <div class="card feat reveal">
+          <span class="orb planet-teal"></span>
+          <span class="step">Phase 1 — Before</span>
+          <h3>Land like you've been here</h3>
+          <p>Where to stay for your vibe — Canggu, Uluwatu, Ubud. What to pack, what to sort before you fly, what a month here really costs.</p>
+        </div>
+        <div class="card feat reveal">
+          <span class="orb planet-blue"></span>
+          <span class="step">Phase 2 — During</span>
+          <h3>A concierge in your pocket</h3>
+          <p>Curated places by area and category — cafés to work from, warungs, beach clubs, gyms. One tap: open Maps, log the visit, done.</p>
+        </div>
+        <div class="card feat reveal">
+          <span class="orb planet-purple"></span>
+          <span class="step">Phase 3 — Money</span>
+          <h3>Know what you can still do</h3>
+          <p>Not a spreadsheet — a pulse. “You can afford three more beach club days this month.” Five-second logging keeps it honest.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="hook reveal">
+      Beginning our descent. Look out the window — that's your island —
+      <span class="hook-arrow">↓</span>
+    </div>
+
+    <!-- ─── stage 05 · final approach ─── -->
+    <section data-stage="APPROACH">
+      <div class="card reveal" style="padding:30px 26px">
+        <div class="sec-head" style="margin-bottom:20px">
+          <div class="stage-tag"><span class="stage-num">05</span> Final approach</div>
+          <h2>Curated for Bali, down to the warung.</h2>
+          <p>Not a generic travel app with a destination dropdown.</p>
+        </div>
+        <ul class="dest-list">
+          <li><span class="tick">✓</span><span><strong>Bali areas decoded</strong> — <em>Uluwatu, Canggu, Ubud, Seminyak and the islands, each with its own personality</em></span></li>
+          <li><span class="tick">✓</span><span><strong>Live place search</strong> — <em>find and save any spot on the island in seconds, with cost estimates</em></span></li>
+          <li><span class="tick">✓</span><span><strong>IDR-native</strong> — <em>amounts in thousands, the way you actually think about them here</em></span></li>
+          <li><span class="tick">✓</span><span><strong>Local presets</strong> — <em>warung, bike rental, laundry — the daily rhythms of island life, one tap each</em></span></li>
+        </ul>
+        <div class="chips">
+          <span class="chip">🍽 Food</span>
+          <span class="chip">☕ Work</span>
+          <span class="chip">💆 Wellness</span>
+          <span class="chip">🏋️ Gym</span>
+          <span class="chip">🎉 Nights</span>
+          <span class="chip">🏖 Beach</span>
+          <span class="chip">🗺 Explore</span>
+        </div>
+      </div>
+
+      <section class="manifesto reveal" style="padding-bottom:0">
+        <blockquote>
+          “Slow travel isn't about spending less.<br>
+          It's about <span class="hl">knowing what your life costs</span> — so you can stay as long as the ocean keeps calling.”
+        </blockquote>
+        <cite>— The slowmad manifesto</cite>
+      </section>
+    </section>
+
+    <div class="hook reveal">
+      Cabin crew, prepare for landing —
+      <span class="hook-arrow">↓</span>
+    </div>
+
+    <!-- ─── stage 06 · landed — boarding pass cta ─── -->
+    <section data-stage="LANDED ✓">
+      <div class="bpass reveal">
+        <div class="bp-main">
+          <div class="bp-air">TripOS Air · Boarding pass</div>
+          <div class="bp-route">
+            <span class="bp-city">YOU</span>
+            <span class="bp-dash"></span>
+            <span class="bp-city bp-to">DPS</span>
+          </div>
+          <p class="bp-sub" id="bpSub">Denpasar, Bali · one-way · stay as long as it holds you</p>
+          <div class="bp-grid">
+            <div><span>Flight</span><strong>TRP-01</strong></div>
+            <div><span>Gate</span><strong>Always open</strong></div>
+            <div><span>Seat</span><strong>Window</strong></div>
+            <div><span>Class</span><strong id="bpClass">Slowmad</strong></div>
+            <div><span>Price</span><strong>Free</strong></div>
+            <div><span>Signup</span><strong>None</strong></div>
+          </div>
+          <a class="btn btn-primary" href="https://script.google.com/macros/s/AKfycbyexYOb-iVfy7En78sBXDcmRUH5LJJwb_BDRjJ2gHjbxuzY2u8BjzhbO9nBmA_KCaMr/exec">Board now — open TripOS</a>
+        </div>
+        <div class="bp-stub">
+          <div class="bp-barcode"></div>
+          <span class="bp-code">DPS · BALI</span>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      TripOS · made for slowmads, by a slowmad · <a href="../">more destinations</a>
+    </footer>
+  </div>
+
+  <script src="../shared/supabase-config.js"></script>
+  <script type="module" src="../shared/auth.js"></script>
+  <script src="../shared/tripos.js"></script>
+  <script>
+  /* ─── check-in concierge — builds a personal Bali plan ─── */
+  (function () {
+    var APP = 'https://script.google.com/macros/s/AKfycbyexYOb-iVfy7En78sBXDcmRUH5LJJwb_BDRjJ2gHjbxuzY2u8BjzhbO9nBmA_KCaMr/exec';
+    var VIBES = {
+      nomad:    { label: 'Digital nomad', area: 'Canggu', why: 'rice-field cafés, fast wifi, the nomad mothership',
+                  picks: ['☕ Shelter Café — flat whites and deep work', '💻 BWork — the co-working anchor', '🌅 Old Man’s — sunset beers with the crew'],
+                  pack: 'Laptop stand, universal adapter, noise-cancelling buds' },
+      surf:     { label: 'Surf', area: 'Uluwatu', why: 'cliff warungs, world-class reef breaks, golden hour every day',
+                  picks: ['🏄 Bingin Beach — barrels and beach warungs', '🌊 Padang Padang — the classic', '🍹 Single Fin — Sunday session HQ'],
+                  pack: 'Reef booties, zinc, a board sock for the scooter rack' },
+      wellness: { label: 'Wellness', area: 'Ubud', why: 'jungle silence, yoga shalas, the healing capital of the island',
+                  picks: ['🧘 The Yoga Barn — the institution', '🌿 Tjampuhan Ridge — sunrise walk', '🥗 Alchemy — raw-food legend'],
+                  pack: 'Yoga mat towel, mosquito spray, layers for cool jungle nights' },
+      party:    { label: 'Party', area: 'Seminyak & Canggu', why: 'beach clubs, cocktail bars, nights that end at sunrise',
+                  picks: ['🎉 La Favela — jungle-bar madness', '🏖 Finns — beach club royalty', '🌮 Motel Mexicola — technicolor nights'],
+                  pack: 'One good shirt, electrolytes, sunglasses you can afford to lose' }
+    };
+    var TIERS = {
+      back: { label: 'Backpacker', idr: 350 },
+      comf: { label: 'Comfortable', idr: 700 },
+      prem: { label: 'Premium', idr: 1500 }
+    };
+
+    var box = document.getElementById('checkin');
+    if (!box) return;
+    var steps = box.querySelectorAll('.ck-step');
+    var dots = document.getElementById('ckDots').children;
+    var build = document.getElementById('ckBuild');
+    var term = document.getElementById('ckTerm');
+    var barFill = document.getElementById('ckBarFill');
+    var plan = document.getElementById('ckPlan');
+    var sel = {};
+    var stepIdx = 0;
+
+    function fmtIDR(k) { return k >= 1000 ? (k / 1000) + 'M' : k + 'k'; }
+    function durLabel(d) { return d === 0 ? 'open-ended' : d === 14 ? '2 weeks' : d === 30 ? '1 month' : '3+ months'; }
+
+    function showStep(i) {
+      for (var s = 0; s < steps.length; s++) steps[s].hidden = s !== i;
+      for (var d = 0; d < dots.length; d++) dots[d].className = d <= i ? 'on' : '';
+    }
+
+    box.addEventListener('click', function (e) {
+      var btn = e.target.closest('.ck-opt');
+      if (!btn) return;
+      sel[btn.getAttribute('data-k')] = btn.getAttribute('data-v');
+      stepIdx++;
+      if (stepIdx < steps.length) { showStep(stepIdx); return; }
+      runBuild();
+    });
+
+    function runBuild() {
+      for (var s = 0; s < steps.length; s++) steps[s].hidden = true;
+      document.getElementById('ckDots').style.display = 'none';
+      build.hidden = false;
+      var v = VIBES[sel.vibe], t = TIERS[sel.tier];
+      var lines = [
+        '▸ reading your vibe: ' + v.label.toLowerCase(),
+        '▸ scanning 60+ curated Bali spots…',
+        '▸ matching ' + v.area + ' to your budget…',
+        '▸ pricing ' + durLabel(+sel.dur) + ' in IDR…',
+        '▸ plan ready <span class="ok">✓</span>'
+      ];
+      term.innerHTML = '';
+      var i = 0;
+      var tick = function () {
+        var ln = document.createElement('span');
+        ln.className = 'ln';
+        ln.innerHTML = lines[i];
+        term.appendChild(ln);
+        i++;
+        if (i < lines.length) setTimeout(tick, 520);
+        else setTimeout(showPlan, 700);
+      };
+      setTimeout(function () { barFill.style.width = '100%'; }, 60);
+      tick();
+    }
+
+    function showPlan() {
+      var v = VIBES[sel.vibe], t = TIERS[sel.tier], d = +sel.dur;
+      build.hidden = true;
+      plan.hidden = false;
+      document.getElementById('planTitle').textContent = 'Your ' + v.label.toLowerCase() + ' ' + (d === 0 ? 'life' : durLabel(d)) + ' in Bali';
+      document.getElementById('planBase').innerHTML = 'Base yourself in <strong>' + v.area + '</strong> — ' + v.why + '. Daily budget: <strong>' + fmtIDR(t.idr) + ' IDR</strong> (' + t.label.toLowerCase() + ').';
+      var rows = [
+        ['Pick 1', v.picks[0]],
+        ['Pick 2', v.picks[1]],
+        ['Pick 3', v.picks[2]],
+        ['Budget', (d === 0 ? '~' + fmtIDR(t.idr * 30) + ' IDR / month' : '~' + fmtIDR(t.idr * d) + ' IDR total') + ' · pace tracked daily'],
+        ['Pack', v.pack],
+        ['Timing', 'Best months, events and rainy-season calls']
+      ];
+      var html = '';
+      for (var r = 0; r < rows.length; r++) {
+        html += '<li><span class="pl-k">' + rows[r][0] + '</span><span>' + rows[r][1] + '</span></li>';
+      }
+      document.getElementById('planList').innerHTML = html;
+      /* personalise the boarding pass at the bottom of the page */
+      document.getElementById('bpClass').textContent = v.label;
+      document.getElementById('bpSub').textContent = 'Denpasar, Bali · ' + durLabel(d) + ' · ' + v.area + ' base · ' + fmtIDR(t.idr) + ' IDR/day';
+      try { localStorage.setItem('tripos_plan', JSON.stringify(sel)); } catch (err) {}
+    }
+
+    document.getElementById('ckReset').addEventListener('click', function () {
+      sel = {};
+      stepIdx = 0;
+      plan.hidden = true;
+      build.hidden = true;
+      barFill.style.width = '0';
+      document.getElementById('ckDots').style.display = '';
+      showStep(0);
+      try { localStorage.removeItem('tripos_plan'); } catch (err) {}
+    });
+
+    /* returning visitor — rebuild their plan instantly */
+    try {
+      var saved = JSON.parse(localStorage.getItem('tripos_plan') || 'null');
+      if (saved && saved.vibe && VIBES[saved.vibe] && TIERS[saved.tier]) {
+        sel = saved;
+        for (var s = 0; s < steps.length; s++) steps[s].hidden = true;
+        document.getElementById('ckDots').style.display = 'none';
+        showPlan();
+      }
+    } catch (err) {}
+  })();
+  </script>
+</body>
+</html>

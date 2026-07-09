@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TripOS — your destination, decoded</title>
+  <meta name="description" content="TripOS is the destination intelligence OS for slowmads — plan the trip, find the places, know what your life abroad costs. Free, no signup.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2242%22 fill=%22%233dffd0%22/></svg>">
+  <link rel="stylesheet" href="shared/tripos.css">
+</head>
+<body>
+  <div class="cosmos"></div>
+
+  <div class="wrap">
+    <nav class="nav">
+      <a class="brand" href="./"><span class="orb planet-teal"></span>TripOS</a>
+      <a class="nav-cta" href="https://script.google.com/macros/s/AKfycbyexYOb-iVfy7En78sBXDcmRUH5LJJwb_BDRjJ2gHjbxuzY2u8BjzhbO9nBmA_KCaMr/exec">Open app</a>
+    </nav>
+
+    <header class="hero">
+      <span class="kicker">For slowmads 🌏</span>
+      <h1>Where are you <span class="glow">flying</span> next?</h1>
+      <p class="sub">TripOS knows your destination inside-out — the plan, the places, and what it all costs — from the moment you decide to go until the moment you leave.</p>
+    </header>
+
+    <section style="padding-top:0">
+      <div class="board reveal in">
+        <div class="board-head">
+          <span>Departures · TripOS Air</span>
+          <span class="live">● Live</span>
+        </div>
+        <div class="board-cols">
+          <span>Time</span>
+          <span>Destination</span>
+          <span class="c-code">Code</span>
+          <span>Status</span>
+        </div>
+        <a class="board-row" href="bali/">
+          <span class="b-time">Now</span>
+          <span>Bali, Indonesia 🌴</span>
+          <span class="b-code">DPS</span>
+          <span class="b-status boarding">● Now boarding</span>
+        </a>
+        <div class="board-row dim">
+          <span class="b-time">Soon</span>
+          <span>Chiang Mai, Thailand</span>
+          <span class="b-code">CNX</span>
+          <span class="b-status scheduled">Scheduled</span>
+        </div>
+        <div class="board-row dim">
+          <span class="b-time">Soon</span>
+          <span>Tulum, Mexico</span>
+          <span class="b-code">TQO</span>
+          <span class="b-status scheduled">Scheduled</span>
+        </div>
+        <div class="board-row dim">
+          <span class="b-time">Soon</span>
+          <span>Lisbon, Portugal</span>
+          <span class="b-code">LIS</span>
+          <span class="b-status scheduled">Scheduled</span>
+        </div>
+      </div>
+      <div class="hook" style="margin-top:26px">
+        Gate 7 is open. Bali is boarding —
+        <span class="hook-arrow">↓</span>
+      </div>
+      <div style="text-align:center;margin-top:8px">
+        <a class="btn btn-primary" href="bali/">Board the Bali flight</a>
+      </div>
+    </section>
+
+    <footer>
+      TripOS · made for slowmads, by a slowmad
+    </footer>
+  </div>
+
+  <script src="shared/supabase-config.js"></script>
+  <script type="module" src="shared/auth.js"></script>
+  <script src="shared/tripos.js"></script>
+</body>
+</html>
