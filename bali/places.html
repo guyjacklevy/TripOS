@@ -3,13 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TripOS — Uluwatu, curated</title>
-  <meta name="description" content="Hand-picked Uluwatu places — who they're for, why to go, when, and what it costs. Curated, not AI-generated.">
+  <title>TripOS — Bali, curated</title>
+  <meta name="description" content="Hand-picked Bali places — who they're for, why to go, when, and what it costs. Curated, not AI-generated.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2242%22 fill=%22%233dffd0%22/></svg>">
   <link rel="stylesheet" href="../shared/tripos.css">
 </head>
 <body>
   <div class="cosmos"></div>
+  <div class="terrain-tint"></div>
 
   <div class="wrap">
     <nav class="nav">
@@ -18,14 +19,30 @@
     </nav>
 
     <header class="places-head">
+      <div class="altitude-bar">
+        <span class="alt-label">Altitude</span>
+        <span class="alt-value" id="altValue">35,000 ft</span>
+        <span class="alt-label">↓ Descending</span>
+      </div>
       <h1>Bali, <span class="glow">curated</span>.</h1>
-      <p>Real places we'd actually send you to — who they're for, when to go, and what they cost. Filter by area and by what you're in the mood for.</p>
+      <div class="coord-display">
+        <span>8°S 115°E</span>
+        <span class="coord-sep">·</span>
+        <span id="coordArea">ALL AREAS</span>
+      </div>
+      <p>Real places. Curated intel. Filter by area, filter by vibe.</p>
     </header>
 
-    <div class="filters" id="placeAreas"></div>
-    <div class="filters" id="placeFilters"></div>
+    <div class="area-cards" id="placeAreas"></div>
+    <div class="legend" id="placeFilters"></div>
 
-    <div class="places-status" id="placesStatus">Loading places…</div>
+    <div class="places-status" id="placesStatus">
+      <div class="scan-state">
+        <div class="scan-line"></div>
+        <p class="scan-text">Scanning Bali · <span id="scanArea">All areas</span></p>
+        <p class="scan-sub">Pulling curated intel from the database…</p>
+      </div>
+    </div>
     <div class="places-grid" id="placesGrid"></div>
 
     <footer>

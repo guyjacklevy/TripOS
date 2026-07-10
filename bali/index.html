@@ -58,31 +58,32 @@
         <h2>The concierge is asking.</h2>
         <p>Answer three questions. TripOS builds a Bali plan that's yours — not a listicle.</p>
       </div>
-      <div class="card checkin reveal" id="checkin">
+      <div class="mission-tag reveal"><span class="pulse-dot"></span>Mission briefing</div>
+      <div class="card checkin mission-card reveal" id="checkin">
         <div class="ck-step" data-ck="vibe">
           <p class="ck-q">What's your vibe?</p>
           <div class="ck-opts">
-            <button type="button" class="ck-opt" data-k="vibe" data-v="nomad">🧑‍💻 Digital nomad</button>
-            <button type="button" class="ck-opt" data-k="vibe" data-v="surf">🏄 Surf</button>
-            <button type="button" class="ck-opt" data-k="vibe" data-v="wellness">🧘 Wellness</button>
-            <button type="button" class="ck-opt" data-k="vibe" data-v="party">🎉 Party</button>
+            <button type="button" class="ck-opt" data-k="vibe" data-v="nomad">🧑‍💻 Digital nomad<span class="opt-sub">work from paradise</span></button>
+            <button type="button" class="ck-opt" data-k="vibe" data-v="surf">🏄 Surf<span class="opt-sub">chase the swell</span></button>
+            <button type="button" class="ck-opt" data-k="vibe" data-v="wellness">🧘 Wellness<span class="opt-sub">reset mind + body</span></button>
+            <button type="button" class="ck-opt" data-k="vibe" data-v="party">🎉 Party<span class="opt-sub">nights that go long</span></button>
           </div>
         </div>
         <div class="ck-step" data-ck="dur" hidden>
           <p class="ck-q">How long are you staying?</p>
           <div class="ck-opts">
-            <button type="button" class="ck-opt" data-k="dur" data-v="14">✈️ 2 weeks</button>
-            <button type="button" class="ck-opt" data-k="dur" data-v="30">🌙 1 month</button>
-            <button type="button" class="ck-opt" data-k="dur" data-v="90">🌴 3+ months</button>
-            <button type="button" class="ck-opt" data-k="dur" data-v="0">🌀 Open-ended</button>
+            <button type="button" class="ck-opt" data-k="dur" data-v="14">✈️ 2 weeks<span class="opt-sub">the reset</span></button>
+            <button type="button" class="ck-opt" data-k="dur" data-v="30">🌙 1 month<span class="opt-sub">the deep dive</span></button>
+            <button type="button" class="ck-opt" data-k="dur" data-v="90">🌴 3+ months<span class="opt-sub">the slowmad life</span></button>
+            <button type="button" class="ck-opt" data-k="dur" data-v="0">🌀 Open-ended<span class="opt-sub">stay till it feels done</span></button>
           </div>
         </div>
         <div class="ck-step" data-ck="tier" hidden>
           <p class="ck-q">Budget tier?</p>
           <div class="ck-opts">
-            <button type="button" class="ck-opt" data-k="tier" data-v="back">🎒 Backpacker</button>
-            <button type="button" class="ck-opt" data-k="tier" data-v="comf">😌 Comfortable</button>
-            <button type="button" class="ck-opt" data-k="tier" data-v="prem">🥂 Premium</button>
+            <button type="button" class="ck-opt" data-k="tier" data-v="back">🎒 Backpacker<span class="opt-sub">stretch every rupiah</span></button>
+            <button type="button" class="ck-opt" data-k="tier" data-v="comf">😌 Comfortable<span class="opt-sub">smart, not stingy</span></button>
+            <button type="button" class="ck-opt" data-k="tier" data-v="prem">🥂 Premium<span class="opt-sub">no compromises</span></button>
           </div>
         </div>
 
@@ -92,7 +93,7 @@
         </div>
 
         <div class="ck-plan" id="ckPlan" hidden>
-          <div class="plan-head">TripOS Concierge · plan generated for you</div>
+          <div class="intel-bar"><span class="pulse-dot"></span>Mission intel · your Bali brief</div>
           <h3 id="planTitle"></h3>
           <p class="plan-base" id="planBase"></p>
           <div class="plan-lock-wrap">
