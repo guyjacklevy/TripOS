@@ -1,13 +1,14 @@
 /* ─── TripOS · curated places browser ────────────────────────
  * Reads the shared, public `curated_places` table from Supabase
- * (RLS allows anyone to read; no login needed) and renders filterable
- * cards. This is the seed of the real "Places" app screen.
+ * (RLS allows anyone to read; no login needed) and renders cards
+ * filterable by area and category. The seed of the "Places" screen.
  * ──────────────────────────────────────────────────────────── */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const cfg = window.TRIPOS_SUPABASE || {};
 const grid = document.getElementById('placesGrid');
-const filterBar = document.getElementById('placeFilters');
+const areaBar = document.getElementById('placeAreas');
+const catBar = document.getElementById('placeFilters');
 const statusEl = document.getElementById('placesStatus');
 
 /* category → orb colour + icon */
@@ -21,8 +22,15 @@ const CAT = {
   surf:      { orb: 'planet-pink',   icon: '🏄', label: 'Surf' }
 };
 
+/* preferred area order (falls back to first-seen for anything else) */
+const AREA_ORDER = ['Uluwatu', 'Canggu', 'Ubud', 'Seminyak', 'Islands'];
+
+const region = (area) => String(area || '').split('/')[0].trim();
+
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const state = { area: 'all', cat: 'all' };
 
 function card(p) {
   const cat = CAT[p.category] || { orb: 'planet-teal', icon: '📍', label: p.category };
@@ -34,10 +42,9 @@ function card(p) {
     : '';
   const timing = p.timing_note
     ? '<div class="row"><span class="k">🕑</span><span>' + esc(p.timing_note) + '</span></div>' : '';
-  const tip = p.tip
-    ? '<p class="place-tip">' + esc(p.tip) + '</p>' : '';
+  const tip = p.tip ? '<p class="place-tip">' + esc(p.tip) + '</p>' : '';
   return (
-    '<article class="place-card" data-cat="' + esc(p.category) + '">' +
+    '<article class="place-card" data-cat="' + esc(p.category) + '" data-region="' + esc(region(p.area)) + '">' +
       '<div class="place-top">' +
         '<span class="orb ' + cat.orb + '"></span>' +
         '<div>' +
@@ -58,22 +65,43 @@ function card(p) {
   );
 }
 
-function renderFilters(cats) {
-  const all = ['all'].concat(cats);
-  filterBar.innerHTML = all.map((c, i) => {
-    const label = c === 'all' ? 'All' : (CAT[c] ? CAT[c].label : c);
-    return '<button class="filter' + (i === 0 ? ' on' : '') + '" data-cat="' + esc(c) + '">' +
+function applyFilters() {
+  let shown = 0;
+  grid.querySelectorAll('.place-card').forEach((el) => {
+    const okArea = state.area === 'all' || el.getAttribute('data-region') === state.area;
+    const okCat = state.cat === 'all' || el.getAttribute('data-cat') === state.cat;
+    const show = okArea && okCat;
+    el.style.display = show ? '' : 'none';
+    if (show) shown++;
+  });
+  let empty = document.getElementById('placesEmpty');
+  if (!shown) {
+    if (!empty) {
+      empty = document.createElement('p');
+      empty.id = 'placesEmpty';
+      empty.className = 'places-status';
+      grid.after(empty);
+    }
+    empty.textContent = 'Nothing in that combo yet — try another filter.';
+  } else if (empty) {
+    empty.remove();
+  }
+}
+
+function buildBar(bar, values, key, labelFor) {
+  const all = ['all'].concat(values);
+  bar.innerHTML = all.map((v, i) => {
+    const label = v === 'all' ? (key === 'area' ? 'All areas' : 'All types') : labelFor(v);
+    return '<button class="filter' + (i === 0 ? ' on' : '') + '" data-v="' + esc(v) + '">' +
       esc(label) + '</button>';
   }).join('');
-  filterBar.addEventListener('click', (e) => {
+  bar.addEventListener('click', (e) => {
     const btn = e.target.closest('.filter');
     if (!btn) return;
-    filterBar.querySelectorAll('.filter').forEach((f) => f.classList.remove('on'));
+    bar.querySelectorAll('.filter').forEach((f) => f.classList.remove('on'));
     btn.classList.add('on');
-    const pick = btn.getAttribute('data-cat');
-    grid.querySelectorAll('.place-card').forEach((el) => {
-      el.style.display = (pick === 'all' || el.getAttribute('data-cat') === pick) ? '' : 'none';
-    });
+    state[key] = btn.getAttribute('data-v');
+    applyFilters();
   });
 }
 
@@ -97,9 +125,18 @@ function renderFilters(cats) {
     }
     statusEl.remove();
     grid.innerHTML = data.map(card).join('');
+
+    const regions = [];
+    data.forEach((p) => { const r = region(p.area); if (regions.indexOf(r) === -1) regions.push(r); });
+    regions.sort((a, b) => {
+      const ia = AREA_ORDER.indexOf(a), ib = AREA_ORDER.indexOf(b);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
     const cats = [];
     data.forEach((p) => { if (cats.indexOf(p.category) === -1) cats.push(p.category); });
-    renderFilters(cats);
+
+    buildBar(areaBar, regions, 'area', (v) => v);
+    buildBar(catBar, cats, 'cat', (v) => (CAT[v] ? CAT[v].label : v));
   } catch (err) {
     console.error('[TripOS] places load failed:', err.message || err);
     statusEl.textContent = 'Could not load places right now.';
