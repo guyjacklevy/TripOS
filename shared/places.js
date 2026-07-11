@@ -5,6 +5,7 @@
  * Google Earth spatial aesthetic — zero libraries, zero weight.
  * ──────────────────────────────────────────────────────────── */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { scorePlace, isMatch, readPlan, VIBE_LABEL, TIER_LABEL, durLabel } from './match.js';
 
 const cfg = window.TRIPOS_SUPABASE || {};
 const grid = document.getElementById('placesGrid');
@@ -69,7 +70,7 @@ function flyTo(target, ms) {
 }
 
 /* ── POI intel card ── */
-function card(p) {
+function card(p, matched) {
   const cat = CAT[p.category] || { orb: 'planet-teal', cc: 'var(--teal)', icon: '📍', label: p.category };
   const personas = (p.personas || []).map((x) =>
     '<span class="persona-chip">' + esc(x) + '</span>').join('');
@@ -85,6 +86,7 @@ function card(p) {
   return (
     '<article class="place-card" data-cat="' + esc(p.category) + '" data-region="' + esc(region(p.area)) +
       '" style="--cc:' + cat.cc + '">' +
+      (matched ? '<span class="match-badge">✦ your match</span>' : '') +
       '<div class="place-top">' +
         '<span class="orb ' + cat.orb + '"></span>' +
         '<div>' +
@@ -211,7 +213,32 @@ function buildLegend(cats) {
       return;
     }
     statusEl.remove();
-    grid.innerHTML = data.map(card).join('');
+
+    /* personalization: if a check-in brief is saved, badge matches + float them up */
+    const plan = readPlan();
+    let list = data;
+    const matchedSet = new Set();
+    if (plan) {
+      const order = new Map(data.map((p, i) => [p, i]));
+      data.forEach((p) => { if (isMatch(scorePlace(p, plan))) matchedSet.add(p); });
+      if (matchedSet.size) {
+        list = data.slice().sort((a, b) => {
+          const am = matchedSet.has(a) ? scorePlace(a, plan) : -1;
+          const bm = matchedSet.has(b) ? scorePlace(b, plan) : -1;
+          return bm - am || order.get(a) - order.get(b);
+        });
+        const banner = document.createElement('div');
+        banner.className = 'match-banner';
+        banner.innerHTML = '<span class="pulse-dot"></span>Matched to your brief · ' +
+          esc(VIBE_LABEL[plan.vibe] || '') + ' · ' +
+          (plan.dur != null ? esc(durLabel(+plan.dur)) + ' · ' : '') +
+          esc(TIER_LABEL[plan.tier] || '') +
+          '<span class="mb-note">your matches float to the top</span>';
+        areaBar.parentNode.insertBefore(banner, areaBar);
+      }
+    }
+
+    grid.innerHTML = list.map((p) => card(p, matchedSet.has(p))).join('');
     dropIn(Array.from(grid.querySelectorAll('.place-card')));
 
     const regions = [];

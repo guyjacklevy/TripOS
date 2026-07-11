@@ -263,6 +263,10 @@
 
   <script src="../shared/supabase-config.js"></script>
   <script type="module" src="../shared/auth.js"></script>
+  <script type="module">
+    import { initMatch } from '../shared/match.js';
+    initMatch();
+  </script>
   <script src="../shared/tripos.js"></script>
   <script>
   /* ─── check-in concierge — builds a personal Bali plan ─── */
@@ -321,9 +325,10 @@
       document.getElementById('ckDots').style.display = 'none';
       build.hidden = false;
       var v = VIBES[sel.vibe], t = TIERS[sel.tier];
+      var spotCount = (window.tripMatch && window.tripMatch.count) ? window.tripMatch.count : 52;
       var lines = [
         '▸ reading your vibe: ' + v.label.toLowerCase(),
-        '▸ scanning 60+ curated Bali spots…',
+        '▸ scanning ' + spotCount + ' curated Bali spots…',
         '▸ matching ' + v.area + ' to your budget…',
         '▸ pricing ' + durLabel(+sel.dur) + ' in IDR…',
         '▸ plan ready <span class="ok">✓</span>'
@@ -349,19 +354,37 @@
       plan.hidden = false;
       document.getElementById('planTitle').textContent = 'Your ' + v.label.toLowerCase() + ' ' + (d === 0 ? 'life' : durLabel(d)) + ' in Bali';
       document.getElementById('planBase').innerHTML = 'Base yourself in <strong>' + v.area + '</strong> — ' + v.why + '. Daily budget: <strong>' + fmtIDR(t.idr) + ' IDR</strong> (' + t.label.toLowerCase() + ').';
-      var rows = [
-        ['Pick 1', v.picks[0]],
-        ['Pick 2', v.picks[1]],
-        ['Pick 3', v.picks[2]],
+      var tailRows = [
         ['Budget', (d === 0 ? '~' + fmtIDR(t.idr * 30) + ' IDR / month' : '~' + fmtIDR(t.idr * d) + ' IDR total') + ' · pace tracked daily'],
         ['Pack', v.pack],
         ['Timing', 'Best months, events and rainy-season calls']
       ];
-      var html = '';
-      for (var r = 0; r < rows.length; r++) {
-        html += '<li><span class="pl-k">' + rows[r][0] + '</span><span>' + rows[r][1] + '</span></li>';
-      }
-      document.getElementById('planList').innerHTML = html;
+      var renderList = function (pickRows) {
+        var html = '';
+        var rows = pickRows.concat(tailRows);
+        for (var r = 0; r < rows.length; r++) {
+          html += '<li><span class="pl-k">' + rows[r][0] + '</span><span>' + rows[r][1] + '</span></li>';
+        }
+        document.getElementById('planList').innerHTML = html;
+      };
+      /* instant render with the static picks, then upgrade to real
+         curated_places matches from the database when the engine is ready */
+      renderList([['Pick 1', v.picks[0]], ['Pick 2', v.picks[1]], ['Pick 3', v.picks[2]]]);
+      var upgradePicks = function () {
+        window.tripMatch.picks(sel, 3).then(function (picks) {
+          if (!picks || picks.length < 3) return;
+          var icons = { beach: '🏖', food: '🍽', nightlife: '🎉', work: '☕', wellness: '💆', explore: '🗺', gym: '🏋️' };
+          renderList(picks.map(function (p, i) {
+            var money = '';
+            for (var m = 0; m < (p.price_level || 1); m++) money += '$';
+            return ['Pick ' + (i + 1), (icons[p.category] || '📍') + ' ' + p.name +
+              (p.verified ? ' ✓' : '') + ' — ' + p.area + ' · ' + money];
+          }));
+        });
+      };
+      /* the match engine is a deferred module — it may load after this script */
+      if (window.tripMatch) upgradePicks();
+      else document.addEventListener('tripos:match-ready', upgradePicks, { once: true });
       /* personalise the boarding pass at the bottom of the page */
       document.getElementById('bpClass').textContent = v.label;
       document.getElementById('bpSub').textContent = 'Denpasar, Bali · ' + durLabel(d) + ' · ' + v.area + ' base · ' + fmtIDR(t.idr) + ' IDR/day';
