@@ -1,2 +1,8 @@
 .DS_Store
 .vercel
+
+# internal agent-coordination workspace — never publish (repo is public)
+_agents/
+
+# local tooling config
+.claude/
