@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TripOS — your Bali</title>
+  <meta name="description" content="Your personal TripOS — your Bali brief, your matched places, your budget pulse.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2242%22 fill=%22%223dffd0%22/></svg>">
+  <link rel="stylesheet" href="../shared/tripos.css">
+</head>
+<body>
+  <div class="cosmos"></div>
+
+  <div class="wrap">
+    <nav class="nav">
+      <a class="brand" href="../"><span class="orb planet-teal"></span>TripOS</a>
+      <a class="nav-auth" id="appLogout" href="#" hidden>Log out</a>
+    </nav>
+
+    <!-- ─── boarding gate (logged out) ─── -->
+    <section id="gate" hidden>
+      <div class="mission-tag"><span class="pulse-dot"></span>Boarding control</div>
+      <div class="card checkin mission-card" style="text-align:center">
+        <h1 class="gate-title">Your <span class="glow">TripOS</span>.</h1>
+        <p class="gate-sub">Your brief, your places, your budget — personal to you. Enter your email and tap the boarding link. No password, ever.</p>
+        <form class="auth-form" id="gateForm">
+          <input class="auth-input" id="gateEmail" type="email" required placeholder="you@email.com" autocomplete="email">
+          <button class="btn btn-primary" type="submit">Send my boarding link</button>
+        </form>
+        <p class="auth-status" id="gateStatus" role="status"></p>
+        <p class="note">First time? The same link creates your account.</p>
+      </div>
+    </section>
+
+    <!-- ─── home (logged in) ─── -->
+    <main id="home" hidden>
+      <!-- your brief -->
+      <section style="padding:26px 0 6px">
+        <div class="intel-bar"><span class="pulse-dot"></span>Mission intel · your Bali brief</div>
+        <h1 class="app-h1" id="briefTitle">Your Bali</h1>
+        <p class="plan-base" id="briefLine"></p>
+        <a class="ck-reset" href="../bali/#checkin" id="briefEdit">↺ change my brief</a>
+      </section>
+
+      <!-- your picks — the main screen -->
+      <section style="padding:30px 0 0">
+        <div class="app-sec-head">
+          <h2>Your picks</h2>
+          <p id="picksSub">Matched to your brief from our curated intel.</p>
+        </div>
+        <div class="places-grid" id="pickGrid"></div>
+        <div style="text-align:center;margin-top:20px">
+          <a class="place-maps" href="../bali/places">Browse every curated place ↗</a>
+        </div>
+      </section>
+
+      <!-- budget pulse — the engine, not the hero -->
+      <section style="padding:38px 0 64px">
+        <div class="app-sec-head">
+          <h2>Budget pulse</h2>
+          <p>So you always know what you can still do.</p>
+        </div>
+        <div class="card pulse-card">
+          <div class="pulse-row">
+            <div class="cell"><span class="k">Spent today</span><strong id="pulseSpent">0k</strong></div>
+            <div class="cell"><span class="k">Daily budget</span><strong id="pulseBudget">–</strong></div>
+            <div class="cell"><span class="k">Still yours</span><strong id="pulseLeft" class="pulse-teal">–</strong></div>
+          </div>
+          <div class="ck-bar"><div class="ck-bar-fill" id="pulseFill"></div></div>
+          <p class="pulse-note" id="pulseNote"></p>
+
+          <div class="quick-log" id="quickLog">
+            <button type="button" class="chip chip-btn" data-amt="35" data-cat="food">🍜 Warung 35k</button>
+            <button type="button" class="chip chip-btn" data-amt="30" data-cat="food">☕ Coffee 30k</button>
+            <button type="button" class="chip chip-btn" data-amt="50" data-cat="transport">🛵 Bike 50k</button>
+            <button type="button" class="chip chip-btn" data-amt="150" data-cat="wellness">💆 Massage 150k</button>
+            <button type="button" class="chip chip-btn" data-amt="300" data-cat="nightlife">🏖 Beach club 300k</button>
+          </div>
+          <form class="log-form" id="logForm">
+            <input class="auth-input log-amt" id="logAmt" type="number" min="1" step="1" placeholder="amount · k IDR" inputmode="numeric">
+            <select class="auth-input log-cat" id="logCat" aria-label="category">
+              <option value="food">food</option>
+              <option value="transport">transport</option>
+              <option value="wellness">wellness</option>
+              <option value="nightlife">nightlife</option>
+              <option value="accommodation">stay</option>
+              <option value="admin">admin</option>
+            </select>
+            <button class="btn btn-primary log-btn" type="submit">Log</button>
+          </form>
+          <p class="auth-status" id="logStatus" role="status"></p>
+          <ul class="spend-list" id="spendList"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../shared/supabase-config.js"></script>
+  <script type="module" src="../shared/app.js"></script>
+</body>
+</html>

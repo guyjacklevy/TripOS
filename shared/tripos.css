@@ -652,6 +652,75 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
   .place-card:hover { transform: none; }
 }
 
+/* ─── the app (/app) ─── */
+.gate-title {
+  font-size: clamp(30px, 7vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+.gate-title .glow { color: var(--teal); text-shadow: 0 0 26px rgba(61, 255, 208, 0.45); }
+.gate-sub { font-size: 14.5px; color: var(--mut); max-width: 400px; margin: 0 auto 22px; }
+#gate { padding-top: 46px; }
+#gate .auth-form { max-width: 340px; margin: 0 auto; }
+
+.app-h1 {
+  font-size: clamp(26px, 6vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.app-sec-head { margin-bottom: 16px; }
+.app-sec-head h2 { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
+.app-sec-head p { font-size: 13.5px; color: var(--mut); }
+
+.pulse-card { padding: 24px 22px; }
+.pulse-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.pulse-row .cell { text-align: center; }
+.pulse-row .k {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 4px;
+}
+.pulse-row strong { font-family: var(--mono); font-size: 19px; font-weight: 700; }
+.pulse-teal { color: var(--teal); text-shadow: 0 0 14px rgba(61, 255, 208, 0.4); }
+.pulse-note {
+  font-size: 13px;
+  color: var(--mut);
+  text-align: center;
+  margin: 12px 0 4px;
+}
+.quick-log { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 16px 0 12px; }
+.chip-btn { font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+.chip-btn:hover { color: var(--teal); border-color: rgba(61, 255, 208, 0.4); }
+.log-form { display: flex; gap: 8px; }
+.log-form .auth-input { text-align: left; padding: 11px 13px; font-size: 14px; }
+.log-amt { flex: 1; min-width: 0; }
+.log-cat { flex: 0 0 112px; }
+.log-btn { padding: 11px 20px; font-size: 14px; border: none; cursor: pointer; font-family: inherit; }
+.spend-list { list-style: none; margin-top: 14px; }
+.spend-list li {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 13px;
+  padding: 8px 2px;
+  border-bottom: 1px dashed var(--line2);
+}
+.spend-list li:last-child { border-bottom: none; }
+.spend-list .sl-cat { flex: 1; color: var(--mut); text-transform: capitalize; }
+.spend-list .sl-amt { font-family: var(--mono); font-weight: 700; color: var(--tx); }
+.spend-list .sl-time { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+
 /* ─── auth modal ─── */
 .auth-modal[hidden] { display: none; }
 .auth-modal {

@@ -15,7 +15,7 @@ const CONFIGURED =
   cfg.url.indexOf('YOUR_') === -1 &&
   cfg.anonKey.indexOf('YOUR_') === -1;
 
-const APP_URL = 'https://script.google.com/macros/s/AKfycbyexYOb-iVfy7En78sBXDcmRUH5LJJwb_BDRjJ2gHjbxuzY2u8BjzhbO9nBmA_KCaMr/exec';
+const APP_URL = '/app/';
 
 window.tripAuth = { ready: CONFIGURED };
 
