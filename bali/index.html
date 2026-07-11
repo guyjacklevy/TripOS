@@ -405,15 +405,20 @@
     });
 
     /* returning visitor — rebuild their plan instantly */
+    function applyPlan(saved) {
+      if (!saved || !VIBES[saved.vibe] || !TIERS[saved.tier]) return false;
+      sel = saved;
+      for (var s = 0; s < steps.length; s++) steps[s].hidden = true;
+      document.getElementById('ckDots').style.display = 'none';
+      showPlan();
+      return true;
+    }
     try {
-      var saved = JSON.parse(localStorage.getItem('tripos_plan') || 'null');
-      if (saved && saved.vibe && VIBES[saved.vibe] && TIERS[saved.tier]) {
-        sel = saved;
-        for (var s = 0; s < steps.length; s++) steps[s].hidden = true;
-        document.getElementById('ckDots').style.display = 'none';
-        showPlan();
-      }
+      applyPlan(JSON.parse(localStorage.getItem('tripos_plan') || 'null'));
     } catch (err) {}
+
+    /* let auth.js re-render with the ACCOUNT's brief once it syncs */
+    window.tripWizard = { apply: applyPlan };
   })();
   </script>
 </body>

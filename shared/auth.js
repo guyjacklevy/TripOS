@@ -58,13 +58,14 @@ if (!CONFIGURED) {
     const email = inputEl.value.trim();
     if (!email) return;
     statusEl.textContent = 'Sending…';
+    /* one door: every login lands in the app, no matter where it started */
     const { error } = await sb.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.href.split('#')[0] }
+      options: { emailRedirectTo: window.location.origin + '/app/' }
     });
     statusEl.textContent = error
       ? '⚠ ' + error.message
-      : '✓ Check your inbox — tap the link to unlock your plan.';
+      : '✓ Check your inbox — the link boards you straight into your TripOS.';
   });
 
   /* ── save the wizard's plan to the user's account ──
@@ -139,17 +140,41 @@ if (!CONFIGURED) {
     if (opener) { e.preventDefault(); openModal(); }
   });
 
+  /* ── account is the source of truth for the brief ──
+   * On login: if the account has a saved trip, it WINS over whatever
+   * this browser remembers (and re-renders the wizard to match).
+   * Only when the account has no trip yet do we push the local one up.
+   * The wizard still saves explicitly when the user completes it. */
+  async function syncTrip() {
+    const { data, error } = await sb
+      .from('trips')
+      .select('vibe, duration_days, budget_tier')
+      .eq('destination', 'bali')
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (error) { console.error('[TripOS] trip sync failed:', error.message); return; }
+    const t = data && data[0];
+    if (t && t.vibe) {
+      const local = { vibe: t.vibe, dur: String(t.duration_days == null ? 0 : t.duration_days), tier: t.budget_tier };
+      try { localStorage.setItem('tripos_plan', JSON.stringify(local)); } catch (_) {}
+      if (window.tripWizard) window.tripWizard.apply(local);
+    } else {
+      await savePlan(); /* fresh account — adopt this browser's brief if any */
+    }
+  }
+
   /* ── boot: pick up any magic-link session, then paint everything ── */
   (async () => {
     const { data } = await sb.auth.getSession();
     user = data.session ? data.session.user : null;
-    if (user) { await savePlan(); }
+    if (user) { await syncTrip(); }
     paintNav();
     reflectUnlocked();
 
-    sb.auth.onAuthStateChange((_evt, session) => {
+    sb.auth.onAuthStateChange((evt, session) => {
+      const hadUser = !!user;
       user = session ? session.user : null;
-      if (user) savePlan();
+      if (user && !hadUser && evt === 'SIGNED_IN') syncTrip();
       paintNav();
       reflectUnlocked();
     });

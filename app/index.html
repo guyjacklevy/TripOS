@@ -11,6 +11,7 @@
 </head>
 <body>
   <div class="cosmos"></div>
+  <div class="terrain-tint"></div>
 
   <div class="wrap">
     <nav class="nav">
@@ -18,35 +19,63 @@
       <a class="nav-auth" id="appLogout" href="#" hidden>Log out</a>
     </nav>
 
+    <!-- arrival moment — shown once, right after a fresh login -->
+    <div class="arrive-banner" id="arriveBanner" hidden>
+      <span class="ab-tick">✓</span>
+      <span>Aboard. Your brief is saved to <strong id="arriveEmail"></strong> — it travels with you now.</span>
+      <button type="button" class="ab-x" id="arriveClose" aria-label="Dismiss">✕</button>
+    </div>
+
     <!-- ─── boarding gate (logged out) ─── -->
     <section id="gate" hidden>
       <div class="mission-tag"><span class="pulse-dot"></span>Boarding control</div>
       <div class="card checkin mission-card" style="text-align:center">
         <h1 class="gate-title">Your <span class="glow">TripOS</span>.</h1>
-        <p class="gate-sub">Your brief, your places, your budget — personal to you. Enter your email and tap the boarding link. No password, ever.</p>
+        <p class="gate-sub">Your brief, your places, your budget — personal to you. Enter your email and board. No password, ever.</p>
         <form class="auth-form" id="gateForm">
           <input class="auth-input" id="gateEmail" type="email" required placeholder="you@email.com" autocomplete="email">
           <button class="btn btn-primary" type="submit">Send my boarding link</button>
         </form>
         <p class="auth-status" id="gateStatus" role="status"></p>
-        <p class="note">First time? The same link creates your account.</p>
+        <div id="gateCode" hidden>
+          <p class="note" style="margin-top:16px">Reading this on another device? Type the 6-digit code from the email instead:</p>
+          <form class="log-form" id="codeForm" style="max-width:320px;margin:10px auto 0">
+            <input class="auth-input log-amt" id="codeInput" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code">
+            <button class="btn btn-primary log-btn" type="submit">Board</button>
+          </form>
+        </div>
+        <p class="note" style="margin-top:14px">First time? The same link creates your account.</p>
       </div>
     </section>
 
     <!-- ─── home (logged in) ─── -->
     <main id="home" hidden>
-      <!-- your brief -->
-      <section style="padding:26px 0 6px">
+      <!-- your brief — a personal boarding pass -->
+      <section style="padding:24px 0 6px">
         <div class="intel-bar"><span class="pulse-dot"></span>Mission intel · your Bali brief</div>
-        <h1 class="app-h1" id="briefTitle">Your Bali</h1>
-        <p class="plan-base" id="briefLine"></p>
-        <a class="ck-reset" href="../bali/#checkin" id="briefEdit">↺ change my brief</a>
+        <div class="bpass">
+          <div class="bp-main">
+            <div class="bp-air">TripOS Air · personal boarding pass</div>
+            <div class="bp-route">
+              <span class="bp-city">YOU</span>
+              <span class="bp-dash"></span>
+              <span class="bp-city bp-to">DPS</span>
+            </div>
+            <p class="bp-sub" id="briefLine">Loading your brief…</p>
+            <div class="bp-grid" id="briefGrid"></div>
+            <a class="ck-reset" href="../bali/#checkin" id="briefEdit">↺ change my brief</a>
+          </div>
+          <div class="bp-stub">
+            <div class="bp-barcode"></div>
+            <span class="bp-code">DPS · BALI</span>
+          </div>
+        </div>
       </section>
 
       <!-- your picks — the main screen -->
-      <section style="padding:30px 0 0">
+      <section style="padding:34px 0 0">
         <div class="app-sec-head">
-          <h2>Your picks</h2>
+          <div class="stage-tag"><span class="stage-num">01</span> Your picks</div>
           <p id="picksSub">Matched to your brief from our curated intel.</p>
         </div>
         <div class="places-grid" id="pickGrid"></div>
@@ -56,10 +85,10 @@
       </section>
 
       <!-- budget pulse — the engine, not the hero -->
-      <section style="padding:38px 0 64px">
+      <section style="padding:40px 0 64px">
         <div class="app-sec-head">
-          <h2>Budget pulse</h2>
-          <p>So you always know what you can still do.</p>
+          <div class="stage-tag"><span class="stage-num">02</span> Budget pulse</div>
+          <p>Fuel gauge — so you always know what you can still do.</p>
         </div>
         <div class="card pulse-card">
           <div class="pulse-row">
