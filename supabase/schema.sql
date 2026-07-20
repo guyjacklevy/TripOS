@@ -20,10 +20,12 @@ create table if not exists public.trips (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null references auth.users(id) on delete cascade,
   destination   text not null default 'bali',
-  vibe          text,            -- nomad | surf | wellness | party
+  vibe          text,            -- nomad | surf | wellness | party | mix
+  vibe_detail   text,            -- branch answer: surf level / work load / wellness focus / party scene
+  party         text,            -- solo | couple | family | crew
   duration_days int,             -- 0 = open-ended
   budget_tier   text,            -- back | comf | prem
-  priorities    text[],
+  priorities    text[],          -- work | food | nightlife | nature | fitness | wellness
   arrive        date,
   depart        date,
   created_at    timestamptz default now()

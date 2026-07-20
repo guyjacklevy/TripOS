@@ -9,16 +9,50 @@
  * ──────────────────────────────────────────────────────────── */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-/* wizard answer → curated_places persona tag */
-export const PERSONA = { nomad: 'nomad', surf: 'surfer', wellness: 'wellness', party: 'party' };
+/* wizard answer → curated_places persona tag (mix = no single persona) */
+export const PERSONA = { nomad: 'nomad', surf: 'surfer', wellness: 'wellness', party: 'party', mix: null };
 
 /* wizard answer → home-base region (matches area prefix) */
-export const HOME_AREA = { nomad: 'Canggu', surf: 'Uluwatu', wellness: 'Ubud', party: 'Seminyak' };
+export const HOME_AREA = { nomad: 'Canggu', surf: 'Uluwatu', wellness: 'Ubud', party: 'Seminyak', mix: 'Canggu' };
 
 /* budget tier → highest price_level that fits the brief */
 export const TIER_CAP = { back: 2, comf: 3, prem: 4 };
 
-export const VIBE_LABEL = { nomad: 'digital nomad', surf: 'surf', wellness: 'wellness', party: 'party' };
+export const VIBE_LABEL = { nomad: 'digital nomad', surf: 'surf', wellness: 'wellness', party: 'party', mix: 'mix of everything' };
+
+/* branch answer → place tags it should pull toward (+2 on intersection) */
+export const DETAIL_TAGS = {
+  deep:       ['cowork', 'wifi', 'work-friendly', 'quiet'],
+  half:       ['work-friendly', 'coffee'],
+  barely:     ['beach-club', 'sunset', 'social'],
+  first:      ['beginner'],
+  improver:   ['surf'],
+  charger:    ['barrels', 'reef', 'cliffs'],
+  yoga:       ['yoga', 'breathwork'],
+  healing:    ['sound-healing', 'ritual', 'sacred', 'wellness', 'community'],
+  fitness:    ['gym', 'fitness'],
+  beachclubs: ['beach-club', 'pools', 'djs'],
+  clubs:      ['nightclub', 'late-night', 'djs', 'party'],
+  bars:       ['beach-bar', 'social', 'live-music', 'sunset']
+};
+
+/* branch answer → tags that would be a WRONG recommendation (-2 on intersection):
+   a first-waves surfer should never see reef barrels as pick 1 */
+export const DETAIL_AVOID = {
+  first:   ['barrels', 'reef', 'cliffs'],
+  charger: ['beginner'],
+  deep:    ['late-night', 'nightclub']
+};
+
+/* priorities multi-select → what counts as a hit (+1 each, capped at +2) */
+export const PRIORITY_MATCH = {
+  work:      { cats: ['work'], tags: ['work-friendly', 'cowork'] },
+  food:      { cats: ['food'], tags: ['brunch', 'warung'] },
+  nightlife: { cats: ['nightlife'], tags: ['party', 'djs'] },
+  nature:    { cats: ['explore'], tags: ['nature', 'waterfall', 'jungle', 'ricefield', 'tide-pools'] },
+  fitness:   { cats: ['gym'], tags: ['gym', 'fitness', 'surf'] },
+  wellness:  { cats: ['wellness'], tags: ['yoga', 'wellness'] }
+};
 export const TIER_LABEL = { back: 'backpacker', comf: 'comfortable', prem: 'premium' };
 export const durLabel = (d) =>
   d === 0 ? 'open-ended' : d === 14 ? '2 weeks' : d === 30 ? '1 month' : '3+ months';
@@ -35,18 +69,39 @@ export function readPlan() {
   } catch (_) { return null; }
 }
 
-/* score one place against a plan. -1 = out of budget, ≥3 = a real match */
+/* score one place against a plan. -1 = out of budget, ≥3 = a real match.
+ * Branch answers (vibe_detail) and priorities sharpen the score — the
+ * questionnaire's extra questions all cash out here. */
 export function scorePlace(p, plan) {
   const persona = PERSONA[plan.vibe];
   const cap = TIER_CAP[plan.tier] || 4;
   const lvl = p.price_level || 1;
   if (plan.tier !== 'prem' && lvl > cap) return -1;
   let s = 0;
-  if ((p.personas || []).indexOf(persona) !== -1) s += 3;
-  if (persona && String(p.area || '').indexOf(HOME_AREA[plan.vibe]) === 0) s += 2;
+  const tags = p.tags || [];
+  if (persona && (p.personas || []).indexOf(persona) !== -1) s += 3;
+  if (plan.vibe === 'mix' && (p.personas || []).length >= 2) s += 2; /* mix loves crossover spots */
+  if (HOME_AREA[plan.vibe] && String(p.area || '').indexOf(HOME_AREA[plan.vibe]) === 0) s += 2;
   if (p.verified) s += 1;
   if (plan.tier === 'prem' && lvl >= 3) s += 1;
   if (plan.tier === 'back' && lvl === 1) s += 1;
+  /* branch tuning: e.g. first-waves surfer pulls toward beginner breaks… */
+  const detailTags = DETAIL_TAGS[plan.vibe_detail];
+  if (detailTags && tags.some((t) => detailTags.indexOf(t) !== -1)) s += 2;
+  /* …and away from places that would be a wrong recommendation for them */
+  const avoidTags = DETAIL_AVOID[plan.vibe_detail];
+  if (avoidTags && tags.some((t) => avoidTags.indexOf(t) !== -1)) s -= 2;
+  /* priorities: each selected interest that this place serves, +1 (cap +2) */
+  if (plan.priorities && plan.priorities.length) {
+    let hits = 0;
+    for (const pr of plan.priorities) {
+      const m = PRIORITY_MATCH[pr];
+      if (!m) continue;
+      if ((m.cats && m.cats.indexOf(p.category) !== -1) ||
+          (m.tags && tags.some((t) => m.tags.indexOf(t) !== -1))) hits++;
+    }
+    s += Math.min(2, hits);
+  }
   return s;
 }
 

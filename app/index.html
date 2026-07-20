@@ -106,6 +106,20 @@
     </div>
   </section>
 
+  <!-- ─── IN-APP CHECK-IN — stage B: signed in, no brief yet ─── -->
+  <section id="checkinScreen" class="record" hidden>
+    <div class="mission-tag"><span class="pulse-dot"></span>Mission briefing</div>
+    <p class="rec-ask">A few quick questions — everything personalizes.</p>
+    <div class="card checkin mission-card">
+      <div id="appCkMount"></div>
+      <div class="ck-build" id="appCkBuild" hidden>
+        <div class="ck-term" id="appCkTerm"></div>
+        <div class="ck-bar"><div class="ck-bar-fill" id="appCkFill"></div></div>
+      </div>
+      <div class="ck-dots" id="appCkDots"></div>
+    </div>
+  </section>
+
   <!-- ─── SHELL (logged in) ─── -->
   <div id="shell" hidden>
     <nav class="nav app-top">

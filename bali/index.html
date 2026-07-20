@@ -56,36 +56,11 @@
       <div class="sec-head reveal">
         <div class="stage-tag"><span class="stage-num">02</span> Check-in</div>
         <h2>The concierge is asking.</h2>
-        <p>Answer three questions. TripOS builds a Bali plan that's yours — not a listicle.</p>
+        <p>A few quick questions — it branches to who you are. TripOS builds a Bali plan that's yours, not a listicle.</p>
       </div>
       <div class="mission-tag reveal"><span class="pulse-dot"></span>Mission briefing</div>
       <div class="card checkin mission-card reveal" id="checkin">
-        <div class="ck-step" data-ck="vibe">
-          <p class="ck-q">What's your vibe?</p>
-          <div class="ck-opts">
-            <button type="button" class="ck-opt" data-k="vibe" data-v="nomad">🧑‍💻 Digital nomad<span class="opt-sub">work from paradise</span></button>
-            <button type="button" class="ck-opt" data-k="vibe" data-v="surf">🏄 Surf<span class="opt-sub">chase the swell</span></button>
-            <button type="button" class="ck-opt" data-k="vibe" data-v="wellness">🧘 Wellness<span class="opt-sub">reset mind + body</span></button>
-            <button type="button" class="ck-opt" data-k="vibe" data-v="party">🎉 Party<span class="opt-sub">nights that go long</span></button>
-          </div>
-        </div>
-        <div class="ck-step" data-ck="dur" hidden>
-          <p class="ck-q">How long are you staying?</p>
-          <div class="ck-opts">
-            <button type="button" class="ck-opt" data-k="dur" data-v="14">✈️ 2 weeks<span class="opt-sub">the reset</span></button>
-            <button type="button" class="ck-opt" data-k="dur" data-v="30">🌙 1 month<span class="opt-sub">the deep dive</span></button>
-            <button type="button" class="ck-opt" data-k="dur" data-v="90">🌴 3+ months<span class="opt-sub">the slowmad life</span></button>
-            <button type="button" class="ck-opt" data-k="dur" data-v="0">🌀 Open-ended<span class="opt-sub">stay till it feels done</span></button>
-          </div>
-        </div>
-        <div class="ck-step" data-ck="tier" hidden>
-          <p class="ck-q">Budget tier?</p>
-          <div class="ck-opts">
-            <button type="button" class="ck-opt" data-k="tier" data-v="back">🎒 Backpacker<span class="opt-sub">stretch every rupiah</span></button>
-            <button type="button" class="ck-opt" data-k="tier" data-v="comf">😌 Comfortable<span class="opt-sub">smart, not stingy</span></button>
-            <button type="button" class="ck-opt" data-k="tier" data-v="prem">🥂 Premium<span class="opt-sub">no compromises</span></button>
-          </div>
-        </div>
+        <div id="ckMount"></div>
 
         <div class="ck-build" id="ckBuild" hidden>
           <div class="ck-term" id="ckTerm"></div>
@@ -96,7 +71,9 @@
           <div class="intel-bar"><span class="pulse-dot"></span>Mission intel · your Bali brief</div>
           <h3 id="planTitle"></h3>
           <p class="plan-base" id="planBase"></p>
+          <ul class="plan-list" id="planTeaser"></ul>
           <div class="plan-lock-wrap">
+            <div class="scan-line"></div>
             <ul class="plan-list locked" id="planList"></ul>
             <div class="plan-lock">
               <span class="plan-lock-ico">🔒</span>
@@ -265,7 +242,10 @@
   <script type="module" src="../shared/auth.js"></script>
   <script type="module">
     import { initMatch } from '../shared/match.js';
+    import { mountCheckin } from '../shared/checkin.js';
     initMatch();
+    window.tripCheckin = { mountCheckin };
+    document.dispatchEvent(new CustomEvent('tripos:checkin-ready'));
   </script>
   <script src="../shared/tripos.js"></script>
   <script>
@@ -284,7 +264,10 @@
                   pack: 'Yoga mat towel, mosquito spray, layers for cool jungle nights' },
       party:    { label: 'Party', area: 'Seminyak & Canggu', why: 'beach clubs, cocktail bars, nights that end at sunrise',
                   picks: ['🎉 La Favela — jungle-bar madness', '🏖 Finns — beach club royalty', '🌮 Motel Mexicola — technicolor nights'],
-                  pack: 'One good shirt, electrolytes, sunglasses you can afford to lose' }
+                  pack: 'One good shirt, electrolytes, sunglasses you can afford to lose' },
+      mix:      { label: 'Mix', area: 'Canggu', why: 'central base, every world within a scooter ride — surf mornings, cowork middays, sunset nights',
+                  picks: ['🌅 Old Man’s — sunset institution', '🧘 The Yoga Barn — the institution', '🍹 Single Fin — Sunday session HQ'],
+                  pack: 'A bit of everything, nothing heavy — you can buy the rest here' }
     };
     var TIERS = {
       back: { label: 'Backpacker', idr: 350 },
@@ -294,43 +277,45 @@
 
     var box = document.getElementById('checkin');
     if (!box) return;
-    var steps = box.querySelectorAll('.ck-step');
-    var dots = document.getElementById('ckDots').children;
+    var mountEl = document.getElementById('ckMount');
+    var dotsEl = document.getElementById('ckDots');
     var build = document.getElementById('ckBuild');
     var term = document.getElementById('ckTerm');
     var barFill = document.getElementById('ckBarFill');
     var plan = document.getElementById('ckPlan');
     var sel = {};
-    var stepIdx = 0;
 
     function fmtIDR(k) { return k >= 1000 ? (k / 1000) + 'M' : k + 'k'; }
     function durLabel(d) { return d === 0 ? 'open-ended' : d === 14 ? '2 weeks' : d === 30 ? '1 month' : '3+ months'; }
 
-    function showStep(i) {
-      for (var s = 0; s < steps.length; s++) steps[s].hidden = s !== i;
-      for (var d = 0; d < dots.length; d++) dots[d].className = d <= i ? 'on' : '';
+    /* branched questionnaire lives in shared/checkin.js (deferred module) */
+    function startCheckin() {
+      var go = function () {
+        mountEl.hidden = false;
+        dotsEl.style.display = '';
+        window.tripCheckin.mountCheckin(mountEl, dotsEl, function (answers) {
+          sel = answers;
+          mountEl.hidden = true;
+          runBuild();
+        });
+      };
+      if (window.tripCheckin) go();
+      else document.addEventListener('tripos:checkin-ready', go, { once: true });
     }
 
-    box.addEventListener('click', function (e) {
-      var btn = e.target.closest('.ck-opt');
-      if (!btn) return;
-      sel[btn.getAttribute('data-k')] = btn.getAttribute('data-v');
-      stepIdx++;
-      if (stepIdx < steps.length) { showStep(stepIdx); return; }
-      runBuild();
-    });
-
     function runBuild() {
-      for (var s = 0; s < steps.length; s++) steps[s].hidden = true;
-      document.getElementById('ckDots').style.display = 'none';
+      dotsEl.style.display = 'none';
       build.hidden = false;
       var v = VIBES[sel.vibe], t = TIERS[sel.tier];
       var spotCount = (window.tripMatch && window.tripMatch.count) ? window.tripMatch.count : 52;
       var lines = [
-        '▸ reading your vibe: ' + v.label.toLowerCase(),
+        '▸ reading your vibe: ' + v.label.toLowerCase() +
+          (sel.vibe_detail_label ? ' · ' + sel.vibe_detail_label : ''),
         '▸ scanning ' + spotCount + ' curated Bali spots…',
         '▸ matching ' + v.area + ' to your budget…',
-        '▸ pricing ' + durLabel(+sel.dur) + ' in IDR…',
+        (sel.priorities && sel.priorities.length
+          ? '▸ weighing ' + sel.priorities.length + ' priorit' + (sel.priorities.length === 1 ? 'y' : 'ies') + '…'
+          : '▸ pricing ' + durLabel(+sel.dur) + ' in IDR…'),
         '▸ plan ready <span class="ok">✓</span>'
       ];
       term.innerHTML = '';
@@ -359,13 +344,15 @@
         ['Pack', v.pack],
         ['Timing', 'Best months, events and rainy-season calls']
       ];
+      var row = function (r) {
+        return '<li><span class="pl-k">' + r[0] + '</span><span>' + r[1] + '</span></li>';
+      };
+      /* Stage 4: pick 1 is the TEASER — fully visible, credibility proof.
+         The rest stays behind the encrypted blur. */
       var renderList = function (pickRows) {
-        var html = '';
-        var rows = pickRows.concat(tailRows);
-        for (var r = 0; r < rows.length; r++) {
-          html += '<li><span class="pl-k">' + rows[r][0] + '</span><span>' + rows[r][1] + '</span></li>';
-        }
-        document.getElementById('planList').innerHTML = html;
+        document.getElementById('planTeaser').innerHTML = row(pickRows[0]);
+        document.getElementById('planList').innerHTML =
+          pickRows.slice(1).concat(tailRows).map(row).join('');
       };
       /* instant render with the static picks, then upgrade to real
          curated_places matches from the database when the engine is ready */
@@ -395,27 +382,27 @@
 
     document.getElementById('ckReset').addEventListener('click', function () {
       sel = {};
-      stepIdx = 0;
       plan.hidden = true;
       build.hidden = true;
       barFill.style.width = '0';
-      document.getElementById('ckDots').style.display = '';
-      showStep(0);
       try { localStorage.removeItem('tripos_plan'); } catch (err) {}
+      startCheckin();
     });
 
     /* returning visitor — rebuild their plan instantly */
     function applyPlan(saved) {
       if (!saved || !VIBES[saved.vibe] || !TIERS[saved.tier]) return false;
       sel = saved;
-      for (var s = 0; s < steps.length; s++) steps[s].hidden = true;
-      document.getElementById('ckDots').style.display = 'none';
+      mountEl.hidden = true;
+      dotsEl.style.display = 'none';
       showPlan();
       return true;
     }
+    var restored = false;
     try {
-      applyPlan(JSON.parse(localStorage.getItem('tripos_plan') || 'null'));
+      restored = applyPlan(JSON.parse(localStorage.getItem('tripos_plan') || 'null'));
     } catch (err) {}
+    if (!restored) startCheckin();
 
     /* let auth.js re-render with the ACCOUNT's brief once it syncs */
     window.tripWizard = { apply: applyPlan };

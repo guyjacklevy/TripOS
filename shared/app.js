@@ -7,6 +7,7 @@
  * ──────────────────────────────────────────────────────────── */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { pickTop, isMatch, scorePlace, readPlan, VIBE_LABEL, TIER_LABEL, HOME_AREA, durLabel, CAT_ICON } from './match.js';
+import { mountCheckin } from './checkin.js';
 
 const cfg = window.TRIPOS_SUPABASE || {};
 const $ = (id) => document.getElementById(id);
@@ -14,6 +15,7 @@ const $ = (id) => document.getElementById(id);
 const welcome = $('welcome');
 const record = $('record');
 const shell = $('shell');
+const checkinScreen = $('checkinScreen');
 
 const TIER_IDR = { back: 350, comf: 700, prem: 1500 };
 const ANCHORS = [[300, 'beach club day'], [150, 'massage'], [35, 'warung meal']];
@@ -135,7 +137,10 @@ function dropIn(grid) {
 function renderPicks(places, trip) {
   let list, matched;
   if (trip && trip.vibe) {
-    const plan = { vibe: trip.vibe, dur: String(trip.duration_days), tier: trip.budget_tier };
+    const plan = {
+      vibe: trip.vibe, dur: String(trip.duration_days), tier: trip.budget_tier,
+      vibe_detail: trip.vibe_detail || null, party: trip.party || null, priorities: trip.priorities || []
+    };
     list = pickTop(places, plan, 6);
     matched = new Set(list.filter((p) => isMatch(scorePlace(p, plan))));
   } else {
@@ -197,6 +202,7 @@ function show(which) {
   welcome.hidden = which !== 'welcome';
   record.hidden = which !== 'record';
   shell.hidden = which !== 'shell';
+  checkinScreen.hidden = which !== 'checkin';
 }
 
 window.__appDebug = {
@@ -245,6 +251,61 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (!error) { setTimeout(() => { $('logStatus').textContent = ''; }, 1600); loadPulse(); }
   }
 
+  /* upsert a brief (from the questionnaire or a pre-login landing run) */
+  async function saveBrief(a) {
+    const { data: up, error } = await sb.from('trips').upsert({
+      user_id: user.id, destination: 'bali',
+      vibe: a.vibe || null,
+      vibe_detail: a.vibe_detail || null,
+      party: a.party || null,
+      duration_days: a.dur != null ? parseInt(a.dur, 10) : null,
+      budget_tier: a.tier || null,
+      priorities: a.priorities && a.priorities.length ? a.priorities : null
+    }, { onConflict: 'user_id,destination' }).select();
+    if (error) console.error('[TripOS] brief save failed:', error.message);
+    try { localStorage.setItem('tripos_plan', JSON.stringify(a)); } catch (_) {}
+    return (up && up[0]) || null;
+  }
+
+  /* stage B: the branched questionnaire, in-app */
+  function openCheckin() {
+    show('checkin');
+    $('appCkBuild').hidden = true;
+    $('appCkFill').style.width = '0';
+    $('appCkMount').hidden = false;
+    mountCheckin($('appCkMount'), $('appCkDots'), (answers) => {
+      $('appCkMount').hidden = true;
+      $('appCkDots').style.display = 'none';
+      $('appCkBuild').hidden = false;
+      const lines = [
+        '▸ reading your vibe: ' + (VIBE_LABEL[answers.vibe] || answers.vibe) +
+          (answers.vibe_detail_label ? ' · ' + answers.vibe_detail_label : ''),
+        '▸ matching our curated spots to your brief…',
+        '▸ saving to your account…',
+        '▸ brief ready <span class="ok">✓</span>'
+      ];
+      const term = $('appCkTerm');
+      term.innerHTML = '';
+      setTimeout(() => { $('appCkFill').style.width = '100%'; }, 60);
+      let i = 0;
+      const tick = () => {
+        const ln = document.createElement('span');
+        ln.className = 'ln';
+        ln.innerHTML = lines[i];
+        term.appendChild(ln);
+        i++;
+        if (i < lines.length) setTimeout(tick, 520);
+        else setTimeout(async () => {
+          trip = await saveBrief(answers);
+          $('appCkDots').style.display = '';
+          freshLogin = true; /* re-use the arrival moment for a fresh brief */
+          loadShell();
+        }, 600);
+      };
+      tick();
+    });
+  }
+
   async function loadShell() {
     show('shell');
     $('acctEmail').textContent = (user.email || '—');
@@ -255,18 +316,18 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (trip && trip.vibe) {
       try {
         localStorage.setItem('tripos_plan', JSON.stringify({
-          vibe: trip.vibe, dur: String(trip.duration_days == null ? 0 : trip.duration_days), tier: trip.budget_tier
+          vibe: trip.vibe, dur: String(trip.duration_days == null ? 0 : trip.duration_days), tier: trip.budget_tier,
+          vibe_detail: trip.vibe_detail || null, party: trip.party || null, priorities: trip.priorities || []
         }));
       } catch (_) {}
     } else {
       const local = readPlan();
       if (local) {
-        const { data: up } = await sb.from('trips').upsert({
-          user_id: user.id, destination: 'bali', vibe: local.vibe,
-          duration_days: local.dur != null ? parseInt(local.dur, 10) : null,
-          budget_tier: local.tier
-        }, { onConflict: 'user_id,destination' }).select();
-        trip = (up && up[0]) || null;
+        trip = await saveBrief(local);
+      } else {
+        /* signed in, no brief anywhere — stage B: check in right here */
+        openCheckin();
+        return;
       }
     }
     dailyK = TIER_IDR[trip && trip.budget_tier] || 700;
@@ -355,6 +416,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   /* passenger record */
   $('recEdit').addEventListener('click', () => openRecord());
+  /* "change my brief" runs the questionnaire in-app — no bounce to the landing page */
+  $('briefEdit').addEventListener('click', (e) => { e.preventDefault(); openCheckin(); });
   let recTitle = '';
   $('titleChips').addEventListener('click', (e) => {
     const btn = e.target.closest('.chip-btn');
