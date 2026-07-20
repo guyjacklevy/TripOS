@@ -9,6 +9,8 @@ create table if not exists public.profiles (
   id           uuid primary key references auth.users(id) on delete cascade,
   email        text,
   display_name text,
+  title        text,   -- passenger record: Mr. / Ms. (gender signal, skippable)
+  full_name    text,   -- passenger record: powers "PASSENGER: MR. G. LEVY"
   home_currency text default 'USD',
   created_at   timestamptz default now()
 );

@@ -37,6 +37,10 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* the hidden attribute ALWAYS wins — no display rule may override it
+   (this class of bug bit us twice: the auth modal, then the welcome form) */
+[hidden] { display: none !important; }
+
 html { scroll-behavior: smooth; }
 
 body {
@@ -650,6 +654,166 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
   .scan-line { animation: none; }
   .pulse-dot { animation: none; }
   .place-card:hover { transform: none; }
+  .panel.on { animation: none; }
+  .runway { transition: none; }
+  .tab-slot:active { transform: none; }
+  .arrive-banner { animation: none; }
+}
+
+/* ─── app v3 shell — welcome / tabs / panels (APP_SPEC §5) ─── */
+.welcome {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.w-inner { width: 100%; max-width: 360px; text-align: center; }
+.w-orb { width: 52px; height: 52px; margin: 0 auto 18px; display: block; }
+.w-title { font-size: 34px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 6px; }
+.w-line { color: var(--mut); font-size: 15px; margin-bottom: 30px; }
+.w-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  width: 100%;
+  text-align: center;
+}
+.w-google .g-mark { width: 18px; height: 18px; background: #fff; border-radius: 50%; padding: 2px; box-sizing: content-box; }
+.w-email-toggle {
+  display: block;
+  margin: 16px auto 0;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--mut);
+  background: none;
+  border: none;
+  border-bottom: 1px dashed var(--dim);
+  cursor: pointer;
+  padding: 2px 0;
+}
+.w-email-toggle:hover { color: var(--teal); }
+.w-email { margin-top: 16px; }
+.w-code { max-width: 300px; margin: 10px auto 0; }
+.w-foot { margin-top: 26px; font-size: 12px; color: var(--dim); }
+
+/* passenger record */
+.record { max-width: 560px; margin: 0 auto; padding: 48px 20px; }
+.record .mission-tag { margin-bottom: 16px; }
+.rec-ask { text-align: center; font-size: 19px; font-weight: 700; margin-bottom: 18px; }
+.title-chips { display: flex; gap: 8px; margin-bottom: 12px; }
+.title-chips .chip-btn { font-size: 13px; padding: 8px 18px; cursor: pointer; }
+.title-chips .chip-btn.on {
+  color: #06231b;
+  background: linear-gradient(135deg, #6fffdd, var(--teal));
+  border-color: transparent;
+}
+.rec-name { width: 100%; text-align: left; margin-bottom: 16px; }
+.rec-actions { display: flex; align-items: center; gap: 18px; }
+
+/* shell + panels */
+#shell { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+.app-top { max-width: 640px; margin: 0 auto; padding: 18px 20px; }
+#shell .arrive-banner { max-width: 640px; margin: 4px auto 10px; }
+.panels { max-width: 640px; margin: 0 auto; padding: 0 20px; }
+.panel { display: none; }
+.panel.on { display: block; animation: panelIn 160ms ease-out; }
+@keyframes panelIn { from { opacity: 0; } to { opacity: 1; } }
+.inst-strip {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 14px 0 6px;
+}
+.inst-strip:first-line { color: var(--mut); }
+.panel-h { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; margin: 2px 0 16px; }
+.fuel-strip {
+  display: block;
+  margin-top: 16px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  color: var(--mut);
+  text-decoration: none;
+  background: var(--glass);
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  padding: 12px 15px;
+}
+.fuel-strip strong { color: var(--teal); }
+.fuel-strip:hover { border-color: rgba(61, 255, 208, 0.3); }
+.acct-card { margin-top: 16px; display: grid; gap: 12px; }
+.acct-row { display: flex; gap: 14px; font-size: 13.5px; align-items: baseline; }
+.acct-row .k {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  flex-shrink: 0;
+  width: 86px;
+}
+
+/* tab bar (§5.2 — Rachel) */
+.tab-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 90;
+  height: calc(64px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: rgba(10, 10, 20, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--line);
+}
+.tab-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--mut);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s, transform 80ms;
+}
+.tab-slot:active { transform: scale(0.94); }
+.tab-slot .tab-ic { width: 24px; height: 24px; }
+.tab-slot.on {
+  color: var(--teal);
+  filter: drop-shadow(0 0 6px rgba(61, 255, 208, 0.4));
+}
+.runway {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 25%;
+  height: 2px;
+  pointer-events: none;
+  transition: transform 180ms ease-out;
+}
+.runway::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background: var(--teal);
+  box-shadow: 0 0 10px rgba(61, 255, 208, 0.6);
 }
 
 /* ─── the app (/app) ─── */

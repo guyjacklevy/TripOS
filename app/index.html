@@ -2,94 +2,146 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>TripOS — your Bali</title>
   <meta name="description" content="Your personal TripOS — your Bali brief, your matched places, your budget pulse.">
   <meta name="robots" content="noindex">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2242%22 fill=%22%223dffd0%22/></svg>">
+  <meta name="theme-color" content="#0a0a14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TripOS">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="stylesheet" href="../shared/tripos.css">
 </head>
 <body>
   <div class="cosmos"></div>
   <div class="terrain-tint"></div>
 
-  <div class="wrap">
-    <nav class="nav">
+  <!-- ─── tab icon sprite (Rachel's tab-icons-v1, inlined — _agents/ is not deployed) ─── -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="tab-today" viewBox="0 0 24 24" fill="none">
+      <line x1="2" y1="16" x2="22" y2="16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M 6 16 A 6 6 0 0 1 18 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="12" y1="7" x2="12" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="7.5" y1="9.1" x2="8.9" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="16.5" y1="9.1" x2="15.1" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="tab-places" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
+      <circle cx="12" cy="12" r="3" fill="currentColor"/>
+    </symbol>
+    <symbol id="tab-pulse" viewBox="0 0 24 24" fill="none">
+      <path d="M 4.5 18.5 A 8.5 8.5 0 1 1 19.5 18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="12" y1="13.5" x2="17.8" y2="8.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="12" cy="13.5" r="1.5" fill="currentColor"/>
+    </symbol>
+    <symbol id="tab-you" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="6" width="20" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="15.5" y1="6" x2="15.5" y2="18" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 1.5"/>
+      <line x1="5" y1="10.5" x2="13" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="5" y1="13.5" x2="11" y2="13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+  </svg>
+
+  <!-- ─── WELCOME — the only door (logged out) ─── -->
+  <section id="welcome" class="welcome" hidden>
+    <div class="w-inner">
+      <span class="orb planet-teal w-orb"></span>
+      <h1 class="w-title">TripOS</h1>
+      <p class="w-line">Bali, decoded — personally.</p>
+
+      <button type="button" class="btn btn-primary w-google" id="googleBtn">
+        <svg class="g-mark" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92a8.78 8.78 0 0 0 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+        Continue with Google
+      </button>
+
+      <button type="button" class="w-email-toggle" id="emailToggle">or continue with email</button>
+
+      <form class="auth-form w-email" id="emailForm" hidden>
+        <input class="auth-input" id="emailInput" type="email" required placeholder="you@email.com" autocomplete="email">
+        <button class="btn btn-primary" type="submit">Send boarding email</button>
+      </form>
+
+      <div id="codeBlock" hidden>
+        <p class="note" style="margin-top:14px">Check your inbox — tap the link, or paste the code if your email shows one:</p>
+        <form class="log-form w-code" id="codeForm">
+          <input class="auth-input log-amt" id="codeInput" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code">
+          <button class="btn btn-primary log-btn" type="submit">Board</button>
+        </form>
+      </div>
+
+      <p class="auth-status" id="welcomeStatus" role="status"></p>
+      <p class="w-foot">No password, ever. First time? The same door creates your account.</p>
+    </div>
+  </section>
+
+  <!-- ─── PASSENGER RECORD — stage 6, once, ON the pass ─── -->
+  <section id="record" class="record" hidden>
+    <div class="mission-tag"><span class="pulse-dot"></span>Passenger record</div>
+    <p class="rec-ask">How should the island address you?</p>
+    <div class="bpass">
+      <div class="bp-main">
+        <div class="bp-air">TripOS Air · personal boarding pass</div>
+        <div class="bp-route">
+          <span class="bp-city">YOU</span><span class="bp-dash"></span><span class="bp-city bp-to">DPS</span>
+        </div>
+        <div class="bp-grid" style="margin-bottom:14px">
+          <div><span>Passenger</span><strong id="recPassenger">—</strong></div>
+          <div><span>Class</span><strong id="recClass">—</strong></div>
+          <div><span>Seat</span><strong>Window</strong></div>
+        </div>
+        <div class="title-chips" id="titleChips">
+          <button type="button" class="chip chip-btn" data-title="Mr.">Mr.</button>
+          <button type="button" class="chip chip-btn" data-title="Ms.">Ms.</button>
+        </div>
+        <input class="auth-input rec-name" id="recName" type="text" placeholder="full name" autocomplete="name">
+        <div class="rec-actions">
+          <button type="button" class="btn btn-primary" id="recSave">Print my pass</button>
+          <button type="button" class="ck-reset" id="recSkip">skip for now</button>
+        </div>
+      </div>
+      <div class="bp-stub"><div class="bp-barcode"></div><span class="bp-code">DPS · BALI</span></div>
+    </div>
+  </section>
+
+  <!-- ─── SHELL (logged in) ─── -->
+  <div id="shell" hidden>
+    <nav class="nav app-top">
       <a class="brand" href="../"><span class="orb planet-teal"></span>TripOS</a>
-      <a class="nav-auth" id="appLogout" href="#" hidden>Log out</a>
+      <a class="nav-auth" id="appLogout" href="#">Log out</a>
     </nav>
 
-    <!-- arrival moment — shown once, right after a fresh login -->
     <div class="arrive-banner" id="arriveBanner" hidden>
       <span class="ab-tick">✓</span>
-      <span>Aboard. Your brief is saved to <strong id="arriveEmail"></strong> — it travels with you now.</span>
+      <span id="arriveText">Aboard.</span>
       <button type="button" class="ab-x" id="arriveClose" aria-label="Dismiss">✕</button>
     </div>
 
-    <!-- ─── boarding gate (logged out) ─── -->
-    <section id="gate" hidden>
-      <div class="mission-tag"><span class="pulse-dot"></span>Boarding control</div>
-      <div class="card checkin mission-card" style="text-align:center">
-        <h1 class="gate-title">Your <span class="glow">TripOS</span>.</h1>
-        <p class="gate-sub">Your brief, your places, your budget — personal to you. Enter your email and board. No password, ever.</p>
-        <form class="auth-form" id="gateForm">
-          <input class="auth-input" id="gateEmail" type="email" required placeholder="you@email.com" autocomplete="email">
-          <button class="btn btn-primary" type="submit">Send my boarding link</button>
-        </form>
-        <p class="auth-status" id="gateStatus" role="status"></p>
-        <div id="gateCode" hidden>
-          <p class="note" style="margin-top:16px">Reading this on another device? Type the 6-digit code from the email instead:</p>
-          <form class="log-form" id="codeForm" style="max-width:320px;margin:10px auto 0">
-            <input class="auth-input log-amt" id="codeInput" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code">
-            <button class="btn btn-primary log-btn" type="submit">Board</button>
-          </form>
-        </div>
-        <p class="note" style="margin-top:14px">First time? The same link creates your account.</p>
-      </div>
-    </section>
-
-    <!-- ─── home (logged in) ─── -->
-    <main id="home" hidden>
-      <!-- your brief — a personal boarding pass -->
-      <section style="padding:24px 0 6px">
-        <div class="intel-bar"><span class="pulse-dot"></span>Mission intel · your Bali brief</div>
-        <div class="bpass">
-          <div class="bp-main">
-            <div class="bp-air">TripOS Air · personal boarding pass</div>
-            <div class="bp-route">
-              <span class="bp-city">YOU</span>
-              <span class="bp-dash"></span>
-              <span class="bp-city bp-to">DPS</span>
-            </div>
-            <p class="bp-sub" id="briefLine">Loading your brief…</p>
-            <div class="bp-grid" id="briefGrid"></div>
-            <a class="ck-reset" href="../bali/#checkin" id="briefEdit">↺ change my brief</a>
-          </div>
-          <div class="bp-stub">
-            <div class="bp-barcode"></div>
-            <span class="bp-code">DPS · BALI</span>
-          </div>
-        </div>
+    <main class="panels">
+      <!-- TODAY (interim — full concierge lands in slice 3) -->
+      <section class="panel" id="panel-today">
+        <div class="inst-strip" id="todayStrip">— · — · —</div>
+        <h2 class="panel-h" id="todayGreet">Today</h2>
+        <div class="places-grid" id="nowGrid"></div>
+        <a class="fuel-strip" href="#pulse" id="fuelStrip" hidden></a>
       </section>
 
-      <!-- your picks — the main screen -->
-      <section style="padding:34px 0 0">
-        <div class="app-sec-head">
-          <div class="stage-tag"><span class="stage-num">01</span> Your picks</div>
-          <p id="picksSub">Matched to your brief from our curated intel.</p>
-        </div>
+      <!-- PLACES (interim — full spatial browser ports in slice 5) -->
+      <section class="panel" id="panel-places">
+        <div class="inst-strip">8°S 115°E · YOUR CURATED LAYER</div>
+        <h2 class="panel-h">Your picks</h2>
         <div class="places-grid" id="pickGrid"></div>
-        <div style="text-align:center;margin-top:20px">
-          <a class="place-maps" href="../bali/places">Browse every curated place ↗</a>
+        <div style="text-align:center;margin:20px 0">
+          <a class="place-maps" href="../bali/places">Open the full terrain browser ↗</a>
         </div>
       </section>
 
-      <!-- budget pulse — the engine, not the hero -->
-      <section style="padding:40px 0 64px">
-        <div class="app-sec-head">
-          <div class="stage-tag"><span class="stage-num">02</span> Budget pulse</div>
-          <p>Fuel gauge — so you always know what you can still do.</p>
-        </div>
+      <!-- PULSE -->
+      <section class="panel" id="panel-pulse">
+        <div class="inst-strip">FUEL · IDR</div>
+        <h2 class="panel-h">Budget pulse</h2>
         <div class="card pulse-card">
           <div class="pulse-row">
             <div class="cell"><span class="k">Spent today</span><strong id="pulseSpent">0k</strong></div>
@@ -98,7 +150,6 @@
           </div>
           <div class="ck-bar"><div class="ck-bar-fill" id="pulseFill"></div></div>
           <p class="pulse-note" id="pulseNote"></p>
-
           <div class="quick-log" id="quickLog">
             <button type="button" class="chip chip-btn" data-amt="35" data-cat="food">🍜 Warung 35k</button>
             <button type="button" class="chip chip-btn" data-amt="30" data-cat="food">☕ Coffee 30k</button>
@@ -107,14 +158,11 @@
             <button type="button" class="chip chip-btn" data-amt="300" data-cat="nightlife">🏖 Beach club 300k</button>
           </div>
           <form class="log-form" id="logForm">
-            <input class="auth-input log-amt" id="logAmt" type="number" min="1" step="1" placeholder="amount · k IDR" inputmode="numeric">
+            <input class="auth-input log-amt" id="logAmt" type="number" min="1" step="1" placeholder="k IDR" inputmode="numeric">
             <select class="auth-input log-cat" id="logCat" aria-label="category">
-              <option value="food">food</option>
-              <option value="transport">transport</option>
-              <option value="wellness">wellness</option>
-              <option value="nightlife">nightlife</option>
-              <option value="accommodation">stay</option>
-              <option value="admin">admin</option>
+              <option value="food">food</option><option value="transport">transport</option>
+              <option value="wellness">wellness</option><option value="nightlife">nightlife</option>
+              <option value="accommodation">stay</option><option value="admin">admin</option>
             </select>
             <button class="btn btn-primary log-btn" type="submit">Log</button>
           </form>
@@ -122,7 +170,39 @@
           <ul class="spend-list" id="spendList"></ul>
         </div>
       </section>
+
+      <!-- YOU -->
+      <section class="panel" id="panel-you">
+        <div class="inst-strip">PASSENGER RECORD</div>
+        <h2 class="panel-h">Your pass</h2>
+        <div class="bpass">
+          <div class="bp-main">
+            <div class="bp-air">TripOS Air · personal boarding pass</div>
+            <div class="bp-route">
+              <span class="bp-city">YOU</span><span class="bp-dash"></span><span class="bp-city bp-to">DPS</span>
+            </div>
+            <p class="bp-sub" id="briefLine">Loading your brief…</p>
+            <div class="bp-grid" id="briefGrid"></div>
+            <a class="ck-reset" href="../bali/#checkin" id="briefEdit">↺ change my brief</a>
+          </div>
+          <div class="bp-stub"><div class="bp-barcode"></div><span class="bp-code">DPS · BALI</span></div>
+        </div>
+        <div class="card acct-card">
+          <div class="acct-row"><span class="k">Signed in as</span><strong id="acctEmail">—</strong></div>
+          <div class="acct-row"><span class="k">Install</span><span>Add TripOS to your home screen from the browser share menu</span></div>
+          <div class="acct-row"><span class="k">Version</span><span>v3 · slice 1</span></div>
+        </div>
+      </section>
     </main>
+
+    <!-- ─── tab bar ─── -->
+    <nav class="tab-bar" id="tabBar">
+      <span class="runway" id="runway"></span>
+      <button type="button" class="tab-slot" data-tab="today"><svg class="tab-ic"><use href="#tab-today"/></svg><span>TODAY</span></button>
+      <button type="button" class="tab-slot" data-tab="places"><svg class="tab-ic"><use href="#tab-places"/></svg><span>PLACES</span></button>
+      <button type="button" class="tab-slot" data-tab="pulse"><svg class="tab-ic"><use href="#tab-pulse"/></svg><span>PULSE</span></button>
+      <button type="button" class="tab-slot" data-tab="you"><svg class="tab-ic"><use href="#tab-you"/></svg><span>YOU</span></button>
+    </nav>
   </div>
 
   <script src="../shared/supabase-config.js"></script>
