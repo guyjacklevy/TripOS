@@ -702,12 +702,25 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
 .record { max-width: 560px; margin: 0 auto; padding: 48px 20px; }
 .record .mission-tag { margin-bottom: 16px; }
 .rec-ask { text-align: center; font-size: 19px; font-weight: 700; margin-bottom: 18px; }
-.title-chips { display: flex; gap: 8px; margin-bottom: 12px; }
-.title-chips .chip-btn { font-size: 13px; padding: 8px 18px; cursor: pointer; }
+.title-chips { display: flex; gap: 10px; margin-bottom: 12px; }
+.title-chips .chip-btn {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tx);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  border-radius: 12px;
+  padding: 13px 0;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.title-chips .chip-btn:hover { border-color: rgba(61, 255, 208, 0.55); }
 .title-chips .chip-btn.on {
   color: #06231b;
   background: linear-gradient(135deg, #6fffdd, var(--teal));
   border-color: transparent;
+  box-shadow: 0 0 18px rgba(61, 255, 208, 0.35);
 }
 .rec-name { width: 100%; text-align: left; margin-bottom: 16px; }
 .rec-actions { display: flex; align-items: center; gap: 18px; }
@@ -1442,10 +1455,14 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
 .ck-reset {
   display: inline-block;
   margin-top: 16px;
+  font: inherit;
   font-size: 12.5px;
   color: var(--mut);
   text-decoration: none;
+  background: none;      /* works as <a> AND <button> */
+  border: none;
   border-bottom: 1px dashed var(--dim);
+  padding: 0;
   cursor: pointer;
 }
 .ck-reset:hover { color: var(--teal); }

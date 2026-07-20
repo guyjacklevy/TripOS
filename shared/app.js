@@ -289,6 +289,18 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     setTab(location.hash.slice(1) || 'today', false);
   }
 
+  function openRecord() {
+    show('record');
+    /* prefill from the account so editing never starts from zero */
+    recTitle = (profile && profile.title) || '';
+    $('recName').value = (profile && profile.full_name) || '';
+    document.querySelectorAll('#titleChips .chip-btn').forEach((b) =>
+      b.classList.toggle('on', b.getAttribute('data-title') === recTitle));
+    $('recPassenger').textContent = passengerLine(recTitle, $('recName').value) || '—';
+    $('recClass').textContent = (readPlan() && VIBE_LABEL[readPlan().vibe]) || '—';
+    setTimeout(() => $('recName').focus(), 60);
+  }
+
   async function route() {
     if (!user) { show('welcome'); return; }
     const { data } = await sb.from('profiles').select('title, full_name').eq('id', user.id).limit(1);
@@ -296,9 +308,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     let skipped = false;
     try { skipped = !!localStorage.getItem('tripos_record_done'); } catch (_) {}
     if (profile && !profile.full_name && !skipped) {
-      show('record');
-      $('recClass').textContent = (readPlan() && VIBE_LABEL[readPlan().vibe]) || '—';
-      setTimeout(() => $('recName').focus(), 60);
+      openRecord();
     } else {
       loadShell();
     }
@@ -344,6 +354,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   });
 
   /* passenger record */
+  $('recEdit').addEventListener('click', () => openRecord());
   let recTitle = '';
   $('titleChips').addEventListener('click', (e) => {
     const btn = e.target.closest('.chip-btn');
