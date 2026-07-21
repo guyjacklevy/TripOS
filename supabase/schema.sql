@@ -61,7 +61,7 @@ create table if not exists public.expenses (
 create table if not exists public.checkins (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users(id) on delete cascade,
-  place_id    uuid references public.places(id) on delete set null,
+  place_id    uuid references public.curated_places(id) on delete set null,  -- the app checks into curated spots
   place_name  text,
   lat         double precision,
   lng         double precision,

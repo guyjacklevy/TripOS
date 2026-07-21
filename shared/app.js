@@ -416,7 +416,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     });
     if (error) {
       console.error('[TripOS] check-in failed:', error.message);
-      btn.textContent = '📍 I’m here';
+      btn.textContent = '⚠ didn’t save — tap to retry';
       btn.disabled = false;
       return;
     }
