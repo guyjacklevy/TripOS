@@ -11,6 +11,7 @@ import {
   pickNow, pickUpcoming, whyNow, timeBlock, DAY_KEYS
 } from './match.js';
 import { mountCheckin } from './checkin.js';
+import { mountPlaces } from './places-browser.js';
 
 const cfg = window.TRIPOS_SUPABASE || {};
 const $ = (id) => document.getElementById(id);
@@ -136,23 +137,6 @@ function dropIn(grid) {
     el.style.animationDelay = (i * 30) + 'ms';
     el.classList.add('poi-drop');
   });
-}
-
-function renderPicks(places, trip) {
-  let list, matched;
-  if (trip && trip.vibe) {
-    const plan = {
-      vibe: trip.vibe, dur: String(trip.duration_days), tier: trip.budget_tier,
-      vibe_detail: trip.vibe_detail || null, party: trip.party || null, priorities: trip.priorities || []
-    };
-    list = pickTop(places, plan, 6);
-    matched = new Set(list.filter((p) => isMatch(scorePlace(p, plan))));
-  } else {
-    list = places.filter((p) => p.verified).slice(0, 6);
-    matched = new Set();
-  }
-  $('pickGrid').innerHTML = list.map((p) => pickCard(p, matched.has(p))).join('');
-  dropIn($('pickGrid'));
 }
 
 const planFromTrip = (trip) => (trip && trip.vibe ? {
@@ -336,8 +320,8 @@ function show(which) {
 }
 
 window.__appDebug = {
-  show, setTab, renderBrief, renderPicks, renderPulse, renderPace, renderCats,
-  renderRecent, renderToday, setPassenger, passengerLine
+  show, setTab, renderBrief, renderPulse, renderPace, renderCats,
+  renderRecent, renderToday, setPassenger, passengerLine, mountPlaces
 };
 
 /* ─── live wiring ─── */
@@ -419,6 +403,47 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     });
     $('logStatus').textContent = error ? '⚠ ' + error.message : '✓ logged';
     if (!error) { setTimeout(() => { $('logStatus').textContent = ''; }, 1600); loadPulse(); }
+  }
+
+  /* Layer 2 mechanics, dark: "I'm here" writes a check-in row.
+     No display yet — the data compounds until thresholds are met. */
+  async function checkinAt(p, btn) {
+    if (!user) return;
+    btn.disabled = true;
+    btn.textContent = '✓ checked in';
+    const { error } = await sb.from('checkins').insert({
+      user_id: user.id, place_id: p.id, place_name: p.name, lat: p.lat, lng: p.lng
+    });
+    if (error) {
+      console.error('[TripOS] check-in failed:', error.message);
+      btn.textContent = '📍 I’m here';
+      btn.disabled = false;
+      return;
+    }
+    setTimeout(() => { btn.textContent = '📍 I’m here'; btn.disabled = false; }, 2600);
+  }
+
+  /* the full spatial browser in the Places tab (remount-safe for brief changes) */
+  function mountPlacesTab(places) {
+    const panel = $('panel-places');
+    panel.querySelectorAll('.match-banner').forEach((b) => b.remove());
+    $('appAreaBar').innerHTML = '';
+    $('appCatBar').innerHTML = '';
+    $('appPlacesGrid').innerHTML = '';
+    mountPlaces({
+      els: {
+        alt: $('appAlt'),
+        coordArea: $('appCoordArea'),
+        areaBar: $('appAreaBar'),
+        catBar: $('appCatBar'),
+        status: $('appPlacesStatus'),
+        grid: $('appPlacesGrid'),
+        bannerHost: $('appAreaBar')
+      },
+      places,
+      plan: planFromTrip(trip),
+      onCheckin: checkinAt
+    });
   }
 
   /* upsert a brief (from the questionnaire or a pre-login landing run) */
@@ -507,7 +532,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     updateStrip(trip, firstName(), new Date());
 
     const { data: places } = await sb.from('curated_places').select('*').eq('destination', 'bali');
-    renderPicks(places || [], trip);
+    mountPlacesTab(places || []);
     renderToday(trip, firstName(), places || []);
     todayCtx = { trip, name: firstName(), places: places || [] };
     startClock();

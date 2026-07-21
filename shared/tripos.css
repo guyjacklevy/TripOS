@@ -305,6 +305,11 @@ section { padding: 56px 0; }
   white-space: nowrap;
 }
 .place-maps:hover { background: rgba(61, 255, 208, 0.1); }
+button.place-maps { background: none; font: inherit; cursor: pointer; }
+.pf-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+.place-here { color: var(--mut); border-color: rgba(61, 255, 208, 0.18); }
+.place-here:hover { color: var(--teal); }
+.place-here:disabled { color: var(--teal); cursor: default; }
 .places-status { text-align: center; color: var(--mut); font-size: 14px; padding: 30px 0; }
 
 /* ─── terrain mode — area-aware backdrop tint ─── */

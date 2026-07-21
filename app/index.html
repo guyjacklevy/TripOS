@@ -146,14 +146,28 @@
         </div>
       </section>
 
-      <!-- PLACES (interim — full spatial browser ports in slice 5) -->
+      <!-- PLACES — the full spatial browser, in-shell (slice 5) -->
       <section class="panel" id="panel-places">
-        <div class="inst-strip">8°S 115°E · YOUR CURATED LAYER</div>
-        <h2 class="panel-h">Your picks</h2>
-        <div class="places-grid" id="pickGrid"></div>
-        <div style="text-align:center;margin:20px 0">
-          <a class="place-maps" href="../bali/places">Open the full terrain browser ↗</a>
+        <div class="altitude-bar" style="margin-top:14px">
+          <span class="alt-label">ALTITUDE</span>
+          <span class="alt-value" id="appAlt">-- ft</span>
+          <span class="alt-label">↓ DESCENDING</span>
         </div>
+        <div class="coord-display">
+          <span>8°S 115°E</span>
+          <span class="coord-sep">·</span>
+          <span id="appCoordArea">ALL AREAS</span>
+        </div>
+        <div class="area-cards" id="appAreaBar"></div>
+        <div class="filters legend" id="appCatBar"></div>
+        <div class="places-status" id="appPlacesStatus">
+          <div class="scan-state">
+            <div class="scan-line"></div>
+            <p class="scan-text">SCANNING BALI</p>
+            <p class="scan-sub">Pulling curated intel…</p>
+          </div>
+        </div>
+        <div class="places-grid" id="appPlacesGrid"></div>
       </section>
 
       <!-- PULSE -->
