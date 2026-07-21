@@ -33,7 +33,7 @@ export const DETAIL_TAGS = {
   fitness:    ['gym', 'fitness'],
   beachclubs: ['beach-club', 'pools', 'djs'],
   clubs:      ['nightclub', 'late-night', 'djs', 'party'],
-  bars:       ['beach-bar', 'social', 'live-music', 'sunset']
+  bars:       ['beach-bar', 'social', 'live-music']
 };
 
 /* branch answer → tags that would be a WRONG recommendation (-2 on intersection):
@@ -125,6 +125,101 @@ export function pickTop(places, plan, n) {
   for (const x of scored) {
     if (out.length >= n) break;
     if (out.indexOf(x.p) === -1) out.push(x.p);
+  }
+  return out;
+}
+
+/* ─── time-aware layer: "what should I do right now?" (Today tab) ─── */
+
+export const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+export const DAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/* hour → the block names used by curated_places.best_time[] */
+export function timeBlock(h) {
+  if (h >= 5 && h < 11) return 'morning';
+  if (h >= 11 && h < 16) return 'afternoon';
+  if (h >= 16 && h < 19) return 'sunset';
+  if (h >= 19 && h < 22) return 'evening';
+  return 'night';
+}
+
+const BLOCK_WORD = {
+  morning: 'Morning window', afternoon: 'Midday window',
+  sunset: 'Golden hour', evening: 'Tonight', night: 'Late one'
+};
+
+/* score for RIGHT NOW: brief fit + is this the place's moment? */
+export function scoreNow(p, plan, date) {
+  const base = scorePlace(p, plan);
+  if (base < 0) return -1;
+  let s = base;
+  const block = timeBlock(date.getHours());
+  const day = DAY_KEYS[date.getDay()];
+  const bt = p.best_time || [];
+  const bd = p.best_days || [];
+  if (bt.indexOf(block) !== -1) s += 3;
+  if (bd.length) {
+    if (bd.indexOf(day) !== -1) s += 4;      /* Single Fin on a Sunday — the whole point */
+    else s -= 3;                              /* day-specific place on the wrong day */
+  }
+  return s;
+}
+
+/* the honest one-liner: WHY this, right now (built from curated data only) */
+export function whyNow(p, date) {
+  const block = timeBlock(date.getHours());
+  const day = DAY_KEYS[date.getDay()];
+  const bd = p.best_days || [];
+  const note = p.timing_note || '';
+  if (bd.indexOf(day) !== -1) {
+    return 'It’s ' + DAY_FULL[date.getDay()] + ' — ' + (note || 'this is its day.');
+  }
+  if ((p.best_time || []).indexOf(block) !== -1) {
+    return BLOCK_WORD[block] + (note ? ' — ' + note : '.');
+  }
+  return note || null;
+}
+
+/* top-n for right now, category-diverse; returns [] if nothing time-fits */
+export function pickNow(places, plan, date, n) {
+  const scored = places
+    .map((p) => ({ p, s: scoreNow(p, plan, date), base: scorePlace(p, plan), timeFit:
+      (p.best_time || []).indexOf(timeBlock(date.getHours())) !== -1 ||
+      (p.best_days || []).indexOf(DAY_KEYS[date.getDay()]) !== -1 }))
+    /* must be a real brief match AND the right moment — timing alone never qualifies */
+    .filter((x) => x.timeFit && isMatch(x.base))
+    .sort((a, b) => b.s - a.s || (a.p.name < b.p.name ? -1 : 1));
+  const out = [];
+  const cats = {};
+  for (const x of scored) {
+    if (out.length >= n) break;
+    if (cats[x.p.category]) continue;
+    cats[x.p.category] = true;
+    out.push(x.p);
+  }
+  return out;
+}
+
+/* coming up: tonight's evening block + tomorrow's day-specific spots */
+export function pickUpcoming(places, plan, date, n, excludeSet) {
+  const out = [];
+  const seen = excludeSet || new Set();
+  /* tonight (only if we're still before the evening) */
+  if (date.getHours() < 19) {
+    const tonight = new Date(date); tonight.setHours(20, 0, 0, 0);
+    for (const p of pickNow(places, plan, tonight, n)) {
+      if (!seen.has(p) && out.length < n) { out.push({ p, label: 'TONIGHT' }); seen.add(p); }
+    }
+  }
+  /* tomorrow */
+  const tom = new Date(date); tom.setDate(tom.getDate() + 1); tom.setHours(17, 0, 0, 0);
+  const tomDay = DAY_KEYS[tom.getDay()];
+  const dayPicks = places
+    .map((p) => ({ p, s: scoreNow(p, plan, tom) }))
+    .filter((x) => x.s >= 3 && (x.p.best_days || []).indexOf(tomDay) !== -1)
+    .sort((a, b) => b.s - a.s);
+  for (const x of dayPicks) {
+    if (!seen.has(x.p) && out.length < n) { out.push({ p: x.p, label: 'TOMORROW' }); seen.add(x.p); }
   }
   return out;
 }

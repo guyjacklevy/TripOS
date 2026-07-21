@@ -134,12 +134,16 @@
     </div>
 
     <main class="panels">
-      <!-- TODAY (interim — full concierge lands in slice 3) -->
+      <!-- TODAY — the concierge (slice 3) -->
       <section class="panel" id="panel-today">
         <div class="inst-strip" id="todayStrip">— · — · —</div>
         <h2 class="panel-h" id="todayGreet">Today</h2>
         <div class="places-grid" id="nowGrid"></div>
         <a class="fuel-strip" href="#pulse" id="fuelStrip" hidden></a>
+        <div id="upcomingWrap" hidden>
+          <div class="up-head">Coming up</div>
+          <div class="places-grid" id="upcomingGrid"></div>
+        </div>
       </section>
 
       <!-- PLACES (interim — full spatial browser ports in slice 5) -->

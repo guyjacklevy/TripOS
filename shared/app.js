@@ -6,7 +6,10 @@
  * Spec: _agents/cto/APP_SPEC.md v3.2 — nothing here is improvised.
  * ──────────────────────────────────────────────────────────── */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { pickTop, isMatch, scorePlace, readPlan, VIBE_LABEL, TIER_LABEL, HOME_AREA, durLabel, CAT_ICON } from './match.js';
+import {
+  pickTop, isMatch, scorePlace, readPlan, VIBE_LABEL, TIER_LABEL, HOME_AREA, durLabel, CAT_ICON,
+  pickNow, pickUpcoming, whyNow, timeBlock, DAY_KEYS
+} from './match.js';
 import { mountCheckin } from './checkin.js';
 
 const cfg = window.TRIPOS_SUPABASE || {};
@@ -104,7 +107,7 @@ function setPassenger(title, fullName) {
   if (el) el.textContent = line || '—';
 }
 
-function pickCard(p, matched) {
+function pickCard(p, matched, nowLine) {
   const meta = CAT_META[p.category] || { orb: 'planet-teal', cc: 'var(--teal)' };
   const icon = CAT_ICON[p.category] || '📍';
   const maps = p.maps_query
@@ -119,9 +122,10 @@ function pickCard(p, matched) {
         '<div class="place-name">' + esc(p.name) + (p.verified ? '<span class="place-verified">✓</span>' : '') + '</div>' +
         '<div class="poi-type">' + icon + ' ' + esc(p.area) + ' · <span class="price-sym">' + money + '</span></div>' +
       '</div></div>' +
+      (nowLine ? '<p class="why-now">' + esc(nowLine) + '</p>' : '') +
       (p.why ? '<p class="place-why">' + esc(p.why) + '</p>' : '') +
       (p.tip ? '<p class="place-tip">' + esc(p.tip) + '</p>' : '') +
-      '<div class="place-foot"><span class="place-price">' + esc(p.timing_note || '') + '</span>' + maps + '</div>' +
+      '<div class="place-foot"><span class="place-price">' + esc(nowLine ? '' : (p.timing_note || '')) + '</span>' + maps + '</div>' +
     '</article>'
   );
 }
@@ -149,13 +153,14 @@ function renderPicks(places, trip) {
   }
   $('pickGrid').innerHTML = list.map((p) => pickCard(p, matched.has(p))).join('');
   dropIn($('pickGrid'));
-  /* interim Today: top 2 of the same picks as "now" cards */
-  $('nowGrid').innerHTML = list.slice(0, 2).map((p) => pickCard(p, matched.has(p))).join('');
-  dropIn($('nowGrid'));
 }
 
-function renderToday(trip, firstName) {
-  const now = new Date();
+const planFromTrip = (trip) => (trip && trip.vibe ? {
+  vibe: trip.vibe, dur: String(trip.duration_days), tier: trip.budget_tier,
+  vibe_detail: trip.vibe_detail || null, party: trip.party || null, priorities: trip.priorities || []
+} : null);
+
+function updateStrip(trip, firstName, now) {
   const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
@@ -163,8 +168,43 @@ function renderToday(trip, firstName) {
   const base = trip && trip.vibe ? (HOME_AREA[trip.vibe] || 'Bali').split(' ')[0].toUpperCase() : 'BALI';
   $('todayStrip').textContent = glyph + ' ' + days[now.getDay()] + ' · ' + hh + ':' + mm + ' · ' + base + ' BASE';
   const h = now.getHours();
-  const block = h < 11 ? 'Morning' : h < 16 ? 'Midday' : h < 20 ? 'Golden hour soon' : 'Night mode';
-  $('todayGreet').textContent = block + (firstName ? ', ' + firstName : '') + '.';
+  const blockWord = h < 11 ? 'Morning' : h < 16 ? 'Midday' : h < 20 ? 'Golden hour soon' : 'Night mode';
+  $('todayGreet').textContent = blockWord + (firstName ? ', ' + firstName : '') + '.';
+}
+
+/* the concierge: NOW cards (time+day aware) + coming up */
+function renderToday(trip, firstName, places, dateOpt) {
+  const now = dateOpt || new Date();
+  updateStrip(trip, firstName, now);
+  if (!places || !places.length) return;
+  const plan = planFromTrip(trip);
+
+  const nowPicks = plan ? pickNow(places, plan, now, 2) : [];
+  let html;
+  if (nowPicks.length) {
+    html = nowPicks.map((p) => pickCard(p, true, '◉ NOW — ' + (whyNow(p, now) || 'your kind of place'))).join('');
+  } else {
+    /* never an empty screen: fall back to the brief's top picks */
+    const fall = plan ? pickTop(places, plan, 2) : places.filter((p) => p.verified).slice(0, 2);
+    html = fall.map((p) => pickCard(p, plan ? isMatch(scorePlace(p, plan)) : false, null)).join('');
+  }
+  $('nowGrid').innerHTML = html;
+  dropIn($('nowGrid'));
+
+  const up = plan ? pickUpcoming(places, plan, now, 2, new Set(nowPicks)) : [];
+  $('upcomingWrap').hidden = !up.length;
+  if (up.length) {
+    $('upcomingGrid').innerHTML = up.map(({ p, label }) => {
+      /* the label already says WHEN — the line just says WHY */
+      const when = label === 'TOMORROW' ? new Date(now.getTime() + 86400000) : now;
+      const bd = p.best_days || [];
+      const reason = bd.indexOf(DAY_KEYS[when.getDay()]) !== -1
+        ? (p.timing_note || 'its day of the week')
+        : (p.timing_note || p.why || '');
+      return pickCard(p, false, '◦ ' + label + ' — ' + reason);
+    }).join('');
+    dropIn($('upcomingGrid'));
+  }
 }
 
 function renderPulse(dailyK, spentK, rows) {
@@ -227,6 +267,26 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const n = profile && profile.full_name ? profile.full_name.trim().split(/\s+/)[0] : '';
     return n || '';
   };
+
+  /* N1: the instrument runs — clock ticks every minute, grids refresh
+     when the time-block flips (morning → midday → golden hour → night) */
+  let todayCtx = null;
+  let clockTimer = null;
+  let lastBlock = null;
+  function startClock() {
+    if (clockTimer) return;
+    lastBlock = timeBlock(new Date().getHours());
+    clockTimer = setInterval(() => {
+      if (!todayCtx) return;
+      const now = new Date();
+      updateStrip(todayCtx.trip, todayCtx.name, now);
+      const block = timeBlock(now.getHours());
+      if (block !== lastBlock) {
+        lastBlock = block;
+        renderToday(todayCtx.trip, todayCtx.name, todayCtx.places, now);
+      }
+    }, 60000);
+  }
 
   const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); };
 
@@ -334,10 +394,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
     renderBrief(trip);
     setPassenger(profile && profile.title, profile && profile.full_name);
-    renderToday(trip, firstName());
+    updateStrip(trip, firstName(), new Date());
 
     const { data: places } = await sb.from('curated_places').select('*').eq('destination', 'bali');
     renderPicks(places || [], trip);
+    renderToday(trip, firstName(), places || []);
+    todayCtx = { trip, name: firstName(), places: places || [] };
+    startClock();
     loadPulse();
 
     if (freshLogin) {
