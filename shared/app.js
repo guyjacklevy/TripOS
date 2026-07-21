@@ -482,12 +482,14 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     (profile && Array.isArray(profile.presets) && profile.presets.length) ? profile.presets : DEFAULT_PRESETS;
   function renderPresets() {
     $('quickLog').innerHTML = getPresets().map((p, i) =>
-      '<button type="button" class="chip chip-btn" data-i="' + i + '" data-amt="' + p.amt + '" data-cat="' + esc(p.cat) + '">' +
+      '<button type="button" class="chip chip-btn' + (presetEdit ? ' editing' : '') +
+        '" data-i="' + i + '" data-amt="' + p.amt + '" data-cat="' + esc(p.cat) + '">' +
         esc(p.label) + ' ' + fmtK(p.amt) +
-        (presetEdit ? '<span class="chip-x">✕</span>' : '') +
+        (presetEdit ? '<span class="chip-x" aria-label="remove">✕</span>' : '') +
       '</button>'
     ).join('');
     $('presetAdd').hidden = !presetEdit;
+    $('presetHint').hidden = !presetEdit;
     $('presetEditBtn').textContent = presetEdit ? '✓ done' : '✎ edit';
   }
   async function savePresets(next) {
@@ -921,6 +923,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const btn = e.target.closest('.chip-btn');
     if (!btn) return;
     if (presetEdit) {
+      /* in edit mode ONLY the ✕ deletes — tapping the chip body does nothing
+         (tap-anywhere-deletes silently ate two of Guy's presets) */
+      if (!e.target.closest('.chip-x')) return;
       const i = parseInt(btn.getAttribute('data-i'), 10);
       savePresets(getPresets().filter((_, idx) => idx !== i));
       return;
@@ -949,12 +954,19 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     $('logAmt').value = '';
     $('amtPreview').textContent = 'amounts are in thousands · 150 = 150,000 IDR';
   });
-  /* PU3: live preview while typing */
+  /* PU3: live preview while typing — on the log field AND the preset field
+     (the preset field's missing preview is how "Fuel 1500" became a 1.5M log) */
   $('logAmt').addEventListener('input', () => {
     const { k, corrected } = normalizeK($('logAmt').value);
     $('amtPreview').textContent = k > 0
       ? '= ' + (k * 1000).toLocaleString('en-US') + ' IDR' + (corrected ? ' (read as thousands)' : '')
       : 'amounts are in thousands · 150 = 150,000 IDR';
+  });
+  $('presetAmt').addEventListener('input', () => {
+    const { k, corrected } = normalizeK($('presetAmt').value);
+    $('presetPreview').textContent = k > 0
+      ? '= ' + (k * 1000).toLocaleString('en-US') + ' IDR each time' + (corrected ? ' (read as thousands)' : '')
+      : '';
   });
   /* PU1: tap the budget cell → edit your daily line */
   $('budgetCell').addEventListener('click', () => {

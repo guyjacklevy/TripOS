@@ -179,7 +179,8 @@
           <div class="pulse-row">
             <div class="cell"><span class="k">Spent today</span><strong id="pulseSpent">0k</strong></div>
             <button type="button" class="cell cell-edit" id="budgetCell" title="Tap to edit your daily budget">
-              <span class="k">Daily budget ✎</span><strong id="pulseBudget">–</strong>
+              <span class="k">Daily budget</span><strong id="pulseBudget">–</strong>
+              <span class="tap-hint">✎ tap to edit</span>
             </button>
             <div class="cell"><span class="k">Still yours</span><strong id="pulseLeft" class="pulse-teal">–</strong></div>
           </div>
@@ -193,16 +194,18 @@
             <span class="k-head">Quick log</span>
             <button type="button" class="ck-reset" id="presetEditBtn" style="margin-top:0">✎ edit</button>
           </div>
+          <p class="sec-context" id="presetHint" hidden>Editing: tap <strong>✕</strong> on a chip to remove it · add your own below.</p>
           <div class="quick-log" id="quickLog"></div>
-          <form class="log-form add-form" id="presetAdd" hidden>
-            <input class="auth-input" id="presetLabel" type="text" placeholder="🍜 My warung" maxlength="24">
-            <input class="auth-input log-amt" id="presetAmt" type="number" min="1" placeholder="k" inputmode="numeric">
-            <select class="auth-input log-cat" id="presetCat" aria-label="preset category">
+          <form class="preset-add" id="presetAdd" hidden>
+            <input class="auth-input" id="presetLabel" type="text" placeholder="name · 🍜 My warung" maxlength="24">
+            <input class="auth-input" id="presetAmt" type="number" min="1" placeholder="k IDR" inputmode="numeric">
+            <select class="auth-input" id="presetCat" aria-label="preset category">
               <option value="food">food</option><option value="transport">transport</option>
               <option value="wellness">wellness</option><option value="nightlife">nightlife</option>
               <option value="accommodation">stay</option><option value="admin">admin</option>
             </select>
             <button class="btn btn-primary log-btn" type="submit">Add</button>
+            <span class="amt-preview" id="presetPreview"></span>
           </form>
           <form class="log-form" id="logForm">
             <input class="auth-input log-amt" id="logAmt" type="number" min="1" step="1" placeholder="k IDR" inputmode="numeric">

@@ -935,14 +935,15 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
 .ck-back:hover { color: var(--teal); }
 .pulse-row .cell-edit {
   font: inherit;
+  color: inherit;   /* iOS Safari paints unstyled buttons blue */
   background: none;
-  border: 1px dashed transparent;
+  border: 1px dashed rgba(61, 255, 208, 0.25);  /* visible affordance, always */
   border-radius: 10px;
   cursor: pointer;
-  padding: 2px 4px;
+  padding: 4px 6px;
   transition: border-color 0.15s;
 }
-.pulse-row .cell-edit:hover { border-color: rgba(61, 255, 208, 0.35); }
+.pulse-row .cell-edit:hover { border-color: rgba(61, 255, 208, 0.55); }
 .quick-top {
   display: flex;
   align-items: center;
@@ -1161,10 +1162,30 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
 .quick-log { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 16px 0 12px; }
 .chip-btn { font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
 .chip-btn:hover { color: var(--teal); border-color: rgba(61, 255, 208, 0.4); }
-.log-form { display: flex; gap: 8px; }
-.log-form .auth-input { text-align: left; padding: 11px 13px; font-size: 14px; }
+.log-form { display: flex; gap: 8px; flex-wrap: wrap; }
+.log-form .auth-input { text-align: left; padding: 11px 13px; font-size: 14px; min-width: 0; }
 .log-amt { flex: 1; min-width: 0; }
 .log-cat { flex: 0 0 112px; }
+
+/* preset editor — two clean rows, never overflows a phone */
+.preset-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 96px) auto;
+  gap: 8px;
+  margin-top: 12px;
+}
+.preset-add #presetLabel { grid-column: 1 / -1; }
+.preset-add .auth-input { text-align: left; padding: 11px 13px; font-size: 14px; min-width: 0; }
+.preset-add .amt-preview { grid-column: 1 / -1; }
+.chip-btn.editing { border-style: dashed; border-color: rgba(255, 107, 107, 0.35); }
+.tap-hint {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: rgba(61, 255, 208, 0.65);
+  margin-top: 3px;
+}
 .log-btn { padding: 11px 20px; font-size: 14px; border: none; cursor: pointer; font-family: inherit; }
 .spend-list { list-style: none; margin-top: 14px; }
 .spend-list li {
