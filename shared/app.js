@@ -47,6 +47,44 @@ function passengerLine(title, fullName) {
   return ((title ? title + ' ' : '') + initial + last).toUpperCase();
 }
 
+/* ─── first-run boot captions (N4 — the tour is dead) ───
+ * Each tab's instrument "powers on" once with a one-line mono caption,
+ * dismissed forever by the first interaction with that tab. */
+let placesCount = 52;
+const BOOT_ANCHOR = {
+  today: () => $('todayStrip'),
+  places: () => document.querySelector('#panel-places .coord-display'),
+  pulse: () => document.querySelector('#panel-pulse .inst-strip')
+};
+const BOOT_TEXT = {
+  today: () => 'your concierge · refreshes with the clock',
+  places: () => 'your curated layer · ' + placesCount + ' spots',
+  pulse: () => 'your fuel gauge · log in 5s'
+};
+function bootFlags() {
+  try { return JSON.parse(localStorage.getItem('tripos_boot') || '{}'); } catch (_) { return {}; }
+}
+function maybeBootCaption(tab) {
+  if (!BOOT_TEXT[tab]) return;
+  const flags = bootFlags();
+  if (flags[tab]) return;
+  const anchor = BOOT_ANCHOR[tab]();
+  if (!anchor || anchor.nextElementSibling && anchor.nextElementSibling.classList.contains('boot-caption')) return;
+  const cap = document.createElement('p');
+  cap.className = 'boot-caption';
+  cap.textContent = '● ' + BOOT_TEXT[tab]();
+  anchor.after(cap);
+  const panel = $('panel-' + tab);
+  panel.addEventListener('click', function dismiss() {
+    try {
+      const fresh = bootFlags();
+      fresh[tab] = 1;
+      localStorage.setItem('tripos_boot', JSON.stringify(fresh));
+    } catch (_) {}
+    cap.remove();
+  }, { once: true });
+}
+
 /* ─── tab shell ─── */
 const TABS = ['today', 'places', 'pulse', 'you'];
 let activeTab = null;
@@ -71,6 +109,7 @@ function setTab(name, push) {
     try { history.replaceState(null, '', '#' + name); } catch (_) {}
   }
   window.scrollTo(0, 0);
+  maybeBootCaption(name);
 }
 $('tabBar').addEventListener('click', (e) => {
   const slot = e.target.closest('.tab-slot');
@@ -702,6 +741,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     updateStrip(trip, firstName(), new Date());
 
     const { data: places } = await sb.from('curated_places').select('*').eq('destination', 'bali');
+    placesCount = (places || []).length || placesCount;
     mountPlacesTab(places || []);
     renderToday(trip, firstName(), places || []);
     todayCtx = { trip, name: firstName(), places: places || [] };
