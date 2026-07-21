@@ -116,3 +116,29 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- ── checklist_items · readiness (pretrip) + packing, per user ──
+create table if not exists public.checklist_items (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  kind       text not null,              -- 'pretrip' | 'packing'
+  label      text not null,
+  done       boolean default false,
+  due_on     date,
+  auto       boolean default false,      -- generated from the brief vs user-added
+  created_at timestamptz default now()
+);
+
+-- ── repack_runs · every accommodation move, with what went missing ──
+create table if not exists public.repack_runs (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  location   text,
+  missing    text[],
+  created_at timestamptz default now()
+);
+
+alter table public.checklist_items enable row level security;
+alter table public.repack_runs enable row level security;
+create policy "checklist_own" on public.checklist_items for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "repack_own" on public.repack_runs for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

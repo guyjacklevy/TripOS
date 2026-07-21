@@ -97,7 +97,9 @@ function renderBrief(trip) {
     '<div><span>Duration</span><strong>' + esc(d === 0 ? 'Open-ended' : durLabel(d)) + '</strong></div>' +
     '<div><span>Budget / day</span><strong>' + fmtK(dailyK) + ' IDR</strong></div>' +
     '<div><span>Base</span><strong>' + esc(HOME_AREA[trip.vibe] || 'Bali') + '</strong></div>' +
-    '<div><span>Tier</span><strong>' + esc(TIER_LABEL[trip.budget_tier] || '—') + '</strong></div>';
+    '<div><span>Tier</span><strong>' + esc(TIER_LABEL[trip.budget_tier] || '—') + '</strong></div>' +
+    '<div><span>Day</span><strong id="bpDay">—</strong></div>' +
+    '<div><span>Ready</span><strong id="bpReady">—</strong></div>';
   const area = (HOME_AREA[trip.vibe] || '').split(' ')[0].toLowerCase();
   if (area) document.body.setAttribute('data-area', area);
 }
@@ -446,6 +448,174 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     });
   }
 
+  /* ─── readiness + packing (slice 6) ───
+   * Auto-generated from the brief once, then the user owns the list.
+   * Duration-aware visa items are the credibility play: a 2-week brief
+   * gets VOA guidance, a 3-monther gets B211A before-you-fly. */
+  const PRETRIP_BASE = [
+    'Travel insurance that covers scooter riding',
+    'eSIM installed before landing (Telkomsel / by.U)',
+    'International Driving Permit — police checks are real',
+    'Tell your bank + know the ATM plan (BCA/Mandiri)',
+    'Travel pharmacy: rehydration salts, charcoal, motion pills'
+  ];
+  const VISA_BY_DUR = {
+    14: 'Visa on Arrival at DPS — IDR 500k, 30 days. Passport valid 6+ months',
+    30: 'Visa on Arrival + plan the EXTENSION — start it around day 20, not day 29',
+    90: 'A 30-day VOA won’t cut it — sort a B211A (60 days, extendable) BEFORE you fly',
+    0:  'Open-ended: B211A visa (60d, extendable ×2) — arrange it before the flight'
+  };
+  const PACK_BASE = [
+    'Passport — 6+ months validity',
+    'Type C/F plug adapter',
+    'Reef-safe sunscreen',
+    'Light rain layer (yes, even in dry season)'
+  ];
+  const PACK_VIBE = {
+    surf:     ['Reef booties', 'Zinc stick', 'Board sock for the scooter rack'],
+    nomad:    ['Laptop stand', 'Noise-cancelling buds', 'Power bank'],
+    wellness: ['Yoga mat towel', 'Mosquito spray', 'Layers for cool jungle nights'],
+    party:    ['One good shirt', 'Electrolytes', 'Sunglasses you can afford to lose'],
+    mix:      ['Power bank', 'Electrolytes', 'Daypack']
+  };
+  function buildAutoItems(t) {
+    const out = [];
+    const d = t && t.duration_days != null ? t.duration_days : 30;
+    out.push({ kind: 'pretrip', label: VISA_BY_DUR[d] || VISA_BY_DUR[30], auto: true });
+    PRETRIP_BASE.forEach((l) => out.push({ kind: 'pretrip', label: l, auto: true }));
+    PACK_BASE.forEach((l) => out.push({ kind: 'packing', label: l, auto: true }));
+    (PACK_VIBE[t && t.vibe] || PACK_VIBE.mix).forEach((l) => out.push({ kind: 'packing', label: l, auto: true }));
+    return out;
+  }
+
+  let checkItems = [];
+  let repack = null; /* { location, packed:Set } while a repack run is live */
+
+  function checkRow(i) {
+    const inRepack = repack && i.kind === 'packing';
+    const on = inRepack ? repack.packed.has(i.id) : !!i.done;
+    return '<li data-id="' + esc(i.id) + '">' +
+      '<button type="button" class="chk' + (on ? ' on' : '') + '" aria-label="toggle">' + (on ? '✓' : '') + '</button>' +
+      '<span class="lbl' + (on && !inRepack ? ' done' : '') + '">' + esc(i.label) + '</span>' +
+      (inRepack ? '' : '<button type="button" class="sl-del" aria-label="delete">✕</button>') +
+    '</li>';
+  }
+
+  function renderChecklists() {
+    const pre = checkItems.filter((i) => i.kind === 'pretrip');
+    const pack = checkItems.filter((i) => i.kind === 'packing');
+    $('pretripList').innerHTML = pre.map(checkRow).join('') ||
+      '<li class="sl-empty">Nothing yet — add your first item.</li>';
+    $('packList').innerHTML = pack.map(checkRow).join('') ||
+      '<li class="sl-empty">Nothing yet — add what you carry.</li>';
+    const doneN = pre.filter((i) => i.done).length;
+    const pct = pre.length ? Math.round((doneN / pre.length) * 100) : 0;
+    $('readyPct').textContent = 'READY ' + pct + '%';
+    $('readyPct').className = 'pace-delta ' + (pct >= 80 ? 'good' : pct >= 40 ? '' : 'bad');
+    /* N2: the pass is an instrument */
+    const bd = $('bpDay'), br = $('bpReady');
+    if (br) br.textContent = pct + '%';
+    if (bd && trip && trip.created_at) {
+      const dayN = Math.max(1, Math.floor((Date.now() - new Date(trip.created_at).getTime()) / 86400000) + 1);
+      bd.textContent = trip.duration_days ? 'DAY ' + dayN + ' / ' + trip.duration_days : 'DAY ' + dayN;
+    }
+    /* readiness nudge on Today: the top open pretrip item */
+    const urgent = pre.find((i) => !i.done);
+    const nudge = $('readyNudge');
+    nudge.hidden = !urgent;
+    if (urgent) nudge.innerHTML = '⚠ <strong>' + esc(urgent.label) + '</strong> · readiness →';
+  }
+
+  async function loadReadiness() {
+    const { data, error } = await sb.from('checklist_items').select('*').order('created_at');
+    if (error) { console.error('[TripOS] checklist load failed:', error.message); return; }
+    checkItems = data || [];
+    if (trip && trip.vibe && !checkItems.some((i) => i.auto)) {
+      const gen = buildAutoItems(trip).map((g) => ({ ...g, user_id: user.id }));
+      const { data: ins, error: e2 } = await sb.from('checklist_items').insert(gen).select();
+      if (e2) console.error('[TripOS] checklist generate failed:', e2.message);
+      else checkItems = checkItems.concat(ins || []);
+    }
+    renderChecklists();
+    loadMissing();
+  }
+
+  async function loadMissing() {
+    const { data, error } = await sb.from('repack_runs').select('*')
+      .order('created_at', { ascending: false }).limit(3);
+    if (error) { console.error('[TripOS] repack load failed:', error.message); return; }
+    const runs = (data || []).filter((r) => r.missing && r.missing.length);
+    $('missingWrap').hidden = !runs.length;
+    $('missingList').innerHTML = runs.map((r) =>
+      r.missing.map((label) =>
+        '<li><span class="sl-cat">' + esc(label) + '</span>' +
+        '<span class="sl-time">last packed leaving ' + esc(r.location || 'somewhere') + ' · ' +
+        new Date(r.created_at).toLocaleDateString([], { day: 'numeric', month: 'short' }) + '</span></li>'
+      ).join('')
+    ).join('');
+  }
+
+  async function toggleItem(id) {
+    const item = checkItems.find((i) => i.id === id);
+    if (!item) return;
+    if (repack && item.kind === 'packing') {
+      /* repack run: check = packed, in memory until Done */
+      if (repack.packed.has(id)) repack.packed.delete(id);
+      else repack.packed.add(id);
+      renderChecklists();
+      return;
+    }
+    item.done = !item.done;
+    renderChecklists();
+    const { error } = await sb.from('checklist_items').update({ done: item.done }).eq('id', id);
+    if (error) { console.error('[TripOS] toggle failed:', error.message); item.done = !item.done; renderChecklists(); }
+  }
+
+  async function deleteItem(id) {
+    checkItems = checkItems.filter((i) => i.id !== id);
+    renderChecklists();
+    const { error } = await sb.from('checklist_items').delete().eq('id', id);
+    if (error) { console.error('[TripOS] item delete failed:', error.message); loadReadiness(); }
+  }
+
+  async function addItem(kind, label) {
+    if (!label.trim()) return;
+    const { data, error } = await sb.from('checklist_items')
+      .insert({ user_id: user.id, kind, label: label.trim(), auto: false }).select();
+    if (error) { console.error('[TripOS] item add failed:', error.message); return; }
+    checkItems = checkItems.concat(data || []);
+    renderChecklists();
+  }
+
+  function setRepackUI() {
+    $('repackBtn').textContent = repack ? '✕ cancel repack' : '🎒 Repack mode';
+    $('repackHint').hidden = !repack;
+    $('repackDone').hidden = !repack;
+    $('repackStart').hidden = true;
+    renderChecklists();
+  }
+
+  async function finishRepack() {
+    const pack = checkItems.filter((i) => i.kind === 'packing');
+    const packedIds = pack.filter((i) => repack.packed.has(i.id)).map((i) => i.id);
+    const missing = pack.filter((i) => !repack.packed.has(i.id)).map((i) => i.label);
+    const location = repack.location;
+    const { error } = await sb.from('repack_runs').insert({ user_id: user.id, location, missing });
+    if (error) { console.error('[TripOS] repack save failed:', error.message); return; }
+    if (packedIds.length) await sb.from('checklist_items').update({ done: true }).in('id', packedIds);
+    const missingIds = pack.filter((i) => !repack.packed.has(i.id)).map((i) => i.id);
+    if (missingIds.length) await sb.from('checklist_items').update({ done: false }).in('id', missingIds);
+    repack = null;
+    setRepackUI();
+    loadReadiness();
+  }
+
+  /* preview/debug: inject checklist state without a session */
+  Object.assign(window.__appDebug, {
+    injectReadiness: (t, items, rpk) => { trip = t; checkItems = items; repack = rpk || null; renderChecklists(); },
+    buildAutoItems
+  });
+
   /* upsert a brief (from the questionnaire or a pre-login landing run) */
   async function saveBrief(a) {
     const { data: up, error } = await sb.from('trips').upsert({
@@ -537,6 +707,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     todayCtx = { trip, name: firstName(), places: places || [] };
     startClock();
     loadPulse();
+    loadReadiness();
 
     if (freshLogin) {
       const line = passengerLine(profile && profile.title, profile && profile.full_name);
@@ -664,6 +835,39 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     logSpend(amt, $('logCat').value);
     $('logAmt').value = '';
   });
+
+  /* readiness + packing wiring */
+  const listHandler = (e) => {
+    const li = e.target.closest('li[data-id]');
+    if (!li) return;
+    const id = li.getAttribute('data-id');
+    if (e.target.closest('.chk')) toggleItem(id);
+    else if (e.target.closest('.sl-del')) deleteItem(id);
+  };
+  $('pretripList').addEventListener('click', listHandler);
+  $('packList').addEventListener('click', listHandler);
+  $('pretripAdd').addEventListener('submit', (e) => {
+    e.preventDefault();
+    addItem('pretrip', $('pretripInput').value);
+    $('pretripInput').value = '';
+  });
+  $('packAdd').addEventListener('submit', (e) => {
+    e.preventDefault();
+    addItem('packing', $('packInput').value);
+    $('packInput').value = '';
+  });
+  $('repackBtn').addEventListener('click', () => {
+    if (repack) { repack = null; setRepackUI(); return; }
+    $('repackStart').hidden = !$('repackStart').hidden;
+    if (!$('repackStart').hidden) setTimeout(() => $('repackLoc').focus(), 40);
+  });
+  $('repackStart').addEventListener('submit', (e) => {
+    e.preventDefault();
+    repack = { location: $('repackLoc').value.trim() || 'last place', packed: new Set() };
+    $('repackLoc').value = '';
+    setRepackUI();
+  });
+  $('repackDone').addEventListener('click', finishRepack);
 
   /* boot */
   (async () => {

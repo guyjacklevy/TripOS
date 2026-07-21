@@ -140,6 +140,7 @@
         <h2 class="panel-h" id="todayGreet">Today</h2>
         <div class="places-grid" id="nowGrid"></div>
         <a class="fuel-strip" href="#pulse" id="fuelStrip" hidden></a>
+        <a class="fuel-strip ready-nudge" href="#you" id="readyNudge" hidden></a>
         <div id="upcomingWrap" hidden>
           <div class="up-head">Coming up</div>
           <div class="places-grid" id="upcomingGrid"></div>
@@ -248,6 +249,43 @@
           </div>
           <div class="bp-stub"><div class="bp-barcode"></div><span class="bp-code">DPS · BALI</span></div>
         </div>
+
+        <!-- readiness — visa, admin, gear (duration-aware, from the brief) -->
+        <div class="card ready-card">
+          <div class="ready-top">
+            <span class="k-head">Readiness</span>
+            <strong id="readyPct" class="pace-delta">—</strong>
+          </div>
+          <ul class="check-list" id="pretripList"></ul>
+          <form class="log-form add-form" id="pretripAdd">
+            <input class="auth-input" id="pretripInput" type="text" placeholder="add your own…" maxlength="80">
+            <button class="btn btn-primary log-btn" type="submit">Add</button>
+          </form>
+        </div>
+
+        <!-- packing — generated from the brief; repack mode on every move -->
+        <div class="card pack-card">
+          <div class="ready-top">
+            <span class="k-head">Packing</span>
+            <button type="button" class="place-maps" id="repackBtn">🎒 Repack mode</button>
+          </div>
+          <form class="log-form add-form" id="repackStart" hidden>
+            <input class="auth-input" id="repackLoc" type="text" placeholder="packing up from where? e.g. Canggu villa" maxlength="60">
+            <button class="btn btn-primary log-btn" type="submit">Start</button>
+          </form>
+          <p class="pulse-note" id="repackHint" hidden>Check things off as they go in the bag. Anything left unchecked lands in the missing log.</p>
+          <ul class="check-list" id="packList"></ul>
+          <form class="log-form add-form" id="packAdd">
+            <input class="auth-input" id="packInput" type="text" placeholder="add an item…" maxlength="80">
+            <button class="btn btn-primary log-btn" type="submit">Add</button>
+          </form>
+          <button class="btn btn-primary" id="repackDone" hidden style="width:100%;margin-top:12px">Done packing — log what's missing</button>
+          <div id="missingWrap" hidden>
+            <span class="k-head" style="margin-top:18px">Missing log</span>
+            <ul class="spend-list" id="missingList"></ul>
+          </div>
+        </div>
+
         <div class="card acct-card">
           <div class="acct-row"><span class="k">Signed in as</span><strong id="acctEmail">—</strong></div>
           <div class="acct-row"><span class="k">Install</span><span>Add TripOS to your home screen from the browser share menu</span></div>
