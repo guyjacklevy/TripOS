@@ -795,6 +795,78 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
   color: var(--dim);
   margin: 26px 0 12px;
 }
+
+/* pulse: pace / categories / recent (slice 4 — v19 density restored) */
+.k-head {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.pace-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pace-delta {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--mut);
+}
+.pace-delta.good { color: var(--teal); text-shadow: 0 0 12px rgba(61, 255, 208, 0.35); }
+.pace-delta.bad { color: var(--rd); text-shadow: 0 0 12px rgba(255, 107, 107, 0.35); }
+.day-strip {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 48px;
+  margin: 14px 0 16px;
+}
+.day-bar { flex: 1; border-radius: 2px; min-height: 2px; }
+.day-bar.ok { background: rgba(61, 255, 208, 0.75); box-shadow: 0 0 6px rgba(61, 255, 208, 0.25); }
+.day-bar.over { background: rgba(255, 107, 107, 0.85); box-shadow: 0 0 6px rgba(255, 107, 107, 0.3); }
+.day-bar.zero { background: rgba(255, 255, 255, 0.12); }
+.day-bar.future { background: rgba(255, 255, 255, 0.05); height: 2px; }
+.day-bar.today { outline: 1px solid rgba(232, 232, 240, 0.5); outline-offset: 1px; }
+.cat-bars { display: grid; gap: 10px; margin-top: 14px; }
+.cat-row { display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
+.cat-name { width: 92px; flex-shrink: 0; color: var(--mut); text-transform: capitalize; }
+.cat-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+.cat-fill { display: block; height: 100%; border-radius: 99px; }
+.cat-amt {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--mut);
+  width: 52px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.recent-card .spend-list { margin-top: 12px; }
+.sl-del {
+  font: inherit;
+  font-size: 12px;
+  color: var(--dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+.sl-del:hover { color: var(--rd); }
+.sl-empty { color: var(--dim); font-size: 13px; list-style: none; }
 .acct-card { margin-top: 16px; display: grid; gap: 12px; }
 .acct-row { display: flex; gap: 14px; font-size: 13.5px; align-items: baseline; }
 .acct-row .k {

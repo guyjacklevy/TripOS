@@ -185,6 +185,32 @@
             <button class="btn btn-primary log-btn" type="submit">Log</button>
           </form>
           <p class="auth-status" id="logStatus" role="status"></p>
+        </div>
+
+        <!-- pace — v19's soul, restored -->
+        <div class="card pace-card">
+          <div class="pace-top">
+            <span class="k-head">Pace · this month</span>
+            <strong id="paceDelta" class="pace-delta">—</strong>
+          </div>
+          <div class="day-strip" id="dayStrip" aria-hidden="true"></div>
+          <div class="pulse-row">
+            <div class="cell"><span class="k">Month so far</span><strong id="paceSpent">–</strong></div>
+            <div class="cell"><span class="k">Budget to date</span><strong id="paceBudget">–</strong></div>
+            <div class="cell"><span class="k">Projected month</span><strong id="paceProj">–</strong></div>
+          </div>
+          <p class="pulse-note" id="paceNote"></p>
+        </div>
+
+        <!-- where it goes -->
+        <div class="card cat-card">
+          <span class="k-head">Categories · this month</span>
+          <div id="catBars" class="cat-bars"></div>
+        </div>
+
+        <!-- recent, tap ✕ to delete -->
+        <div class="card recent-card">
+          <span class="k-head">Recent</span>
           <ul class="spend-list" id="spendList"></ul>
         </div>
       </section>

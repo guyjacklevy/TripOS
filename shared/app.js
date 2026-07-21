@@ -207,7 +207,7 @@ function renderToday(trip, firstName, places, dateOpt) {
   }
 }
 
-function renderPulse(dailyK, spentK, rows) {
+function renderPulse(dailyK, spentK) {
   const leftK = Math.max(0, dailyK - spentK);
   $('pulseSpent').textContent = fmtK(spentK);
   $('pulseBudget').textContent = fmtK(dailyK) + ' IDR';
@@ -226,15 +226,105 @@ function renderPulse(dailyK, spentK, rows) {
       ? 'Still on the table today: ' + bits.join(' · ')
       : 'Tight day — a warung run might have to wait for tomorrow.';
   }
-  $('spendList').innerHTML = (rows || []).map((r) =>
-    '<li><span class="sl-cat">' + esc(r.category || '—') + '</span>' +
-    '<span class="sl-amt">' + fmtK((r.amount_idr || 0) / 1000) + '</span>' +
-    '<span class="sl-time">' + new Date(r.spent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</span></li>'
-  ).join('');
   /* fuel strip on Today */
   const fs = $('fuelStrip');
   fs.hidden = false;
   fs.innerHTML = '▲ <strong>' + fmtK(leftK) + ' IDR</strong> still yours today · tap for the pulse';
+}
+
+/* pace: days elapsed vs budget consumed, bar-per-day, month projection */
+function renderPace(dailyK, monthRows, now) {
+  const day = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const perDay = new Array(daysInMonth).fill(0);
+  let monthK = 0;
+  (monthRows || []).forEach((r) => {
+    const d = new Date(r.spent_at);
+    const k = (r.amount_idr || 0) / 1000;
+    monthK += k;
+    if (d.getMonth() === now.getMonth()) perDay[d.getDate() - 1] += k;
+  });
+  const budgetToDateK = dailyK * day;
+  const deltaDays = (budgetToDateK - monthK) / dailyK;
+  const proj = day > 0 ? (monthK / day) * daysInMonth : 0;
+
+  $('paceSpent').textContent = fmtK(monthK) + ' IDR';
+  $('paceBudget').textContent = fmtK(budgetToDateK) + ' IDR';
+  $('paceProj').textContent = monthK > 0 ? fmtK(proj) + ' IDR' : '—';
+
+  const del = $('paceDelta');
+  if (!monthK) {
+    del.textContent = 'no spends yet';
+    del.className = 'pace-delta';
+    $('paceNote').textContent = 'The strip fills as you log — every bar is a day.';
+  } else if (deltaDays >= 0.5) {
+    del.textContent = '≈ ' + (Math.round(deltaDays * 10) / 10) + ' days ahead';
+    del.className = 'pace-delta good';
+    $('paceNote').textContent = 'Under pace — the island can keep you longer.';
+  } else if (deltaDays <= -0.5) {
+    del.textContent = '≈ ' + (Math.round(-deltaDays * 10) / 10) + ' days behind';
+    del.className = 'pace-delta bad';
+    $('paceNote').textContent = 'Over pace — a few warung days pull it back.';
+  } else {
+    del.textContent = 'on pace';
+    del.className = 'pace-delta good';
+    $('paceNote').textContent = 'Right on the line. Clean flying.';
+  }
+
+  const maxK = Math.max(dailyK * 1.5, ...perDay);
+  $('dayStrip').innerHTML = perDay.map((k, i) => {
+    const dayN = i + 1;
+    if (dayN > day) return '<span class="day-bar future"></span>';
+    const h = k > 0 ? Math.max(4, Math.round((k / maxK) * 44)) : 2;
+    const cls = k > dailyK ? 'over' : (k > 0 ? 'ok' : 'zero');
+    const today = dayN === day ? ' today' : '';
+    return '<span class="day-bar ' + cls + today + '" style="height:' + h + 'px"></span>';
+  }).join('');
+}
+
+/* category breakdown, planet-orb colors */
+const EXP_CAT_COLOR = {
+  food: 'var(--am)', transport: 'var(--cy)', wellness: 'var(--teal)',
+  nightlife: 'var(--purple)', accommodation: 'var(--rd)', admin: 'var(--mut)'
+};
+function renderCats(monthRows) {
+  const sums = {};
+  let total = 0;
+  (monthRows || []).forEach((r) => {
+    const k = (r.amount_idr || 0) / 1000;
+    sums[r.category || 'other'] = (sums[r.category || 'other'] || 0) + k;
+    total += k;
+  });
+  const entries = Object.entries(sums).sort((a, b) => b[1] - a[1]);
+  $('catBars').innerHTML = entries.length
+    ? entries.map(([cat, k]) => {
+        const pct = total ? Math.round((k / total) * 100) : 0;
+        const cc = EXP_CAT_COLOR[cat] || 'var(--teal)';
+        return '<div class="cat-row">' +
+          '<span class="cat-name">' + esc(cat) + '</span>' +
+          '<span class="cat-track"><span class="cat-fill" style="width:' + pct + '%;background:' + cc + '"></span></span>' +
+          '<span class="cat-amt">' + fmtK(k) + '</span>' +
+        '</div>';
+      }).join('')
+    : '<p class="pulse-note" style="margin:0">Your first warung run goes here.</p>';
+}
+
+/* recent spends — last 10 this month, ✕ to delete */
+function renderRecent(monthRows) {
+  const rows = (monthRows || []).slice(0, 10);
+  $('spendList').innerHTML = rows.length
+    ? rows.map((r) => {
+        const d = new Date(r.spent_at);
+        const when = d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ' · ' +
+          d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return '<li data-id="' + esc(r.id || '') + '">' +
+          '<span class="sl-cat">' + esc(r.category || '—') + '</span>' +
+          '<span class="sl-amt">' + fmtK((r.amount_idr || 0) / 1000) + '</span>' +
+          '<span class="sl-time">' + when + '</span>' +
+          (r.id ? '<button type="button" class="sl-del" aria-label="Delete">✕</button>' : '') +
+        '</li>';
+      }).join('')
+    : '<li class="sl-empty">Nothing logged yet — the presets above take 2 seconds.</li>';
 }
 
 /* ─── screens ─── */
@@ -246,8 +336,8 @@ function show(which) {
 }
 
 window.__appDebug = {
-  show, setTab, renderBrief, renderPicks, renderPulse, renderToday, setPassenger,
-  passengerLine
+  show, setTab, renderBrief, renderPicks, renderPulse, renderPace, renderCats,
+  renderRecent, renderToday, setPassenger, passengerLine
 };
 
 /* ─── live wiring ─── */
@@ -288,17 +378,37 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }, 60000);
   }
 
-  const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); };
+  const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+  const startOfMonth = () => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; };
 
   async function loadPulse() {
     const { data, error } = await sb.from('expenses')
-      .select('amount_idr, category, spent_at')
-      .gte('spent_at', startOfToday())
+      .select('id, amount_idr, category, spent_at')
+      .gte('spent_at', startOfMonth().toISOString())
       .order('spent_at', { ascending: false });
     if (error) { console.error('[TripOS] expenses load failed:', error.message); return; }
-    const spentK = (data || []).reduce((s, r) => s + (r.amount_idr || 0), 0) / 1000;
-    renderPulse(dailyK, spentK, data || []);
+    const rows = data || [];
+    const t0 = startOfToday().getTime();
+    const todayK = rows.reduce((s, r) =>
+      s + (new Date(r.spent_at).getTime() >= t0 ? (r.amount_idr || 0) : 0), 0) / 1000;
+    renderPulse(dailyK, todayK);
+    renderPace(dailyK, rows, new Date());
+    renderCats(rows);
+    renderRecent(rows);
   }
+
+  /* tap ✕ on a recent spend → gone (RLS guarantees it's your own row) */
+  $('spendList').addEventListener('click', async (e) => {
+    const btn = e.target.closest('.sl-del');
+    if (!btn) return;
+    const li = btn.closest('li');
+    const id = li && li.getAttribute('data-id');
+    if (!id) return;
+    li.style.opacity = '0.4';
+    const { error } = await sb.from('expenses').delete().eq('id', id);
+    if (error) { console.error('[TripOS] delete failed:', error.message); li.style.opacity = ''; return; }
+    loadPulse();
+  });
 
   async function logSpend(amtK, cat) {
     if (!user || !(amtK > 0)) return;
