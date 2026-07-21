@@ -11,6 +11,7 @@ create table if not exists public.profiles (
   display_name text,
   title        text,   -- passenger record: Mr. / Ms. (gender signal, skippable)
   full_name    text,   -- passenger record: powers "PASSENGER: MR. G. LEVY"
+  presets      jsonb,  -- personal quick-log presets [{label,amt,cat}]
   home_currency text default 'USD',
   created_at   timestamptz default now()
 );
@@ -23,6 +24,8 @@ create table if not exists public.trips (
   vibe          text,            -- nomad | surf | wellness | party | mix
   vibe_detail   text,            -- branch answer: surf level / work load / wellness focus / party scene
   party         text,            -- solo | couple | family | crew
+  party_detail  text,            -- couple branch: honeymoon | anniversary | fun
+  budget_daily_k int,            -- user override of tier daily budget (k IDR)
   duration_days int,             -- 0 = open-ended
   budget_tier   text,            -- back | comf | prem
   priorities    text[],          -- work | food | nightlife | nature | fitness | wellness

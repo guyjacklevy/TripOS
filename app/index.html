@@ -80,7 +80,7 @@
   <!-- ─── PASSENGER RECORD — stage 6, once, ON the pass ─── -->
   <section id="record" class="record" hidden>
     <div class="mission-tag"><span class="pulse-dot"></span>Passenger record</div>
-    <p class="rec-ask">How should the island address you?</p>
+    <p class="rec-ask">How should your concierge address you?</p>
     <div class="bpass">
       <div class="bp-main">
         <div class="bp-air">TripOS Air · personal boarding pass</div>
@@ -134,10 +134,10 @@
     </div>
 
     <main class="panels">
-      <!-- TODAY — the concierge (slice 3) -->
+      <!-- TODAY — the concierge (slice 3 · greeting first per Guy) -->
       <section class="panel" id="panel-today">
-        <div class="inst-strip" id="todayStrip">— · — · —</div>
-        <h2 class="panel-h" id="todayGreet">Today</h2>
+        <h2 class="panel-h" id="todayGreet" style="margin-top:14px">Today</h2>
+        <div class="inst-strip" id="todayStrip" style="padding-top:0">— · — · —</div>
         <div class="places-grid" id="nowGrid"></div>
         <a class="fuel-strip" href="#pulse" id="fuelStrip" hidden></a>
         <a class="fuel-strip ready-nudge" href="#you" id="readyNudge" hidden></a>
@@ -178,18 +178,32 @@
         <div class="card pulse-card">
           <div class="pulse-row">
             <div class="cell"><span class="k">Spent today</span><strong id="pulseSpent">0k</strong></div>
-            <div class="cell"><span class="k">Daily budget</span><strong id="pulseBudget">–</strong></div>
+            <button type="button" class="cell cell-edit" id="budgetCell" title="Tap to edit your daily budget">
+              <span class="k">Daily budget ✎</span><strong id="pulseBudget">–</strong>
+            </button>
             <div class="cell"><span class="k">Still yours</span><strong id="pulseLeft" class="pulse-teal">–</strong></div>
           </div>
+          <form class="log-form add-form" id="budgetEdit" hidden>
+            <input class="auth-input log-amt" id="budgetInput" type="number" min="50" step="10" placeholder="daily · k IDR" inputmode="numeric">
+            <button class="btn btn-primary log-btn" type="submit">Set</button>
+          </form>
           <div class="ck-bar"><div class="ck-bar-fill" id="pulseFill"></div></div>
           <p class="pulse-note" id="pulseNote"></p>
-          <div class="quick-log" id="quickLog">
-            <button type="button" class="chip chip-btn" data-amt="35" data-cat="food">🍜 Warung 35k</button>
-            <button type="button" class="chip chip-btn" data-amt="30" data-cat="food">☕ Coffee 30k</button>
-            <button type="button" class="chip chip-btn" data-amt="50" data-cat="transport">🛵 Bike 50k</button>
-            <button type="button" class="chip chip-btn" data-amt="150" data-cat="wellness">💆 Massage 150k</button>
-            <button type="button" class="chip chip-btn" data-amt="300" data-cat="nightlife">🏖 Beach club 300k</button>
+          <div class="quick-top">
+            <span class="k-head">Quick log</span>
+            <button type="button" class="ck-reset" id="presetEditBtn" style="margin-top:0">✎ edit</button>
           </div>
+          <div class="quick-log" id="quickLog"></div>
+          <form class="log-form add-form" id="presetAdd" hidden>
+            <input class="auth-input" id="presetLabel" type="text" placeholder="🍜 My warung" maxlength="24">
+            <input class="auth-input log-amt" id="presetAmt" type="number" min="1" placeholder="k" inputmode="numeric">
+            <select class="auth-input log-cat" id="presetCat" aria-label="preset category">
+              <option value="food">food</option><option value="transport">transport</option>
+              <option value="wellness">wellness</option><option value="nightlife">nightlife</option>
+              <option value="accommodation">stay</option><option value="admin">admin</option>
+            </select>
+            <button class="btn btn-primary log-btn" type="submit">Add</button>
+          </form>
           <form class="log-form" id="logForm">
             <input class="auth-input log-amt" id="logAmt" type="number" min="1" step="1" placeholder="k IDR" inputmode="numeric">
             <select class="auth-input log-cat" id="logCat" aria-label="category">
@@ -199,6 +213,10 @@
             </select>
             <button class="btn btn-primary log-btn" type="submit">Log</button>
           </form>
+          <div class="log-extras">
+            <span class="amt-preview" id="amtPreview">amounts are in thousands · 150 = 150,000 IDR</span>
+            <label class="retro-date"><span class="k">date</span><input class="auth-input" id="logDate" type="date"></label>
+          </div>
           <p class="auth-status" id="logStatus" role="status"></p>
         </div>
 
@@ -256,6 +274,7 @@
             <span class="k-head">Readiness</span>
             <strong id="readyPct" class="pace-delta">—</strong>
           </div>
+          <p class="sec-context">Visa, insurance, gear — generated for <em>your</em> trip length. Tick things off; the pass tracks how ready you are.</p>
           <ul class="check-list" id="pretripList"></ul>
           <form class="log-form add-form" id="pretripAdd">
             <input class="auth-input" id="pretripInput" type="text" placeholder="add your own…" maxlength="80">
@@ -269,6 +288,7 @@
             <span class="k-head">Packing</span>
             <button type="button" class="place-maps" id="repackBtn">🎒 Repack mode</button>
           </div>
+          <p class="sec-context">Your kit for this brief. Moving place? Run <strong>Repack mode</strong> — check things into the bag, and anything left behind lands in the missing log.</p>
           <form class="log-form add-form" id="repackStart" hidden>
             <input class="auth-input" id="repackLoc" type="text" placeholder="packing up from where? e.g. Canggu villa" maxlength="60">
             <button class="btn btn-primary log-btn" type="submit">Start</button>

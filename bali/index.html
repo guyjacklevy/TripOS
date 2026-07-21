@@ -78,7 +78,7 @@
             <div class="plan-lock">
               <span class="plan-lock-ico">🔒</span>
               <p><strong>Your full plan is ready</strong> — curated picks, daily budget, packing list and the best month to come.</p>
-              <a class="btn btn-primary" data-auth-gate href="../app/">Unlock it free in TripOS</a>
+              <a class="btn btn-primary" data-auth-gate href="../app/">Open my full brief — free</a>
               <p class="note">Opens instantly — your plan travels with you.</p>
             </div>
           </div>
@@ -311,7 +311,8 @@
       var lines = [
         '▸ reading your vibe: ' + v.label.toLowerCase() +
           (sel.vibe_detail_label ? ' · ' + sel.vibe_detail_label : ''),
-        '▸ scanning ' + spotCount + ' curated Bali spots…',
+        '▸ scanning curated intel: ' + spotCount + ' spots · ' + (spotCount * 15) + '+ field notes…',
+        '▸ cross-referencing tides, seasons, crowds…',
         '▸ matching ' + v.area + ' to your budget…',
         (sel.priorities && sel.priorities.length
           ? '▸ weighing ' + sel.priorities.length + ' priorit' + (sel.priorities.length === 1 ? 'y' : 'ies') + '…'

@@ -86,6 +86,7 @@ if (!CONFIGURED) {
         vibe: plan.vibe || null,
         vibe_detail: plan.vibe_detail || null,
         party: plan.party || null,
+        party_detail: plan.party_detail || null,
         duration_days: plan.dur != null ? parseInt(plan.dur, 10) : null,
         budget_tier: plan.tier || null,
         priorities: plan.priorities && plan.priorities.length ? plan.priorities : null
@@ -151,7 +152,7 @@ if (!CONFIGURED) {
   async function syncTrip() {
     const { data, error } = await sb
       .from('trips')
-      .select('vibe, vibe_detail, party, duration_days, budget_tier, priorities')
+      .select('vibe, vibe_detail, party, party_detail, duration_days, budget_tier, priorities')
       .eq('destination', 'bali')
       .order('created_at', { ascending: false })
       .limit(1);
@@ -160,7 +161,8 @@ if (!CONFIGURED) {
     if (t && t.vibe) {
       const local = {
         vibe: t.vibe, dur: String(t.duration_days == null ? 0 : t.duration_days), tier: t.budget_tier,
-        vibe_detail: t.vibe_detail || null, party: t.party || null, priorities: t.priorities || []
+        vibe_detail: t.vibe_detail || null, party: t.party || null,
+        party_detail: t.party_detail || null, priorities: t.priorities || []
       };
       try { localStorage.setItem('tripos_plan', JSON.stringify(local)); } catch (_) {}
       if (window.tripWizard) window.tripWizard.apply(local);

@@ -79,6 +79,17 @@ export const BRANCH = {
   }
 };
 
+export const PARTY_BRANCH = {
+  couple: {
+    q: "What's the occasion?",
+    opts: [
+      ['honeymoon',   '💍 Honeymoon',   'the big one'],
+      ['anniversary', '🥂 Anniversary', 'celebrating us'],
+      ['fun',         '🌊 Just us',     'no occasion needed']
+    ]
+  }
+};
+
 export const DETAIL_LABEL = {
   deep: 'deep-work days', half: 'half days', barely: 'barely working',
   first: 'first waves', improver: 'improver lines', charger: 'charging reef',
@@ -98,9 +109,12 @@ export const PRIORITIES = [
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-/* the question sequence, given answers so far (mix skips the branch) */
+/* the question sequence, given answers so far
+   (couple gets the occasion branch; mix skips the vibe branch) */
 function sequence(a) {
-  const seq = ['party', 'vibe'];
+  const seq = ['party'];
+  if (a.party === 'couple') seq.push('partyBranch');
+  seq.push('vibe');
   if (a.vibe && a.vibe !== 'mix') seq.push('branch');
   seq.push('dur', 'tier', 'priorities');
   return seq;
@@ -125,13 +139,19 @@ export function mountCheckin(container, dotsEl, onComplete) {
     const seq = sequence(answers);
     const key = seq[pos];
     drawDots();
+    const backBtn = pos > 0
+      ? '<button type="button" class="ck-back" data-act="back">← back</button>'
+      : '';
 
     if (key === 'priorities') {
       container.innerHTML =
-        '<div class="ck-step"><p class="ck-q">What matters most? <span class="ck-q-sub">pick any — or skip</span></p>' +
+        '<div class="ck-step">' + backBtn +
+        '<p class="ck-q">What matters most? <span class="ck-q-sub">pick any — or skip</span></p>' +
         '<div class="ck-opts ck-multi">' +
         PRIORITIES.map(([k, label]) =>
-          '<button type="button" class="ck-opt ck-pill" data-v="' + esc(k) + '">' + esc(label) + '</button>'
+          '<button type="button" class="ck-opt ck-pill' +
+          (answers.priorities.indexOf(k) !== -1 ? ' on' : '') +
+          '" data-v="' + esc(k) + '">' + esc(label) + '</button>'
         ).join('') +
         '</div>' +
         '<div class="ck-multi-actions">' +
@@ -141,9 +161,12 @@ export function mountCheckin(container, dotsEl, onComplete) {
       return;
     }
 
-    const def = key === 'branch' ? BRANCH[answers.vibe] : QUESTIONS[key];
+    const def = key === 'branch' ? BRANCH[answers.vibe]
+      : key === 'partyBranch' ? PARTY_BRANCH[answers.party]
+      : QUESTIONS[key];
     container.innerHTML =
-      '<div class="ck-step"><p class="ck-q">' + esc(def.q) + '</p>' +
+      '<div class="ck-step">' + backBtn +
+      '<p class="ck-q">' + esc(def.q) + '</p>' +
       '<div class="ck-opts">' +
       def.opts.map(([k, label, sub]) => optButton(k, label, sub)).join('') +
       '</div></div>';
@@ -152,6 +175,13 @@ export function mountCheckin(container, dotsEl, onComplete) {
   container.onclick = (e) => {
     const seq = sequence(answers);
     const key = seq[pos];
+
+    /* mistapped? go back one — answers survive, dependents clear on re-answer */
+    const back = e.target.closest('[data-act="back"]');
+    if (back) {
+      if (pos > 0) { pos--; render(); }
+      return;
+    }
 
     if (key === 'priorities') {
       const act = e.target.closest('[data-act]');
@@ -175,7 +205,13 @@ export function mountCheckin(container, dotsEl, onComplete) {
     if (!btn) return;
     const v = btn.getAttribute('data-v');
     if (key === 'branch') answers.vibe_detail = v;
-    else answers[key] = v;
+    else if (key === 'partyBranch') answers.party_detail = v;
+    else {
+      /* re-answering an earlier question clears its dependent branch */
+      if (key === 'vibe' && answers.vibe !== v) delete answers.vibe_detail;
+      if (key === 'party' && answers.party !== v) delete answers.party_detail;
+      answers[key] = v;
+    }
     pos++;
     render();
   };

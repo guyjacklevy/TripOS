@@ -54,12 +54,14 @@ let placesCount = 52;
 const BOOT_ANCHOR = {
   today: () => $('todayStrip'),
   places: () => document.querySelector('#panel-places .coord-display'),
-  pulse: () => document.querySelector('#panel-pulse .inst-strip')
+  pulse: () => document.querySelector('#panel-pulse .inst-strip'),
+  you: () => document.querySelector('#panel-you .inst-strip')
 };
 const BOOT_TEXT = {
   today: () => 'your concierge · refreshes with the clock',
   places: () => 'your curated layer · ' + placesCount + ' spots',
-  pulse: () => 'your fuel gauge · log in 5s'
+  pulse: () => 'your fuel gauge · log in 5s',
+  you: () => 'your flight prep · visa, gear, repacking'
 };
 function bootFlags() {
   try { return JSON.parse(localStorage.getItem('tripos_boot') || '{}'); } catch (_) { return {}; }
@@ -167,7 +169,7 @@ function pickCard(p, matched, nowLine) {
       (nowLine ? '<p class="why-now">' + esc(nowLine) + '</p>' : '') +
       (p.why ? '<p class="place-why">' + esc(p.why) + '</p>' : '') +
       (p.tip ? '<p class="place-tip">' + esc(p.tip) + '</p>' : '') +
-      '<div class="place-foot"><span class="place-price">' + esc(nowLine ? '' : (p.timing_note || '')) + '</span>' + maps + '</div>' +
+      '<div class="place-foot"><span class="place-price">' + esc(nowLine ? (p.price_note || '') : (p.timing_note || '')) + '</span>' + maps + '</div>' +
     '</article>'
   );
 }
@@ -182,7 +184,8 @@ function dropIn(grid) {
 
 const planFromTrip = (trip) => (trip && trip.vibe ? {
   vibe: trip.vibe, dur: String(trip.duration_days), tier: trip.budget_tier,
-  vibe_detail: trip.vibe_detail || null, party: trip.party || null, priorities: trip.priorities || []
+  vibe_detail: trip.vibe_detail || null, party: trip.party || null,
+  party_detail: trip.party_detail || null, priorities: trip.priorities || []
 } : null);
 
 function updateStrip(trip, firstName, now) {
@@ -382,6 +385,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const n = profile && profile.full_name ? profile.full_name.trim().split(/\s+/)[0] : '';
     return n || '';
   };
+  /* T3 (Guy's call): the concierge greets with title + name on Today */
+  const greetName = () => {
+    const f = firstName();
+    if (!f) return '';
+    return profile && profile.title ? profile.title + ' ' + f : f;
+  };
 
   /* N1: the instrument runs — clock ticks every minute, grids refresh
      when the time-block flips (morning → midday → golden hour → night) */
@@ -435,15 +444,57 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     loadPulse();
   });
 
-  async function logSpend(amtK, cat) {
+  /* PU3: typing 150000 must never become 150M — big numbers are read as full IDR */
+  function normalizeK(raw) {
+    const n = parseInt(raw, 10);
+    if (!(n > 0)) return { k: 0 };
+    if (n >= 10000) return { k: Math.round(n / 1000), corrected: true };
+    return { k: n };
+  }
+
+  async function logSpend(amtK, cat, dateStr) {
     if (!user || !(amtK > 0)) return;
     $('logStatus').textContent = 'Logging…';
-    const { error } = await sb.from('expenses').insert({
+    const row = {
       user_id: user.id, trip_id: trip && trip.id ? trip.id : null,
       amount_idr: Math.round(amtK * 1000), category: cat
-    });
-    $('logStatus').textContent = error ? '⚠ ' + error.message : '✓ logged';
+    };
+    /* PU4: retro-dated spends land at midday of the chosen day */
+    if (dateStr) {
+      const today = new Date().toISOString().slice(0, 10);
+      if (dateStr !== today) row.spent_at = new Date(dateStr + 'T12:00:00').toISOString();
+    }
+    const { error } = await sb.from('expenses').insert(row);
+    $('logStatus').textContent = error ? '⚠ ' + error.message : '✓ logged ' + fmtK(amtK);
     if (!error) { setTimeout(() => { $('logStatus').textContent = ''; }, 1600); loadPulse(); }
+  }
+
+  /* PU2: quick-log presets — yours, editable */
+  const DEFAULT_PRESETS = [
+    { label: '🍜 Warung', amt: 35, cat: 'food' },
+    { label: '☕ Coffee', amt: 30, cat: 'food' },
+    { label: '🛵 Bike', amt: 50, cat: 'transport' },
+    { label: '💆 Massage', amt: 150, cat: 'wellness' },
+    { label: '🏖 Beach club', amt: 300, cat: 'nightlife' }
+  ];
+  let presetEdit = false;
+  const getPresets = () =>
+    (profile && Array.isArray(profile.presets) && profile.presets.length) ? profile.presets : DEFAULT_PRESETS;
+  function renderPresets() {
+    $('quickLog').innerHTML = getPresets().map((p, i) =>
+      '<button type="button" class="chip chip-btn" data-i="' + i + '" data-amt="' + p.amt + '" data-cat="' + esc(p.cat) + '">' +
+        esc(p.label) + ' ' + fmtK(p.amt) +
+        (presetEdit ? '<span class="chip-x">✕</span>' : '') +
+      '</button>'
+    ).join('');
+    $('presetAdd').hidden = !presetEdit;
+    $('presetEditBtn').textContent = presetEdit ? '✓ done' : '✎ edit';
+  }
+  async function savePresets(next) {
+    profile.presets = next;
+    renderPresets();
+    const { error } = await sb.from('profiles').update({ presets: next }).eq('id', user.id);
+    if (error) console.error('[TripOS] presets save failed:', error.message);
   }
 
   /* Layer 2 mechanics, dark: "I'm here" writes a check-in row.
@@ -662,6 +713,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       vibe: a.vibe || null,
       vibe_detail: a.vibe_detail || null,
       party: a.party || null,
+      party_detail: a.party_detail || null,
       duration_days: a.dur != null ? parseInt(a.dur, 10) : null,
       budget_tier: a.tier || null,
       priorities: a.priorities && a.priorities.length ? a.priorities : null
@@ -734,18 +786,20 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         return;
       }
     }
-    dailyK = TIER_IDR[trip && trip.budget_tier] || 700;
+    dailyK = (trip && trip.budget_daily_k) || TIER_IDR[trip && trip.budget_tier] || 700;
 
     renderBrief(trip);
+    renderPresets();
     setPassenger(profile && profile.title, profile && profile.full_name);
-    updateStrip(trip, firstName(), new Date());
+    updateStrip(trip, greetName(), new Date());
 
     const { data: places } = await sb.from('curated_places').select('*').eq('destination', 'bali');
     placesCount = (places || []).length || placesCount;
     mountPlacesTab(places || []);
-    renderToday(trip, firstName(), places || []);
-    todayCtx = { trip, name: firstName(), places: places || [] };
+    renderToday(trip, greetName(), places || []);
+    todayCtx = { trip, name: greetName(), places: places || [] };
     startClock();
+    try { $('logDate').value = new Date().toISOString().slice(0, 10); } catch (_) {}
     loadPulse();
     loadReadiness();
 
@@ -773,7 +827,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   async function route() {
     if (!user) { show('welcome'); return; }
-    const { data } = await sb.from('profiles').select('title, full_name').eq('id', user.id).limit(1);
+    const { data } = await sb.from('profiles').select('title, full_name, presets').eq('id', user.id).limit(1);
     profile = (data && data[0]) || null;
     let skipped = false;
     try { skipped = !!localStorage.getItem('tripos_record_done'); } catch (_) {}
@@ -866,14 +920,63 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   $('quickLog').addEventListener('click', (e) => {
     const btn = e.target.closest('.chip-btn');
     if (!btn) return;
-    logSpend(parseInt(btn.getAttribute('data-amt'), 10), btn.getAttribute('data-cat'));
+    if (presetEdit) {
+      const i = parseInt(btn.getAttribute('data-i'), 10);
+      savePresets(getPresets().filter((_, idx) => idx !== i));
+      return;
+    }
+    logSpend(parseInt(btn.getAttribute('data-amt'), 10), btn.getAttribute('data-cat'), $('logDate').value);
+  });
+  $('presetEditBtn').addEventListener('click', () => {
+    presetEdit = !presetEdit;
+    renderPresets();
+  });
+  $('presetAdd').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const label = $('presetLabel').value.trim();
+    const { k } = normalizeK($('presetAmt').value);
+    if (!label || !(k > 0)) return;
+    savePresets(getPresets().concat([{ label, amt: k, cat: $('presetCat').value }]));
+    $('presetLabel').value = '';
+    $('presetAmt').value = '';
   });
   $('logForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const amt = parseInt($('logAmt').value, 10);
-    if (!(amt > 0)) return;
-    logSpend(amt, $('logCat').value);
+    const { k, corrected } = normalizeK($('logAmt').value);
+    if (!(k > 0)) return;
+    if (corrected) $('logStatus').textContent = 'Read that as ' + fmtK(k) + ' (amounts are in thousands)';
+    logSpend(k, $('logCat').value, $('logDate').value);
     $('logAmt').value = '';
+    $('amtPreview').textContent = 'amounts are in thousands · 150 = 150,000 IDR';
+  });
+  /* PU3: live preview while typing */
+  $('logAmt').addEventListener('input', () => {
+    const { k, corrected } = normalizeK($('logAmt').value);
+    $('amtPreview').textContent = k > 0
+      ? '= ' + (k * 1000).toLocaleString('en-US') + ' IDR' + (corrected ? ' (read as thousands)' : '')
+      : 'amounts are in thousands · 150 = 150,000 IDR';
+  });
+  /* PU1: tap the budget cell → edit your daily line */
+  $('budgetCell').addEventListener('click', () => {
+    const f = $('budgetEdit');
+    f.hidden = !f.hidden;
+    if (!f.hidden) {
+      $('budgetInput').value = dailyK;
+      setTimeout(() => $('budgetInput').focus(), 40);
+    }
+  });
+  $('budgetEdit').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const { k } = normalizeK($('budgetInput').value);
+    if (!(k > 0)) return;
+    dailyK = k;
+    $('budgetEdit').hidden = true;
+    loadPulse();
+    if (trip && trip.id) {
+      const { error } = await sb.from('trips').update({ budget_daily_k: k }).eq('id', trip.id);
+      if (error) console.error('[TripOS] budget save failed:', error.message);
+      else trip.budget_daily_k = k;
+    }
   });
 
   /* readiness + packing wiring */

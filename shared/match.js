@@ -44,6 +44,9 @@ export const DETAIL_AVOID = {
   deep:    ['late-night', 'nightclub']
 };
 
+/* honeymoon / anniversary couples pull toward the romantic tier */
+export const OCCASION_TAGS = ['date-night', 'fine-dining', 'beachfront'];
+
 /* priorities multi-select → what counts as a hit (+1 each, capped at +2) */
 export const PRIORITY_MATCH = {
   work:      { cats: ['work'], tags: ['work-friendly', 'cowork'] },
@@ -91,6 +94,11 @@ export function scorePlace(p, plan) {
   /* …and away from places that would be a wrong recommendation for them */
   const avoidTags = DETAIL_AVOID[plan.vibe_detail];
   if (avoidTags && tags.some((t) => avoidTags.indexOf(t) !== -1)) s -= 2;
+  /* occasion: honeymooners see the romantic tier rise */
+  if ((plan.party_detail === 'honeymoon' || plan.party_detail === 'anniversary') &&
+      tags.some((t) => OCCASION_TAGS.indexOf(t) !== -1)) {
+    s += plan.party_detail === 'honeymoon' ? 2 : 1;
+  }
   /* priorities: each selected interest that this place serves, +1 (cap +2) */
   if (plan.priorities && plan.priorities.length) {
     let hits = 0;
