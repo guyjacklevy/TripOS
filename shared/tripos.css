@@ -283,13 +283,27 @@ section { padding: 56px 0; }
 }
 .place-personas { display: flex; flex-wrap: wrap; gap: 6px; }
 .persona-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--teal);
-  background: rgba(61, 255, 208, 0.07);
-  border: 1px solid rgba(61, 255, 208, 0.2);
+  color: var(--tx);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
   border-radius: 99px;
-  padding: 3px 10px;
+  padding: 3px 10px 3px 8px;
+}
+.persona-chip .pdot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pd);
+  flex-shrink: 0;
+}
+.persona-chip .pdot.ring {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--pd);
 }
 .place-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
 .place-price { font-size: 12px; color: var(--dim); }

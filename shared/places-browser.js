@@ -40,6 +40,18 @@ export function mountPlaces(cfg) {
   const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const state = { area: 'all', cat: 'all', q: '' };
 
+  /* ── persona dot colours (2b): 6 filled hues + 2 ring dots, zero new tokens ── */
+  const PERSONA_DOT = {
+    surfer:   { c: 'var(--teal)',         ring: false },
+    nomad:    { c: 'var(--cy)',           ring: false },
+    foodie:   { c: 'var(--am)',           ring: false },
+    party:    { c: 'var(--area-denpasar)', ring: false },
+    luxury:   { c: 'var(--purple)',       ring: false },
+    wellness: { c: 'var(--area-ubud)',    ring: false },
+    family:   { c: 'var(--area-ubud)',    ring: true  },
+    culture:  { c: 'var(--purple)',       ring: true  },
+  };
+
   /* ── altitude counter ── */
   let altCurrent = 35000;
   let altRAF = null;
@@ -65,8 +77,11 @@ export function mountPlaces(cfg) {
   function card(p, bd) {
     const matched = !!bd;
     const cat = CAT[p.category] || { orb: 'planet-teal', cc: 'var(--teal)', icon: '📍', label: p.category };
-    const personas = (p.personas || []).map((x) =>
-      '<span class="persona-chip">' + esc(x) + '</span>').join('');
+    const personas = (p.personas || []).map((x) => {
+      const d = PERSONA_DOT[x] || { c: 'var(--mut)', ring: false };
+      return '<span class="persona-chip"><span class="pdot' + (d.ring ? ' ring' : '') +
+        '" style="--pd:' + d.c + '"></span>' + esc(x) + '</span>';
+    }).join('');
     const maps = p.maps_query
       ? '<a class="place-maps" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' +
         encodeURIComponent(p.maps_query) + '">Maps ↗</a>' : '';
