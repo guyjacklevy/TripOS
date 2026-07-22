@@ -224,9 +224,21 @@ function dayState(d) {
   return { h, m, mins, day: d.getDay(), phase, rail, angle };
 }
 
-function tripDayCounter(trip) {
+/* ONE day-of-trip number, used by both the Today strip and the boarding pass
+   so they can never disagree (Rachel's note). Calendar-day diff (time-of-day
+   ignored) against the shared clock `now`, not Date.now().
+   Origin = trip.created_at, a deliberate PROXY for arrival until we collect a
+   real `arrive` date in the questionnaire (backlogged). */
+function tripDayNumber(trip, now) {
   if (!trip || !trip.created_at) return null;
-  const n = Math.max(1, Math.floor((Date.now() - new Date(trip.created_at).getTime()) / 86400000) + 1);
+  const s = new Date(trip.created_at);
+  const sMid = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+  const nMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.max(1, Math.round((nMid - sMid) / 86400000) + 1);
+}
+function tripDayLabel(trip, now) {
+  const n = tripDayNumber(trip, now);
+  if (n == null) return null;
   return trip.duration_days ? 'DAY ' + n + '/' + trip.duration_days : 'DAY ' + n;
 }
 
@@ -235,9 +247,12 @@ function updateStrip(trip, firstName, now) {
   const hh = String(s.h).padStart(2, '0');
   const mm = String(s.m).padStart(2, '0');
   const base = trip && trip.vibe ? (HOME_AREA[trip.vibe] || 'Bali').split(' ')[0].toUpperCase() : 'BALI';
-  const dayc = tripDayCounter(trip);
+  const dayc = tripDayLabel(trip, now);
   $('todayStrip').textContent = DAY_ABBR[s.day] + ' · ' + hh + ':' + mm + (dayc ? ' · ' + dayc : '');
   $('todayStrip2').textContent = base + ' BASE · ' + PHASE_WORD[s.phase];
+  /* greeting uses the RAIL word; the strip uses the PHASE word — 19:00 shows
+     "Night" (rail) beside "DUSK" (phase). Intentional: two layers of one clock
+     (Rachel). Do NOT reconcile them. */
   const blockWord = s.rail === 'morning' ? 'Morning' : s.rail === 'midday' ? 'Midday'
     : s.rail === 'golden' ? 'Golden hour' : 'Night';
   $('todayGreet').textContent = blockWord + (firstName ? ', ' + firstName : '') + '.';
@@ -256,39 +271,129 @@ function updateStrip(trip, firstName, now) {
   }
 }
 
-/* the concierge: NOW cards (time+day aware) + coming up */
+/* ─── the flight plan (WAVE3_TODAY_TIMELINE_SPEC) ───
+   Four rails on one route line, aligned to dayState's rails. Current rail =
+   full POI cards (the old NOW cards) + a you-are-here tick; future rails =
+   slot cards; past rails collapse. Empty rails invite. */
+const RAILS = [
+  { key: 'morning', label: 'MORNING',     hours: '05–11',   start: 300, end: 660 },
+  { key: 'midday',  label: 'MIDDAY',      hours: '11–16',   start: 660, end: 960 },
+  { key: 'golden',  label: 'GOLDEN HOUR', hours: '16–19',   start: 960, end: 1140 },
+  { key: 'night',   label: 'NIGHT',       hours: '19–LATE', start: 1140, end: 1740 }
+];
+const BLOCK_RAIL = { morning: 'morning', afternoon: 'midday', sunset: 'golden', evening: 'night', night: 'night' };
+const BLOCK_ORDER = { morning: 0, afternoon: 1, sunset: 2, evening: 3, night: 4 };
+function primaryRail(p) {
+  const bt = (p.best_time || []).slice().sort((a, b) => (BLOCK_ORDER[a] ?? 9) - (BLOCK_ORDER[b] ?? 9));
+  return bt.length ? BLOCK_RAIL[bt[0]] : null;
+}
+/* brief-relevant picks for a rail, topped up with verified spots so a rail is
+   rarely empty; category-diverse; returns [] only if the rail truly has nothing */
+function railPicks(places, plan, railKey, n) {
+  const inRail = places.filter((p) => primaryRail(p) === railKey);
+  const scored = inRail
+    .map((p) => ({ p, s: plan ? scorePlace(p, plan) : (p.verified ? 3 : 0) }))
+    .sort((a, b) => b.s - a.s);
+  const out = [];
+  const cats = {};
+  for (const x of scored) {
+    if (out.length >= n) break;
+    if (x.s < 0) continue;
+    if (cats[x.p.category]) continue;
+    cats[x.p.category] = true;
+    out.push(x.p);
+  }
+  return { picks: out, total: scored.filter((x) => x.s >= 3).length || inRail.length };
+}
+function slotCard(p) {
+  const meta = CAT_META[p.category] || { cc: 'var(--teal)' };
+  return '<a class="slot-card" href="#places" data-place="' + esc(p.id) + '" style="--cc:' + meta.cc + '">' +
+    '<span class="slot-dot"></span>' +
+    '<span class="slot-name">' + esc(p.name) + (p.verified ? ' ✓' : '') + '</span>' +
+    '<span class="slot-hint">' + esc(p.area.split('/')[0].trim()) + '</span>' +
+  '</a>';
+}
+function railInvite(rail) {
+  return '<a class="rail-invite" href="#places">no picks this block · browse ' +
+    rail.label.toLowerCase() + ' spots →</a>';
+}
+
 function renderToday(trip, firstName, places, dateOpt) {
   const now = dateOpt || baliNow();
   updateStrip(trip, firstName, now);
   if (!places || !places.length) return;
   const plan = planFromTrip(trip);
+  const s = dayState(now);
+  const currentIdx = RAILS.findIndex((r) => r.key === s.rail);
+  const postMidnight = s.mins < 300; /* 00:00–04:59, still the NIGHT rail */
 
-  const nowPicks = plan ? pickNow(places, plan, now, 2) : [];
-  let html;
-  if (nowPicks.length) {
-    html = nowPicks.map((p) =>
-      pickCard(p, scoreBreakdown(p, plan), '◉ NOW — ' + (whyNow(p, now) || 'your kind of place'))).join('');
-  } else {
-    /* never an empty screen: fall back to the brief's top picks */
-    const fall = plan ? pickTop(places, plan, 2) : places.filter((p) => p.verified).slice(0, 2);
-    html = fall.map((p) => pickCard(p, plan ? isMatch(scorePlace(p, plan)) : false, null)).join('');
-  }
-  $('nowGrid').innerHTML = html;
-  dropIn($('nowGrid'));
+  let html = '';
+  RAILS.forEach((r, i) => {
+    const state = r.key === s.rail ? 'current'
+      : postMidnight ? 'future'
+      : (i < currentIdx ? 'past' : 'future');
+    const { picks, total } = railPicks(places, plan, r.key, state === 'current' ? 2 : 2);
 
-  const up = plan ? pickUpcoming(places, plan, now, 2, new Set(nowPicks)) : [];
-  $('upcomingWrap').hidden = !up.length;
-  if (up.length) {
-    $('upcomingGrid').innerHTML = up.map(({ p, label }) => {
-      /* the label already says WHEN — the line just says WHY */
-      const when = label === 'TOMORROW' ? new Date(now.getTime() + 86400000) : now;
-      const bd = p.best_days || [];
-      const reason = bd.indexOf(DAY_KEYS[when.getDay()]) !== -1
-        ? (p.timing_note || 'its day of the week')
-        : (p.timing_note || p.why || '');
-      return pickCard(p, false, '◦ ' + label + ' — ' + reason);
-    }).join('');
-    dropIn($('upcomingGrid'));
+    if (state === 'past') {
+      html += '<div class="rail past" data-rail="' + r.key + '">' +
+        '<button type="button" class="rail-head-past">' + r.hours + ' · ' + r.label +
+        ' · passed · ' + total + ' pick' + (total === 1 ? '' : 's') + '</button>' +
+        '<div class="rail-body" hidden></div></div>';
+      return;
+    }
+
+    html += '<div class="rail ' + state + '" data-rail="' + r.key + '">' +
+      '<div class="rail-node"></div>' +
+      '<div class="rail-head">' + r.hours + ' · ' + r.label + '</div>';
+
+    if (state === 'current') {
+      /* you-are-here tick, positioned proportionally within the block */
+      let nowAdj = s.mins;
+      if (r.key === 'night' && s.mins < 300) nowAdj = s.mins + 1440;
+      const p = Math.min(1, Math.max(0, (nowAdj - r.start) / (r.end - r.start)));
+      const hh = String(s.h).padStart(2, '0'), mm = String(s.m).padStart(2, '0');
+      html += '<div class="tl-now"><div class="tl-now-bar"><span class="tl-now-tick" style="left:' +
+        (p * 100).toFixed(1) + '%"></span></div>' +
+        '<span class="tl-now-label" style="left:' + (p * 100).toFixed(1) + '%">' + hh + ':' + mm + ' · you are here</span></div>';
+      /* the old NOW cards: time+day aware, with why-now */
+      const nowPicks = plan ? pickNow(places, plan, now, 2) : [];
+      const cards = nowPicks.length
+        ? nowPicks.map((pp) => pickCard(pp, scoreBreakdown(pp, plan), '◉ NOW — ' + (whyNow(pp, now) || 'your kind of place')))
+        : picks.map((pp) => pickCard(pp, plan && isMatch(scorePlace(pp, plan)) ? scoreBreakdown(pp, plan) : null, null));
+      html += '<div class="rail-cards">' + (cards.join('') || railInvite(r)) + '</div>';
+    } else {
+      /* future: slot cards */
+      const shown = picks.slice(0, 2);
+      html += shown.length
+        ? '<div class="rail-slots">' + shown.map(slotCard).join('') +
+          (total > shown.length ? '<a class="slot-more" href="#places">+ ' + (total - shown.length) + ' more →</a>' : '') + '</div>'
+        : railInvite(r);
+    }
+    html += '</div>';
+  });
+
+  const tl = $('timeline');
+  tl.innerHTML = html;
+  dropIn(tl);
+  /* past rails expand on tap (dimmed, no lift) */
+  tl.querySelectorAll('.rail-head-past').forEach((btn) => {
+    btn.onclick = () => {
+      const body = btn.nextElementSibling;
+      if (body.dataset.loaded !== '1') {
+        const key = btn.closest('.rail').getAttribute('data-rail');
+        const rk = RAILS.find((r) => r.key === key);
+        body.innerHTML = railPicks(places, plan, key, 2).picks.map(slotCard).join('') || railInvite(rk);
+        body.dataset.loaded = '1';
+      }
+      body.hidden = !body.hidden;
+      btn.closest('.rail').classList.toggle('open', !body.hidden);
+    };
+  });
+  /* auto-scroll the current rail into the top third (once per render) */
+  const cur = tl.querySelector('.rail.current');
+  if (cur && dateOpt === undefined) {
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    cur.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
   }
 }
 
@@ -708,9 +813,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     /* N2: the pass is an instrument */
     const bd = $('bpDay'), br = $('bpReady');
     if (br) br.textContent = pct + '%';
-    if (bd && trip && trip.created_at) {
-      const dayN = Math.max(1, Math.floor((Date.now() - new Date(trip.created_at).getTime()) / 86400000) + 1);
-      bd.textContent = trip.duration_days ? 'DAY ' + dayN + ' / ' + trip.duration_days : 'DAY ' + dayN;
+    if (bd) {
+      const lbl = tripDayLabel(trip, baliNow());  /* same helper as the Today strip */
+      bd.textContent = lbl ? lbl.replace('DAY ', 'DAY ').replace('/', ' / ') : '—';
     }
     /* readiness nudge on Today: the top open pretrip item */
     const urgent = pre.find((i) => !i.done);

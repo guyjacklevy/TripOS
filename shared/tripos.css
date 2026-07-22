@@ -1025,6 +1025,65 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
   .od-night, .od-rim, .od-pin { transition: none; }
 }
 
+/* wave 3: Today as a flight plan — the timeline (WAVE3_TODAY_TIMELINE_SPEC) */
+.timeline { position: relative; margin-top: 18px; padding-left: 26px; }
+.timeline::before { /* the route line */
+  content: ""; position: absolute; left: 16px; top: 6px; bottom: 6px;
+  width: 1px; background: var(--line);
+}
+.rail { position: relative; padding: 4px 0 20px; }
+.rail-node { /* dot on the route line */
+  position: absolute; left: -14px; top: 7px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--dim); box-shadow: none;
+}
+.rail.current .rail-node { background: var(--teal); box-shadow: 0 0 8px rgba(61, 255, 208, 0.7); }
+.rail.current::before { /* teal route segment for the current rail */
+  content: ""; position: absolute; left: -10px; top: 7px; bottom: 12px; width: 2px;
+  background: var(--teal); opacity: 0.6; border-radius: 2px;
+}
+.rail-head {
+  font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--mut); margin-bottom: 10px;
+}
+.rail.current .rail-head { color: var(--teal); text-shadow: 0 0 10px rgba(61, 255, 208, 0.35); }
+.rail.future .rail-head { color: var(--tx); }
+/* past rail: one collapsed line */
+.rail.past { padding-bottom: 12px; opacity: 0.45; }
+.rail.past .rail-node { top: 13px; }
+.rail-head-past {
+  font: inherit; font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--mut);
+  background: none; border: none; cursor: pointer; padding: 6px 0; text-align: left;
+}
+.rail.past.open { opacity: 0.7; }
+.rail.past .rail-body { display: grid; gap: 8px; margin-top: 8px; }
+.rail.past .rail-body[hidden] { display: none; }
+/* you-are-here tick */
+.tl-now { position: relative; margin: 2px 0 14px; height: 26px; }
+.tl-now-bar { position: absolute; left: 0; right: 8px; top: 4px; height: 2px; background: rgba(61, 255, 208, 0.18); border-radius: 2px; }
+.tl-now-tick { position: absolute; top: -4px; width: 2px; height: 10px; background: var(--teal); box-shadow: 0 0 6px rgba(61, 255, 208, 0.7); transform: translateX(-50%); }
+.tl-now-label { position: absolute; top: 12px; transform: translateX(-50%); white-space: nowrap; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; color: var(--teal); }
+.rail-cards { display: grid; gap: 14px; }
+/* future rail slot cards */
+.rail-slots { display: grid; gap: 8px; }
+.slot-card {
+  display: flex; align-items: center; gap: 10px; min-height: 44px;
+  padding: 10px 13px; text-decoration: none;
+  background: var(--glass); border: 1px solid var(--line); border-left: 2px solid var(--cc, var(--teal));
+  border-radius: 12px; transition: transform 80ms;
+}
+.slot-card:active { transform: scale(0.97); }
+.slot-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cc, var(--teal)); flex-shrink: 0; }
+.slot-name { flex: 1; font-size: 13.5px; color: var(--tx); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot-hint { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--dim); flex-shrink: 0; }
+.slot-more, .rail-invite {
+  display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+  color: var(--mut); text-decoration: none; padding: 8px 0;
+}
+.slot-more:hover, .rail-invite:hover { color: var(--teal); }
+.rail-invite { color: var(--dim); }
+@media (prefers-reduced-motion: reduce) { .slot-card:active { transform: none; } }
+
 /* wave 4a: places search + Google-Maps discovery */
 .place-search {
   width: 100%;
