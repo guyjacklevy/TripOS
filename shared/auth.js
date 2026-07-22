@@ -188,5 +188,19 @@ if (!CONFIGURED) {
     });
   })();
 
+  /* L8: Google directly on the landing's locked-brief screen — peak desire,
+     one tap, zero hops. Signed-in users go straight through to the app. */
+  const lockGoogle = document.getElementById('lockGoogle');
+  if (lockGoogle) {
+    lockGoogle.addEventListener('click', async () => {
+      if (user) { window.location.href = '/app/'; return; }
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + '/app/' }
+      });
+      if (error) console.error('[TripOS] google sign-in failed:', error.message);
+    });
+  }
+
   window.tripAuth = { ready: true, open: openModal, client: sb, savePlan: savePlan };
 }

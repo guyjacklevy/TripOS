@@ -7,7 +7,7 @@
  * ──────────────────────────────────────────────────────────── */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
-  pickTop, isMatch, scorePlace, readPlan, VIBE_LABEL, TIER_LABEL, HOME_AREA, durLabel, CAT_ICON,
+  pickTop, isMatch, scorePlace, scoreBreakdown, readPlan, VIBE_LABEL, TIER_LABEL, HOME_AREA, durLabel, CAT_ICON,
   pickNow, pickUpcoming, whyNow, timeBlock, DAY_KEYS
 } from './match.js';
 import { mountCheckin } from './checkin.js';
@@ -159,9 +159,12 @@ function pickCard(p, matched, nowLine) {
       encodeURIComponent(p.maps_query) + '">Maps ↗</a>' : '';
   let money = '';
   for (let m = 0; m < (p.price_level || 1); m++) money += '$';
+  const badge = matched && matched.pct
+    ? '✦ ' + matched.pct + '% match'
+    : (matched ? '✦ your match' : null);
   return (
     '<article class="place-card" style="--cc:' + meta.cc + '">' +
-      (matched ? '<span class="match-badge">✦ your match</span>' : '') +
+      (badge ? '<span class="match-badge">' + badge + '</span>' : '') +
       '<div class="place-top"><span class="orb ' + meta.orb + '"></span><div>' +
         '<div class="place-name">' + esc(p.name) + (p.verified ? '<span class="place-verified">✓</span>' : '') + '</div>' +
         '<div class="poi-type">' + icon + ' ' + esc(p.area) + ' · <span class="price-sym">' + money + '</span></div>' +
@@ -210,7 +213,8 @@ function renderToday(trip, firstName, places, dateOpt) {
   const nowPicks = plan ? pickNow(places, plan, now, 2) : [];
   let html;
   if (nowPicks.length) {
-    html = nowPicks.map((p) => pickCard(p, true, '◉ NOW — ' + (whyNow(p, now) || 'your kind of place'))).join('');
+    html = nowPicks.map((p) =>
+      pickCard(p, scoreBreakdown(p, plan), '◉ NOW — ' + (whyNow(p, now) || 'your kind of place'))).join('');
   } else {
     /* never an empty screen: fall back to the brief's top picks */
     const fall = plan ? pickTop(places, plan, 2) : places.filter((p) => p.verified).slice(0, 2);
@@ -501,6 +505,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   /* Layer 2 mechanics, dark: "I'm here" writes a check-in row.
      No display yet — the data compounds until thresholds are met. */
+  const SPEND_EST = { 1: 50, 2: 150, 3: 300, 4: 600 };            /* k IDR by price level */
+  const EXP_FROM_PLACE = {                                          /* place cat → expense cat */
+    food: 'food', work: 'food', nightlife: 'nightlife', beach: 'nightlife',
+    wellness: 'wellness', gym: 'wellness', explore: 'transport'
+  };
   async function checkinAt(p, btn) {
     if (!user) return;
     btn.disabled = true;
@@ -515,6 +524,25 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       return;
     }
     setTimeout(() => { btn.textContent = '📍 I’m here'; btn.disabled = false; }, 2600);
+    /* T7: the v19 loop — checked in? offer the typical spend, one tap to log */
+    const card = btn.closest('.place-card');
+    if (card && !card.querySelector('.spend-suggest')) {
+      const estK = SPEND_EST[p.price_level || 1];
+      const cat = EXP_FROM_PLACE[p.category] || 'food';
+      const sug = document.createElement('div');
+      sug.className = 'spend-suggest';
+      sug.innerHTML = '<button type="button" class="place-maps ss-log">＋ log ~' + fmtK(estK) +
+        ' spend here?</button><button type="button" class="ck-reset ss-skip">skip</button>';
+      card.appendChild(sug);
+      sug.querySelector('.ss-log').addEventListener('click', async () => {
+        sug.innerHTML = '<span class="ss-done">…</span>';
+        await logSpend(estK, cat);
+        sug.innerHTML = '<span class="ss-done">✓ ' + fmtK(estK) + ' logged to your pulse</span>';
+        setTimeout(() => sug.remove(), 3000);
+      });
+      sug.querySelector('.ss-skip').addEventListener('click', () => sug.remove());
+      setTimeout(() => { if (sug.parentNode) sug.remove(); }, 20000);
+    }
   }
 
   /* the full spatial browser in the Places tab (remount-safe for brief changes) */
@@ -702,6 +730,32 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     loadReadiness();
   }
 
+  /* Y1: install experience — native prompt where the browser offers one,
+     illustrated Safari steps on iOS, honest fallback elsewhere */
+  let deferredInstall = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstall = e;
+    updateInstallCard();
+  });
+  function updateInstallCard() {
+    const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      window.navigator.standalone === true;
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    $('installedMark').hidden = !standalone;
+    $('installBtn').hidden = standalone || !deferredInstall;
+    $('iosSteps').hidden = standalone || !isIOS;
+    $('installFallback').hidden = standalone || isIOS || !!deferredInstall;
+    if (standalone) $('installWhy').textContent = 'TripOS lives on your home screen. See you out there.';
+  }
+  $('installBtn').addEventListener('click', async () => {
+    if (!deferredInstall) return;
+    deferredInstall.prompt();
+    const choice = await deferredInstall.userChoice.catch(() => null);
+    if (choice && choice.outcome === 'accepted') deferredInstall = null;
+    updateInstallCard();
+  });
+
   /* preview/debug: inject checklist state without a session */
   Object.assign(window.__appDebug, {
     injectReadiness: (t, items, rpk) => { trip = t; checkItems = items; repack = rpk || null; renderChecklists(); },
@@ -802,6 +856,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     todayCtx = { trip, name: greetName(), places: places || [] };
     startClock();
     try { $('logDate').value = new Date().toISOString().slice(0, 10); } catch (_) {}
+    updateInstallCard();
     loadPulse();
     loadReadiness();
 

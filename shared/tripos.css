@@ -988,6 +988,67 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
 }
 .sec-context strong, .sec-context em { color: var(--tx); font-style: normal; }
 
+/* wave 2: match receipts, lock upgrade, spend loop, install */
+.match-why {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: rgba(61, 255, 208, 0.75);
+}
+.lock-list {
+  list-style: none;
+  text-align: left;
+  font-size: 13px;
+  color: var(--tx);
+  display: grid;
+  gap: 6px;
+  margin: 2px 0 6px;
+}
+.lock-list li { color: var(--mut); }
+.plan-lock .w-google { max-width: 300px; }
+.spend-suggest {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px dashed rgba(61, 255, 208, 0.25);
+  padding-top: 11px;
+  margin-top: 2px;
+}
+.spend-suggest .ss-log { color: var(--teal); }
+.spend-suggest .ck-reset { margin-top: 0; }
+.ss-done {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--teal);
+}
+.install-card { border-color: rgba(61, 255, 208, 0.22); }
+.ios-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13.5px;
+  color: var(--tx);
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--line2);
+}
+.ios-step:last-child { border-bottom: none; }
+.ios-n {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(61, 255, 208, 0.1);
+  border: 1px solid rgba(61, 255, 208, 0.3);
+  color: var(--teal);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+.ios-glyph { color: var(--teal); }
+
 /* first-run boot captions (N4) — the instrument powers on, once */
 .boot-caption {
   font-family: var(--mono);

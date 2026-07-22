@@ -6,7 +6,7 @@
  * handler — when present, cards grow an "I'm here" action
  * (Layer 2 mechanics: data collection starts before display).
  * ──────────────────────────────────────────────────────────── */
-import { scorePlace, isMatch, VIBE_LABEL, TIER_LABEL, durLabel } from './match.js';
+import { scorePlace, scoreBreakdown, isMatch, VIBE_LABEL, TIER_LABEL, durLabel } from './match.js';
 
 export const CAT = {
   beach:     { orb: 'planet-pink',   cc: 'var(--cat-beach)',    icon: '🏖', label: 'Beach' },
@@ -60,8 +60,9 @@ export function mountPlaces(cfg) {
     altRAF = requestAnimationFrame(step);
   }
 
-  /* ── POI card ── */
-  function card(p, matched) {
+  /* ── POI card (bd = scoreBreakdown when this place matches the brief) ── */
+  function card(p, bd) {
+    const matched = !!bd;
     const cat = CAT[p.category] || { orb: 'planet-teal', cc: 'var(--teal)', icon: '📍', label: p.category };
     const personas = (p.personas || []).map((x) =>
       '<span class="persona-chip">' + esc(x) + '</span>').join('');
@@ -77,7 +78,7 @@ export function mountPlaces(cfg) {
     return (
       '<article class="place-card" data-cat="' + esc(p.category) + '" data-region="' + esc(region(p.area)) +
         '" style="--cc:' + cat.cc + '">' +
-        (matched ? '<span class="match-badge">✦ your match</span>' : '') +
+        (matched ? '<span class="match-badge">✦ ' + bd.pct + '% match</span>' : '') +
         '<div class="place-top">' +
           '<span class="orb ' + cat.orb + '"></span>' +
           '<div>' +
@@ -86,6 +87,9 @@ export function mountPlaces(cfg) {
             '<div class="poi-type">' + cat.icon + ' ' + esc(p.area) + '</div>' +
           '</div>' +
         '</div>' +
+        (matched && bd.reasons.length
+          ? '<p class="match-why">matched on: ' + bd.reasons.slice(0, 4).map(esc).join(' · ') + '</p>'
+          : '') +
         (personas ? '<div class="place-personas">' + personas + '</div>' : '') +
         (p.why ? '<p class="place-why">' + esc(p.why) + '</p>' : '') +
         '<div class="place-meta">' + timing + '</div>' +
@@ -178,14 +182,17 @@ export function mountPlaces(cfg) {
   if (els.status) els.status.remove();
 
   let list = places;
-  const matchedSet = new Set();
+  const matchedMap = new Map(); /* place → scoreBreakdown */
   if (plan) {
     const order = new Map(places.map((p, i) => [p, i]));
-    places.forEach((p) => { if (isMatch(scorePlace(p, plan))) matchedSet.add(p); });
-    if (matchedSet.size) {
+    places.forEach((p) => {
+      const bd = scoreBreakdown(p, plan);
+      if (isMatch(bd.score)) matchedMap.set(p, bd);
+    });
+    if (matchedMap.size) {
       list = places.slice().sort((a, b) => {
-        const am = matchedSet.has(a) ? scorePlace(a, plan) : -1;
-        const bm = matchedSet.has(b) ? scorePlace(b, plan) : -1;
+        const am = matchedMap.has(a) ? matchedMap.get(a).score : -1;
+        const bm = matchedMap.has(b) ? matchedMap.get(b).score : -1;
         return bm - am || order.get(a) - order.get(b);
       });
       if (els.bannerHost) {
@@ -201,7 +208,7 @@ export function mountPlaces(cfg) {
     }
   }
 
-  els.grid.innerHTML = list.map((p) => card(p, matchedSet.has(p))).join('');
+  els.grid.innerHTML = list.map((p) => card(p, matchedMap.get(p) || null)).join('');
   dropIn(Array.from(els.grid.querySelectorAll('.place-card')));
 
   if (onCheckin) {

@@ -271,6 +271,21 @@
           <div class="bp-stub"><div class="bp-barcode"></div><span class="bp-code">DPS · BALI</span></div>
         </div>
 
+        <!-- install — the retention lever: on the home screen or forgotten -->
+        <div class="card install-card" id="installCard">
+          <div class="ready-top">
+            <span class="k-head">Take TripOS home</span>
+            <strong class="pace-delta good" id="installedMark" hidden>✓ installed</strong>
+          </div>
+          <p class="sec-context" id="installWhy">Put it on your home screen — it opens full-screen, instantly, like the app it is. No browser bar, no typing URLs on a scooter.</p>
+          <button class="btn btn-primary" id="installBtn" hidden style="width:100%">➕ Install TripOS</button>
+          <div id="iosSteps" hidden>
+            <div class="ios-step"><span class="ios-n">1</span><span>Tap <strong>Share</strong> <span class="ios-glyph">⬆</span> in Safari’s toolbar below</span></div>
+            <div class="ios-step"><span class="ios-n">2</span><span>Scroll and choose <strong>Add to Home Screen</strong> <span class="ios-glyph">➕</span></span></div>
+          </div>
+          <p class="sec-context" id="installFallback" hidden>Use your browser’s menu → <strong>Install app</strong> / <strong>Add to Home Screen</strong>.</p>
+        </div>
+
         <!-- readiness — visa, admin, gear (duration-aware, from the brief) -->
         <div class="card ready-card">
           <div class="ready-top">
@@ -311,8 +326,7 @@
 
         <div class="card acct-card">
           <div class="acct-row"><span class="k">Signed in as</span><strong id="acctEmail">—</strong></div>
-          <div class="acct-row"><span class="k">Install</span><span>Add TripOS to your home screen from the browser share menu</span></div>
-          <div class="acct-row"><span class="k">Version</span><span>v3 · slice 1</span></div>
+          <div class="acct-row"><span class="k">Version</span><span>v3 · wave 2</span></div>
         </div>
       </section>
     </main>

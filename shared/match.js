@@ -72,45 +72,69 @@ export function readPlan() {
   } catch (_) { return null; }
 }
 
-/* score one place against a plan. -1 = out of budget, ≥3 = a real match.
- * Branch answers (vibe_detail) and priorities sharpen the score — the
- * questionnaire's extra questions all cash out here. */
-export function scorePlace(p, plan) {
+/* human labels for the branch answers (mirrors checkin.js, kept tiny) */
+const DETAIL_WHY = {
+  deep: 'deep-work ready', half: 'work-friendly', barely: 'off-duty energy',
+  first: 'your level', improver: 'your level', charger: 'your level',
+  yoga: 'your focus', healing: 'your focus', fitness: 'your focus',
+  beachclubs: 'your scene', clubs: 'your scene', bars: 'your scene'
+};
+
+/* T5: score WITH receipts — every point traceable to a reason the user
+ * can read. scorePlace stays the single source of truth via this. */
+export function scoreBreakdown(p, plan) {
   const persona = PERSONA[plan.vibe];
   const cap = TIER_CAP[plan.tier] || 4;
   const lvl = p.price_level || 1;
-  if (plan.tier !== 'prem' && lvl > cap) return -1;
-  let s = 0;
   const tags = p.tags || [];
-  if (persona && (p.personas || []).indexOf(persona) !== -1) s += 3;
-  if (plan.vibe === 'mix' && (p.personas || []).length >= 2) s += 2; /* mix loves crossover spots */
-  if (HOME_AREA[plan.vibe] && String(p.area || '').indexOf(HOME_AREA[plan.vibe]) === 0) s += 2;
-  if (p.verified) s += 1;
-  if (plan.tier === 'prem' && lvl >= 3) s += 1;
-  if (plan.tier === 'back' && lvl === 1) s += 1;
-  /* branch tuning: e.g. first-waves surfer pulls toward beginner breaks… */
+  const reasons = [];
+  /* the best score THIS plan could give any place — makes % honest */
+  let max = (plan.vibe === 'mix' ? 2 : 3) + 2 + 1 + 1 +
+    (plan.vibe_detail ? 2 : 0) +
+    (plan.priorities && plan.priorities.length ? Math.min(2, plan.priorities.length) : 0) +
+    ((plan.party_detail === 'honeymoon' || plan.party_detail === 'anniversary') ? 2 : 0);
+  if (plan.tier !== 'prem' && lvl > cap) return { score: -1, max, pct: 0, reasons };
+  let s = 0;
+  if (persona && (p.personas || []).indexOf(persona) !== -1) {
+    s += 3; reasons.push((VIBE_LABEL[plan.vibe] || plan.vibe) + ' fit');
+  }
+  if (plan.vibe === 'mix' && (p.personas || []).length >= 2) { s += 2; reasons.push('crossover spot'); }
+  if (HOME_AREA[plan.vibe] && String(p.area || '').indexOf(HOME_AREA[plan.vibe]) === 0) {
+    s += 2; reasons.push(HOME_AREA[plan.vibe] + ' base');
+  }
+  if (p.verified) { s += 1; reasons.push('verified'); }
+  if (plan.tier === 'prem' && lvl >= 3) { s += 1; reasons.push('premium tier'); }
+  else if (plan.tier === 'back' && lvl === 1) { s += 1; reasons.push('backpacker price'); }
+  else if (lvl <= cap) reasons.push('in budget');
   const detailTags = DETAIL_TAGS[plan.vibe_detail];
-  if (detailTags && tags.some((t) => detailTags.indexOf(t) !== -1)) s += 2;
-  /* …and away from places that would be a wrong recommendation for them */
+  if (detailTags && tags.some((t) => detailTags.indexOf(t) !== -1)) {
+    s += 2; reasons.push(DETAIL_WHY[plan.vibe_detail] || 'your style');
+  }
   const avoidTags = DETAIL_AVOID[plan.vibe_detail];
   if (avoidTags && tags.some((t) => avoidTags.indexOf(t) !== -1)) s -= 2;
-  /* occasion: honeymooners see the romantic tier rise */
   if ((plan.party_detail === 'honeymoon' || plan.party_detail === 'anniversary') &&
       tags.some((t) => OCCASION_TAGS.indexOf(t) !== -1)) {
     s += plan.party_detail === 'honeymoon' ? 2 : 1;
+    reasons.push(plan.party_detail + ' pick');
   }
-  /* priorities: each selected interest that this place serves, +1 (cap +2) */
   if (plan.priorities && plan.priorities.length) {
     let hits = 0;
     for (const pr of plan.priorities) {
       const m = PRIORITY_MATCH[pr];
       if (!m) continue;
       if ((m.cats && m.cats.indexOf(p.category) !== -1) ||
-          (m.tags && tags.some((t) => m.tags.indexOf(t) !== -1))) hits++;
+          (m.tags && tags.some((t) => m.tags.indexOf(t) !== -1))) {
+        hits++;
+        if (hits <= 2) reasons.push(pr + ' priority');
+      }
     }
     s += Math.min(2, hits);
   }
-  return s;
+  return { score: s, max, pct: s <= 0 ? 0 : Math.min(100, Math.round((s / max) * 100)), reasons };
+}
+
+export function scorePlace(p, plan) {
+  return scoreBreakdown(p, plan).score;
 }
 
 export const isMatch = (score) => score >= 3;
