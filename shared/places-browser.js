@@ -35,9 +35,10 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 export function mountPlaces(cfg) {
-  const { els, places, plan, onCheckin } = cfg;
+  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd } = cfg;
+  const allPlaces = places.slice();
   const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const state = { area: 'all', cat: 'all' };
+  const state = { area: 'all', cat: 'all', q: '' };
 
   /* ── altitude counter ── */
   let altCurrent = 35000;
@@ -75,10 +76,14 @@ export function mountPlaces(cfg) {
     const timing = p.timing_note
       ? '<div class="row"><span class="k">🕑</span><span>' + esc(p.timing_note) + '</span></div>' : '';
     const tip = p.tip ? '<p class="place-tip">' + esc(p.tip) + '</p>' : '';
+    const searchHay = [p.name, p.area, cat.label, (p.personas || []).join(' '), (p.tags || []).join(' ')]
+      .join(' ').toLowerCase();
+    const disc = p.source === 'google'
+      ? '<span class="disc-badge" title="Discovered via Google Maps — unverified">◔ discovered</span>' : '';
     return (
       '<article class="place-card" data-cat="' + esc(p.category) + '" data-region="' + esc(region(p.area)) +
-        '" style="--cc:' + cat.cc + '">' +
-        (matched ? '<span class="match-badge">✦ ' + bd.pct + '% match</span>' : '') +
+        '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
+        (matched ? '<span class="match-badge">✦ ' + bd.pct + '% match</span>' : disc) +
         '<div class="place-top">' +
           '<span class="orb ' + cat.orb + '"></span>' +
           '<div>' +
@@ -114,10 +119,12 @@ export function mountPlaces(cfg) {
 
   function applyFilters(animate) {
     const shown = [];
+    const q = (state.q || '').trim().toLowerCase();
     els.grid.querySelectorAll('.place-card').forEach((el) => {
       const okArea = state.area === 'all' || el.getAttribute('data-region') === state.area;
       const okCat = state.cat === 'all' || el.getAttribute('data-cat') === state.cat;
-      const show = okArea && okCat;
+      const okQ = !q || (el.getAttribute('data-search') || '').indexOf(q) !== -1;
+      const show = okArea && okCat && okQ;
       el.style.display = show ? '' : 'none';
       if (show) shown.push(el);
     });
@@ -129,10 +136,75 @@ export function mountPlaces(cfg) {
         empty.className = 'places-status places-empty';
         els.grid.after(empty);
       }
-      empty.textContent = 'Nothing in that combo yet — try another filter.';
+      empty.textContent = q
+        ? 'No curated match for “' + q + '”.'
+        : 'Nothing in that combo yet — try another filter.';
     } else if (empty) {
       empty.remove();
     }
+    updateDiscover(shown.length);
+    return shown.length;
+  }
+
+  /* ── Google-Maps fallback: only when the app supplies onGoogleSearch ── */
+  function updateDiscover(localCount) {
+    if (!els.discover || !onGoogleSearch) return;
+    const q = (state.q || '').trim();
+    if (q.length < 3) { els.discover.hidden = true; els.discover.innerHTML = ''; return; }
+    els.discover.hidden = false;
+    if (!els.discover.dataset.q || els.discover.dataset.q !== q) {
+      els.discover.dataset.q = q;
+      els.discover.innerHTML =
+        '<button type="button" class="btn btn-primary disc-search">' +
+        (localCount ? 'Not it? ' : '') + 'Search Google Maps for “' + esc(q) + '” →</button>' +
+        '<div class="disc-results"></div>';
+      els.discover.querySelector('.disc-search').onclick = runGoogleSearch;
+    }
+  }
+
+  async function runGoogleSearch(e) {
+    const btn = e.currentTarget;
+    const q = (state.q || '').trim();
+    const out = els.discover.querySelector('.disc-results');
+    btn.disabled = true;
+    out.innerHTML = '<p class="places-status">Searching Google Maps…</p>';
+    let cands = [];
+    try { cands = await onGoogleSearch(q); } catch (_) { cands = null; }
+    btn.disabled = false;
+    if (!cands) { out.innerHTML = '<p class="places-status">Couldn’t reach Google Maps right now.</p>'; return; }
+    if (!cands.length) { out.innerHTML = '<p class="places-status">Google had nothing for that either.</p>'; return; }
+    out.innerHTML = cands.map((c, i) =>
+      '<div class="disc-card" data-i="' + i + '">' +
+        '<div><div class="place-name">' + esc(c.name) + '</div>' +
+          '<div class="poi-type">' + esc(c.area || 'Bali') + ' · ' + esc(c.category) +
+            (c.rating ? ' · ★ ' + c.rating : '') + '</div></div>' +
+        (c.already
+          ? '<span class="disc-have">already in TripOS</span>'
+          : '<button type="button" class="place-maps disc-add">＋ Add</button>') +
+      '</div>'
+    ).join('');
+    out.querySelectorAll('.disc-add').forEach((b) => {
+      b.onclick = async () => {
+        const c = cands[+b.closest('.disc-card').getAttribute('data-i')];
+        b.disabled = true; b.textContent = 'adding…';
+        let place = null;
+        try { place = await onGoogleAdd(c); } catch (_) { place = null; }
+        if (!place) { b.disabled = false; b.textContent = '⚠ retry'; return; }
+        b.outerHTML = '<span class="disc-have">✓ added</span>';
+        injectPlace(place);
+      };
+    });
+  }
+
+  /* drop a freshly-discovered place into the live grid, highlighted */
+  function injectPlace(place) {
+    allPlaces.unshift(place);
+    const bd = plan ? scoreBreakdown(place, plan) : null;
+    els.grid.insertAdjacentHTML('afterbegin', card(place, bd && isMatch(bd.score) ? bd : null));
+    const el = els.grid.firstElementChild;
+    el.classList.add('just-added');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (onCheckin) bindCheckin();
   }
 
   function buildAreaCards(regions) {
@@ -211,14 +283,15 @@ export function mountPlaces(cfg) {
   els.grid.innerHTML = list.map((p) => card(p, matchedMap.get(p) || null)).join('');
   dropIn(Array.from(els.grid.querySelectorAll('.place-card')));
 
-  if (onCheckin) {
+  function bindCheckin() {
     els.grid.onclick = (e) => {
       const btn = e.target.closest('.place-here');
       if (!btn) return;
-      const p = places.find((x) => String(x.id) === btn.getAttribute('data-place-id'));
+      const p = allPlaces.find((x) => String(x.id) === btn.getAttribute('data-place-id'));
       if (p) onCheckin(p, btn);
     };
   }
+  if (onCheckin) bindCheckin();
 
   const regions = [];
   places.forEach((p) => { const r = region(p.area); if (regions.indexOf(r) === -1) regions.push(r); });
@@ -231,4 +304,13 @@ export function mountPlaces(cfg) {
 
   buildAreaCards(regions);
   buildLegend(cats);
+
+  /* ── search input: instant local filter (debounced) ── */
+  if (els.search) {
+    let t = null;
+    els.search.oninput = () => {
+      clearTimeout(t);
+      t = setTimeout(() => { state.q = els.search.value; applyFilters(true); }, 180);
+    };
+  }
 }

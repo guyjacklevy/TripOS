@@ -988,6 +988,65 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
 }
 .sec-context strong, .sec-context em { color: var(--tx); font-style: normal; }
 
+/* wave 4a: places search + Google-Maps discovery */
+.place-search {
+  width: 100%;
+  text-align: left;
+  font-size: 14.5px;
+  padding: 12px 15px;
+  margin: 6px 0 4px;
+}
+.place-search::placeholder { color: var(--dim); }
+.disc-badge {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--am);
+  background: rgba(255, 180, 84, 0.08);
+  border: 1px solid rgba(255, 180, 84, 0.3);
+  border-radius: 99px;
+  padding: 3px 9px;
+}
+.discover { margin: 6px 0 14px; }
+.disc-search {
+  width: 100%;
+  font-size: 14px;
+  text-align: center;
+}
+.disc-results { display: grid; gap: 8px; margin-top: 10px; }
+.disc-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.disc-card .place-name { font-size: 14.5px; }
+.disc-add { flex-shrink: 0; color: var(--teal); }
+.disc-have {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--teal);
+}
+.place-card.just-added {
+  animation: justAdded 2.2s ease-out;
+}
+@keyframes justAdded {
+  0% { box-shadow: 0 0 0 2px var(--teal), 0 4px 24px rgba(0, 0, 0, 0.4); }
+  100% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--cc) 6%, transparent), 0 4px 24px rgba(0, 0, 0, 0.4); }
+}
+@media (prefers-reduced-motion: reduce) { .place-card.just-added { animation: none; } }
+
 /* wave 2: match receipts, lock upgrade, spend loop, install */
 .match-why {
   font-family: var(--mono);

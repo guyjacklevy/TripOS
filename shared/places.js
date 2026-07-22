@@ -37,7 +37,8 @@ const statusEl = document.getElementById('placesStatus');
         catBar: document.getElementById('placeFilters'),
         status: statusEl,
         grid: document.getElementById('placesGrid'),
-        bannerHost: document.getElementById('placeAreas')
+        bannerHost: document.getElementById('placeAreas'),
+        search: document.getElementById('placeSearch')
       },
       places: data,
       plan: readPlan()

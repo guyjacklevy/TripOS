@@ -560,12 +560,31 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         catBar: $('appCatBar'),
         status: $('appPlacesStatus'),
         grid: $('appPlacesGrid'),
-        bannerHost: $('appAreaBar')
+        bannerHost: $('appAreaBar'),
+        search: $('appPlaceSearch'),
+        discover: $('appDiscover')
       },
       places,
       plan: planFromTrip(trip),
-      onCheckin: checkinAt
+      onCheckin: checkinAt,
+      onGoogleSearch: googleSearch,
+      onGoogleAdd: googleAdd
     });
+  }
+
+  /* Wave 4: the edge function — search Google Maps, add to our data.
+     Key never touches the client; supabase-js sends the user's JWT. */
+  async function googleSearch(query) {
+    const { data, error } = await sb.functions.invoke('places-search', { body: { action: 'search', query } });
+    if (error) { console.error('[TripOS] google search failed:', error.message); return null; }
+    if (data && data.error) { console.error('[TripOS] search:', data.error); return data.error === 'search-not-configured' ? null : []; }
+    return (data && data.candidates) || [];
+  }
+  async function googleAdd(candidate) {
+    const { data, error } = await sb.functions.invoke('places-search', { body: { action: 'add', place_id: candidate.google_place_id } });
+    if (error) { console.error('[TripOS] add place failed:', error.message); return null; }
+    if (data && data.error) { console.error('[TripOS] add:', data.error); return null; }
+    return (data && data.place) || null;
   }
 
   /* ─── readiness + packing (slice 6) ───
