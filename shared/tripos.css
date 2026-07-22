@@ -274,6 +274,17 @@ section { padding: 56px 0; }
 .mini-foot { display: flex; gap: 14px; align-items: center; margin-top: auto; }
 .mini-foot .place-maps { font-size: 12px; }
 .poi-mini .match-badge { font-size: 10px; }
+/* the whole mini card is tappable — "more ›" makes that legible on phones */
+.poi-mini { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.poi-mini:active { transform: scale(0.98); }
+.mini-more {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--teal);
+  white-space: nowrap;
+}
 
 /* see-all detail view — full cards for one category */
 .cat-detail { display: flex; flex-direction: column; gap: 16px; }

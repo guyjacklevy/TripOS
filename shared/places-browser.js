@@ -100,7 +100,7 @@ export function mountPlaces(cfg) {
       ? '<span class="disc-badge" title="Discovered via Google Maps — unverified">◔ discovered</span>' : '';
     return (
       '<article class="place-card" data-cat="' + esc(p.category) + '" data-region="' + esc(region(p.area)) +
-        '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
+        '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
         (matched ? '<span class="match-badge">✦ ' + bd.pct + '% match</span>' : disc) +
         '<div class="place-top">' +
           '<span class="orb ' + cat.orb + '"></span>' +
@@ -164,7 +164,7 @@ export function mountPlaces(cfg) {
           '</div>' +
         '</div>' +
         (p.why ? '<p class="place-why mini-why">' + esc(p.why) + '</p>' : '') +
-        (here || maps ? '<div class="mini-foot">' + here + maps + '</div>' : '') +
+        '<div class="mini-foot">' + here + maps + '<span class="mini-more">more ›</span></div>' +
       '</article>'
     );
   }
@@ -207,8 +207,9 @@ export function mountPlaces(cfg) {
     });
   }
 
-  /* see-all view — full cards for a single category, with a back control */
-  function renderCatGrid(catKey) {
+  /* see-all view — full cards for a single category, with a back control.
+     focusId (optional): scroll to + highlight that place's full card. */
+  function renderCatGrid(catKey, focusId) {
     const meta = CAT[catKey] || { cc: 'var(--teal)', label: catKey };
     const cards = list.filter((p) => p.category === catKey);
     els.grid.innerHTML = '<div class="cat-detail">' +
@@ -218,6 +219,13 @@ export function mountPlaces(cfg) {
     '</div>';
     dropIn(Array.from(els.grid.querySelectorAll('.place-card')));
     els.grid.querySelector('.row-back').onclick = () => { state.view = 'rows'; renderRows(); applyFilters(false); };
+    if (focusId) {
+      const el = els.grid.querySelector('.place-card[data-id="' + CSS.escape(String(focusId)) + '"]');
+      if (el) {
+        el.classList.add('just-added');
+        requestAnimationFrame(() => el.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'center' }));
+      }
+    }
   }
 
   function applyFilters(animate) {
@@ -378,15 +386,24 @@ export function mountPlaces(cfg) {
 
   renderRows();
 
-  function bindCheckin() {
-    els.grid.onclick = (e) => {
-      const btn = e.target.closest('.place-here');
-      if (!btn) return;
+  /* one delegated handler on the grid, survives every re-render:
+     Maps links pass through · "I'm here" checks in · any other tap on a
+     carousel card opens its category detail, scrolled to that place */
+  els.grid.onclick = (e) => {
+    if (e.target.closest('a')) return;
+    const btn = e.target.closest('.place-here');
+    if (btn) {
       const p = allPlaces.find((x) => String(x.id) === btn.getAttribute('data-place-id'));
-      if (p) onCheckin(p, btn);
-    };
-  }
-  if (onCheckin) bindCheckin();
+      if (p && onCheckin) onCheckin(p, btn);
+      return;
+    }
+    const mini = e.target.closest('.poi-mini');
+    if (mini) {
+      state.view = mini.getAttribute('data-cat');
+      renderCatGrid(state.view, mini.getAttribute('data-id'));
+      applyFilters(false);
+    }
+  };
 
   const regions = [];
   places.forEach((p) => { const r = region(p.area); if (regions.indexOf(r) === -1) regions.push(r); });
