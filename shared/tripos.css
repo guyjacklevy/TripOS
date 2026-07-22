@@ -1775,6 +1775,84 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
   color: var(--dim);
 }
 
+/* ═══ L6 · THE CHAOS BOARD ═══════════════════════════════════════════
+   THE ONE EXCEPTION: every .artifact below is DELIBERATELY off-brand —
+   white/grey backgrounds, system-ui, hard shadows, emoji. That IS the
+   point: the clutter of the world before the brief. These styles are
+   scoped to .chaos-* / .artifact and must NEVER be reused elsewhere. */
+.chaos-wrap { overflow: hidden; }
+.chaos-board { position: relative; height: 400px; max-width: 420px; margin: 0 auto; }
+.artifact {
+  position: absolute;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: #ffffff;
+  color: #1a1a1f;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5), 0 2px 5px rgba(0, 0, 0, 0.3);
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.35;
+  transform: rotate(var(--r, 0deg));
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+/* one-shot "gravity": artifacts settle toward the brief as the section reveals */
+html.js .chaos-wrap:not(.in) .artifact { transform: translateY(-7px) rotate(calc(var(--r, 0deg) * 1.5)) scale(1.05); }
+html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
+
+.art-tabs   { top: 0;      left: 0;    width: 84%; z-index: 3; --r: -4deg; }
+.art-sheet  { top: 76px;   right: 0;   width: 150px; z-index: 2; --r: 4deg; filter: blur(0.4px); }
+.art-ig     { top: 152px;  left: 0;    width: 150px; z-index: 4; --r: -6deg; }
+.art-tiktok { top: 118px;  right: 5%;  width: 132px; z-index: 2; --r: 6deg; filter: blur(0.4px); }
+.art-wa     { bottom: 4px; left: 13%;  width: 184px; z-index: 5; --r: -3deg; }
+
+.art-tabs { background: #e8e8ee; padding: 6px 6px 0; }
+.tab-strip { display: flex; gap: 4px; align-items: flex-end; overflow: hidden; }
+.tab { background: #fff; border-radius: 6px 6px 0 0; padding: 5px 9px; font-size: 10.5px; white-space: nowrap; color: #555; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
+.tab.active { color: #111; font-weight: 600; }
+.tab-plus { font-size: 10px; color: #999; padding: 0 2px 5px; white-space: nowrap; }
+
+.art-sheet { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 1px; background: #c7c7d0; padding: 1px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.sheet-cell { background: #fff; padding: 4px 6px; font-size: 10px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sheet-h { background: #f0f0f4; font-weight: 600; text-align: center; color: #999; }
+.sheet-cell.err { color: #c0392b; font-weight: 700; }
+
+.art-ig { padding: 11px; }
+.ig-top { font-size: 11px; font-weight: 600; margin-bottom: 7px; }
+.ig-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+.ig-grid i { aspect-ratio: 1; border-radius: 3px; display: block; background: linear-gradient(135deg, #cfd8dc, #a9b4ba); }
+.ig-grid i:nth-child(2) { background: linear-gradient(135deg, #f3c1a9, #d99873); }
+.ig-grid i:nth-child(3) { background: linear-gradient(135deg, #bcd6c2, #8fb397); }
+.ig-grid i:nth-child(5) { background: linear-gradient(135deg, #e6c6d6, #c295ac); }
+.ig-count { font-size: 10px; color: #999; margin-top: 7px; }
+
+.art-tiktok { background: #111116; color: #fff; }
+.tt-cap { font-size: 11px; font-weight: 600; line-height: 1.3; }
+.tt-meta { font-size: 10px; color: #9a9aa5; margin-top: 7px; }
+
+.art-wa { background: #e4ddd4; padding: 10px 10px 8px; }
+.wa-bubble { background: #fff; border-radius: 9px; padding: 6px 9px; font-size: 11px; margin-bottom: 5px; max-width: 84%; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.14); }
+.wa-me { background: #dcf8c6; margin-left: auto; }
+.wa-time { font-size: 9px; color: #6a7078; text-align: right; }
+
+.chaos-caption { display: flex; align-items: center; justify-content: center; gap: 13px; margin: 26px 0 20px; font-family: var(--mono); font-size: 13px; }
+.cc-before { color: var(--dim); text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, 0.28); letter-spacing: 0.04em; }
+.cc-arrow { color: var(--teal); font-style: normal; }
+.cc-after { color: var(--teal); text-transform: uppercase; letter-spacing: 0.16em; font-weight: 600; }
+
+.brief-card { border-left: 3px solid var(--teal); max-width: 440px; margin: 0 auto; }
+.brief-card h3 { margin: 12px 0 8px; font-size: 19px; }
+.brief-card p { color: var(--mut); font-size: 14px; line-height: 1.55; }
+
+/* ═══ L7 · INBOUND TRANSMISSION ═══ the system speaking, not a founder */
+.transmission { text-align: center; padding-top: 42px; }
+.tx-eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; color: var(--dim); margin-bottom: 18px; }
+.tx-line { font-family: var(--mono); font-size: clamp(20px, 5.2vw, 24px); color: var(--teal); font-weight: 500; letter-spacing: 0.005em; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .chaos-wrap:not(.in) .artifact { transform: rotate(var(--r, 0deg)); }
+  .artifact { transition: none; }
+}
+
 /* ─── boarding pass ─── */
 .bpass {
   display: flex;

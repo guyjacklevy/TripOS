@@ -111,25 +111,49 @@
         <h2>You're leaving all of this on the ground.</h2>
         <p>47 Instagram saves. 3 Facebook group screenshots. A half-finished spreadsheet. Sound familiar?</p>
       </div>
-      <div class="card pain-card reveal">
-        <span class="orb planet-amber"></span>
-        <div>
-          <h3>Your research is everywhere</h3>
-          <p>Instagram, TikTok, Reddit, Facebook groups, six open tabs. Hundreds of fragments, zero picture. Nobody just tells you what this place is and how it works.</p>
+      <!-- L6 · THE CHAOS BOARD — the ONLY place in the product where off-brand
+           styling is permitted (light backgrounds, system-ui, hard shadows,
+           emoji): it IS the clutter of the world before. All styles are scoped
+           under .chaos-* / .artifact in tripos.css — never let them leak. -->
+      <div class="chaos-wrap reveal">
+        <div class="chaos-board" aria-hidden="true">
+          <div class="artifact art-tabs">
+            <div class="tab-strip">
+              <span class="tab">Best Bali cafés 2026</span>
+              <span class="tab">Uluwatu villa price</span>
+              <span class="tab">B211A visa how-to</span>
+              <span class="tab active">bingin warung??</span>
+              <span class="tab-plus">+43</span>
+            </div>
+          </div>
+          <div class="artifact art-sheet">
+            <div class="sheet-cell sheet-h">A</div><div class="sheet-cell sheet-h">B</div><div class="sheet-cell sheet-h">C</div>
+            <div class="sheet-cell">villa</div><div class="sheet-cell">8.5M?</div><div class="sheet-cell err">#REF!</div>
+            <div class="sheet-cell">scooter</div><div class="sheet-cell">1.2M?</div><div class="sheet-cell">=B2*30</div>
+            <div class="sheet-cell">total</div><div class="sheet-cell err">#DIV/0!</div><div class="sheet-cell"></div>
+          </div>
+          <div class="artifact art-ig">
+            <div class="ig-top">📌 Bali 2026 · Saved</div>
+            <div class="ig-grid"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="ig-count">214 saved</div>
+          </div>
+          <div class="artifact art-tiktok">
+            <div class="tt-cap">10 SECRET Bali spots 🤫</div>
+            <div class="tt-meta">🔖 1.2M · ▶ 8.4M</div>
+          </div>
+          <div class="artifact art-wa">
+            <div class="wa-bubble">wait which beach was it?? 😭</div>
+            <div class="wa-bubble wa-me">the one with the swing i think</div>
+            <div class="wa-time">2:14 AM · read</div>
+          </div>
         </div>
-      </div>
-      <div class="card pain-card reveal">
-        <span class="orb planet-pink"></span>
-        <div>
-          <h3>You don't know what anything costs</h3>
-          <p>Is 350k fair for a massage? Is 8.5M a good deal on a villa? Without local benchmarks you overpay for weeks — and can't answer the only question that matters: how long can I stay?</p>
-        </div>
-      </div>
-      <div class="card pain-card reveal">
-        <span class="orb planet-purple"></span>
-        <div>
-          <h3>The great place amnesia</h3>
-          <p>Someone tells you about a perfect cliff café in Bingin. Two days later it's gone — a blurry memory in a sea of screenshots and half-saved pins.</p>
+
+        <div class="chaos-caption"><span class="cc-before">47 tabs</span><em class="cc-arrow">→</em><span class="cc-after">one brief</span></div>
+
+        <div class="card brief-card">
+          <div class="intel-bar"><span class="pulse-dot"></span>Your Bali brief</div>
+          <h3>One place. Everything decided.</h3>
+          <p>Where to stay, what a month really costs, the spots worth your time — matched to you, on one calm screen. No tabs. No screenshots. No “which beach was it.”</p>
         </div>
       </div>
     </section>
@@ -201,12 +225,11 @@
         </div>
       </div>
 
-      <section class="manifesto reveal" style="padding-bottom:0">
-        <blockquote>
-          “Slow travel isn't about spending less.<br>
-          It's about <span class="hl">knowing what your life costs</span> — so you can stay as long as the ocean keeps calling.”
-        </blockquote>
-        <cite>— The slowmad manifesto</cite>
+      <!-- L7 · inbound transmission — the system speaking, not a founder.
+           Mono, teal, terse, second person. No quote marks, no attribution. -->
+      <section class="transmission reveal" style="padding-bottom:0">
+        <div class="tx-eyebrow">// INBOUND · DPS</div>
+        <p class="tx-line">Your plan lands before you do.</p>
       </section>
     </section>
 
