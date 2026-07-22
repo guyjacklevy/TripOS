@@ -134,10 +134,33 @@
     </div>
 
     <main class="panels">
-      <!-- TODAY — the concierge (slice 3 · greeting first per Guy) -->
+      <!-- TODAY — the concierge (orbit dial instrument per WAVE3_GLOBE_SPEC) -->
       <section class="panel" id="panel-today">
-        <h2 class="panel-h" id="todayGreet" style="margin-top:14px">Today</h2>
-        <div class="inst-strip" id="todayStrip" style="padding-top:0">— · — · —</div>
+        <div class="today-head">
+          <div class="orbit-dial" id="orbitDial" data-phase="day" style="--od-angle:210deg">
+            <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
+              <defs>
+                <radialGradient id="odSphere" cx="38%" cy="32%" r="75%">
+                  <stop offset="0%" stop-color="#1e2746"/>
+                  <stop offset="70%" stop-color="#101528"/>
+                  <stop offset="100%" stop-color="#0a0a14"/>
+                </radialGradient>
+              </defs>
+              <circle cx="24" cy="24" r="20" fill="url(#odSphere)"/>
+              <path d="M12 27 q4-3 8-2 t8 0 q3 0 5 2" stroke="rgba(255,255,255,0.16)" stroke-width="2" stroke-linecap="round" fill="none"/>
+              <path d="M15 20 q3-1.5 6-1" stroke="rgba(255,255,255,0.10)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+              <g class="od-night"><path d="M24 4 a20 20 0 0 1 0 40 z" fill="rgba(4,5,11,0.78)"/></g>
+              <circle class="od-rim" cx="24" cy="24" r="20.75" fill="none" stroke-width="1.5"/>
+              <circle class="od-pin" cx="31" cy="28" r="2.2"/>
+              <circle class="od-ping" cx="31" cy="28" r="2.2" fill="none" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="today-head-text">
+            <div class="inst-strip" id="todayStrip" style="padding:0">— · — · —</div>
+            <div class="inst-strip" id="todayStrip2" style="padding:0">— · —</div>
+          </div>
+        </div>
+        <h2 class="panel-h" id="todayGreet">Today</h2>
         <div class="places-grid" id="nowGrid"></div>
         <a class="fuel-strip" href="#pulse" id="fuelStrip" hidden></a>
         <a class="fuel-strip ready-nudge" href="#you" id="readyNudge" hidden></a>

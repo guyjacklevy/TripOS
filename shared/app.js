@@ -52,7 +52,7 @@ function passengerLine(title, fullName) {
  * dismissed forever by the first interaction with that tab. */
 let placesCount = 52;
 const BOOT_ANCHOR = {
-  today: () => $('todayStrip'),
+  today: () => document.querySelector('#panel-today .today-head'),
   places: () => document.querySelector('#panel-places .coord-display'),
   pulse: () => document.querySelector('#panel-pulse .inst-strip'),
   you: () => document.querySelector('#panel-you .inst-strip')
@@ -191,21 +191,74 @@ const planFromTrip = (trip) => (trip && trip.vibe ? {
   party_detail: trip.party_detail || null, priorities: trip.priorities || []
 } : null);
 
+/* Bali runs on WITA (UTC+8, no DST). The app is a Bali destination brain,
+   so the dial/timeline read Bali local time regardless of the device. */
+function baliNow() {
+  try { return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Makassar' })); }
+  catch (_) { return new Date(); }
+}
+
+/* THE shared clock (WAVE3_GLOBE_SPEC §3 + TODAY_TIMELINE §2) — computed once,
+   consumed by both the orbit dial and (next) the timeline. Never compute twice. */
+const DAY_ABBR = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const PHASE_WORD = { dawn: 'DAWN', day: 'DAYLIGHT', golden: 'GOLDEN HOUR', dusk: 'DUSK', night: 'NIGHT' };
+/* literal hex per phase — set inline so stroke/fill can actually fade (Rachel's table) */
+const PHASE_COLOR = { dawn: '#ffb454', day: '#3dffd0', golden: '#ffb454', dusk: '#a78bfa', night: '#4cc9f0' };
+function dayState(d) {
+  const h = d.getHours(), m = d.getMinutes(), mins = h * 60 + m;
+  let phase;
+  if (mins >= 300 && mins < 480) phase = 'dawn';
+  else if (mins >= 480 && mins < 960) phase = 'day';
+  else if (mins >= 960 && mins < 1110) phase = 'golden';
+  else if (mins >= 1110 && mins < 1230) phase = 'dusk';
+  else phase = 'night';
+  let rail;
+  if (mins >= 300 && mins < 660) rail = 'morning';
+  else if (mins >= 660 && mins < 960) rail = 'midday';
+  else if (mins >= 960 && mins < 1140) rail = 'golden';
+  else rail = 'night';
+  /* terminator angle: --od-angle = mins/4 + CAL. CAL=30 puts the pin (φ≈120°,
+     lower-right) at the terminator entering light at 06:00 and dark at 18:00;
+     verified against noon (lit) and midnight (dark). */
+  const angle = mins / 4 + 30;
+  return { h, m, mins, day: d.getDay(), phase, rail, angle };
+}
+
+function tripDayCounter(trip) {
+  if (!trip || !trip.created_at) return null;
+  const n = Math.max(1, Math.floor((Date.now() - new Date(trip.created_at).getTime()) / 86400000) + 1);
+  return trip.duration_days ? 'DAY ' + n + '/' + trip.duration_days : 'DAY ' + n;
+}
+
 function updateStrip(trip, firstName, now) {
-  const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-  const hh = String(now.getHours()).padStart(2, '0');
-  const mm = String(now.getMinutes()).padStart(2, '0');
-  const glyph = (now.getHours() >= 6 && now.getHours() < 20) ? '☀' : '☾';
+  const s = dayState(now);
+  const hh = String(s.h).padStart(2, '0');
+  const mm = String(s.m).padStart(2, '0');
   const base = trip && trip.vibe ? (HOME_AREA[trip.vibe] || 'Bali').split(' ')[0].toUpperCase() : 'BALI';
-  $('todayStrip').textContent = glyph + ' ' + days[now.getDay()] + ' · ' + hh + ':' + mm + ' · ' + base + ' BASE';
-  const h = now.getHours();
-  const blockWord = h < 11 ? 'Morning' : h < 16 ? 'Midday' : h < 20 ? 'Golden hour soon' : 'Night mode';
+  const dayc = tripDayCounter(trip);
+  $('todayStrip').textContent = DAY_ABBR[s.day] + ' · ' + hh + ':' + mm + (dayc ? ' · ' + dayc : '');
+  $('todayStrip2').textContent = base + ' BASE · ' + PHASE_WORD[s.phase];
+  const blockWord = s.rail === 'morning' ? 'Morning' : s.rail === 'midday' ? 'Midday'
+    : s.rail === 'golden' ? 'Golden hour' : 'Night';
   $('todayGreet').textContent = blockWord + (firstName ? ', ' + firstName : '') + '.';
+  /* drive the orbit dial: phase → glow (CSS), literal colour (JS), terminator angle */
+  const dial = $('orbitDial');
+  if (dial) {
+    dial.dataset.phase = s.phase;
+    dial.style.setProperty('--od-angle', s.angle.toFixed(1) + 'deg');
+    const c = PHASE_COLOR[s.phase];
+    const rim = dial.querySelector('.od-rim');
+    const pin = dial.querySelector('.od-pin');
+    const ping = dial.querySelector('.od-ping');
+    if (rim) rim.style.stroke = c;
+    if (pin) { pin.style.fill = c; pin.style.filter = 'drop-shadow(0 0 4px ' + c + ')'; }
+    if (ping) ping.style.stroke = c;
+  }
 }
 
 /* the concierge: NOW cards (time+day aware) + coming up */
 function renderToday(trip, firstName, places, dateOpt) {
-  const now = dateOpt || new Date();
+  const now = dateOpt || baliNow();
   updateStrip(trip, firstName, now);
   if (!places || !places.length) return;
   const plan = planFromTrip(trip);
@@ -369,7 +422,8 @@ function show(which) {
 
 window.__appDebug = {
   show, setTab, renderBrief, renderPulse, renderPace, renderCats,
-  renderRecent, renderToday, setPassenger, passengerLine, mountPlaces
+  renderRecent, renderToday, setPassenger, passengerLine, mountPlaces,
+  updateStrip, dayState, baliNow
 };
 
 /* ─── live wiring ─── */
@@ -403,10 +457,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   let lastBlock = null;
   function startClock() {
     if (clockTimer) return;
-    lastBlock = timeBlock(new Date().getHours());
+    lastBlock = timeBlock(baliNow().getHours());
     clockTimer = setInterval(() => {
       if (!todayCtx) return;
-      const now = new Date();
+      const now = baliNow();
       updateStrip(todayCtx.trip, todayCtx.name, now);
       const block = timeBlock(now.getHours());
       if (block !== lastBlock) {
@@ -866,7 +920,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     renderBrief(trip);
     renderPresets();
     setPassenger(profile && profile.title, profile && profile.full_name);
-    updateStrip(trip, greetName(), new Date());
+    updateStrip(trip, greetName(), baliNow());
 
     const { data: places } = await sb.from('curated_places').select('*').eq('destination', 'bali');
     placesCount = (places || []).length || placesCount;
