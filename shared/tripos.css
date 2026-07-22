@@ -239,9 +239,56 @@ section { padding: 56px 0; }
   border-color: transparent;
 }
 
-.places-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-@media (min-width: 620px) { .places-grid { grid-template-columns: 1fr 1fr; } }
-.places-grid .place-card { min-height: 140px; }
+.places-grid { display: block; }
+
+/* ── Wave 4 · category carousels (2a): rows ARE the categories ── */
+.cat-rows { display: flex; flex-direction: column; gap: 26px; }
+.plb-row { min-width: 0; }
+.row-head { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; padding: 0 2px; }
+.row-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cc); box-shadow: 0 0 8px var(--cc); flex-shrink: 0; }
+.row-name { font-family: var(--mono); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--tx); font-weight: 700; }
+.row-count { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.row-matched {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--teal); border: 1px solid rgba(61, 255, 208, 0.3); border-radius: 99px; padding: 2px 7px;
+}
+.row-all {
+  margin-left: auto; background: none; border: none; cursor: pointer;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--teal); padding: 4px 2px;
+}
+.row-all:hover { color: var(--tx); }
+.carousel {
+  display: flex; gap: 14px; overflow-x: auto;
+  scroll-snap-type: x mandatory; scroll-padding-left: 2px;
+  padding: 4px 40px 8px 2px; margin: -4px 0 -8px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.carousel::-webkit-scrollbar { display: none; }
+.carousel .poi-mini { flex: 0 0 240px; width: 240px; scroll-snap-align: start; min-height: 168px; padding: 16px; gap: 8px; }
+.poi-mini .place-top .orb { width: 28px; height: 28px; }
+.poi-mini .place-name { font-size: 15px; }
+.mini-why {
+  font-size: 13px; color: var(--mut);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.mini-foot { display: flex; gap: 14px; align-items: center; margin-top: auto; }
+.mini-foot .place-maps { font-size: 12px; }
+.poi-mini .match-badge { font-size: 10px; }
+
+/* see-all detail view — full cards for one category */
+.cat-detail { display: flex; flex-direction: column; gap: 16px; }
+.row-back {
+  align-self: flex-start; background: none; border: 1px solid var(--line); border-radius: 99px; cursor: pointer;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--mut); padding: 6px 14px;
+}
+.row-back:hover { color: var(--tx); border-color: var(--cc); }
+.cat-detail-h {
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--mono); font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--tx);
+}
+.poi-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 620px) { .poi-grid { grid-template-columns: 1fr 1fr; } }
+.poi-grid .place-card { min-height: 140px; }
 
 .place-card {
   background: var(--glass);

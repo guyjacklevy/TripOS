@@ -38,7 +38,10 @@ export function mountPlaces(cfg) {
   const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd } = cfg;
   const allPlaces = places.slice();
   const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const state = { area: 'all', cat: 'all', q: '' };
+  const state = { area: 'all', cat: 'all', q: '', view: 'rows' };
+  /* view: 'rows' = Netflix category carousels · '<category>' = single-category see-all grid */
+  let list = places;            // brief-sorted place list (matches float to top)
+  const matchedMap = new Map(); // place → scoreBreakdown, matches only
 
   /* ── persona dot colours (2b): 6 filled hues + 2 ring dots, zero new tokens ── */
   const PERSONA_DOT = {
@@ -132,16 +135,108 @@ export function mountPlaces(cfg) {
     });
   }
 
+  /* ── compact carousel card (2a): name · area · 2-line why · match badge.
+     Same data-* attrs + searchHay as the full card, so applyFilters treats
+     mini and full cards identically. Cost/tip/timing/personas are cut. ── */
+  function miniCard(p, bd) {
+    const matched = !!bd;
+    const cat = CAT[p.category] || { orb: 'planet-teal', cc: 'var(--teal)', icon: '📍', label: p.category };
+    const here = onCheckin
+      ? '<button type="button" class="place-maps place-here" data-place-id="' + esc(p.id) + '">📍 I’m here</button>'
+      : '';
+    const maps = p.maps_query
+      ? '<a class="place-maps" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' +
+        encodeURIComponent(p.maps_query) + '">Maps ↗</a>' : '';
+    const searchHay = [p.name, p.area, cat.label, (p.personas || []).join(' '), (p.tags || []).join(' ')]
+      .join(' ').toLowerCase();
+    const disc = p.source === 'google'
+      ? '<span class="disc-badge" title="Discovered via Google Maps — unverified">◔ discovered</span>' : '';
+    return (
+      '<article class="place-card poi-mini" data-cat="' + esc(p.category) + '" data-region="' + esc(region(p.area)) +
+        '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
+        (matched ? '<span class="match-badge">✦ ' + bd.pct + '%</span>' : disc) +
+        '<div class="place-top">' +
+          '<span class="orb ' + cat.orb + '"></span>' +
+          '<div>' +
+            '<div class="place-name">' + esc(p.name) +
+              (p.verified ? '<span class="place-verified" title="Verified">✓</span>' : '') + '</div>' +
+            '<div class="poi-type">' + cat.icon + ' ' + esc(p.area) + '</div>' +
+          '</div>' +
+        '</div>' +
+        (p.why ? '<p class="place-why mini-why">' + esc(p.why) + '</p>' : '') +
+        (here || maps ? '<div class="mini-foot">' + here + maps + '</div>' : '') +
+      '</article>'
+    );
+  }
+
+  /* group brief-sorted list by category; matched categories float to top
+     (by best in-category score), the rest by descending count */
+  function catGroups() {
+    const byCat = new Map();
+    list.forEach((p) => { if (!byCat.has(p.category)) byCat.set(p.category, []); byCat.get(p.category).push(p); });
+    const groups = [];
+    byCat.forEach((cards, catKey) => {
+      let matched = false, best = -1;
+      cards.forEach((p) => { const bd = matchedMap.get(p); if (bd) { matched = true; if (bd.score > best) best = bd.score; } });
+      groups.push({ cat: catKey, cards, count: cards.length, matched, best });
+    });
+    groups.sort((a, b) =>
+      (a.matched === b.matched ? 0 : (a.matched ? -1 : 1)) ||
+      (a.matched ? b.best - a.best : b.count - a.count));
+    return groups;
+  }
+
+  /* rows view — the category carousels ARE the categories (legend retired) */
+  function renderRows() {
+    els.grid.innerHTML = '<div class="cat-rows">' + catGroups().map((g) => {
+      const meta = CAT[g.cat] || { cc: 'var(--teal)', label: g.cat };
+      return '<div class="plb-row" data-cat="' + esc(g.cat) + '" style="--cc:' + meta.cc + '">' +
+        '<header class="row-head">' +
+          '<span class="row-dot"></span>' +
+          '<span class="row-name">' + esc(meta.label) + '</span>' +
+          '<span class="row-count">' + g.count + '</span>' +
+          (g.matched ? '<span class="row-matched">✦ matched</span>' : '') +
+          '<button type="button" class="row-all" data-cat="' + esc(g.cat) + '">see all →</button>' +
+        '</header>' +
+        '<div class="carousel">' + g.cards.map((p) => miniCard(p, matchedMap.get(p) || null)).join('') + '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+    dropIn(Array.from(els.grid.querySelectorAll('.place-card')));
+    els.grid.querySelectorAll('.row-all').forEach((b) => {
+      b.onclick = () => { state.view = b.getAttribute('data-cat'); renderCatGrid(state.view); applyFilters(false); };
+    });
+  }
+
+  /* see-all view — full cards for a single category, with a back control */
+  function renderCatGrid(catKey) {
+    const meta = CAT[catKey] || { cc: 'var(--teal)', label: catKey };
+    const cards = list.filter((p) => p.category === catKey);
+    els.grid.innerHTML = '<div class="cat-detail">' +
+      '<button type="button" class="row-back">← all categories</button>' +
+      '<h3 class="cat-detail-h" style="--cc:' + meta.cc + '"><span class="row-dot"></span>' + esc(meta.label) + '</h3>' +
+      '<div class="poi-grid">' + cards.map((p) => card(p, matchedMap.get(p) || null)).join('') + '</div>' +
+    '</div>';
+    dropIn(Array.from(els.grid.querySelectorAll('.place-card')));
+    els.grid.querySelector('.row-back').onclick = () => { state.view = 'rows'; renderRows(); applyFilters(false); };
+  }
+
   function applyFilters(animate) {
     const shown = [];
     const q = (state.q || '').trim().toLowerCase();
     els.grid.querySelectorAll('.place-card').forEach((el) => {
       const okArea = state.area === 'all' || el.getAttribute('data-region') === state.area;
-      const okCat = state.cat === 'all' || el.getAttribute('data-cat') === state.cat;
       const okQ = !q || (el.getAttribute('data-search') || '').indexOf(q) !== -1;
-      const show = okArea && okCat && okQ;
+      const show = okArea && okQ; /* no category filter — rows ARE the categories */
       el.style.display = show ? '' : 'none';
       if (show) shown.push(el);
+    });
+    /* collapse empty category rows + keep the row count honest */
+    els.grid.querySelectorAll('.plb-row').forEach((row) => {
+      let vis = 0;
+      row.querySelectorAll('.place-card').forEach((c) => { if (c.style.display !== 'none') vis++; });
+      row.style.display = vis ? '' : 'none';
+      const cnt = row.querySelector('.row-count');
+      if (cnt) cnt.textContent = vis;
     });
     if (animate) dropIn(shown);
     let empty = els.grid.parentNode.querySelector('.places-empty');
@@ -153,7 +248,7 @@ export function mountPlaces(cfg) {
       }
       empty.textContent = q
         ? 'No curated match for “' + q + '”.'
-        : 'Nothing in that combo yet — try another filter.';
+        : 'Nothing in that area yet — try another.';
     } else if (empty) {
       empty.remove();
     }
@@ -211,15 +306,20 @@ export function mountPlaces(cfg) {
     });
   }
 
-  /* drop a freshly-discovered place into the live grid, highlighted */
+  /* drop a freshly-discovered place into its category row, highlighted */
   function injectPlace(place) {
     allPlaces.unshift(place);
     const bd = plan ? scoreBreakdown(place, plan) : null;
-    els.grid.insertAdjacentHTML('afterbegin', card(place, bd && isMatch(bd.score) ? bd : null));
-    const el = els.grid.firstElementChild;
-    el.classList.add('just-added');
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    if (onCheckin) bindCheckin();
+    if (bd && isMatch(bd.score)) matchedMap.set(place, bd);
+    list = [place].concat(list.filter((p) => p.id !== place.id));
+    state.view = 'rows';
+    renderRows();
+    applyFilters(false);
+    const el = els.grid.querySelector('.place-card[data-id="' + CSS.escape(String(place.id)) + '"]');
+    if (el) {
+      el.classList.add('just-added');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    }
   }
 
   function buildAreaCards(regions) {
@@ -247,29 +347,10 @@ export function mountPlaces(cfg) {
     };
   }
 
-  function buildLegend(cats) {
-    const all = ['all'].concat(cats);
-    els.catBar.innerHTML = all.map((c, i) => {
-      const meta = c === 'all' ? { cc: 'var(--teal)', label: 'All types' } : (CAT[c] || { cc: 'var(--teal)', label: c });
-      return '<button type="button" class="legend-pill' + (i === 0 ? ' on' : '') + '" data-v="' + esc(c) +
-        '" style="--cc:' + meta.cc + '"><span class="legend-dot"></span>' + esc(meta.label) + '</button>';
-    }).join('');
-    els.catBar.onclick = (e) => {
-      const btn = e.target.closest('.legend-pill');
-      if (!btn) return;
-      els.catBar.querySelectorAll('.legend-pill').forEach((b) => b.classList.remove('on'));
-      btn.classList.add('on');
-      state.cat = btn.getAttribute('data-v');
-      applyFilters(true);
-    };
-  }
-
   /* ── render ── */
   flyTo(8000, 1200);
   if (els.status) els.status.remove();
 
-  let list = places;
-  const matchedMap = new Map(); /* place → scoreBreakdown */
   if (plan) {
     const order = new Map(places.map((p, i) => [p, i]));
     places.forEach((p) => {
@@ -295,8 +376,7 @@ export function mountPlaces(cfg) {
     }
   }
 
-  els.grid.innerHTML = list.map((p) => card(p, matchedMap.get(p) || null)).join('');
-  dropIn(Array.from(els.grid.querySelectorAll('.place-card')));
+  renderRows();
 
   function bindCheckin() {
     els.grid.onclick = (e) => {
@@ -314,11 +394,9 @@ export function mountPlaces(cfg) {
     const ia = AREA_ORDER.indexOf(a), ib = AREA_ORDER.indexOf(b);
     return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
   });
-  const cats = [];
-  places.forEach((p) => { if (cats.indexOf(p.category) === -1) cats.push(p.category); });
 
   buildAreaCards(regions);
-  buildLegend(cats);
+  if (els.catBar) { els.catBar.innerHTML = ''; els.catBar.hidden = true; } /* legend retired — rows ARE the categories */
 
   /* ── search input: instant local filter (debounced) ── */
   if (els.search) {
