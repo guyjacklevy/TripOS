@@ -227,18 +227,28 @@ function dayState(d) {
 /* ONE day-of-trip number, used by both the Today strip and the boarding pass
    so they can never disagree (Rachel's note). Calendar-day diff (time-of-day
    ignored) against the shared clock `now`, not Date.now().
-   Origin = trip.created_at, a deliberate PROXY for arrival until we collect a
-   real `arrive` date in the questionnaire (backlogged). */
+   Origin = trip.arrive (real landing day, slice 7) when set; else
+   trip.created_at as the historical proxy. Can return ≤0 pre-arrival —
+   tripDayLabel renders that as a T− countdown. */
 function tripDayNumber(trip, now) {
-  if (!trip || !trip.created_at) return null;
-  const s = new Date(trip.created_at);
-  const sMid = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+  if (!trip) return null;
+  let sMid;
+  if (trip.arrive) {
+    /* plain DATE 'YYYY-MM-DD' — parse components, never new Date(str) (UTC shift) */
+    const p = String(trip.arrive).split('-');
+    sMid = new Date(+p[0], +p[1] - 1, +p[2]);
+  } else if (trip.created_at) {
+    const s = new Date(trip.created_at);
+    sMid = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+  } else return null;
   const nMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.max(1, Math.round((nMid - sMid) / 86400000) + 1);
+  const n = Math.round((nMid - sMid) / 86400000) + 1;
+  return trip.arrive ? n : Math.max(1, n); /* proxy origin can never be future */
 }
 function tripDayLabel(trip, now) {
   const n = tripDayNumber(trip, now);
   if (n == null) return null;
+  if (n <= 0) return 'T−' + (1 - n); /* pre-arrival: launch-style countdown */
   return trip.duration_days ? 'DAY ' + n + '/' + trip.duration_days : 'DAY ' + n;
 }
 
@@ -528,7 +538,7 @@ function show(which) {
 window.__appDebug = {
   show, setTab, renderBrief, renderPulse, renderPace, renderCats,
   renderRecent, renderToday, setPassenger, passengerLine, mountPlaces,
-  updateStrip, dayState, baliNow
+  updateStrip, dayState, baliNow, tripDayNumber, tripDayLabel
 };
 
 /* ─── live wiring ─── */
@@ -950,7 +960,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       party_detail: a.party_detail || null,
       duration_days: a.dur != null ? parseInt(a.dur, 10) : null,
       budget_tier: a.tier || null,
-      priorities: a.priorities && a.priorities.length ? a.priorities : null
+      priorities: a.priorities && a.priorities.length ? a.priorities : null,
+      arrive: a.arrive || null
     }, { onConflict: 'user_id,destination' }).select();
     if (error) console.error('[TripOS] brief save failed:', error.message);
     try { localStorage.setItem('tripos_plan', JSON.stringify(a)); } catch (_) {}
@@ -1007,7 +1018,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       try {
         localStorage.setItem('tripos_plan', JSON.stringify({
           vibe: trip.vibe, dur: String(trip.duration_days == null ? 0 : trip.duration_days), tier: trip.budget_tier,
-          vibe_detail: trip.vibe_detail || null, party: trip.party || null, priorities: trip.priorities || []
+          vibe_detail: trip.vibe_detail || null, party: trip.party || null, priorities: trip.priorities || [],
+          arrive: trip.arrive || null
         }));
       } catch (_) {}
     } else {

@@ -724,6 +724,24 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
 }
 .ck-opt:hover .opt-sub { color: var(--mut); }
 
+/* arrive step — landing-day date picker (.ck-opts is a 2-col grid: span it) */
+.ck-wide { grid-column: 1 / -1; }
+.ck-arrive { grid-column: 1 / -1; display: flex; gap: 10px; align-items: stretch; }
+.ck-date {
+  flex: 1;
+  min-width: 0;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 14px;
+  color: var(--tx);
+  font: inherit;
+  font-size: 15px;
+  color-scheme: dark;
+}
+.ck-date:focus { outline: none; border-color: rgba(61, 255, 208, 0.5); }
+.ck-arrive .btn { flex-shrink: 0; padding: 11px 16px; }
+
 /* intel panel header on the generated plan */
 .intel-bar {
   display: flex;

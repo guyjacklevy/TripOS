@@ -116,8 +116,14 @@ function sequence(a) {
   if (a.party === 'couple') seq.push('partyBranch');
   seq.push('vibe');
   if (a.vibe && a.vibe !== 'mix') seq.push('branch');
-  seq.push('dur', 'tier', 'priorities');
+  seq.push('dur', 'arrive', 'tier', 'priorities');
   return seq;
+}
+
+/* today as YYYY-MM-DD in the device's timezone (someone "already here" IS on Bali time) */
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
 export function mountCheckin(container, dotsEl, onComplete) {
@@ -142,6 +148,23 @@ export function mountCheckin(container, dotsEl, onComplete) {
     const backBtn = pos > 0
       ? '<button type="button" class="ck-back" data-act="back">← back</button>'
       : '';
+
+    if (key === 'arrive') {
+      container.innerHTML =
+        '<div class="ck-step">' + backBtn +
+        '<p class="ck-q">When do you land? <span class="ck-q-sub">so day counts are real — or skip</span></p>' +
+        '<div class="ck-opts">' +
+          '<button type="button" class="ck-opt ck-wide" data-act="arr-here">🌴 I’m already here<span class="opt-sub">count from today</span></button>' +
+          '<div class="ck-arrive">' +
+            '<input type="date" class="ck-date" id="ckArrive" value="' + esc(answers.arrive || todayISO()) + '">' +
+            '<button type="button" class="btn btn-primary" data-act="arr-set">Set landing day</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ck-multi-actions">' +
+          '<button type="button" class="ck-reset" data-act="arr-skip">skip</button>' +
+        '</div></div>';
+      return;
+    }
 
     if (key === 'priorities') {
       container.innerHTML =
@@ -180,6 +203,21 @@ export function mountCheckin(container, dotsEl, onComplete) {
     const back = e.target.closest('[data-act="back"]');
     if (back) {
       if (pos > 0) { pos--; render(); }
+      return;
+    }
+
+    if (key === 'arrive') {
+      const act = e.target.closest('[data-act]');
+      if (!act) return; /* taps on the date input itself pass through */
+      const a = act.getAttribute('data-act');
+      if (a === 'arr-here') answers.arrive = todayISO();
+      else if (a === 'arr-set') {
+        const v = (document.getElementById('ckArrive') || {}).value;
+        if (!v) return;
+        answers.arrive = v;
+      } else if (a === 'arr-skip') answers.arrive = null;
+      pos++;
+      render();
       return;
     }
 
