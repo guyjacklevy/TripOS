@@ -1924,6 +1924,72 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .vl-v strong { display: block; font-size: 14.5px; margin-bottom: 3px; }
 .vl-v span { font-size: 13px; color: var(--mut); line-height: 1.5; }
 
+/* ═══ AI-1 · THE ROUTE INSTRUMENT ═══════════════════════════════════
+   The flight-plan grammar at trip-zoom (AI_ROUTE_SURFACES_SPEC §1):
+   vertical line, 12px area-orbs in terrain tints, current leg lit,
+   nights in mono with dot leaders. Zero new tokens, zero new motion. */
+.route-instr {
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 18px 18px 14px;
+  margin-top: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.ri-head { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; color: var(--dim); }
+.ri-head em { font-style: normal; color: var(--teal); }
+.ri-summary { font-size: 13.5px; color: var(--mut); line-height: 1.5; margin: 10px 0 4px; }
+.ri-legs { position: relative; margin-top: 10px; }
+.ri-legs::before {
+  content: ""; position: absolute; left: 5px; top: 10px; bottom: 10px;
+  width: 2px; background: var(--line); border-radius: 2px;
+}
+.ri-leg { position: relative; padding-left: 26px; }
+.ri-orb {
+  position: absolute; left: 0; top: 14px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--at, var(--teal));
+  box-shadow: 0 0 0 3px rgba(10, 10, 20, 0.9);
+}
+.ri-leg.current .ri-orb { box-shadow: 0 0 0 3px rgba(10, 10, 20, 0.9), 0 0 12px var(--at, var(--teal)); }
+.ri-leg.done { opacity: 0.45; }
+.ri-row {
+  display: flex; align-items: baseline; gap: 8px; width: 100%;
+  min-height: 44px; padding: 10px 0 4px;
+  background: none; border: none; cursor: pointer; text-align: left;
+  font: inherit; color: var(--tx);
+}
+.ri-row:disabled { cursor: default; }
+.ri-name { font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: 0.14em; }
+.ri-leg.current .ri-name { color: var(--at, var(--teal)); }
+.ri-dots { flex: 1; border-bottom: 1px dotted rgba(255, 255, 255, 0.22); transform: translateY(-3px); min-width: 18px; }
+.ri-n { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--mut); white-space: nowrap; }
+.ri-leg.current .ri-n { color: var(--teal); }
+.ri-caret { font-size: 10px; color: var(--dim); flex-shrink: 0; }
+.ri-why { padding: 0 0 12px; }
+.ri-why p { font-size: 13px; color: var(--mut); line-height: 1.5; margin-bottom: 8px; }
+.ri-places { font-size: 11.5px; }
+.ri-foot { border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 12px; }
+.ri-replan {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+  color: var(--teal); background: none; cursor: pointer;
+  border: 1px solid rgba(61, 255, 208, 0.3); border-radius: 99px; padding: 7px 14px;
+}
+.ri-replan:hover { border-color: var(--teal); }
+.ri-confirm p { font-size: 12.5px; color: var(--mut); margin-bottom: 10px; }
+.ri-confirm .ri-go { padding: 8px 18px; margin-right: 14px; }
+.ri-locked { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; color: var(--dim); }
+.ri-fade { opacity: 0; transition: opacity 0.22s ease; }
+/* the strip's tappable LEG token (visible affordance: bordered underline-chip) */
+.leg-chip {
+  font: inherit; color: inherit; background: none; cursor: pointer;
+  border: none; border-bottom: 1px solid rgba(61, 255, 208, 0.45);
+  padding: 0 1px 1px; letter-spacing: inherit;
+}
+.leg-chip:active { color: var(--teal); }
+@media (prefers-reduced-motion: reduce) { .ri-fade { transition: none; } }
+
 /* ═══ L7 · INBOUND TRANSMISSION ═══ the system speaking, not a founder */
 .transmission { text-align: center; padding-top: 42px; }
 .tx-eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; color: var(--dim); margin-bottom: 18px; }

@@ -118,6 +118,14 @@ $('tabBar').addEventListener('click', (e) => {
   if (slot) setTab(slot.getAttribute('data-tab'));
 });
 window.addEventListener('hashchange', () => setTab(location.hash.slice(1), false));
+/* AI-1b: the strip's LEG chip jumps to the route instrument on You */
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.leg-chip')) {
+    setTab('you');
+    const el = document.getElementById('youRoute');
+    if (el && !el.hidden) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+});
 
 /* ─── renders (pure — testable without a session) ─── */
 
@@ -252,6 +260,48 @@ function tripDayLabel(trip, now) {
   return trip.duration_days ? 'DAY ' + n + '/' + trip.duration_days : 'DAY ' + n;
 }
 
+/* ─── AI-1 · ONE route state, computed next to dayState() (Rachel's rule):
+   the Today strip, the route instrument, and the repack nudge all read this
+   object — they can never disagree. <2 legs → null → every surface falls
+   back to the classic single-base experience (never fake a route). ─── */
+const AREA_TINT = {
+  Canggu: 'var(--area-canggu)', Uluwatu: 'var(--area-uluwatu)', Ubud: 'var(--area-ubud)',
+  Seminyak: 'var(--area-seminyak)', Sanur: 'var(--area-sanur)', Denpasar: 'var(--area-denpasar)',
+  Islands: 'var(--area-islands)'
+};
+let TRIP_LEGS = []; /* loaded with the trip; single source for routeState callers */
+function routeState(trip, legs, now) {
+  if (!trip || !legs || legs.length < 2) return null;
+  const total = legs.reduce((s, l) => s + (l.nights || 0), 0);
+  const day = tripDayNumber(trip, now);
+  const d = day == null ? 0 : day;
+  let acc = 0, cur = null, next = null;
+  legs.forEach((l, i) => {
+    if (!cur && d > acc && d <= acc + l.nights) {
+      cur = { area: l.area, nights: l.nights, why: l.why, idx: i, nightOf: d - acc };
+      next = legs[i + 1] || null;
+    }
+    acc += l.nights;
+  });
+  return {
+    legs, total, count: legs.length, cur, next,
+    pre: d < 1,                                    /* T−n: route ahead, nothing started */
+    over: d > total,                               /* open-ended tail past the route */
+    lastDay: !!(cur && cur.nightOf === cur.nights),
+    summary: (trip.route_summary || '').trim()
+  };
+}
+/* replan gate — v1 rule: routes freeze at arrival (days adapt later, AI-3).
+   No arrive date = still planning = replan allowed. */
+function canReplan(trip, now) {
+  if (!trip) return false;
+  if (!trip.arrive) return true;
+  const p = String(trip.arrive).split('-');
+  const aMid = new Date(+p[0], +p[1] - 1, +p[2]);
+  const nMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return nMid <= aMid;
+}
+
 function updateStrip(trip, firstName, now) {
   const s = dayState(now);
   const hh = String(s.h).padStart(2, '0');
@@ -259,7 +309,19 @@ function updateStrip(trip, firstName, now) {
   const base = trip && trip.vibe ? (HOME_AREA[trip.vibe] || 'Bali').split(' ')[0].toUpperCase() : 'BALI';
   const dayc = tripDayLabel(trip, now);
   $('todayStrip').textContent = DAY_ABBR[s.day] + ' · ' + hh + ':' + mm + (dayc ? ' · ' + dayc : '');
-  $('todayStrip2').textContent = base + ' BASE · ' + PHASE_WORD[s.phase];
+  /* AI-1b: the leg is the base — the word BASE dies when a route exists.
+     Leg-day counter stays OFF the strip (it lives on the route instrument). */
+  const rs = routeState(trip, TRIP_LEGS, now);
+  if (rs && rs.cur) {
+    const legChip = '<button type="button" class="leg-chip" data-goto="you">LEG ' +
+      (rs.cur.idx + 1) + '/' + rs.count + '</button>';
+    $('todayStrip2').innerHTML = rs.lastDay && rs.next
+      ? esc(rs.cur.area.toUpperCase()) + ' · LAST DAY → ' + esc(rs.next.area.toUpperCase()) +
+        ' · ' + PHASE_WORD[s.phase]
+      : esc(rs.cur.area.toUpperCase()) + ' · ' + legChip + ' · ' + PHASE_WORD[s.phase];
+  } else {
+    $('todayStrip2').textContent = base + ' BASE · ' + PHASE_WORD[s.phase];
+  }
   /* greeting uses the RAIL word; the strip uses the PHASE word — 19:00 shows
      "Night" (rail) beside "DUSK" (phase). Intentional: two layers of one clock
      (Rachel). Do NOT reconcile them. */
@@ -278,6 +340,103 @@ function updateStrip(trip, firstName, now) {
     if (rim) rim.style.stroke = c;
     if (pin) { pin.style.fill = c; pin.style.filter = 'drop-shadow(0 0 4px ' + c + ')'; }
     if (ping) ping.style.stroke = c;
+  }
+}
+
+/* ─── AI-1a · THE ROUTE INSTRUMENT (AI_ROUTE_SURFACES_SPEC §1) ───
+   The flight-plan grammar at trip-zoom: vertical line, area-orb nodes in
+   terrain tints, current leg lit, nights in mono with dot leaders.
+   Not-an-airline checklist: nights not dates · names not codes · orbs not
+   planes · no chevrons between legs · no prices · no booking language.
+   <2 legs → instrument suppressed entirely (renders nothing). */
+function renderRoute(trip, legs, now, opts) {
+  const host = $('youRoute');
+  if (!host) return;
+  const rs = routeState(trip, legs, now);
+  if (!rs) { host.hidden = true; host.innerHTML = ''; return; }
+  const o = opts || {};
+  const d = tripDayNumber(trip, now) || 0;
+
+  let acc = 0;
+  const rows = rs.legs.map((l, i) => {
+    const start = acc; acc += l.nights;
+    const done = d > start + l.nights;
+    const isCur = !!(rs.cur && rs.cur.idx === i);
+    const state = done ? 'done' : isCur ? 'current' : 'planned';
+    const nightsLbl = done ? l.nights + ' NIGHTS · DONE'
+      : isCur ? 'NIGHT ' + rs.cur.nightOf + ' OF ' + l.nights
+      : l.nights + ' NIGHTS';
+    const why = (l.why || '').trim();
+    /* whys missing = silence, never padding (spec §4) */
+    const whyBlock = why
+      ? '<div class="ri-why"' + (isCur ? '' : ' hidden') + '><p>' + esc(why) + '</p>' +
+        '<button type="button" class="place-maps ri-places" data-area="' + esc(l.area) + '">→ places in ' +
+        esc(l.area.toUpperCase()) + '</button></div>'
+      : '';
+    return '<div class="ri-leg ' + state + '" data-i="' + i + '" style="--at:' +
+        (AREA_TINT[l.area] || 'var(--teal)') + '">' +
+      '<span class="ri-orb"></span>' +
+      '<button type="button" class="ri-row"' + (why ? '' : ' disabled') + '>' +
+        '<span class="ri-name">' + esc(l.area.toUpperCase()) + '</span>' +
+        '<span class="ri-dots"></span>' +
+        '<span class="ri-n">' + nightsLbl + '</span>' +
+        (why ? '<span class="ri-caret">' + (isCur ? '▴' : '▾') + '</span>' : '') +
+      '</button>' +
+      whyBlock +
+    '</div>';
+  });
+
+  host.hidden = false;
+  host.innerHTML =
+    '<div class="route-instr">' +
+      '<div class="ri-head">YOUR ROUTE · <em>' + rs.total + '</em> NIGHTS · <em>' + rs.count + '</em> LEGS</div>' +
+      (rs.summary ? '<p class="ri-summary">' + esc(rs.summary) + '</p>' : '') +
+      '<div class="ri-legs">' + rows.join('') + '</div>' +
+      '<div class="ri-foot">' +
+        (canReplan(trip, now)
+          ? '<button type="button" class="ri-replan" id="riReplan">↻ REPLAN ROUTE</button>' +
+            '<div class="ri-confirm" id="riConfirm" hidden>' +
+              '<p>Your route regenerates from your brief — legs and picks may change.</p>' +
+              '<button type="button" class="btn btn-primary ri-go" id="riGo">replan</button>' +
+              '<button type="button" class="ck-reset" id="riKeep">keep</button>' +
+            '</div>'
+          : '<p class="ri-locked">route locked in flight · days adapt daily</p>') +
+      '</div>' +
+    '</div>';
+
+  /* reveal: existing drop-in keyframes, 90ms stagger per leg (spec §1.3) */
+  if (o.reveal) {
+    host.querySelectorAll('.ri-leg').forEach((el, i) => {
+      el.style.animationDelay = (i * 90) + 'ms';
+      el.classList.add('poi-drop');
+    });
+  }
+  /* expand/collapse — the row is the tap target, the caret is the affordance */
+  host.querySelectorAll('.ri-row').forEach((btn) => {
+    btn.onclick = () => {
+      const legEl = btn.closest('.ri-leg');
+      const why = legEl.querySelector('.ri-why');
+      if (!why) return;
+      why.hidden = !why.hidden;
+      const caret = btn.querySelector('.ri-caret');
+      if (caret) caret.textContent = why.hidden ? '▾' : '▴';
+    };
+  });
+  /* deep-link: Places filtered to the leg's area */
+  host.querySelectorAll('.ri-places').forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      setTab('places');
+      const card = document.querySelector('#appAreaBar .area-card[data-v="' + b.getAttribute('data-area') + '"]');
+      if (card) card.click();
+    };
+  });
+  if (o.onReplan) {
+    const chip = $('riReplan'), conf = $('riConfirm');
+    if (chip) chip.onclick = () => { chip.hidden = true; conf.hidden = false; };
+    const keep = $('riKeep'), go = $('riGo');
+    if (keep) keep.onclick = () => { conf.hidden = true; chip.hidden = false; };
+    if (go) go.onclick = o.onReplan;
   }
 }
 
@@ -538,7 +697,14 @@ function show(which) {
 window.__appDebug = {
   show, setTab, renderBrief, renderPulse, renderPace, renderCats,
   renderRecent, renderToday, setPassenger, passengerLine, mountPlaces,
-  updateStrip, dayState, baliNow, tripDayNumber, tripDayLabel
+  updateStrip, dayState, baliNow, tripDayNumber, tripDayLabel,
+  routeState, renderRoute, canReplan,
+  /* preview: inject a route without a session — strip + instrument + nudge */
+  injectRoute: (t, legs, opts) => {
+    TRIP_LEGS = legs || [];
+    renderRoute(t, TRIP_LEGS, baliNow(), opts || {});
+    updateStrip(t, '', baliNow());
+  }
 };
 
 /* ─── live wiring ─── */
@@ -577,6 +743,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       if (!todayCtx) return;
       const now = baliNow();
       updateStrip(todayCtx.trip, todayCtx.name, now);
+      paintNudge(); /* last-day repack nudge flips at midnight with the leg */
       const block = timeBlock(now.getHours());
       if (block !== lastBlock) {
         lastBlock = block;
@@ -827,11 +994,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const lbl = tripDayLabel(trip, baliNow());  /* same helper as the Today strip */
       bd.textContent = lbl ? lbl.replace('DAY ', 'DAY ').replace('/', ' / ') : '—';
     }
-    /* readiness nudge on Today: the top open pretrip item */
-    const urgent = pre.find((i) => !i.done);
-    const nudge = $('readyNudge');
-    nudge.hidden = !urgent;
-    if (urgent) nudge.innerHTML = '⚠ <strong>' + esc(urgent.label) + '</strong> · readiness →';
+    /* nudge on Today: last-day repack beats the top open pretrip item */
+    paintNudge();
   }
 
   async function loadReadiness() {
@@ -947,7 +1111,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   /* preview/debug: inject checklist state without a session */
   Object.assign(window.__appDebug, {
     injectReadiness: (t, items, rpk) => { trip = t; checkItems = items; repack = rpk || null; renderChecklists(); },
-    buildAutoItems
+    buildAutoItems, paintNudge
   });
 
   /* upsert a brief (from the questionnaire or a pre-login landing run) */
@@ -966,6 +1130,69 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (error) console.error('[TripOS] brief save failed:', error.message);
     try { localStorage.setItem('tripos_plan', JSON.stringify(a)); } catch (_) {}
     return (up && up[0]) || null;
+  }
+
+  /* ─── AI-1a: call the plan-engine, refresh legs. Returns true only when a
+     real ≥2-leg route landed. Every failure path is silent-classic. ─── */
+  let revealRouteNext = false;
+  async function genRoute() {
+    try {
+      const { data, error } = await sb.functions.invoke('plan-engine', { body: { action: 'route' } });
+      if (error || !data || data.error) {
+        console.warn('[TripOS] plan-engine:', (data && data.error) || (error && error.message) || 'unreachable');
+        if (trip) trip.route_generated_at = trip.route_generated_at || new Date().toISOString();
+        return false;
+      }
+      TRIP_LEGS = data.legs || [];
+      if (trip) {
+        trip.route_summary = data.summary || null;
+        trip.route_generated_at = new Date().toISOString();
+      }
+      return TRIP_LEGS.length >= 2;
+    } catch (e) {
+      console.warn('[TripOS] plan-engine unreachable:', e && e.message);
+      return false;
+    }
+  }
+
+  /* replan flow (spec §3): confirm already happened (riGo) → old route
+     crossfades out → honest terminal line in place → new route drops in */
+  async function replanRoute() {
+    const host = $('youRoute');
+    const instr = host && host.querySelector('.route-instr');
+    if (!instr) return;
+    instr.classList.add('ri-fade');
+    const nights = trip && trip.duration_days ? trip.duration_days : 30;
+    setTimeout(() => {
+      instr.innerHTML = '<div class="ck-term" style="min-height:52px"><span class="ln">▸ re-routing your ' +
+        nights + ' nights…</span></div>';
+      instr.classList.remove('ri-fade');
+    }, 220);
+    const ok = await genRoute();
+    if (ok) {
+      renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute });
+      updateStrip(trip, greetName(), baliNow());
+      paintNudge();
+    } else {
+      instr.querySelector('.ck-term').innerHTML =
+        '<span class="ln">▸ routing unavailable — your current route stands</span>';
+      setTimeout(() => renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute }), 1600);
+    }
+  }
+
+  /* ONE nudge painter — last-day repack beats the readiness item (spec §2) */
+  function paintNudge() {
+    const nudge = $('readyNudge');
+    if (!nudge) return;
+    const rs = routeState(trip, TRIP_LEGS, baliNow());
+    if (rs && rs.lastDay && rs.next) {
+      nudge.hidden = false;
+      nudge.innerHTML = '🎒 Moving to <strong>' + esc(rs.next.area) + '</strong> tomorrow — run your repack? →';
+      return;
+    }
+    const urgent = (checkItems || []).filter((i) => i.kind === 'pretrip').find((i) => !i.done);
+    nudge.hidden = !urgent;
+    if (urgent) nudge.innerHTML = '⚠ <strong>' + esc(urgent.label) + '</strong> · readiness →';
   }
 
   /* stage B: the branched questionnaire, in-app */
@@ -998,9 +1225,25 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         if (i < lines.length) setTimeout(tick, 520);
         else setTimeout(async () => {
           trip = await saveBrief(answers);
+          /* AI-1a: route while the terminal holds — honest lines only */
+          const addLn = (html) => {
+            const ln = document.createElement('span');
+            ln.className = 'ln'; ln.innerHTML = html; term.appendChild(ln);
+          };
+          addLn('▸ routing your legs across the island…');
+          const ok = await genRoute();
+          addLn(ok ? '▸ route ready <span class="ok">✓</span>'
+                   : '▸ routing unavailable — your base plan is ready');
           $('appCkDots').style.display = '';
           freshLogin = true; /* re-use the arrival moment for a fresh brief */
-          loadShell();
+          revealRouteNext = ok;
+          await loadShell();
+          /* the reveal: land on the route itself (You, under the pass) */
+          if (ok) {
+            setTab('you');
+            const el = $('youRoute');
+            if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400);
+          }
         }, 600);
       };
       tick();
@@ -1033,6 +1276,25 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       }
     }
     dailyK = (trip && trip.budget_daily_k) || TIER_IDR[trip && trip.budget_tier] || 700;
+
+    /* AI-1a: the route rides with the trip. First-ever load of a brief that has
+       never been routed → generate once in the background (route_generated_at
+       stops loops — a 1-leg result won't retry forever). Engine missing/failing
+       leaves every surface exactly as the classic single-base app. */
+    const { data: legRows } = await sb.from('trip_legs').select('*')
+      .eq('trip_id', trip.id).order('seq');
+    TRIP_LEGS = legRows || [];
+    renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: revealRouteNext, onReplan: replanRoute });
+    revealRouteNext = false;
+    if (TRIP_LEGS.length < 2 && !trip.route_generated_at) {
+      genRoute().then((ok) => {
+        if (ok) {
+          renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute });
+          updateStrip(trip, greetName(), baliNow());
+          paintNudge();
+        }
+      });
+    }
 
     renderBrief(trip);
     renderPresets();
