@@ -1899,27 +1899,10 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .place-card > *:not(.card-photo) { z-index: 1; }
 .place-card > *:not(.card-photo):not(.match-badge):not(.disc-badge) { position: relative; }
 
-/* landing hero — 45% presence, radial vignette, image may be the subject */
-.hero { position: relative; }
-.hero-photo { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-.hero-photo img {
-  width: 100%; height: 100%; object-fit: cover; object-position: center 30%;
-  filter: grayscale(1) brightness(0.72) contrast(1.12);
-  opacity: 0.6;
-}
-.hero-photo::before {
-  content: ""; position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(61, 255, 208, 0.16), rgba(167, 139, 250, 0.12));
-  mix-blend-mode: color;
-}
-.hero-photo::after {
-  content: ""; position: absolute; inset: 0;
-  background: radial-gradient(ellipse at center, rgba(10, 10, 20, 0.12) 0%, rgba(10, 10, 20, 0.72) 74%, #0a0a14 100%);
-}
-@supports not (mix-blend-mode: color) {
-  .hero-photo::before { mix-blend-mode: normal; opacity: 0.25; }
-}
-.hero > *:not(.hero-photo) { position: relative; z-index: 1; }
+/* Hero photo: REMOVED by Guy's call (Jul 23) — full-bleed Bali at the hero's
+   mobile crop read as mud, not place. Real Bali lives on the cards (22%
+   texture windows, where the grade works). A hero treatment needs Rachel's
+   art direction if we retry. hero-bali.webp stays in shared/img for that. */
 
 /* ═══ L4 v2 · CONCIERGE LEDGER — value rows, not stat tiles ═══ */
 .value-ledger {
