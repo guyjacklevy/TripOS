@@ -32,19 +32,24 @@
 
     <!-- ─── stage 01 · boarding call ─── -->
     <header class="hero" data-stage="BOARDING">
+      <!-- 2c: real Bali (Tegalalang) behind the glass, 45% presence, radial fade -->
+      <div class="hero-photo" aria-hidden="true"><img src="../shared/img/hero-bali.webp" alt=""></div>
       <div class="stage-tag"><span class="stage-num">01</span> Boarding call</div>
       <!-- L3: title completes "now you can…" — says what you CAN, not what we are -->
       <h1>Stay <span class="glow">longer</span> for less.</h1>
-      <p class="sub">Bali, decided for you — before you go and while you're there. TripOS is the destination brain that plans your trip, guides your days, and tells you exactly how long the island can keep you.</p>
-      <p class="boarding-call">Your flight to Bali is now boarding · Gate 7 · <span class="blink">Final call</span></p>
-      <a class="btn btn-primary" href="../app/">Board TripOS — it's free</a>
+      <p class="sub">Your Bali planner + concierge — before you go and while you're there. TripOS plans the trip, guides your days, and tells you exactly how long the island can keep you.</p>
+      <p class="boarding-call">Planning desk: open · your brief takes 30 seconds · <span class="blink">concierge online</span></p>
+      <a class="btn btn-primary" href="../app/">Start my Bali plan — free</a>
       <p class="note">No password. No install. Works on any phone.</p>
-      <!-- L4: value KPIs, not feature counts — every number defensible -->
-      <div class="stats">
-        <div class="stat"><strong data-count="30" data-suffix="s">30s</strong><span>three questions → your full plan</span></div>
-        <div class="stat"><strong>35k ≠ 350k</strong><span>know before you pay</span></div>
-        <div class="stat"><strong>LIVE</strong><span>your runway — how long you can stay</span></div>
-        <div class="stat"><strong data-count="0">0</strong><span>tabs · spreadsheets · passwords</span></div>
+      <!-- L4 v2: the concierge ledger — value in sentences, not stat tiles -->
+      <div class="value-ledger">
+        <div class="vl-head">// WHAT YOUR CONCIERGE HANDLES</div>
+        <div class="vl-row"><span class="vl-k">30s<em>not 3 weeks</em></span>
+          <div class="vl-v"><strong>Your whole trip, planned.</strong><span>Three questions become a full brief — where to base, what to pack, what a month really costs.</span></div></div>
+        <div class="vl-row"><span class="vl-k">35k<em>not 350k</em></span>
+          <div class="vl-v"><strong>Local prices on everything.</strong><span>Every place carries what it really costs — pay warung prices, not tourist prices.</span></div></div>
+        <div class="vl-row"><span class="vl-k">LIVE<em>every day</em></span>
+          <div class="vl-v"><strong>“How long can I stay?”</strong><span>Your budget against the island, updated daily — the answer that keeps you here.</span></div></div>
       </div>
     </header>
 
@@ -90,7 +95,7 @@
                 <svg class="g-mark" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92a8.78 8.78 0 0 0 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
                 Continue with Google
               </button>
-              <a class="ck-reset" data-auth-gate href="../app/">or board with email →</a>
+              <a class="ck-reset" data-auth-gate href="../app/">or continue with email →</a>
               <p class="note">free · 5 seconds · your brief travels with you</p>
             </div>
           </div>
@@ -102,7 +107,7 @@
     </section>
 
     <div class="hook reveal">
-      Checked in. Cabin doors closing — take one last look at how you used to plan trips —
+      Brief in. Before your concierge takes over — one last look at how you used to plan trips —
       <span class="hook-arrow">↓</span>
     </div>
 
@@ -161,7 +166,7 @@
     </section>
 
     <div class="hook reveal">
-      Wheels up. Here's what flying with a destination brain feels like —
+      All of that, handled. Here's what a trip feels like when a concierge planned it —
       <span class="hook-arrow">↓</span>
     </div>
 
@@ -195,7 +200,7 @@
     </section>
 
     <div class="hook reveal">
-      Beginning our descent. Look out the window — that's your island —
+      Getting close now. Below — the places your concierge already scouted —
       <span class="hook-arrow">↓</span>
     </div>
 
@@ -236,7 +241,7 @@
     </section>
 
     <div class="hook reveal">
-      Cabin crew, prepare for landing —
+      Your pass is ready —
       <span class="hook-arrow">↓</span>
     </div>
 
@@ -244,7 +249,7 @@
     <section data-stage="LANDED ✓">
       <div class="bpass reveal">
         <div class="bp-main">
-          <div class="bp-air">TripOS Air · Boarding pass</div>
+          <div class="bp-air">TripOS Concierge · your Bali pass</div>
           <div class="bp-route">
             <span class="bp-city">YOU</span>
             <span class="bp-dash"></span>
@@ -252,14 +257,14 @@
           </div>
           <p class="bp-sub" id="bpSub">Denpasar, Bali · one-way · stay as long as it holds you</p>
           <div class="bp-grid">
-            <div><span>Flight</span><strong>TRP-01</strong></div>
-            <div><span>Gate</span><strong>Always open</strong></div>
+            <div><span>Plan</span><strong>BALI-01</strong></div>
+            <div><span>Concierge</span><strong>Always on</strong></div>
             <div><span>Seat</span><strong>Window</strong></div>
             <div><span>Class</span><strong id="bpClass">Slowmad</strong></div>
             <div><span>Price</span><strong>Free</strong></div>
             <div><span>Signup</span><strong>None</strong></div>
           </div>
-          <a class="btn btn-primary" href="../app/">Board now — open TripOS</a>
+          <a class="btn btn-primary" href="../app/">Open TripOS — start planning</a>
         </div>
         <div class="bp-stub">
           <div class="bp-barcode"></div>

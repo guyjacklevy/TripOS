@@ -34,6 +34,13 @@ const region = (area) => String(area || '').split('/')[0].trim();
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+/* 2c: graded category photo behind the glass (~22% presence — atmosphere,
+   never subject). Both mounts sit one level deep, so ../shared works. */
+const catPhoto = (cat) => CAT[cat]
+  ? '<span class="card-photo" aria-hidden="true"><img loading="lazy" alt="" ' +
+    'src="../shared/img/cat-' + esc(cat) + '.webp" onerror="this.parentNode.remove()"></span>'
+  : '';
+
 export function mountPlaces(cfg) {
   const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd } = cfg;
   const allPlaces = places.slice();
@@ -101,6 +108,7 @@ export function mountPlaces(cfg) {
     return (
       '<article class="place-card" data-cat="' + esc(p.category) + '" data-region="' + esc(region(p.area)) +
         '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
+        catPhoto(p.category) +
         (matched ? '<span class="match-badge">✦ ' + bd.pct + '% match</span>' : disc) +
         '<div class="place-top">' +
           '<span class="orb ' + cat.orb + '"></span>' +
@@ -154,6 +162,7 @@ export function mountPlaces(cfg) {
     return (
       '<article class="place-card poi-mini" data-cat="' + esc(p.category) + '" data-region="' + esc(region(p.area)) +
         '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
+        catPhoto(p.category) +
         (matched ? '<span class="match-badge">✦ ' + bd.pct + '%</span>' : disc) +
         '<div class="place-top">' +
           '<span class="orb ' + cat.orb + '"></span>' +
