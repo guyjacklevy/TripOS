@@ -432,4 +432,20 @@ export function mountPlaces(cfg) {
       t = setTimeout(() => { state.q = els.search.value; applyFilters(true); }, 180);
     };
   }
+
+  /* ── public handle: deep-focus one place (Today timeline taps land HERE,
+     on the exact card, not on an unrelated grid) ── */
+  return {
+    focusPlace(id) {
+      const p = allPlaces.find((x) => String(x.id) === String(id));
+      if (!p) return;
+      if (state.area !== 'all') {
+        const allBtn = els.areaBar && els.areaBar.querySelector('.area-card[data-v="all"]');
+        if (allBtn) allBtn.click(); /* an active area filter must never hide the target */
+      }
+      state.view = p.category;
+      renderCatGrid(p.category, String(id));
+      applyFilters(false);
+    }
+  };
 }

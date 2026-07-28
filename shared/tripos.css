@@ -1981,6 +1981,11 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .ri-confirm .ri-go { padding: 8px 18px; margin-right: 14px; }
 .ri-locked { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; color: var(--dim); }
 .ri-fade { opacity: 0; transition: opacity 0.22s ease; }
+/* Today NOW cards are tappable through to their place (affordance rule) */
+.place-card.now-tap { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.place-card.now-tap:active { transform: scale(0.98); }
+.place-card.now-tap .pf-actions { display: inline-flex; gap: 14px; align-items: center; }
+
 /* the strip's tappable LEG token (visible affordance: bordered underline-chip) */
 .leg-chip {
   font: inherit; color: inherit; background: none; cursor: pointer;

@@ -171,7 +171,7 @@ function pickCard(p, matched, nowLine) {
     ? '✦ ' + matched.pct + '% match'
     : (matched ? '✦ your match' : null);
   return (
-    '<article class="place-card" style="--cc:' + meta.cc + '">' +
+    '<article class="place-card now-tap" data-place="' + esc(p.id) + '" style="--cc:' + meta.cc + '">' +
       (badge ? '<span class="match-badge">' + badge + '</span>' : '') +
       '<div class="place-top"><span class="orb ' + meta.orb + '"></span><div>' +
         '<div class="place-name">' + esc(p.name) + (p.verified ? '<span class="place-verified">✓</span>' : '') + '</div>' +
@@ -180,7 +180,8 @@ function pickCard(p, matched, nowLine) {
       (nowLine ? '<p class="why-now">' + esc(nowLine) + '</p>' : '') +
       (p.why ? '<p class="place-why">' + esc(p.why) + '</p>' : '') +
       (p.tip ? '<p class="place-tip">' + esc(p.tip) + '</p>' : '') +
-      '<div class="place-foot"><span class="place-price">' + esc(nowLine ? (p.price_note || '') : (p.timing_note || '')) + '</span>' + maps + '</div>' +
+      '<div class="place-foot"><span class="place-price">' + esc(nowLine ? (p.price_note || '') : (p.timing_note || '')) + '</span>' +
+        '<span class="pf-actions">' + maps + '<span class="mini-more">more ›</span></span></div>' +
     '</article>'
   );
 }
@@ -882,13 +883,14 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   }
 
   /* the full spatial browser in the Places tab (remount-safe for brief changes) */
+  let placesApi = null; /* mountPlaces handle — Today taps deep-focus through it */
   function mountPlacesTab(places) {
     const panel = $('panel-places');
     panel.querySelectorAll('.match-banner').forEach((b) => b.remove());
     $('appAreaBar').innerHTML = '';
     $('appCatBar').innerHTML = '';
     $('appPlacesGrid').innerHTML = '';
-    mountPlaces({
+    placesApi = mountPlaces({
       els: {
         alt: $('appAlt'),
         coordArea: $('appCoordArea'),
@@ -907,6 +909,18 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       onGoogleAdd: googleAdd
     });
   }
+
+  /* Today → Places, with relation (Guy's phone test): any tap on a card that
+     carries data-place lands on THAT place — category detail, scrolled,
+     highlighted. Maps links pass through untouched. */
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-place]');
+    if (!el || e.target.closest('a.place-maps')) return;
+    e.preventDefault();
+    const id = el.getAttribute('data-place');
+    setTab('places');
+    if (placesApi) placesApi.focusPlace(id);
+  });
 
   /* Wave 4: the edge function — search Google Maps, add to our data.
      Key never touches the client; supabase-js sends the user's JWT. */
@@ -1111,7 +1125,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   /* preview/debug: inject checklist state without a session */
   Object.assign(window.__appDebug, {
     injectReadiness: (t, items, rpk) => { trip = t; checkItems = items; repack = rpk || null; renderChecklists(); },
-    buildAutoItems, paintNudge
+    buildAutoItems, paintNudge, mountPlacesTab
   });
 
   /* upsert a brief (from the questionnaire or a pre-login landing run) */
