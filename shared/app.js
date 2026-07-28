@@ -1160,7 +1160,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   /* preview/debug: inject checklist state without a session */
   Object.assign(window.__appDebug, {
     injectReadiness: (t, items, rpk) => { trip = t; checkItems = items; repack = rpk || null; renderChecklists(); },
-    buildAutoItems, paintNudge, mountPlacesTab
+    buildAutoItems, paintNudge, mountPlacesTab,
+    injectCuration: (places) => { isAdmin = true; loadCurationDesk(places); }
   });
 
   /* upsert a brief (from the questionnaire or a pre-login landing run) */
@@ -1286,6 +1287,78 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (urgent) nudge.innerHTML = '⚠ <strong>' + esc(urgent.label) + '</strong> · readiness →';
   }
 
+  /* ─── CURATION DESK (admins only — RLS enforces; the client just paints).
+     The credibility ratchet: ◔ discovered → Guy's eye → ✓ verified (or gone).
+     S1 grows from S3, and every promotion upgrades every future plan. ─── */
+  let isAdmin = false;
+  async function loadCurationDesk(places) {
+    const card = $('curateCard');
+    if (!card) return;
+    if (!isAdmin) {
+      const { data } = await sb.from('app_admins').select('user_id').limit(1);
+      isAdmin = !!(data && data.length);
+    }
+    if (!isAdmin) { card.hidden = true; return; }
+    const queue = (places || []).filter((p) => p.source === 'google' && !p.verified);
+    $('curateCount').textContent = queue.length + ' waiting';
+    card.hidden = false;
+    $('curateList').innerHTML = queue.length ? queue.map((p) =>
+      '<div class="cur-row" data-id="' + esc(p.id) + '">' +
+        '<button type="button" class="cur-head">' +
+          '<span class="cur-name">' + esc(p.name) + '</span>' +
+          '<span class="cur-meta">' + esc((p.area || '').split('/')[0].trim()) + ' · ' + esc(p.category) + '</span>' +
+          '<span class="ri-caret">▾</span>' +
+        '</button>' +
+        '<div class="cur-body" hidden>' +
+          '<textarea class="auth-input cur-why" rows="3" maxlength="220" placeholder="write the why — or verify as-is">' +
+            esc((p.why || '').indexOf('Discovered via Google Maps') === 0 ? '' : (p.why || '')) + '</textarea>' +
+          '<div class="cur-actions">' +
+            '<button type="button" class="btn btn-primary cur-verify">✓ verify</button>' +
+            '<button type="button" class="ck-reset cur-reject">✕ reject</button>' +
+          '</div>' +
+          '<p class="pulse-note cur-note" hidden></p>' +
+        '</div>' +
+      '</div>'
+    ).join('') : '<p class="sec-context">Queue clear — nothing awaiting review.</p>';
+
+    $('curateList').onclick = async (e) => {
+      const row = e.target.closest('.cur-row');
+      if (!row) return;
+      const id = row.getAttribute('data-id');
+      if (e.target.closest('.cur-head')) {
+        const body = row.querySelector('.cur-body');
+        body.hidden = !body.hidden;
+        row.querySelector('.ri-caret').textContent = body.hidden ? '▾' : '▴';
+        return;
+      }
+      const note = row.querySelector('.cur-note');
+      const fail = (msg) => { note.hidden = false; note.textContent = msg + ' — tap to retry'; };
+      if (e.target.closest('.cur-verify')) {
+        const why = row.querySelector('.cur-why').value.trim();
+        const patch = { verified: true };
+        if (why) patch.why = why;
+        const { error } = await sb.from('curated_places').update(patch).eq('id', id);
+        if (error) { fail('didn’t save'); return; }
+        const p = (todayCtx ? todayCtx.places : []).find((x) => String(x.id) === String(id));
+        if (p) { p.verified = true; if (why) p.why = why; }
+        refreshAfterCuration();
+        return;
+      }
+      if (e.target.closest('.cur-reject')) {
+        const { error } = await sb.from('curated_places').delete().eq('id', id);
+        if (error) { fail('didn’t delete'); return; }
+        if (todayCtx) todayCtx.places = todayCtx.places.filter((x) => String(x.id) !== String(id));
+        refreshAfterCuration();
+      }
+    };
+  }
+  function refreshAfterCuration() {
+    if (!todayCtx) return;
+    mountPlacesTab(todayCtx.places);
+    renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
+    loadCurationDesk(todayCtx.places);
+  }
+
   /* stage B: the branched questionnaire, in-app */
   function openCheckin() {
     show('checkin');
@@ -1402,6 +1475,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     renderToday(trip, greetName(), places || []);
     todayCtx = { trip, name: greetName(), places: places || [] };
     startClock();
+    loadCurationDesk(places || []);
     try { $('logDate').value = new Date().toISOString().slice(0, 10); } catch (_) {}
     updateInstallCard();
     loadPulse();

@@ -1988,6 +1988,23 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
   text-transform: uppercase; color: var(--teal); white-space: nowrap;
 }
 
+/* curation desk (admin-only card on You) */
+.cur-row { border-top: 1px dashed var(--line); }
+.cur-row:first-child { border-top: none; }
+.cur-head {
+  display: flex; align-items: baseline; gap: 10px; width: 100%;
+  min-height: 44px; padding: 11px 0;
+  background: none; border: none; cursor: pointer; text-align: left;
+  font: inherit; color: var(--tx);
+}
+.cur-name { font-weight: 600; font-size: 14px; }
+.cur-meta { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--dim); margin-left: auto; white-space: nowrap; }
+.cur-body { padding: 0 0 14px; }
+.cur-why { width: 100%; margin-bottom: 10px; font-size: 13px; }
+.cur-actions { display: flex; gap: 16px; align-items: center; }
+.cur-actions .cur-verify { padding: 8px 18px; }
+.cur-note { color: var(--am); }
+
 /* Today NOW cards are tappable through to their place (affordance rule) */
 .place-card.now-tap { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .place-card.now-tap:active { transform: scale(0.98); }

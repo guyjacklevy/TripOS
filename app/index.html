@@ -349,6 +349,18 @@
           </div>
         </div>
 
+        <!-- curation desk — ADMINS ONLY (RLS-gated; hidden for everyone else).
+             The credibility ratchet: discovered ◔ places get reviewed here and
+             promoted to verified ✓, or rejected out of the dataset. -->
+        <div class="card curate-card" id="curateCard" hidden>
+          <div class="ready-top">
+            <span class="k-head">Curation desk</span>
+            <strong class="pace-delta" id="curateCount">—</strong>
+          </div>
+          <p class="sec-context">Places the engine discovered on Google, awaiting your eye. Verify what's real (write the why — that's the product), reject what isn't.</p>
+          <div id="curateList"></div>
+        </div>
+
         <div class="card acct-card">
           <div class="acct-row"><span class="k">Signed in as</span><strong id="acctEmail">—</strong></div>
           <div class="acct-row"><span class="k">Version</span><span>v3 · wave 2</span></div>
