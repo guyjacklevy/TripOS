@@ -475,11 +475,12 @@ function railPicks(places, plan, railKey, n) {
   }
   return { picks: out, total: scored.filter((x) => x.s >= 3).length || inRail.length };
 }
-function slotCard(p) {
+function slotCard(p, planned) {
   const meta = CAT_META[p.category] || { cc: 'var(--teal)' };
-  return '<a class="slot-card" href="#places" data-place="' + esc(p.id) + '" style="--cc:' + meta.cc + '">' +
+  return '<a class="slot-card' + (planned ? ' is-planned' : '') + '" href="#places" data-place="' + esc(p.id) + '" style="--cc:' + meta.cc + '">' +
     '<span class="slot-dot"></span>' +
     '<span class="slot-name">' + esc(p.name) + (p.verified ? ' ✓' : '') + '</span>' +
+    (planned ? '<span class="slot-planned">✦ planned</span>' : '') +
     '<span class="slot-hint">' + esc(p.area.split('/')[0].trim()) + '</span>' +
   '</a>';
 }
@@ -487,6 +488,11 @@ function railInvite(rail) {
   return '<a class="rail-invite" href="#places">no picks this block · browse ' +
     rail.label.toLowerCase() + ' spots →</a>';
 }
+
+/* AI-2a: today's day-plan slots — [{rail, place_id, why}] for the current
+   (leg, day), set by the IIFE's loadDayPlan(). null = no plan = classic rails.
+   The plan augments the rails; it never fakes one. */
+let DAY_PLAN = null;
 
 function renderToday(trip, firstName, places, dateOpt) {
   const now = dateOpt || baliNow();
@@ -497,12 +503,25 @@ function renderToday(trip, firstName, places, dateOpt) {
   const currentIdx = RAILS.findIndex((r) => r.key === s.rail);
   const postMidnight = s.mins < 300; /* 00:00–04:59, still the NIGHT rail */
 
+  /* resolve planned slots to real place rows (id must exist in our data —
+     engine guarantees it, but the client never trusts blindly) */
+  const plannedByRail = {};
+  (DAY_PLAN || []).forEach((sl) => {
+    const p = places.find((x) => String(x.id) === String(sl.place_id));
+    if (p && !plannedByRail[sl.rail]) plannedByRail[sl.rail] = { p, why: (sl.why || '').trim() };
+  });
+
   let html = '';
   RAILS.forEach((r, i) => {
     const state = r.key === s.rail ? 'current'
       : postMidnight ? 'future'
       : (i < currentIdx ? 'past' : 'future');
-    const { picks, total } = railPicks(places, plan, r.key, state === 'current' ? 2 : 2);
+    const planned = plannedByRail[r.key] || null;
+    let { picks, total } = railPicks(places, plan, r.key, state === 'current' ? 2 : 2);
+    if (planned) {
+      picks = picks.filter((p) => String(p.id) !== String(planned.p.id));
+      total = Math.max(total, picks.length + 1);
+    }
 
     if (state === 'past') {
       html += '<div class="rail past" data-rail="' + r.key + '">' +
@@ -525,18 +544,26 @@ function renderToday(trip, firstName, places, dateOpt) {
       html += '<div class="tl-now"><div class="tl-now-bar"><span class="tl-now-tick" style="left:' +
         (p * 100).toFixed(1) + '%"></span></div>' +
         '<span class="tl-now-label" style="left:' + (p * 100).toFixed(1) + '%">' + hh + ':' + mm + ' · you are here</span></div>';
-      /* the old NOW cards: time+day aware, with why-now */
-      const nowPicks = plan ? pickNow(places, plan, now, 2) : [];
-      const cards = nowPicks.length
+      /* the planned pick leads the rail; NOW suggestions follow (deduped) */
+      const cards = [];
+      if (planned) {
+        cards.push(pickCard(planned.p, plan && isMatch(scorePlace(planned.p, plan)) ? scoreBreakdown(planned.p, plan) : null,
+          '✦ PLANNED — ' + (planned.why || 'on today’s plan')));
+      }
+      const nowPicks = (plan ? pickNow(places, plan, now, 2) : [])
+        .filter((pp) => !planned || String(pp.id) !== String(planned.p.id));
+      const rest = nowPicks.length
         ? nowPicks.map((pp) => pickCard(pp, scoreBreakdown(pp, plan), '◉ NOW — ' + (whyNow(pp, now) || 'your kind of place')))
         : picks.map((pp) => pickCard(pp, plan && isMatch(scorePlace(pp, plan)) ? scoreBreakdown(pp, plan) : null, null));
+      cards.push(...rest.slice(0, planned ? 1 : 2));
       html += '<div class="rail-cards">' + (cards.join('') || railInvite(r)) + '</div>';
     } else {
-      /* future: slot cards */
-      const shown = picks.slice(0, 2);
-      html += shown.length
-        ? '<div class="rail-slots">' + shown.map(slotCard).join('') +
-          (total > shown.length ? '<a class="slot-more" href="#places">+ ' + (total - shown.length) + ' more →</a>' : '') + '</div>'
+      /* future: planned slot leads, suggestions fill to 2 */
+      const shown = picks.slice(0, planned ? 1 : 2);
+      const slots = (planned ? [slotCard(planned.p, true)] : []).concat(shown.map((pp) => slotCard(pp)));
+      html += slots.length
+        ? '<div class="rail-slots">' + slots.join('') +
+          (total > slots.length ? '<a class="slot-more" href="#places">+ ' + (total - slots.length) + ' more →</a>' : '') + '</div>'
         : railInvite(r);
     }
     html += '</div>';
@@ -552,7 +579,7 @@ function renderToday(trip, firstName, places, dateOpt) {
       if (body.dataset.loaded !== '1') {
         const key = btn.closest('.rail').getAttribute('data-rail');
         const rk = RAILS.find((r) => r.key === key);
-        body.innerHTML = railPicks(places, plan, key, 2).picks.map(slotCard).join('') || railInvite(rk);
+        body.innerHTML = railPicks(places, plan, key, 2).picks.map((pp) => slotCard(pp)).join('') || railInvite(rk);
         body.dataset.loaded = '1';
       }
       body.hidden = !body.hidden;
@@ -700,6 +727,7 @@ window.__appDebug = {
   renderRecent, renderToday, setPassenger, passengerLine, mountPlaces,
   updateStrip, dayState, baliNow, tripDayNumber, tripDayLabel,
   routeState, renderRoute, canReplan,
+  injectDayPlan: (slots) => { DAY_PLAN = slots || null; },
   /* preview: inject a route without a session — strip + instrument + nudge */
   injectRoute: (t, legs, opts) => {
     TRIP_LEGS = legs || [];
@@ -740,11 +768,18 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   function startClock() {
     if (clockTimer) return;
     lastBlock = timeBlock(baliNow().getHours());
+    let lastDayNum = trip ? tripDayNumber(trip, baliNow()) : null;
     clockTimer = setInterval(() => {
       if (!todayCtx) return;
       const now = baliNow();
       updateStrip(todayCtx.trip, todayCtx.name, now);
       paintNudge(); /* last-day repack nudge flips at midnight with the leg */
+      /* midnight: a new trip day = possibly a new leg day-plan */
+      const dn = tripDayNumber(todayCtx.trip, now);
+      if (dn !== lastDayNum) {
+        lastDayNum = dn;
+        loadDayPlan().then(() => renderToday(todayCtx.trip, todayCtx.name, todayCtx.places, baliNow()));
+      }
       const block = timeBlock(now.getHours());
       if (block !== lastBlock) {
         lastBlock = block;
@@ -1169,6 +1204,36 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
   }
 
+  /* ─── AI-2a: today's plan for the current (leg, day). Generation is lazy —
+     one engine call per leg, cached in day_plans; failures stay silent and
+     the rails simply keep their classic suggestion behavior. ─── */
+  const daysTried = {}; /* leg_seq → true, stops same-session retry loops */
+  async function loadDayPlan() {
+    DAY_PLAN = null;
+    const rs = routeState(trip, TRIP_LEGS, baliNow());
+    if (!rs || !rs.cur) return;
+    const legSeq = rs.cur.idx + 1;
+    const { data } = await sb.from('day_plans').select('slots')
+      .eq('trip_id', trip.id).eq('leg_seq', legSeq).eq('day_in_leg', rs.cur.nightOf).limit(1);
+    if (data && data[0]) { DAY_PLAN = data[0].slots || null; return; }
+    /* nothing for this leg yet → generate once in the background */
+    if (daysTried[legSeq]) return;
+    daysTried[legSeq] = true;
+    try {
+      const { data: gen, error } = await sb.functions.invoke('plan-engine', { body: { action: 'days', leg_seq: legSeq } });
+      if (error || !gen || gen.error) {
+        console.warn('[TripOS] day-plan:', (gen && gen.error) || (error && error.message) || 'unreachable');
+        return;
+      }
+      const { data: fresh } = await sb.from('day_plans').select('slots')
+        .eq('trip_id', trip.id).eq('leg_seq', legSeq).eq('day_in_leg', rs.cur.nightOf).limit(1);
+      if (fresh && fresh[0]) {
+        DAY_PLAN = fresh[0].slots || null;
+        if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
+      }
+    } catch (e) { console.warn('[TripOS] day-plan unreachable:', e && e.message); }
+  }
+
   /* replan flow (spec §3): confirm already happened (riGo) → old route
      crossfades out → honest terminal line in place → new route drops in */
   async function replanRoute() {
@@ -1187,6 +1252,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute });
       updateStrip(trip, greetName(), baliNow());
       paintNudge();
+      /* the old route's day plans died with it (server-side) — start fresh */
+      DAY_PLAN = null;
+      Object.keys(daysTried).forEach((k) => delete daysTried[k]);
+      loadDayPlan().then(() => { if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places); });
     } else {
       instr.querySelector('.ck-term').innerHTML =
         '<span class="ln">▸ routing unavailable — your current route stands</span>';
@@ -1306,8 +1375,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute });
           updateStrip(trip, greetName(), baliNow());
           paintNudge();
+          loadDayPlan().then(() => { if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places); });
         }
       });
+    } else {
+      /* routed already → today's plan rides along (lazy per-leg generation) */
+      loadDayPlan().then(() => { if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places); });
     }
 
     renderBrief(trip);

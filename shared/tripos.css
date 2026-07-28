@@ -1981,6 +1981,13 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .ri-confirm .ri-go { padding: 8px 18px; margin-right: 14px; }
 .ri-locked { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; color: var(--dim); }
 .ri-fade { opacity: 0; transition: opacity 0.22s ease; }
+/* AI-2a: planned slots on the rails — teal ✦ tag, accent border, no new tokens */
+.slot-card.is-planned { border-color: rgba(61, 255, 208, 0.35); }
+.slot-planned {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--teal); white-space: nowrap;
+}
+
 /* Today NOW cards are tappable through to their place (affordance rule) */
 .place-card.now-tap { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .place-card.now-tap:active { transform: scale(0.98); }
