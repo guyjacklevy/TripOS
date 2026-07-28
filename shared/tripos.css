@@ -1980,6 +1980,20 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .ri-confirm p { font-size: 12.5px; color: var(--mut); margin-bottom: 10px; }
 .ri-confirm .ri-go { padding: 8px 18px; margin-right: 14px; }
 .ri-locked { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; color: var(--dim); }
+/* AI-2.5 · deviation controls */
+.ri-foot { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.ri-foot .ri-locked, .ri-foot .ri-offroute, .ri-foot .ri-areas, .ri-foot .ri-confirm { flex-basis: 100%; }
+.ri-offroute { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--am); line-height: 1.6; }
+.ri-offroute strong { color: var(--am); }
+.ri-areas { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 2px; }
+.ri-area-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font: inherit; font-size: 12.5px; font-weight: 600; color: var(--tx);
+  background: var(--glass); border: 1px solid var(--line); border-radius: 99px;
+  padding: 8px 14px; cursor: pointer;
+}
+.ri-area-chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--at, var(--teal)); }
+.ri-area-chip:active { transform: scale(0.96); }
 .ri-fade { opacity: 0; transition: opacity 0.22s ease; }
 /* AI-2a: planned slots on the rails — teal ✦ tag, accent border, no new tokens */
 .slot-card.is-planned { border-color: rgba(61, 255, 208, 0.35); }

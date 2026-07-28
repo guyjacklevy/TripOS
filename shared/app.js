@@ -292,6 +292,21 @@ function routeState(trip, legs, now) {
     summary: (trip.route_summary || '').trim()
   };
 }
+/* AI-2.5 · deviation: the traveler moved by their own will. Today follows
+   them; the route is never silently rewritten — it waits, visibly. Null =
+   on-route. Picking the current leg's own area counts as returning. */
+function offRoute(trip, rs) {
+  const o = trip && trip.area_override;
+  if (!o) return null;
+  if (rs && rs.cur && rs.cur.area === o) return null;
+  return o;
+}
+const inAreaRegion = (p, area) => {
+  const r = String(p.area || '').split('/')[0].trim();
+  if (area === 'Islands') return /penida|lembongan|islands|ceningan/i.test(r);
+  return r.toLowerCase() === String(area).toLowerCase();
+};
+
 /* replan gate — v1 rule: routes freeze at arrival (days adapt later, AI-3).
    No arrive date = still planning = replan allowed. */
 function canReplan(trip, now) {
@@ -313,7 +328,13 @@ function updateStrip(trip, firstName, now) {
   /* AI-1b: the leg is the base — the word BASE dies when a route exists.
      Leg-day counter stays OFF the strip (it lives on the route instrument). */
   const rs = routeState(trip, TRIP_LEGS, now);
-  if (rs && rs.cur) {
+  const ov = offRoute(trip, rs);
+  if (ov) {
+    /* deviation: the strip follows the traveler; OFF-ROUTE is the tappable
+       way back (jumps to the route instrument, where the return control lives) */
+    $('todayStrip2').innerHTML = esc(ov.toUpperCase()) +
+      ' · <button type="button" class="leg-chip">OFF-ROUTE</button> · ' + PHASE_WORD[s.phase];
+  } else if (rs && rs.cur) {
     const legChip = '<button type="button" class="leg-chip" data-goto="you">LEG ' +
       (rs.cur.idx + 1) + '/' + rs.count + '</button>';
     $('todayStrip2').innerHTML = rs.lastDay && rs.next
@@ -387,6 +408,18 @@ function renderRoute(trip, legs, now, opts) {
     '</div>';
   });
 
+  /* AI-2.5: deviation is visible, never silent — the route waits */
+  const ov = offRoute(trip, rs);
+  const overrideBlock = ov
+    ? '<p class="ri-offroute">📍 off-route · you’re in <strong>' + esc(ov) + '</strong> — Today follows you, the route waits</p>' +
+      '<button type="button" class="ri-replan" id="riBack">↩ BACK ON ROUTE</button>'
+    : '<button type="button" class="ri-replan ri-else" id="riElse">📍 I’M SOMEWHERE ELSE</button>' +
+      '<div class="ri-areas" id="riAreas" hidden>' +
+        Object.keys(AREA_TINT).map((a) =>
+          '<button type="button" class="ri-area-chip" data-area="' + esc(a) + '" style="--at:' + AREA_TINT[a] + '">' + esc(a) + '</button>'
+        ).join('') +
+      '</div>';
+
   host.hidden = false;
   host.innerHTML =
     '<div class="route-instr">' +
@@ -394,6 +427,7 @@ function renderRoute(trip, legs, now, opts) {
       (rs.summary ? '<p class="ri-summary">' + esc(rs.summary) + '</p>' : '') +
       '<div class="ri-legs">' + rows.join('') + '</div>' +
       '<div class="ri-foot">' +
+        overrideBlock +
         (canReplan(trip, now)
           ? '<button type="button" class="ri-replan" id="riReplan">↻ REPLAN ROUTE</button>' +
             '<div class="ri-confirm" id="riConfirm" hidden>' +
@@ -438,6 +472,14 @@ function renderRoute(trip, legs, now, opts) {
     const keep = $('riKeep'), go = $('riGo');
     if (keep) keep.onclick = () => { conf.hidden = true; chip.hidden = false; };
     if (go) go.onclick = o.onReplan;
+  }
+  if (o.onOverride) {
+    const elseBtn = $('riElse'), areas = $('riAreas'), back = $('riBack');
+    if (elseBtn) elseBtn.onclick = () => { areas.hidden = !areas.hidden; };
+    if (areas) areas.querySelectorAll('.ri-area-chip').forEach((b) => {
+      b.onclick = () => o.onOverride(b.getAttribute('data-area'));
+    });
+    if (back) back.onclick = () => o.onOverride(null);
   }
 }
 
@@ -503,10 +545,20 @@ function renderToday(trip, firstName, places, dateOpt) {
   const currentIdx = RAILS.findIndex((r) => r.key === s.rail);
   const postMidnight = s.mins < 300; /* 00:00–04:59, still the NIGHT rail */
 
+  /* AI-2.5: off-route → the leg's day plan doesn't apply (it was planned for
+     an area you're not in) and picks localize to where you actually are —
+     falling back to the full pool rather than ever rendering empty rails */
+  const ov = offRoute(trip, routeState(trip, TRIP_LEGS, now));
+  let pool = places;
+  if (ov) {
+    const local = places.filter((p) => inAreaRegion(p, ov));
+    if (local.length >= 4) pool = local;
+  }
+
   /* resolve planned slots to real place rows (id must exist in our data —
      engine guarantees it, but the client never trusts blindly) */
   const plannedByRail = {};
-  (DAY_PLAN || []).forEach((sl) => {
+  if (!ov) (DAY_PLAN || []).forEach((sl) => {
     const p = places.find((x) => String(x.id) === String(sl.place_id));
     if (p && !plannedByRail[sl.rail]) plannedByRail[sl.rail] = { p, why: (sl.why || '').trim() };
   });
@@ -517,7 +569,7 @@ function renderToday(trip, firstName, places, dateOpt) {
       : postMidnight ? 'future'
       : (i < currentIdx ? 'past' : 'future');
     const planned = plannedByRail[r.key] || null;
-    let { picks, total } = railPicks(places, plan, r.key, state === 'current' ? 2 : 2);
+    let { picks, total } = railPicks(pool, plan, r.key, state === 'current' ? 2 : 2);
     if (planned) {
       picks = picks.filter((p) => String(p.id) !== String(planned.p.id));
       total = Math.max(total, picks.length + 1);
@@ -550,7 +602,7 @@ function renderToday(trip, firstName, places, dateOpt) {
         cards.push(pickCard(planned.p, plan && isMatch(scorePlace(planned.p, plan)) ? scoreBreakdown(planned.p, plan) : null,
           '✦ PLANNED — ' + (planned.why || 'on today’s plan')));
       }
-      const nowPicks = (plan ? pickNow(places, plan, now, 2) : [])
+      const nowPicks = (plan ? pickNow(pool, plan, now, 2) : [])
         .filter((pp) => !planned || String(pp.id) !== String(planned.p.id));
       const rest = nowPicks.length
         ? nowPicks.map((pp) => pickCard(pp, scoreBreakdown(pp, plan), '◉ NOW — ' + (whyNow(pp, now) || 'your kind of place')))
@@ -579,7 +631,7 @@ function renderToday(trip, firstName, places, dateOpt) {
       if (body.dataset.loaded !== '1') {
         const key = btn.closest('.rail').getAttribute('data-rail');
         const rk = RAILS.find((r) => r.key === key);
-        body.innerHTML = railPicks(places, plan, key, 2).picks.map((pp) => slotCard(pp)).join('') || railInvite(rk);
+        body.innerHTML = railPicks(pool, plan, key, 2).picks.map((pp) => slotCard(pp)).join('') || railInvite(rk);
         body.dataset.loaded = '1';
       }
       body.hidden = !body.hidden;
@@ -1258,7 +1310,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }, 220);
     const ok = await genRoute();
     if (ok) {
-      renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute });
+      renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride });
       updateStrip(trip, greetName(), baliNow());
       paintNudge();
       /* the old route's day plans died with it (server-side) — start fresh */
@@ -1268,16 +1320,29 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     } else {
       instr.querySelector('.ck-term').innerHTML =
         '<span class="ln">▸ routing unavailable — your current route stands</span>';
-      setTimeout(() => renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute }), 1600);
+      setTimeout(() => renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride }), 1600);
     }
   }
 
-  /* ONE nudge painter — last-day repack beats the readiness item (spec §2) */
+  /* AI-2.5: persist the deviation; every surface repaints from one place */
+  async function setOverride(area) {
+    const val = area || null;
+    const { error } = await sb.from('trips').update({ area_override: val }).eq('id', trip.id);
+    if (error) { console.error('[TripOS] override save failed:', error.message); return; }
+    trip.area_override = val;
+    renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride });
+    if (todayCtx) { todayCtx.trip = trip; renderToday(trip, todayCtx.name, todayCtx.places); }
+    else updateStrip(trip, greetName(), baliNow());
+    paintNudge();
+  }
+
+  /* ONE nudge painter — last-day repack beats the readiness item (spec §2);
+     while off-route the "moving tomorrow" nudge would mislead — suppressed */
   function paintNudge() {
     const nudge = $('readyNudge');
     if (!nudge) return;
     const rs = routeState(trip, TRIP_LEGS, baliNow());
-    if (rs && rs.lastDay && rs.next) {
+    if (rs && rs.lastDay && rs.next && !offRoute(trip, rs)) {
       nudge.hidden = false;
       nudge.innerHTML = '🎒 Moving to <strong>' + esc(rs.next.area) + '</strong> tomorrow — run your repack? →';
       return;
@@ -1448,12 +1513,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const { data: legRows } = await sb.from('trip_legs').select('*')
       .eq('trip_id', trip.id).order('seq');
     TRIP_LEGS = legRows || [];
-    renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: revealRouteNext, onReplan: replanRoute });
+    renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: revealRouteNext, onReplan: replanRoute, onOverride: setOverride });
     revealRouteNext = false;
     if (TRIP_LEGS.length < 2 && !trip.route_generated_at) {
       genRoute().then((ok) => {
         if (ok) {
-          renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute });
+          renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride });
           updateStrip(trip, greetName(), baliNow());
           paintNudge();
           loadDayPlan().then(() => { if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places); });
