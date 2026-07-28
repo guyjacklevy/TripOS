@@ -1229,6 +1229,14 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         .eq('trip_id', trip.id).eq('leg_seq', legSeq).eq('day_in_leg', rs.cur.nightOf).limit(1);
       if (fresh && fresh[0]) {
         DAY_PLAN = fresh[0].slots || null;
+        /* AI-2b: discovery may have grown the dataset mid-call — if the plan
+           references places we haven't loaded, refresh the pool so planned
+           slots resolve (and the Places tab shows the new ◔ discovered rows) */
+        if (todayCtx && (DAY_PLAN || []).some((sl) =>
+              !todayCtx.places.find((x) => String(x.id) === String(sl.place_id)))) {
+          const { data: allP } = await sb.from('curated_places').select('*').eq('destination', 'bali');
+          if (allP && allP.length) { todayCtx.places = allP; mountPlacesTab(allP); }
+        }
         if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
       }
     } catch (e) { console.warn('[TripOS] day-plan unreachable:', e && e.message); }
