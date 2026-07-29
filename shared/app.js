@@ -1178,9 +1178,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (!user) return;
     btn.disabled = true;
     btn.textContent = '✓ checked in';
-    const { error } = await sb.from('checkins').insert({
+    const { data: ckRow, error } = await sb.from('checkins').insert({
       user_id: user.id, place_id: p.id, place_name: p.name, lat: p.lat, lng: p.lng
-    });
+    }).select().single();
     if (error) {
       console.error('[TripOS] check-in failed:', error.message);
       btn.textContent = '⚠ didn’t save — tap to retry';
@@ -1189,7 +1189,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
     setTimeout(() => { btn.textContent = '📍 I’m here'; btn.disabled = false; }, 2600);
     /* A1: the stamp ceremony — the check-in lands in the passport live */
-    CHECKINS.push({ user_id: user.id, place_id: p.id, place_name: p.name, lat: p.lat, lng: p.lng, created_at: new Date().toISOString() });
+    CHECKINS.push(ckRow || { user_id: user.id, place_id: p.id, place_name: p.name, created_at: new Date().toISOString() });
     if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places, { ceremony: p.id });
     /* T7: the v19 loop — checked in? offer the typical spend, one tap to log */
     const card = btn.closest('.place-card');
@@ -1199,8 +1199,19 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const sug = document.createElement('div');
       sug.className = 'spend-suggest';
       sug.innerHTML = '<button type="button" class="place-maps ss-log">＋ log ~' + fmtK(estK) +
-        ' spend here?</button><button type="button" class="ck-reset ss-skip">skip</button>';
+        ' spend here?</button><button type="button" class="place-maps ss-worth">worth it</button>' +
+        '<button type="button" class="ck-reset ss-skip">skip</button>';
       card.appendChild(sug);
+      /* A2: the 1-tap micro-signal (S2) — was it worth going? */
+      sug.querySelector('.ss-worth').addEventListener('click', async (ev) => {
+        const b = ev.currentTarget;
+        b.disabled = true;
+        if (ckRow && ckRow.id) {
+          const { error: we } = await sb.from('checkins').update({ worth_it: true }).eq('id', ckRow.id);
+          b.textContent = we ? '⚠ retry' : '✓ noted';
+          if (we) b.disabled = false; else ckRow.worth_it = true;
+        } else b.textContent = '✓ noted';
+      });
       sug.querySelector('.ss-log').addEventListener('click', async () => {
         sug.innerHTML = '<span class="ss-done">…</span>';
         await logSpend(estK, cat);
@@ -1251,6 +1262,92 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     setTab('places');
     if (placesApi) placesApi.focusPlace(id);
   });
+
+  /* ─── A2 · zero-friction check-in ───
+     One tap → nearest places from where you stand → confirm → the stamp
+     ceremony fires. Permission asked contextually at first attempt, never
+     onboarding (Rachel). Every failure path lands in Places, honestly. */
+  const havKm = (la1, ln1, la2, ln2) => {
+    const R = 6371, dLa = (la2 - la1) * Math.PI / 180, dLn = (ln2 - ln1) * Math.PI / 180;
+    const a = Math.sin(dLa / 2) ** 2 +
+      Math.cos(la1 * Math.PI / 180) * Math.cos(la2 * Math.PI / 180) * Math.sin(dLn / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+  const gpsBtnEl = $('gpsBtn');
+  if (gpsBtnEl) gpsBtnEl.onclick = () => {
+    const sheet = $('gpsSheet');
+    sheet.hidden = false;
+    if (!navigator.geolocation) {
+      sheet.innerHTML = '<p class="pulse-note">location unavailable on this device — pick the place in Places</p>';
+      return;
+    }
+    /* the contextual line ABOVE the OS prompt (Rachel's copy direction) */
+    sheet.innerHTML = '<p class="pulse-note">find where you are? · one tap check-ins</p>';
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const { latitude: la, longitude: ln } = pos.coords;
+      const cands = ((todayCtx && todayCtx.places) || [])
+        .filter((p) => typeof p.lat === 'number' && typeof p.lng === 'number')
+        .map((p) => ({ p, km: havKm(la, ln, p.lat, p.lng) }))
+        .sort((a, b) => a.km - b.km).slice(0, 3);
+      if (!cands.length) {
+        sheet.innerHTML = '<p class="pulse-note">nothing nearby in the data yet — pick it in Places</p>';
+        return;
+      }
+      sheet.innerHTML = '<p class="pulse-note">you’re near:</p>' +
+        cands.map((c, i) =>
+          '<button type="button" class="ri-replan gps-pick" data-i="' + i + '">' +
+          esc(c.p.name) + ' · ' + (c.km < 1 ? Math.round(c.km * 1000) + ' m' : c.km.toFixed(1) + ' km') +
+          '</button>').join('') +
+        '<button type="button" class="ck-reset gps-else">somewhere else →</button>';
+      sheet.querySelectorAll('.gps-pick').forEach((b) => {
+        b.onclick = async () => {
+          await checkinAt(cands[+b.getAttribute('data-i')].p, b);
+          setTimeout(() => { sheet.hidden = true; }, 1400);
+        };
+      });
+      sheet.querySelector('.gps-else').onclick = () => { sheet.hidden = true; setTab('places'); };
+    }, () => {
+      sheet.innerHTML = '<p class="pulse-note">location unavailable — pick the place in Places</p>';
+    }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+  };
+
+  /* A2 · retroactive logging: "I was at X yesterday" — the log stays whole */
+  const retroBtn = $('ppRetro'), retroForm = $('ppRetroForm');
+  if (retroBtn) retroBtn.onclick = () => {
+    retroForm.hidden = !retroForm.hidden;
+    if (!retroForm.hidden) {
+      $('ppPlaces').innerHTML = ((todayCtx && todayCtx.places) || [])
+        .map((p) => '<option value="' + esc(p.name) + '">').join('');
+      try { $('ppRetroDate').max = new Date().toISOString().slice(0, 10); } catch (_) {}
+    }
+  };
+  if (retroForm) retroForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const note = $('ppRetroNote');
+    const name = $('ppRetroPlace').value.trim();
+    const dateV = $('ppRetroDate').value;
+    const p = ((todayCtx && todayCtx.places) || []).find((x) => x.name === name);
+    if (!p || !dateV) {
+      note.hidden = false;
+      note.textContent = !p ? 'pick a place from the list' : 'pick the day';
+      return;
+    }
+    const { data: ckRow, error } = await sb.from('checkins').insert({
+      user_id: user.id, place_id: p.id, place_name: p.name, lat: p.lat, lng: p.lng,
+      created_at: dateV + 'T12:00:00+08:00' /* noon Bali on the chosen day */
+    }).select().single();
+    if (error) {
+      note.hidden = false;
+      note.textContent = 'didn’t save — tap stamp to retry';
+      return;
+    }
+    CHECKINS.push(ckRow);
+    CHECKINS.sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+    note.hidden = true;
+    retroForm.hidden = true;
+    $('ppRetroPlace').value = ''; $('ppRetroDate').value = '';
+    if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places, { ceremony: p.id });
+  };
 
   /* A1 · passport controls: view toggle, category filter, You section index */
   const ppToggleEl = $('ppToggle');
@@ -1527,6 +1624,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   /* preview/debug: inject checklist state without a session */
   Object.assign(window.__appDebug, {
     injectReadiness: (t, items, rpk) => { trip = t; checkItems = items; repack = rpk || null; renderChecklists(); },
+    injectToday: (t, places) => { todayCtx = { trip: t, name: '', places: places || [] }; },
     buildAutoItems, paintNudge, mountPlacesTab,
     injectCuration: (places) => { isAdmin = true; loadCurationDesk(places); }
   });

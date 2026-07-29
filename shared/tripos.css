@@ -2086,6 +2086,13 @@ div.stamp { cursor: default; }
 .stamp.st-new { animation: stampIn 0.4s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .stamp.st-new { animation: none; } }
 
+/* A2: zero-friction check-in — chip on Today + the nearest-places sheet */
+.gps-row { margin: 10px 0 4px; }
+.gps-sheet { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; margin-bottom: 10px; }
+.gps-sheet .gps-pick { text-align: left; }
+.pp-retro-form { margin-top: 10px; }
+.pp-retro-form .auth-input { font-size: 13px; }
+
 /* AI-3: the live concierge — input on Today + reply line above the timeline */
 .cx-form { margin-bottom: 4px; }
 .cx-form .auth-input { font-size: 13.5px; }
