@@ -648,6 +648,26 @@ function renderPassport(trip, places, opts) {
     else if (trip && trip.created_at) { const c = new Date(trip.created_at); origin = new Date(c.getFullYear(), c.getMonth(), c.getDate()); }
     else origin = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const rows = [];
+    /* the asset never hides real history: check-ins logged BEFORE day 1
+       (earlier stays, or an arrive date set later) render as PRE-TRIP days —
+       stamped days only, no empty padding outside the trip window */
+    const preMap = new Map();
+    CHECKINS.forEach((c) => {
+      const b = baliDateOf(c.created_at);
+      if (new Date(b.y, b.m, b.d) < origin) {
+        const k = b.y + '-' + b.m + '-' + b.d;
+        if (!preMap.has(k)) preMap.set(k, { dd: b, cks: [] });
+        preMap.get(k).cks.push(c);
+      }
+    });
+    [...preMap.values()]
+      .sort((a, b) => (a.dd.y - b.dd.y) || (a.dd.m - b.dd.m) || (a.dd.d - b.dd.d))
+      .forEach((g) => {
+        rows.push('<div class="pp-day"><span class="pp-day-label">' +
+          dateLbl(g.dd) + ' · PRE-TRIP</span><div class="stamp-grid">' +
+          g.cks.map((c) => stampEl(c, resolve(c.place_id), {})).join('') +
+          '</div></div>');
+      });
     for (let d = 1; d <= Math.max(1, dayN); d++) {
       const dd = new Date(origin.getFullYear(), origin.getMonth(), origin.getDate() + (d - 1));
       const key = dd.getFullYear() + '-' + dd.getMonth() + '-' + dd.getDate();
