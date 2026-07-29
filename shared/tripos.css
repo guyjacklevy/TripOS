@@ -2086,6 +2086,43 @@ div.stamp { cursor: default; }
 .stamp.st-new { animation: stampIn 0.4s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .stamp.st-new { animation: none; } }
 
+/* ═══ A3 · THE SHARED PASSPORT (public page /s/) ═══ */
+.share-wrap { max-width: 560px; }
+.sh-center { text-align: center; padding: 80px 0; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.sh-gone-h { font-size: 26px; }
+.sh-hero { text-align: center; padding: 26px 0 10px; }
+.sh-dial { width: 84px; height: 84px; margin: 0 auto 14px; }
+.sh-title { font-family: var(--mono); font-size: clamp(22px, 6vw, 30px); letter-spacing: 0.14em; margin-bottom: 10px; }
+.sh-counts { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; color: var(--dim); }
+.sh-counts em { font-style: normal; color: var(--teal); }
+.sh-cap { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--dim); margin-top: 10px; }
+.sh-sec { margin-top: 34px; }
+.sh-sec-cap { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; color: var(--dim); margin-bottom: 12px; text-transform: uppercase; }
+.sh-cta { text-align: center; margin: 44px 0 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.sh-cta-line { font-size: 19px; font-weight: 700; }
+.sh-foot { text-align: center; padding: 24px 0 40px; }
+.sh-foot a { color: var(--mut); font-size: 13px; }
+.sh-mini {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(4, 4, 12, 0.72); backdrop-filter: blur(4px);
+  display: flex; align-items: flex-end; justify-content: center; padding: 18px;
+}
+.sh-mini-card {
+  width: 100%; max-width: 420px;
+  background: var(--surface, #12121e); border: 1px solid var(--line); border-radius: 18px;
+  padding: 20px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;
+}
+/* owner side: share sheet in the passport */
+.pp-share-row { margin: 0 0 12px; }
+.pp-share-sheet { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.pp-share-link {
+  font-family: var(--mono); font-size: 11px; color: var(--teal);
+  word-break: break-all; background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px;
+}
+.pp-share-priv { font-size: 12px; color: var(--mut); line-height: 1.5; }
+.pp-share-acts { display: flex; gap: 16px; align-items: center; }
+
 /* A2: zero-friction check-in — chip on Today + the nearest-places sheet */
 .gps-row { margin: 10px 0 4px; }
 .gps-sheet { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; margin-bottom: 10px; }

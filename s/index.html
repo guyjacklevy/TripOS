@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A Bali passport — TripOS</title>
+  <meta name="description" content="A traveler's Bali, stamped — real places, really visited. Plan yours from it.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a0a14">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2242%22 fill=%22%233dffd0%22/></svg>">
+  <link rel="stylesheet" href="../shared/tripos.css">
+</head>
+<body>
+  <div class="cosmos"></div>
+
+  <div class="wrap share-wrap">
+    <nav class="nav">
+      <a class="brand" href="../"><span class="orb planet-teal"></span>TripOS</a>
+      <a class="nav-cta" href="../bali/">Plan my Bali</a>
+    </nav>
+
+    <!-- state: loading -->
+    <div id="shLoading" class="sh-center">
+      <p class="pulse-note">opening the passport…</p>
+    </div>
+
+    <!-- state: gone (revoked / bad token) — brand voice, not an error screen -->
+    <div id="shGone" class="sh-center" hidden>
+      <span class="orb planet-teal" style="width:34px;height:34px"></span>
+      <h1 class="sh-gone-h">this passport went private</h1>
+      <p class="sec-context">The traveler closed this link. You can still start your own.</p>
+      <a class="btn btn-primary" href="../bali/">Plan my Bali — free</a>
+    </div>
+
+    <!-- state: the passport -->
+    <div id="shBody" hidden>
+      <!-- beat 1 · hero -->
+      <header class="sh-hero">
+        <div class="orbit-dial sh-dial" id="shDial" data-phase="day" style="--od-angle:210deg">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <circle class="od-rim" cx="32" cy="32" r="30"/>
+            <circle class="od-sea" cx="32" cy="32" r="27"/>
+            <g class="od-night" style="transform:rotate(var(--od-angle))">
+              <path d="M32 5 a27 27 0 0 1 0 54 z" fill="rgba(4,4,12,0.78)"/>
+            </g>
+            <circle class="od-pin" cx="47" cy="24" r="3"/>
+            <circle class="od-ping" cx="47" cy="24" r="6"/>
+          </svg>
+        </div>
+        <h1 class="sh-title" id="shTitle">A BALI PASSPORT</h1>
+        <p class="sh-counts" id="shCounts"></p>
+        <p class="sh-cap">real places · really visited · stamped by TripOS</p>
+      </header>
+
+      <!-- beat 2 · the route, read-only -->
+      <section class="sh-sec" id="shRouteSec" hidden>
+        <p class="sh-sec-cap">the route — where this trip based itself</p>
+        <div class="route-instr"><div class="ri-legs" id="shLegs"></div><p class="ri-locked" id="shStillOut" hidden>» still out there</p></div>
+      </section>
+
+      <!-- beat 3 · the passport spread -->
+      <section class="sh-sec">
+        <p class="sh-sec-cap">the stamps — every check-in is a real visit</p>
+        <div id="shSpread"></div>
+      </section>
+
+      <!-- beat 4 · stamped days -->
+      <section class="sh-sec" id="shDaysSec" hidden>
+        <p class="sh-sec-cap">how the days actually went</p>
+        <div class="pp-days" id="shDays"></div>
+      </section>
+
+      <!-- beat 5 · the provenance CTA -->
+      <section class="sh-cta">
+        <p class="sh-cta-line" id="shCtaLine">Plan your Bali from this month.</p>
+        <a class="btn btn-primary" href="../bali/" id="shCtaBtn">Start my Bali plan — free</a>
+        <p class="note">3 questions · 30 seconds · your own passport starts empty and honest</p>
+      </section>
+
+      <footer class="sh-foot">
+        <a href="../bali/" id="shFootCta">plan your own →</a>
+      </footer>
+    </div>
+  </div>
+
+  <!-- stamp mini-card overlay (save · via <name>) -->
+  <div class="sh-mini" id="shMini" hidden>
+    <div class="sh-mini-card" id="shMiniCard"></div>
+  </div>
+
+  <script src="../shared/supabase-config.js"></script>
+  <script type="module" src="./share.js"></script>
+</body>
+</html>

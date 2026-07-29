@@ -1361,6 +1361,46 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places, { ceremony: p.id });
   };
 
+  /* ─── A3 · sharing: explicit, per-trip, revocable. The link is the ONLY
+     public door, and the privacy boundary is stated where the share happens. */
+  const shareSlug = () => {
+    const a = new Uint8Array(16); crypto.getRandomValues(a);
+    return Array.from(a, (b) => (b % 36).toString(36)).join('');
+  };
+  const shareBtn = $('ppShare');
+  if (shareBtn) shareBtn.onclick = async () => {
+    const sheet = $('ppShareSheet');
+    if (!sheet.hidden) { sheet.hidden = true; return; }
+    sheet.hidden = false;
+    sheet.innerHTML = '<p class="pulse-note">▸ opening the share desk…</p>';
+    let { data: rows } = await sb.from('trip_shares').select('*')
+      .eq('trip_id', trip.id).is('revoked_at', null).limit(1);
+    let share = rows && rows[0];
+    if (!share) {
+      const ins = await sb.from('trip_shares').insert({ trip_id: trip.id, token: shareSlug() }).select().single();
+      if (ins.error) { sheet.innerHTML = '<p class="pulse-note">couldn’t create the link — tap SHARE to retry</p>'; return; }
+      share = ins.data;
+    }
+    const link = location.origin + '/s/?t=' + share.token;
+    sheet.innerHTML =
+      '<div class="pp-share-link" id="ppShareLink">' + esc(link) + '</div>' +
+      '<p class="pp-share-priv">Past days and places only. Never your spend, never where you are now. Revoke any time — the link dies instantly.</p>' +
+      '<div class="pp-share-acts">' +
+        '<button type="button" class="btn btn-primary log-btn" id="ppShareCopy">copy link</button>' +
+        '<button type="button" class="ck-reset" id="ppShareRevoke">revoke</button>' +
+      '</div>';
+    $('ppShareCopy').onclick = async () => {
+      try { await navigator.clipboard.writeText(link); $('ppShareCopy').textContent = '✓ copied'; }
+      catch (_) { $('ppShareCopy').textContent = 'copy failed — long-press the link'; }
+    };
+    $('ppShareRevoke').onclick = async () => {
+      const { error } = await sb.from('trip_shares').update({ revoked_at: new Date().toISOString() }).eq('id', share.id);
+      sheet.innerHTML = error
+        ? '<p class="pulse-note">couldn’t revoke — tap SHARE to retry</p>'
+        : '<p class="pulse-note">link revoked — this passport is private again. Tap SHARE for a fresh link any time.</p>';
+    };
+  };
+
   /* A1 · passport controls: view toggle, category filter, You section index */
   const ppToggleEl = $('ppToggle');
   if (ppToggleEl) ppToggleEl.onclick = (e) => {
