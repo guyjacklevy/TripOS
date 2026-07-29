@@ -1995,6 +1995,20 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .ri-area-chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--at, var(--teal)); }
 .ri-area-chip:active { transform: scale(0.96); }
 .ri-fade { opacity: 0; transition: opacity 0.22s ease; }
+/* AI-3: the live concierge — input on Today + reply line above the timeline */
+.cx-form { margin-bottom: 4px; }
+.cx-form .auth-input { font-size: 13.5px; }
+.cx-reply {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--teal);
+  line-height: 1.6;
+  border-left: 2px solid rgba(61, 255, 208, 0.4);
+  padding-left: 11px;
+  margin-bottom: 18px;
+}
+
 /* AI-2a: planned slots on the rails — teal ✦ tag, accent border, no new tokens */
 .slot-card.is-planned { border-color: rgba(61, 255, 208, 0.35); }
 .slot-planned {

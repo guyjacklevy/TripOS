@@ -163,6 +163,14 @@
         <h2 class="panel-h" id="todayGreet">Today</h2>
         <a class="fuel-strip" href="#pulse" id="fuelStrip" hidden></a>
         <a class="fuel-strip ready-nudge" href="#you" id="readyNudge" hidden></a>
+
+        <!-- AI-3 · the live concierge: say what's true, today adjusts around it -->
+        <form class="log-form add-form cx-form" id="cxForm" hidden>
+          <input class="auth-input" id="cxInput" type="text" maxlength="200" autocomplete="off"
+            placeholder="tell your concierge — 'raining', 'low energy', 'friend in town'">
+          <button class="btn btn-primary log-btn" type="submit">adjust</button>
+        </form>
+        <p class="pulse-note" id="cxNote" hidden></p>
         <div class="timeline" id="timeline"></div>
       </section>
 

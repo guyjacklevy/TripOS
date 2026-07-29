@@ -535,6 +535,10 @@ function railInvite(rail) {
    (leg, day), set by the IIFE's loadDayPlan(). null = no plan = classic rails.
    The plan augments the rails; it never fakes one. */
 let DAY_PLAN = null;
+/* AI-3: an adjusted day (concierge replied to the traveler's situation).
+   Adjusted plans render even off-route — they were made FOR where you are. */
+let DAY_PLAN_ADJUSTED = false;
+let CX_NOTE = null;
 
 function renderToday(trip, firstName, places, dateOpt) {
   const now = dateOpt || baliNow();
@@ -556,12 +560,17 @@ function renderToday(trip, firstName, places, dateOpt) {
   }
 
   /* resolve planned slots to real place rows (id must exist in our data —
-     engine guarantees it, but the client never trusts blindly) */
+     engine guarantees it, but the client never trusts blindly). Adjusted
+     plans (AI-3) render even off-route — they were made for where you are. */
   const plannedByRail = {};
-  if (!ov) (DAY_PLAN || []).forEach((sl) => {
+  if (!ov || DAY_PLAN_ADJUSTED) (DAY_PLAN || []).forEach((sl) => {
     const p = places.find((x) => String(x.id) === String(sl.place_id));
     if (p && !plannedByRail[sl.rail]) plannedByRail[sl.rail] = { p, why: (sl.why || '').trim() };
   });
+
+  /* the concierge input shows only when there's a day to adjust */
+  const cxForm = $('cxForm');
+  if (cxForm) cxForm.hidden = !(routeState(trip, TRIP_LEGS, now) || {}).cur;
 
   let html = '';
   RAILS.forEach((r, i) => {
@@ -622,6 +631,8 @@ function renderToday(trip, firstName, places, dateOpt) {
   });
 
   const tl = $('timeline');
+  /* AI-3: the concierge's reply leads the adjusted day */
+  if (CX_NOTE) html = '<p class="cx-reply">◦ ' + esc(CX_NOTE) + '</p>' + html;
   tl.innerHTML = html;
   dropIn(tl);
   /* past rails expand on tap (dimmed, no lift) */
@@ -780,6 +791,7 @@ window.__appDebug = {
   updateStrip, dayState, baliNow, tripDayNumber, tripDayLabel,
   routeState, renderRoute, canReplan,
   injectDayPlan: (slots) => { DAY_PLAN = slots || null; },
+  injectAdjust: (reply, slots) => { CX_NOTE = reply || null; if (slots) DAY_PLAN = slots; DAY_PLAN_ADJUSTED = true; },
   /* preview: inject a route without a session — strip + instrument + nudge */
   injectRoute: (t, legs, opts) => {
     TRIP_LEGS = legs || [];
@@ -1008,6 +1020,38 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     setTab('places');
     if (placesApi) placesApi.focusPlace(id);
   });
+
+  /* AI-3 · the live concierge: one message → today re-plans around it */
+  const cxFormEl = $('cxForm');
+  if (cxFormEl) cxFormEl.onsubmit = async (e) => {
+    e.preventDefault();
+    const inp = $('cxInput');
+    const msg = inp.value.trim();
+    if (!msg) return;
+    const btn = cxFormEl.querySelector('button');
+    const note = $('cxNote');
+    btn.disabled = true;
+    note.hidden = false;
+    note.textContent = '▸ your concierge is adjusting today…';
+    try {
+      const { data, error } = await sb.functions.invoke('plan-engine', { body: { action: 'adjust', message: msg } });
+      if (error || !data || data.error || !data.reply) {
+        note.textContent = 'concierge unavailable — try again';
+        btn.disabled = false;
+        return;
+      }
+      DAY_PLAN = (data.slots && data.slots.length) ? data.slots : DAY_PLAN;
+      DAY_PLAN_ADJUSTED = true;
+      CX_NOTE = data.reply;
+      inp.value = '';
+      note.hidden = true;
+      btn.disabled = false;
+      if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
+    } catch (_) {
+      note.textContent = 'concierge unavailable — try again';
+      btn.disabled = false;
+    }
+  };
 
   /* Wave 4: the edge function — search Google Maps, add to our data.
      Key never touches the client; supabase-js sends the user's JWT. */
@@ -1263,6 +1307,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   const daysTried = {}; /* leg_seq → true, stops same-session retry loops */
   async function loadDayPlan() {
     DAY_PLAN = null;
+    DAY_PLAN_ADJUSTED = false; /* a fresh (leg, day) clears yesterday's adjustment */
+    CX_NOTE = null;
     const rs = routeState(trip, TRIP_LEGS, baliNow());
     if (!rs || !rs.cur) return;
     const legSeq = rs.cur.idx + 1;
