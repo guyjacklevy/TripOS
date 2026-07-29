@@ -2037,6 +2037,14 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .place-card.now-tap { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .place-card.now-tap:active { transform: scale(0.98); }
 .place-card.now-tap .pf-actions { display: inline-flex; gap: 14px; align-items: center; }
+/* the plan outranks category: planned-lead is the ONE card that overrides the accent */
+.place-card.planned-lead { --cc: var(--teal) !important; }
+/* off-route strip token agrees with the amber marker (attention, not error) */
+.leg-chip.off { color: var(--am); border-bottom-color: rgba(255, 180, 84, 0.5); }
+/* curation ceremony: pending amber count · ◔ graduates to ✓ in teal */
+.cur-count { color: var(--am); }
+.cur-badge { font-size: 13px; color: var(--dim); flex-shrink: 0; transition: color 0.16s ease; }
+.cur-badge.done { color: var(--teal); }
 
 /* the strip's tappable LEG token (visible affordance: bordered underline-chip) */
 .leg-chip {

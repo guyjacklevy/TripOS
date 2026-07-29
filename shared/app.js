@@ -159,7 +159,7 @@ function setPassenger(title, fullName) {
   if (el) el.textContent = line || '—';
 }
 
-function pickCard(p, matched, nowLine) {
+function pickCard(p, matched, nowLine, plannedLead) {
   const meta = CAT_META[p.category] || { orb: 'planet-teal', cc: 'var(--teal)' };
   const icon = CAT_ICON[p.category] || '📍';
   const maps = p.maps_query
@@ -171,7 +171,7 @@ function pickCard(p, matched, nowLine) {
     ? '✦ ' + matched.pct + '% match'
     : (matched ? '✦ your match' : null);
   return (
-    '<article class="place-card now-tap" data-place="' + esc(p.id) + '" style="--cc:' + meta.cc + '">' +
+    '<article class="place-card now-tap' + (plannedLead ? ' planned-lead' : '') + '" data-place="' + esc(p.id) + '" style="--cc:' + meta.cc + '">' +
       (badge ? '<span class="match-badge">' + badge + '</span>' : '') +
       '<div class="place-top"><span class="orb ' + meta.orb + '"></span><div>' +
         '<div class="place-name">' + esc(p.name) + (p.verified ? '<span class="place-verified">✓</span>' : '') + '</div>' +
@@ -333,7 +333,7 @@ function updateStrip(trip, firstName, now) {
     /* deviation: the strip follows the traveler; OFF-ROUTE is the tappable
        way back (jumps to the route instrument, where the return control lives) */
     $('todayStrip2').innerHTML = esc(ov.toUpperCase()) +
-      ' · <button type="button" class="leg-chip">OFF-ROUTE</button> · ' + PHASE_WORD[s.phase];
+      ' · <button type="button" class="leg-chip off">OFF-ROUTE</button> · ' + PHASE_WORD[s.phase];
   } else if (rs && rs.cur) {
     const legChip = '<button type="button" class="leg-chip" data-goto="you">LEG ' +
       (rs.cur.idx + 1) + '/' + rs.count + '</button>';
@@ -411,9 +411,9 @@ function renderRoute(trip, legs, now, opts) {
   /* AI-2.5: deviation is visible, never silent — the route waits */
   const ov = offRoute(trip, rs);
   const overrideBlock = ov
-    ? '<p class="ri-offroute">📍 off-route · you’re in <strong>' + esc(ov) + '</strong> — Today follows you, the route waits</p>' +
+    ? '<p class="ri-offroute">off-route · you’re in <strong>' + esc(ov) + '</strong> — Today follows you, the route waits</p>' +
       '<button type="button" class="ri-replan" id="riBack">↩ BACK ON ROUTE</button>'
-    : '<button type="button" class="ri-replan ri-else" id="riElse">📍 I’M SOMEWHERE ELSE</button>' +
+    : '<button type="button" class="ri-replan ri-else" id="riElse">I’M SOMEWHERE ELSE</button>' +
       '<div class="ri-areas" id="riAreas" hidden>' +
         Object.keys(AREA_TINT).map((a) =>
           '<button type="button" class="ri-area-chip" data-area="' + esc(a) + '" style="--at:' + AREA_TINT[a] + '">' + esc(a) + '</button>'
@@ -522,7 +522,7 @@ function slotCard(p, planned) {
   return '<a class="slot-card' + (planned ? ' is-planned' : '') + '" href="#places" data-place="' + esc(p.id) + '" style="--cc:' + meta.cc + '">' +
     '<span class="slot-dot"></span>' +
     '<span class="slot-name">' + esc(p.name) + (p.verified ? ' ✓' : '') + '</span>' +
-    (planned ? '<span class="slot-planned">✦ planned</span>' : '') +
+    (planned ? '<span class="slot-planned">▸ planned</span>' : '') +
     '<span class="slot-hint">' + esc(p.area.split('/')[0].trim()) + '</span>' +
   '</a>';
 }
@@ -608,8 +608,11 @@ function renderToday(trip, firstName, places, dateOpt) {
       /* the planned pick leads the rail; NOW suggestions follow (deduped) */
       const cards = [];
       if (planned) {
+        /* ▸ is the engine's own voice (Rachel's AI-2 pass §1): the terminal
+           plans in ▸ lines, the rails carry the same mark. planned-lead is the
+           only card that ever overrides the category accent. */
         cards.push(pickCard(planned.p, plan && isMatch(scorePlace(planned.p, plan)) ? scoreBreakdown(planned.p, plan) : null,
-          '✦ PLANNED — ' + (planned.why || 'on today’s plan')));
+          '▸ PLANNED — ' + (planned.why || 'on today’s plan'), true));
       }
       const nowPicks = (plan ? pickNow(pool, plan, now, 2) : [])
         .filter((pp) => !planned || String(pp.id) !== String(planned.p.id));
@@ -1380,6 +1383,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (todayCtx) { todayCtx.trip = trip; renderToday(trip, todayCtx.name, todayCtx.places); }
     else updateStrip(trip, greetName(), baliNow());
     paintNudge();
+    setTab('today'); /* the goal was "fix Today" — don't strand them on You (Rachel §4) */
   }
 
   /* ONE nudge painter — last-day repack beats the readiness item (spec §2);
@@ -1411,11 +1415,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
     if (!isAdmin) { card.hidden = true; return; }
     const queue = (places || []).filter((p) => p.source === 'google' && !p.verified);
-    $('curateCount').textContent = queue.length + ' waiting';
+    $('curateCount').textContent = queue.length + ' AWAITING';
+    $('curateCount').className = 'pace-delta cur-count'; /* pending work = attention amber */
     card.hidden = false;
     $('curateList').innerHTML = queue.length ? queue.map((p) =>
       '<div class="cur-row" data-id="' + esc(p.id) + '">' +
         '<button type="button" class="cur-head">' +
+          '<span class="cur-badge">◔</span>' +
           '<span class="cur-name">' + esc(p.name) + '</span>' +
           '<span class="cur-meta">' + esc((p.area || '').split('/')[0].trim()) + ' · ' + esc(p.category) + '</span>' +
           '<span class="ri-caret">▾</span>' +
@@ -1461,7 +1467,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
             const i = todayCtx.places.findIndex((x) => String(x.id) === String(id));
             if (i !== -1) todayCtx.places[i] = data.place;
           }
-          refreshAfterCuration();
+          /* the ceremony: ◔ graduates to ✓ before the row leaves the queue —
+             the credibility ratchet made visible (Rachel §3) */
+          const badge = row.querySelector('.cur-badge');
+          if (badge) { badge.textContent = '✓'; badge.classList.add('done'); }
+          setTimeout(refreshAfterCuration, 450);
         } catch (_) {
           btn.disabled = false;
           btn.innerHTML = '✓ approve — research &amp; verify';
