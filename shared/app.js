@@ -1306,8 +1306,20 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         };
       });
       sheet.querySelector('.gps-else').onclick = () => { sheet.hidden = true; setTab('places'); };
-    }, () => {
-      sheet.innerHTML = '<p class="pulse-note">location unavailable — pick the place in Places</p>';
+    }, (err) => {
+      /* say what actually happened — a generic line hides the fix (Guy's test) */
+      const denied = err && err.code === 1;
+      sheet.innerHTML = denied
+        ? '<p class="pulse-note">location is blocked for this site. iPhone: Settings → Privacy &amp; Security → Location Services → Safari Websites → “While Using”. Then in Safari tap <strong>ᴀA</strong> in the address bar → Website Settings → Location → Allow.</p>' +
+          '<button type="button" class="ri-replan gps-retry">try again</button>' +
+          '<button type="button" class="ck-reset gps-else">or pick the place in Places →</button>'
+        : '<p class="pulse-note">couldn’t get a fix (' + (err && err.code === 3 ? 'timed out' : 'position unavailable') + ') — near buildings or indoors this can take a moment.</p>' +
+          '<button type="button" class="ri-replan gps-retry">try again</button>' +
+          '<button type="button" class="ck-reset gps-else">or pick the place in Places →</button>';
+      const retry = sheet.querySelector('.gps-retry');
+      if (retry) retry.onclick = () => gpsBtnEl.onclick();
+      const elseB = sheet.querySelector('.gps-else');
+      if (elseB) elseB.onclick = () => { sheet.hidden = true; setTab('places'); };
     }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
   };
 
