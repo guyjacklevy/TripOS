@@ -284,7 +284,15 @@
       <section class="panel" id="panel-you">
         <div class="inst-strip">PASSENGER RECORD</div>
         <h2 class="panel-h">Your pass</h2>
-        <div class="bpass">
+        <!-- A1: You is the trip's identity page — the index row kills the long scroll -->
+        <div class="you-index" id="youIndex">
+          <button type="button" data-goto="youPass" class="on">pass</button>
+          <button type="button" data-goto="youRoute">route</button>
+          <button type="button" data-goto="youPassport">passport</button>
+          <button type="button" data-goto="readyCard">ready</button>
+          <button type="button" data-goto="packCard">pack</button>
+        </div>
+        <div class="bpass" id="youPass">
           <div class="bp-main">
             <div class="bp-air">TripOS Air · personal boarding pass</div>
             <div class="bp-route">
@@ -304,6 +312,18 @@
              says the shape of your trip. Suppressed entirely below 2 legs. -->
         <div id="youRoute" hidden></div>
 
+        <!-- A1 · THE PASSPORT — the asset. Stamps are check-ins; pages are
+             areas; visas are legs. Real only, no spend amounts, ever. -->
+        <div class="card passport-card" id="youPassport">
+          <div class="pp-head" id="ppHead">YOUR BALI</div>
+          <div class="pp-toggle" id="ppToggle">
+            <button type="button" data-v="place" class="on">BY PLACE</button>
+            <button type="button" data-v="day">BY DAY</button>
+          </div>
+          <div class="pp-filter" id="ppFilter"></div>
+          <div id="ppBody"></div>
+        </div>
+
         <!-- install — the retention lever: on the home screen or forgotten -->
         <div class="card install-card" id="installCard">
           <div class="ready-top">
@@ -320,7 +340,7 @@
         </div>
 
         <!-- readiness — visa, admin, gear (duration-aware, from the brief) -->
-        <div class="card ready-card">
+        <div class="card ready-card" id="readyCard">
           <div class="ready-top">
             <span class="k-head">Readiness</span>
             <strong id="readyPct" class="pace-delta">—</strong>
@@ -334,7 +354,7 @@
         </div>
 
         <!-- packing — generated from the brief; repack mode on every move -->
-        <div class="card pack-card">
+        <div class="card pack-card" id="packCard">
           <div class="ready-top">
             <span class="k-head">Packing</span>
             <button type="button" class="place-maps" id="repackBtn">🎒 Repack mode</button>

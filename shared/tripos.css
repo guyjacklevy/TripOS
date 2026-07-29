@@ -1995,6 +1995,97 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .ri-area-chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--at, var(--teal)); }
 .ri-area-chip:active { transform: scale(0.96); }
 .ri-fade { opacity: 0; transition: opacity 0.22s ease; }
+/* ═══ A1 · THE PASSPORT ══════════════════════════════════════════════
+   Object semantics, never skeuomorphism: stamps/pages/visas rendered in
+   glass + instrument ink + terrain tints. Deterministic rotation per
+   place; ceremony = drop-in + settle composed, nothing new. */
+.you-index {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.you-index button {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+  color: var(--mut); background: none; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px;
+}
+.you-index button.on { color: var(--teal); border-color: rgba(61, 255, 208, 0.35); }
+
+.passport-card { margin-top: 16px; }
+.pp-head { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; color: var(--dim); margin-bottom: 12px; }
+.pp-head em { font-style: normal; color: var(--teal); }
+.pp-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
+.pp-toggle button {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+  color: var(--mut); background: none; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 99px; padding: 7px 14px;
+}
+.pp-toggle button.on { color: var(--teal); border-color: rgba(61, 255, 208, 0.35); }
+.pp-filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.pp-cat {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 600; color: var(--mut);
+  background: none; border: 1px solid var(--line); border-radius: 99px;
+  padding: 5px 11px; cursor: pointer;
+}
+.pp-cat.on { color: var(--tx); border-color: rgba(255, 255, 255, 0.25); }
+
+.pp-page { margin-bottom: 22px; }
+.visa {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  border: 1.5px solid var(--st, var(--teal)); border-radius: 12px;
+  padding: 10px 14px; margin-bottom: 12px;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--st, var(--teal)) 12%, transparent);
+}
+.visa-name { font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: var(--st, var(--teal)); }
+.visa-date { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; color: var(--dim); }
+
+.stamp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stamp {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 92px; padding: 12px 10px;
+  font: inherit; color: var(--tx); text-align: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px solid var(--st, var(--teal));
+  cursor: pointer;
+  transform: rotate(var(--rot, 0deg));
+  -webkit-tap-highlight-color: transparent;
+}
+div.stamp { cursor: default; }
+.stamp.st-circle { border-radius: 50%; aspect-ratio: 1; }
+.stamp.st-diamond { border-radius: 22px 8px 22px 8px; }
+.stamp:active { transform: rotate(var(--rot, 0deg)) scale(0.97); }
+.st-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.st-name { font-size: 12px; font-weight: 700; line-height: 1.25;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.st-date { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; color: var(--dim); }
+.st-v { color: var(--teal); }
+.st-v.st-disc { color: var(--dim); }
+.st-count {
+  position: absolute; top: 6px; right: 10px;
+  font-family: var(--mono); font-size: 9.5px; color: var(--st, var(--teal));
+}
+.st-meta { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.08em; color: var(--teal); }
+.pp-pulse { display: inline-block; margin-top: 10px; }
+
+/* BY DAY — memory-zoom on the route line */
+.pp-days { position: relative; padding-left: 18px; }
+.pp-days::before { content: ""; position: absolute; left: 4px; top: 8px; bottom: 8px; width: 2px; background: var(--line); border-radius: 2px; }
+.pp-day { position: relative; padding: 8px 0 14px; }
+.pp-day::before { content: ""; position: absolute; left: -17px; top: 13px; width: 7px; height: 7px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 3px rgba(10, 10, 20, 0.9); }
+.pp-day.dim::before { background: var(--dim); }
+.pp-day-label { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--dim); margin-bottom: 10px; }
+.pp-day.dim .pp-day-label { margin-bottom: 0; }
+.pp-ghost { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--mut); opacity: 0.45; padding: 4px 0; }
+
+/* the ceremony: drop-in + press settle, composed — one shot */
+@keyframes stampIn {
+  0%   { opacity: 0; transform: translateY(-10px) rotate(var(--rot, 0deg)) scale(1.06); }
+  70%  { opacity: 1; transform: translateY(0)     rotate(var(--rot, 0deg)) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0)     rotate(var(--rot, 0deg)) scale(1); }
+}
+.stamp.st-new { animation: stampIn 0.4s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .stamp.st-new { animation: none; } }
+
 /* AI-3: the live concierge — input on Today + reply line above the timeline */
 .cx-form { margin-bottom: 4px; }
 .cx-form .auth-input { font-size: 13.5px; }

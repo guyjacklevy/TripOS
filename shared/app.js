@@ -483,6 +483,207 @@ function renderRoute(trip, legs, now, opts) {
   }
 }
 
+/* ═══ A1 · THE PASSPORT (ASSET_SURFACES_SPEC) ═══════════════════════
+   Stamps are check-ins; pages are areas; visas are first entries.
+   Object semantics, never skeuomorphism — glass, instrument ink,
+   terrain tints. Real only; NO spend amounts anywhere in here.
+   Banned by spec: completion %, streaks, gamification. */
+let CHECKINS = [];        /* the user's check-in rows, chronological */
+let TRIP_DAY_PLANS = [];  /* [{leg_seq, day_in_leg, slots}] for planned-vs-actual */
+let PP_VIEW = 'place';
+let PP_CAT = 'all';
+let PP_COUNTED = false;   /* header count-up plays once per session */
+const MONTH_ABBR = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+/* deterministic per-place: rotation −3°…+3° and frame shape — stable across
+   renders, no randomness in the render path (Rachel §0.1) */
+function stampSeed(id) {
+  let h = 0; const s = String(id || '');
+  for (let i = 0; i < s.length; i++) h = ((h * 31) + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+function baliDateOf(iso) {
+  const b = new Date(new Date(iso).getTime() + 8 * 3600e3);
+  return { y: b.getUTCFullYear(), m: b.getUTCMonth(), d: b.getUTCDate() };
+}
+const dateLbl = (dd) => MONTH_ABBR[dd.m] + ' ' + dd.d;
+
+function stampEl(ck, p, opts) {
+  const o = opts || {};
+  const seed = stampSeed(ck.place_id || ck.place_name);
+  const rot = (((seed % 61) / 10) - 3).toFixed(1);
+  const shape = ((seed >> 3) % 2) ? 'st-diamond' : 'st-circle';
+  const areaName = p ? String(p.area || '').split('/')[0].trim() : 'Bali';
+  const tint = AREA_TINT[areaName] || 'var(--teal)';
+  const cc = p && CAT_META[p.category] ? CAT_META[p.category].cc : 'var(--teal)';
+  const dd = baliDateOf(ck.created_at);
+  const badge = p ? (p.verified ? '<span class="st-v">✓</span>'
+    : (p.source === 'google' ? '<span class="st-v st-disc">◔</span>' : '')) : '';
+  const count = (o.count || 0) > 1 ? '<span class="st-count">×' + o.count + '</span>' : '';
+  const meta = o.meta ? '<span class="st-meta">' + o.meta + '</span>' : '';
+  const tap = !!p; /* rejected/vanished places render untappable, from the log alone */
+  return '<' + (tap ? 'button type="button"' : 'div') +
+    ' class="stamp ' + shape + (o.ceremony ? ' st-new' : '') + '"' +
+    (tap ? ' data-place="' + esc(ck.place_id) + '"' : '') +
+    ' style="--st:' + tint + ';--rot:' + rot + 'deg">' +
+      count +
+      '<span class="st-dot" style="background:' + cc + '"></span>' +
+      '<span class="st-name">' + esc(p ? p.name : (ck.place_name || '—')) + '</span>' +
+      '<span class="st-date">' + dateLbl(dd) + ' ' + badge + '</span>' +
+      meta +
+    '</' + (tap ? 'button' : 'div') + '>';
+}
+function visaEl(area, firstIso) {
+  const tint = AREA_TINT[area] || 'var(--teal)';
+  const dd = baliDateOf(firstIso);
+  return '<div class="visa" style="--st:' + tint + '">' +
+    '<span class="visa-name">' + esc(area.toUpperCase()) + '</span>' +
+    '<span class="visa-date">ENTRY · ' + dateLbl(dd) + '</span></div>';
+}
+
+function renderPassport(trip, places, opts) {
+  const host = $('ppBody');
+  if (!host) return;
+  const o = opts || {};
+  const resolve = (id) => (places || []).find((x) => String(x.id) === String(id)) || null;
+
+  /* header counts — real, never padded */
+  const ids = new Set(), areas = new Set();
+  CHECKINS.forEach((c) => {
+    ids.add(String(c.place_id));
+    const p = resolve(c.place_id);
+    areas.add(p ? String(p.area || '').split('/')[0].trim() : 'Bali');
+  });
+  const head = $('ppHead');
+  const counts = [[ids.size, 'PLACES'], [areas.size, 'AREAS'], [CHECKINS.length, 'STAMPS']];
+  head.innerHTML = 'YOUR BALI · ' + counts.map(([n, l]) =>
+    '<em data-n="' + n + '">' + (PP_COUNTED ? n : 0) + '</em> ' + l).join(' · ');
+  if (!PP_COUNTED && CHECKINS.length && !REDUCED_MOTION()) {
+    PP_COUNTED = true;
+    head.querySelectorAll('em').forEach((el) => {
+      const target = +el.getAttribute('data-n'); let t0 = null;
+      const step = (ts) => {
+        if (!t0) t0 = ts;
+        const p = Math.min(1, (ts - t0) / 700);
+        el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+    /* rAF can stall in background tabs — the numbers must land regardless */
+    setTimeout(() => head.querySelectorAll('em').forEach((el) => { el.textContent = el.getAttribute('data-n'); }), 900);
+  } else { PP_COUNTED = true; head.querySelectorAll('em').forEach((el) => { el.textContent = el.getAttribute('data-n'); }); }
+
+  /* empty state: instrument at zero + ONE action (§5.4) */
+  if (!CHECKINS.length) {
+    $('ppToggle').hidden = true;
+    $('ppFilter').innerHTML = '';
+    host.innerHTML = '<p class="sec-context">No stamps yet — your first check-in starts the passport.</p>' +
+      '<button type="button" class="btn btn-primary pp-start">Find where you are →</button>';
+    host.querySelector('.pp-start').onclick = () => setTab('places');
+    return;
+  }
+  $('ppToggle').hidden = false;
+
+  if (PP_VIEW === 'place') {
+    /* BY PLACE — the library: one stamp per place (×n revisits), pages = areas */
+    const perPlace = new Map();
+    CHECKINS.forEach((c) => {
+      const k = String(c.place_id);
+      if (!perPlace.has(k)) perPlace.set(k, { ck: c, count: 0 });
+      perPlace.get(k).count++;
+    });
+    const groups = new Map(); /* area → {first, items[]} */
+    perPlace.forEach((v) => {
+      const p = resolve(v.ck.place_id);
+      if (PP_CAT !== 'all' && (!p || p.category !== PP_CAT)) return;
+      const area = p ? String(p.area || '').split('/')[0].trim() : 'Bali';
+      if (!groups.has(area)) groups.set(area, { first: v.ck.created_at, items: [] });
+      const g = groups.get(area);
+      if (v.ck.created_at < g.first) g.first = v.ck.created_at;
+      g.items.push({ ...v, p });
+    });
+    /* category filter chips — persona-dot pattern, color only in the dot */
+    const cats = [...new Set([...perPlace.values()].map((v) => (resolve(v.ck.place_id) || {}).category).filter(Boolean))];
+    $('ppFilter').innerHTML = ['all'].concat(cats).map((c) =>
+      '<button type="button" class="pp-cat' + (PP_CAT === c ? ' on' : '') + '" data-v="' + esc(c) + '">' +
+      (c === 'all' ? 'all' : '<span class="pdot" style="--pd:' + ((CAT_META[c] || {}).cc || 'var(--teal)') + '"></span>' + esc(c)) +
+      '</button>').join('');
+    const ordered = [...groups.entries()].sort((a, b) => a[1].first < b[1].first ? -1 : 1);
+    host.innerHTML = ordered.map(([area, g]) =>
+      '<div class="pp-page">' +
+        visaEl(area, g.first) +
+        '<div class="stamp-grid">' +
+          g.items.sort((a, b) => a.ck.created_at < b.ck.created_at ? -1 : 1)
+            .map((it) => stampEl(it.ck, it.p, { count: it.count, ceremony: o.ceremony && String(it.ck.place_id) === String(o.ceremony) }))
+            .join('') +
+        '</div>' +
+        '<button type="button" class="ck-reset pp-pulse">view in pulse →</button>' +
+      '</div>').join('') ||
+      '<p class="sec-context">Nothing in that category yet.</p>';
+    host.querySelectorAll('.pp-pulse').forEach((b) => { b.onclick = () => setTab('pulse'); });
+  } else {
+    /* BY DAY — memory-zoom: the route grammar's third altitude */
+    $('ppFilter').innerHTML = '';
+    const now = baliNow();
+    const dayN = tripDayNumber(trip, now) || 0;
+    /* absolute day → (leg_seq, day_in_leg) for planned-vs-actual */
+    const legOf = (d) => {
+      let acc = 0;
+      for (let i = 0; i < TRIP_LEGS.length; i++) {
+        const l = TRIP_LEGS[i];
+        if (d > acc && d <= acc + l.nights) return { seq: l.seq || (i + 1), dayInLeg: d - acc };
+        acc += l.nights;
+      }
+      return null;
+    };
+    const planFor = (d) => {
+      const lg = legOf(d); if (!lg) return [];
+      const row = TRIP_DAY_PLANS.find((r) => r.leg_seq === lg.seq && r.day_in_leg === lg.dayInLeg);
+      return (row && row.slots) || [];
+    };
+    /* origin midnight for date labels */
+    let origin;
+    if (trip && trip.arrive) { const p = String(trip.arrive).split('-'); origin = new Date(+p[0], +p[1] - 1, +p[2]); }
+    else if (trip && trip.created_at) { const c = new Date(trip.created_at); origin = new Date(c.getFullYear(), c.getMonth(), c.getDate()); }
+    else origin = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const rows = [];
+    for (let d = 1; d <= Math.max(1, dayN); d++) {
+      const dd = new Date(origin.getFullYear(), origin.getMonth(), origin.getDate() + (d - 1));
+      const key = dd.getFullYear() + '-' + dd.getMonth() + '-' + dd.getDate();
+      const dayCks = CHECKINS.filter((c) => {
+        const b = baliDateOf(c.created_at);
+        return (b.y + '-' + b.m + '-' + b.d) === key;
+      });
+      const planned = planFor(d);
+      const stampedIds = new Set(dayCks.map((c) => String(c.place_id)));
+      const label = MONTH_ABBR[dd.getMonth()] + ' ' + dd.getDate() + ' · DAY ' + d;
+      if (!dayCks.length && !planned.length) {
+        rows.push('<div class="pp-day dim"><span class="pp-day-label">' + label + ' · no stamps</span></div>');
+        continue;
+      }
+      const stamps = dayCks.map((c) => {
+        const p = resolve(c.place_id);
+        const wasPlanned = planned.some((s) => String(s.place_id) === String(c.place_id));
+        return stampEl(c, p, { meta: wasPlanned ? '▸ planned · ✓ stamped' : null,
+          ceremony: o.ceremony && String(c.place_id) === String(o.ceremony) });
+      }).join('');
+      /* planned-but-missed: dim ghost rows, BY DAY only, never on the share page */
+      const ghosts = (d < dayN ? planned : []).filter((s) => !stampedIds.has(String(s.place_id)))
+        .map((s) => {
+          const p = resolve(s.place_id);
+          return p ? '<div class="pp-ghost">▸ ' + esc(p.name) + ' · planned · passed</div>' : '';
+        }).join('');
+      rows.push('<div class="pp-day"><span class="pp-day-label">' + label + '</span>' +
+        (stamps ? '<div class="stamp-grid">' + stamps + '</div>' : '') + ghosts + '</div>');
+    }
+    host.innerHTML = '<div class="pp-days">' + rows.join('') + '</div>';
+  }
+}
+function REDUCED_MOTION() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 /* ─── the flight plan (WAVE3_TODAY_TIMELINE_SPEC) ───
    Four rails on one route line, aligned to dayState's rails. Current rail =
    full POI cards (the old NOW cards) + a you-are-here tick; future rails =
@@ -795,6 +996,10 @@ window.__appDebug = {
   routeState, renderRoute, canReplan,
   injectDayPlan: (slots) => { DAY_PLAN = slots || null; },
   injectAdjust: (reply, slots) => { CX_NOTE = reply || null; if (slots) DAY_PLAN = slots; DAY_PLAN_ADJUSTED = true; },
+  injectPassport: (trip, places, checkins, dayPlans, opts) => {
+    CHECKINS = checkins || []; TRIP_DAY_PLANS = dayPlans || [];
+    renderPassport(trip, places || [], opts || {});
+  },
   /* preview: inject a route without a session — strip + instrument + nudge */
   injectRoute: (t, legs, opts) => {
     TRIP_LEGS = legs || [];
@@ -963,6 +1168,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       return;
     }
     setTimeout(() => { btn.textContent = '📍 I’m here'; btn.disabled = false; }, 2600);
+    /* A1: the stamp ceremony — the check-in lands in the passport live */
+    CHECKINS.push({ user_id: user.id, place_id: p.id, place_name: p.name, lat: p.lat, lng: p.lng, created_at: new Date().toISOString() });
+    if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places, { ceremony: p.id });
     /* T7: the v19 loop — checked in? offer the typical spend, one tap to log */
     const card = btn.closest('.place-card');
     if (card && !card.querySelector('.spend-suggest')) {
@@ -1023,6 +1231,46 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     setTab('places');
     if (placesApi) placesApi.focusPlace(id);
   });
+
+  /* A1 · passport controls: view toggle, category filter, You section index */
+  const ppToggleEl = $('ppToggle');
+  if (ppToggleEl) ppToggleEl.onclick = (e) => {
+    const b = e.target.closest('button[data-v]');
+    if (!b) return;
+    PP_VIEW = b.getAttribute('data-v');
+    ppToggleEl.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+    if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+  };
+  const ppFilterEl = $('ppFilter');
+  if (ppFilterEl) ppFilterEl.onclick = (e) => {
+    const b = e.target.closest('.pp-cat');
+    if (!b) return;
+    PP_CAT = b.getAttribute('data-v');
+    if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+  };
+  const youIdx = $('youIndex');
+  if (youIdx) {
+    youIdx.onclick = (e) => {
+      const b = e.target.closest('button[data-goto]');
+      if (!b) return;
+      youIdx.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+      const t = $(b.getAttribute('data-goto'));
+      if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    /* active chip tracks scroll */
+    if ('IntersectionObserver' in window) {
+      const spy = new IntersectionObserver((es) => {
+        es.forEach((en) => {
+          if (!en.isIntersecting) return;
+          youIdx.querySelectorAll('button').forEach((x) =>
+            x.classList.toggle('on', x.getAttribute('data-goto') === en.target.id));
+        });
+      }, { rootMargin: '-25% 0px -65% 0px' });
+      ['youPass', 'youRoute', 'youPassport', 'readyCard', 'packCard'].forEach((i) => {
+        const el = $(i); if (el) spy.observe(el);
+      });
+    }
+  }
 
   /* AI-3 · the live concierge: one message → today re-plans around it */
   const cxFormEl = $('cxForm');
@@ -1609,6 +1857,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     mountPlacesTab(places || []);
     renderToday(trip, greetName(), places || []);
     todayCtx = { trip, name: greetName(), places: places || [] };
+
+    /* A1: the passport rides with the trip — check-ins + planned-vs-actual */
+    const { data: ckAll } = await sb.from('checkins').select('*').order('created_at');
+    CHECKINS = ckAll || [];
+    const { data: dpAll } = await sb.from('day_plans').select('leg_seq, day_in_leg, slots').eq('trip_id', trip.id);
+    TRIP_DAY_PLANS = dpAll || [];
+    renderPassport(trip, places || []);
     startClock();
     loadCurationDesk(places || []);
     try { $('logDate').value = new Date().toISOString().slice(0, 10); } catch (_) {}
