@@ -1375,10 +1375,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           '<span class="ri-caret">▾</span>' +
         '</button>' +
         '<div class="cur-body" hidden>' +
-          '<textarea class="auth-input cur-why" rows="3" maxlength="220" placeholder="write the why — or verify as-is">' +
-            esc((p.why || '').indexOf('Discovered via Google Maps') === 0 ? '' : (p.why || '')) + '</textarea>' +
+          '<p class="sec-context">Approve and the concierge researches it — real reviews, hours, prices — writes the full intel, and verifies it. One tap.</p>' +
           '<div class="cur-actions">' +
-            '<button type="button" class="btn btn-primary cur-verify">✓ verify</button>' +
+            '<button type="button" class="btn btn-primary cur-verify">✓ approve — research &amp; verify</button>' +
             '<button type="button" class="ck-reset cur-reject">✕ reject</button>' +
           '</div>' +
           '<p class="pulse-note cur-note" hidden></p>' +
@@ -1399,14 +1398,29 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const note = row.querySelector('.cur-note');
       const fail = (msg) => { note.hidden = false; note.textContent = msg + ' — tap to retry'; };
       if (e.target.closest('.cur-verify')) {
-        const why = row.querySelector('.cur-why').value.trim();
-        const patch = { verified: true };
-        if (why) patch.why = why;
-        const { error } = await sb.from('curated_places').update(patch).eq('id', id);
-        if (error) { fail('didn’t save'); return; }
-        const p = (todayCtx ? todayCtx.places : []).find((x) => String(x.id) === String(id));
-        if (p) { p.verified = true; if (why) p.why = why; }
-        refreshAfterCuration();
+        /* Guy approves → the engine researches (Google reviews/hours/prices)
+           and writes curated-grade intel, grounded only in that data */
+        const btn = row.querySelector('.cur-verify');
+        btn.disabled = true;
+        btn.textContent = 'researching the place…';
+        try {
+          const { data, error } = await sb.functions.invoke('plan-engine', { body: { action: 'enrich', place_id: id } });
+          if (error || !data || data.error || !data.place) {
+            btn.disabled = false;
+            btn.innerHTML = '✓ approve — research &amp; verify';
+            fail('research failed');
+            return;
+          }
+          if (todayCtx) {
+            const i = todayCtx.places.findIndex((x) => String(x.id) === String(id));
+            if (i !== -1) todayCtx.places[i] = data.place;
+          }
+          refreshAfterCuration();
+        } catch (_) {
+          btn.disabled = false;
+          btn.innerHTML = '✓ approve — research &amp; verify';
+          fail('research failed');
+        }
         return;
       }
       if (e.target.closest('.cur-reject')) {
