@@ -6,3 +6,9 @@ _agents/
 
 # local tooling config
 .claude/
+
+# secrets must never enter the repo (real home: ~/Documents/prevoya-secrets/)
+client_secret_*.json
+*credentials*.json
+.env
+.env.*

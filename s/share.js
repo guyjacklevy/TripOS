@@ -79,6 +79,20 @@ function stampHTML(s, count, viaName) {
   $('shCtaLine').textContent = 'Plan your Bali from ' + name + '’s ' + (monthWord || 'trip') + '.';
   $('shFootCta').textContent = 'plan your own Bali like ' + name + '’s →';
 
+  /* provenance travels with the new user into sign-up (S4 seed) — every
+   * exit from this page carries it, not only the stamp mini-card */
+  const seedVia = (place) => {
+    try {
+      localStorage.setItem('tripos_via', JSON.stringify({
+        via: name, place: place || null, token: token, at: Date.now()
+      }));
+    } catch (_) {}
+  };
+  ['shCtaBtn', 'shFootCta'].forEach((id) => {
+    const el = $(id);
+    if (el) el.addEventListener('click', () => seedVia(null));
+  });
+
   /* beat 2 · completed legs only; ongoing trips end in mystery */
   if ((data.legs || []).length || data.ongoing) {
     $('shRouteSec').hidden = false;
@@ -149,14 +163,8 @@ function stampHTML(s, count, viaName) {
         '<a class="btn btn-primary sh-save" href="../bali/">save · via ' + esc(name) + '</a>' +
         '<button type="button" class="ck-reset sh-close">close</button>';
       mini.hidden = false;
-      mini.querySelector('.sh-save').addEventListener('click', () => {
-        /* provenance travels with the new user into sign-up (S4 seed) */
-        try {
-          localStorage.setItem('tripos_via', JSON.stringify({
-            via: name, place: st.getAttribute('data-name'), token: token, at: Date.now()
-          }));
-        } catch (_) {}
-      });
+      mini.querySelector('.sh-save').addEventListener('click', () =>
+        seedVia(st.getAttribute('data-name')));
       mini.querySelector('.sh-close').onclick = () => { mini.hidden = true; };
       return;
     }

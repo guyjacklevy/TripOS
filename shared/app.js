@@ -2151,10 +2151,31 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     setTimeout(() => $('recName').focus(), 60);
   }
 
+  /* S4 provenance pickup: the shared passport page seeded tripos_via when
+   * this visitor left someone's public trip. Persist it to the profile once
+   * (never overwrite an existing attribution), then clear the seed. On a
+   * failed write the seed stays put — the next app open IS the retry. */
+  async function pickupProvenance() {
+    let seed = null;
+    try { seed = JSON.parse(localStorage.getItem('tripos_via') || 'null'); } catch (_) {}
+    if (!seed || !seed.via || !seed.token) return;
+    const clear = () => { try { localStorage.removeItem('tripos_via'); } catch (_) {} };
+    if (!profile) return;                    /* profile row not there yet — keep the seed */
+    if (profile.via_token) { clear(); return; } /* already attributed — first one wins */
+    const { error } = await sb.from('profiles').update({
+      via_name: String(seed.via).slice(0, 80),
+      via_place: seed.place ? String(seed.place).slice(0, 120) : null,
+      via_token: String(seed.token).slice(0, 120),
+      via_at: typeof seed.at === 'number' ? new Date(seed.at).toISOString() : new Date().toISOString()
+    }).eq('id', user.id);
+    if (!error) clear();
+  }
+
   async function route() {
     if (!user) { show('welcome'); return; }
-    const { data } = await sb.from('profiles').select('title, full_name, presets').eq('id', user.id).limit(1);
+    const { data } = await sb.from('profiles').select('title, full_name, presets, via_token').eq('id', user.id).limit(1);
     profile = (data && data[0]) || null;
+    pickupProvenance();                      /* background — never blocks boarding */
     let skipped = false;
     try { skipped = !!localStorage.getItem('tripos_record_done'); } catch (_) {}
     if (profile && !profile.full_name && !skipped) {
