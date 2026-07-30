@@ -159,12 +159,18 @@ function setPassenger(title, fullName) {
   if (el) el.textContent = line || '—';
 }
 
-function pickCard(p, matched, nowLine, plannedLead) {
+function pickCard(p, matched, nowLine, plannedLead, railKey) {
   const meta = CAT_META[p.category] || { orb: 'planet-teal', cc: 'var(--teal)' };
   const icon = CAT_ICON[p.category] || '📍';
   const maps = p.maps_query
     ? '<a class="place-maps" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' +
       encodeURIComponent(p.maps_query) + '">Maps ↗</a>' : '';
+  /* 1.3 (Guy): the plan's cards carry the SAME actions as Places — check-in
+     is the whole point. 4: planned picks aren't set in stone — ↻ rotates
+     through honest alternatives for that rail. */
+  const here = '<button type="button" class="place-maps place-here" data-place-id="' + esc(p.id) + '">📍 I’m here</button>';
+  const swap = plannedLead && railKey
+    ? '<button type="button" class="place-maps pl-swap" data-swap-rail="' + esc(railKey) + '">↻ swap</button>' : '';
   let money = '';
   for (let m = 0; m < (p.price_level || 1); m++) money += '$';
   const badge = matched && matched.pct
@@ -181,7 +187,7 @@ function pickCard(p, matched, nowLine, plannedLead) {
       (p.why ? '<p class="place-why">' + esc(p.why) + '</p>' : '') +
       (p.tip ? '<p class="place-tip">' + esc(p.tip) + '</p>' : '') +
       '<div class="place-foot"><span class="place-price">' + esc(nowLine ? (p.price_note || '') : (p.timing_note || '')) + '</span>' +
-        '<span class="pf-actions">' + maps + '<span class="mini-more">more ›</span></span></div>' +
+        '<span class="pf-actions">' + here + swap + maps + '<span class="mini-more">more ›</span></span></div>' +
     '</article>'
   );
 }
@@ -492,6 +498,7 @@ let CHECKINS = [];        /* the user's check-in rows, chronological */
 let TRIP_DAY_PLANS = [];  /* [{leg_seq, day_in_leg, slots}] for planned-vs-actual */
 let PP_VIEW = 'place';
 let PP_CAT = 'all';
+let PP_EDIT = false; /* 2.2: edit mode — only the explicit ✕ deletes a stamp */
 let PP_COUNTED = false;   /* header count-up plays once per session */
 const MONTH_ABBR = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
@@ -522,14 +529,18 @@ function stampEl(ck, p, opts) {
   const count = (o.count || 0) > 1 ? '<span class="st-count">×' + o.count + '</span>' : '';
   const meta = o.meta ? '<span class="st-meta">' + o.meta + '</span>' : '';
   const tap = !!p; /* rejected/vanished places render untappable, from the log alone */
+  /* 2.1 (Guy): the stamp says WHAT the place is — category in words, not color alone */
+  const catWord = p && p.category ? ' · ' + esc(p.category) : '';
+  const delX = o.editable && o.ckId
+    ? '<span class="st-x" data-ck="' + esc(o.ckId) + '" role="button" aria-label="remove stamp">✕</span>' : '';
   return '<' + (tap ? 'button type="button"' : 'div') +
     ' class="stamp ' + shape + (o.ceremony ? ' st-new' : '') + '"' +
     (tap ? ' data-place="' + esc(ck.place_id) + '"' : '') +
     ' style="--st:' + tint + ';--rot:' + rot + 'deg">' +
-      count +
+      delX + count +
       '<span class="st-dot" style="background:' + cc + '"></span>' +
       '<span class="st-name">' + esc(p ? p.name : (ck.place_name || '—')) + '</span>' +
-      '<span class="st-date">' + dateLbl(dd) + ' ' + badge + '</span>' +
+      '<span class="st-date">' + dateLbl(dd) + catWord + ' ' + badge + '</span>' +
       meta +
     '</' + (tap ? 'button' : 'div') + '>';
 }
@@ -686,7 +697,8 @@ function renderPassport(trip, places, opts) {
         const p = resolve(c.place_id);
         const wasPlanned = planned.some((s) => String(s.place_id) === String(c.place_id));
         return stampEl(c, p, { meta: wasPlanned ? '▸ planned · ✓ stamped' : null,
-          ceremony: o.ceremony && String(c.place_id) === String(o.ceremony) });
+          ceremony: o.ceremony && String(c.place_id) === String(o.ceremony),
+          editable: PP_EDIT, ckId: c.id });
       }).join('');
       /* planned-but-missed: dim ghost rows, BY DAY only, never on the share page */
       const ghosts = (d < dayN ? planned : []).filter((s) => !stampedIds.has(String(s.place_id)))
@@ -738,13 +750,14 @@ function railPicks(places, plan, railKey, n) {
   }
   return { picks: out, total: scored.filter((x) => x.s >= 3).length || inRail.length };
 }
-function slotCard(p, planned) {
+function slotCard(p, planned, railKey) {
   const meta = CAT_META[p.category] || { cc: 'var(--teal)' };
   return '<a class="slot-card' + (planned ? ' is-planned' : '') + '" href="#places" data-place="' + esc(p.id) + '" style="--cc:' + meta.cc + '">' +
     '<span class="slot-dot"></span>' +
     '<span class="slot-name">' + esc(p.name) + (p.verified ? ' ✓' : '') + '</span>' +
     (planned ? '<span class="slot-planned">▸ planned</span>' : '') +
     '<span class="slot-hint">' + esc(p.area.split('/')[0].trim()) + '</span>' +
+    (planned && railKey ? '<button type="button" class="slot-swap" data-swap-rail="' + esc(railKey) + '" aria-label="swap">↻</button>' : '') +
   '</a>';
 }
 function railInvite(rail) {
@@ -833,7 +846,7 @@ function renderToday(trip, firstName, places, dateOpt) {
            plans in ▸ lines, the rails carry the same mark. planned-lead is the
            only card that ever overrides the category accent. */
         cards.push(pickCard(planned.p, plan && isMatch(scorePlace(planned.p, plan)) ? scoreBreakdown(planned.p, plan) : null,
-          '▸ PLANNED — ' + (planned.why || 'on today’s plan'), true));
+          '▸ PLANNED — ' + (planned.why || 'on today’s plan'), true, r.key));
       }
       const nowPicks = (plan ? pickNow(pool, plan, now, 2) : [])
         .filter((pp) => !planned || String(pp.id) !== String(planned.p.id));
@@ -845,7 +858,7 @@ function renderToday(trip, firstName, places, dateOpt) {
     } else {
       /* future: planned slot leads, suggestions fill to 2 */
       const shown = picks.slice(0, planned ? 1 : 2);
-      const slots = (planned ? [slotCard(planned.p, true)] : []).concat(shown.map((pp) => slotCard(pp)));
+      const slots = (planned ? [slotCard(planned.p, true, r.key)] : []).concat(shown.map((pp) => slotCard(pp)));
       html += slots.length
         ? '<div class="rail-slots">' + slots.join('') +
           (total > slots.length ? '<a class="slot-more" href="#places">+ ' + (total - slots.length) + ' more →</a>' : '') + '</div>'
@@ -900,10 +913,7 @@ function renderPulse(dailyK, spentK) {
       ? 'Still on the table today: ' + bits.join(' · ')
       : 'Tight day — a warung run might have to wait for tomorrow.';
   }
-  /* fuel strip on Today */
-  const fs = $('fuelStrip');
-  fs.hidden = false;
-  fs.innerHTML = '▲ <strong>' + fmtK(leftK) + ' IDR</strong> still yours today · tap for the pulse';
+  /* 1.2 (Guy): the Today fuel strip is gone — money lives in Pulse only */
 }
 
 /* pace: days elapsed vs budget consumed, bar-per-day, month projection */
@@ -1198,8 +1208,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const cat = EXP_FROM_PLACE[p.category] || 'food';
       const sug = document.createElement('div');
       sug.className = 'spend-suggest';
-      sug.innerHTML = '<button type="button" class="place-maps ss-log">＋ log ~' + fmtK(estK) +
-        ' spend here?</button><button type="button" class="place-maps ss-worth">worth it</button>' +
+      /* 3 (Guy): the estimate is a starting point, not the price — editable
+         before logging, still one tap when the guess is right */
+      sug.innerHTML = '<span class="ss-editwrap"><input class="auth-input ss-amt" inputmode="numeric" value="' + estK + '"><span class="ss-k">k IDR</span></span>' +
+        '<button type="button" class="place-maps ss-log">＋ log</button>' +
+        '<button type="button" class="place-maps ss-worth">worth it</button>' +
         '<button type="button" class="ck-reset ss-skip">skip</button>';
       card.appendChild(sug);
       /* A2: the 1-tap micro-signal (S2) — was it worth going? */
@@ -1213,13 +1226,17 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         } else b.textContent = '✓ noted';
       });
       sug.querySelector('.ss-log').addEventListener('click', async () => {
+        let v = parseInt(sug.querySelector('.ss-amt').value, 10);
+        if (!Number.isFinite(v) || v <= 0) v = estK;
+        if (v >= 10000) v = Math.round(v / 1000); /* typed full IDR — read as thousands */
         sug.innerHTML = '<span class="ss-done">…</span>';
-        await logSpend(estK, cat);
-        sug.innerHTML = '<span class="ss-done">✓ ' + fmtK(estK) + ' logged to your pulse</span>';
+        await logSpend(v, cat);
+        sug.innerHTML = '<span class="ss-done">✓ ' + fmtK(v) + ' logged to your pulse</span>';
         setTimeout(() => sug.remove(), 3000);
       });
       sug.querySelector('.ss-skip').addEventListener('click', () => sug.remove());
-      setTimeout(() => { if (sug.parentNode) sug.remove(); }, 20000);
+      const auto = setTimeout(() => { if (sug.parentNode) sug.remove(); }, 20000);
+      sug.querySelector('.ss-amt').addEventListener('focus', () => clearTimeout(auto));
     }
   }
 
@@ -1255,6 +1272,22 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
      carries data-place lands on THAT place — category detail, scrolled,
      highlighted. Maps links pass through untouched. */
   document.addEventListener('click', (e) => {
+    if (e.target.closest('.st-x')) return; /* passport delete has its own handler */
+    /* 1.3: Today cards check in like Places cards do */
+    const here = e.target.closest('.place-here');
+    if (here && e.target.closest('#timeline')) {
+      e.preventDefault();
+      const p = todayCtx && todayCtx.places.find((x) => String(x.id) === here.getAttribute('data-place-id'));
+      if (p) checkinAt(p, here);
+      return;
+    }
+    /* 4: the plan isn't set in stone — rotate the slot through alternatives */
+    const sw = e.target.closest('.pl-swap, .slot-swap');
+    if (sw && e.target.closest('#timeline')) {
+      e.preventDefault();
+      swapPlanned(sw.getAttribute('data-swap-rail'));
+      return;
+    }
     const el = e.target.closest('[data-place]');
     if (!el || e.target.closest('a.place-maps')) return;
     e.preventDefault();
@@ -1262,6 +1295,35 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     setTab('places');
     if (placesApi) placesApi.focusPlace(id);
   });
+
+  /* 4 · swap one planned place: rotate through the rail's honest alternatives,
+     persist when on-route (RLS own-row update on day_plans) */
+  function swapPlanned(railKey) {
+    if (!DAY_PLAN || !todayCtx || !railKey) return;
+    const slot = DAY_PLAN.find((s) => s.rail === railKey);
+    if (!slot) return;
+    const rs = routeState(todayCtx.trip, TRIP_LEGS, baliNow());
+    const ov = offRoute(todayCtx.trip, rs);
+    let pool = todayCtx.places;
+    if (ov) {
+      const local = pool.filter((p) => inAreaRegion(p, ov));
+      if (local.length >= 4) pool = local;
+    }
+    const plan = planFromTrip(todayCtx.trip);
+    const { picks } = railPicks(pool, plan, railKey, 6);
+    if (!picks.length) return;
+    const i = picks.findIndex((p) => String(p.id) === String(slot.place_id));
+    const alt = picks[(i + 1) % picks.length];
+    if (!alt || String(alt.id) === String(slot.place_id)) return;
+    slot.place_id = alt.id;
+    slot.why = 'your swap — ↻ again for another';
+    renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
+    if (rs && rs.cur && !ov) {
+      sb.from('day_plans').update({ slots: DAY_PLAN })
+        .eq('trip_id', todayCtx.trip.id).eq('leg_seq', rs.cur.idx + 1).eq('day_in_leg', rs.cur.nightOf)
+        .then(({ error }) => { if (error) console.warn('[TripOS] swap persist failed:', error.message); });
+    }
+  }
 
   /* ─── A2 · zero-friction check-in ───
      One tap → nearest places from where you stand → confirm → the stamp
@@ -1402,6 +1464,32 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   };
 
   /* A1 · passport controls: view toggle, category filter, You section index */
+  /* 2.2 · edit mode: deletion lives in BY DAY (one stamp = one check-in);
+     entering edit switches the view so the ✕ always means exactly one row */
+  const ppEditBtn = $('ppEditBtn');
+  if (ppEditBtn) ppEditBtn.onclick = () => {
+    PP_EDIT = !PP_EDIT;
+    ppEditBtn.textContent = PP_EDIT ? '✓ done editing' : 'edit stamps';
+    if (PP_EDIT && PP_VIEW !== 'day') {
+      PP_VIEW = 'day';
+      const t = $('ppToggle');
+      if (t) t.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.getAttribute('data-v') === 'day'));
+    }
+    if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+  };
+  const ppBodyEl = $('ppBody');
+  if (ppBodyEl) ppBodyEl.addEventListener('click', async (e) => {
+    const x = e.target.closest('.st-x');
+    if (!x) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const id = x.getAttribute('data-ck');
+    const { error } = await sb.from('checkins').delete().eq('id', id);
+    if (error) { console.error('[TripOS] stamp delete failed:', error.message); return; }
+    CHECKINS = CHECKINS.filter((c) => String(c.id) !== String(id));
+    if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+  });
+
   const ppToggleEl = $('ppToggle');
   if (ppToggleEl) ppToggleEl.onclick = (e) => {
     const b = e.target.closest('button[data-v]');

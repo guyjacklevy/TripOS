@@ -47,12 +47,12 @@ function stampHTML(s, count, viaName) {
   const tint = AREA_TINT[s.area] || 'var(--teal)';
   const cc = CAT_CC[s.category] || 'var(--teal)';
   const badge = s.verified ? '<span class="st-v">✓</span>' : (s.discovered ? '<span class="st-v st-disc">◔</span>' : '');
-  return '<button type="button" class="stamp ' + shape + '" data-name="' + esc(s.name) + '" data-area="' + esc(s.area) + '"' +
+  return '<button type="button" class="stamp ' + shape + '" data-name="' + esc(s.name) + '" data-area="' + esc(s.area) + '" data-cat="' + esc(s.category || '') + '"' +
     ' style="--st:' + tint + ';--rot:' + rot + 'deg">' +
     (count > 1 ? '<span class="st-count">×' + count + '</span>' : '') +
     '<span class="st-dot" style="background:' + cc + '"></span>' +
     '<span class="st-name">' + esc(s.name) + '</span>' +
-    '<span class="st-date">' + dateLbl(s.date) + ' ' + badge + '</span>' +
+    '<span class="st-date">' + dateLbl(s.date) + (s.category ? ' · ' + esc(s.category) : '') + ' ' + badge + '</span>' +
   '</button>';
 }
 
@@ -144,7 +144,8 @@ function stampHTML(s, count, viaName) {
     if (st) {
       $('shMiniCard').innerHTML =
         '<div class="place-name">' + esc(st.getAttribute('data-name')) + '</div>' +
-        '<div class="poi-type">' + esc(st.getAttribute('data-area')) + ' · from ' + esc(name) + '’s passport</div>' +
+        '<div class="poi-type">' + (st.getAttribute('data-cat') ? esc(st.getAttribute('data-cat')) + ' · ' : '') +
+          esc(st.getAttribute('data-area')) + ' · from ' + esc(name) + '’s passport</div>' +
         '<a class="btn btn-primary sh-save" href="../bali/">save · via ' + esc(name) + '</a>' +
         '<button type="button" class="ck-reset sh-close">close</button>';
       mini.hidden = false;

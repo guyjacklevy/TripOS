@@ -839,10 +839,10 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
 
 /* shell + panels */
 #shell { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
-.app-top { max-width: 640px; margin: 0 auto; padding: 18px 20px; }
+.app-top { max-width: 640px; margin: 0 auto; padding: calc(14px + env(safe-area-inset-top)) 20px 14px; }
 #shell .arrive-banner { max-width: 640px; margin: 4px auto 10px; }
 .panels { max-width: 640px; margin: 0 auto; padding: 0 20px; }
-.panel { display: none; }
+.panel { display: none; padding: 10px 0 56px; } /* 1.1: landing section padding leaked 56px of dead air into the app */
 .panel.on { display: block; animation: panelIn 160ms ease-out; }
 @keyframes panelIn { from { opacity: 0; } to { opacity: 1; } }
 .inst-strip {
@@ -2167,6 +2167,25 @@ div.stamp { cursor: default; }
 .cur-actions { display: flex; gap: 16px; align-items: center; }
 .cur-actions .cur-verify { padding: 8px 18px; }
 .cur-note { color: var(--am); }
+
+/* editable spend suggestion (Guy: the estimate is rarely the real price) */
+.ss-editwrap { display: inline-flex; align-items: center; gap: 4px; }
+.ss-amt { width: 62px; padding: 6px 8px; font-size: 13px; text-align: right; }
+.ss-k { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+/* plan swap — one place at a time, rotating through honest alternatives */
+.slot-swap {
+  flex-shrink: 0; font: inherit; font-size: 13px; color: var(--teal);
+  background: none; border: 1px solid rgba(61, 255, 208, 0.3); border-radius: 99px;
+  width: 28px; height: 28px; cursor: pointer; line-height: 1;
+}
+/* passport edit mode: only the ✕ deletes (destructive taps get explicit targets) */
+.st-x {
+  position: absolute; top: -6px; left: -6px;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--tx);
+  background: var(--surface, #12121e); border: 1px solid rgba(255, 107, 107, 0.5);
+}
 
 /* Today NOW cards are tappable through to their place (affordance rule) */
 .place-card.now-tap { cursor: pointer; -webkit-tap-highlight-color: transparent; }
