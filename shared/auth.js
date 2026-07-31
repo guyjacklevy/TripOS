@@ -38,17 +38,29 @@ if (!CONFIGURED) {
       '<p class="auth-sub">Enter your email — we\'ll send a one-tap magic link. No password, ever.</p>' +
       '<form class="auth-form">' +
         '<input class="auth-input" type="email" required placeholder="you@email.com" autocomplete="email">' +
-        '<button class="btn btn-primary auth-send" type="submit">Send magic link</button>' +
+        '<button class="btn btn-primary auth-send" type="submit">Send boarding email</button>' +
       '</form>' +
+      /* F3½ (UX audit, lock parity): code-first — the main funnel gets the
+         same 6-digit door as the app welcome; no inbox round-trip required */
+      '<div class="auth-code" hidden>' +
+        '<p class="note" style="margin-top:12px">Check your inbox — tap the link, or paste the code if your email shows one:</p>' +
+        '<form class="log-form auth-code-form">' +
+          '<input class="auth-input log-amt auth-code-input" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code">' +
+          '<button class="btn btn-primary log-btn" type="submit">Board</button>' +
+        '</form>' +
+      '</div>' +
       '<p class="auth-status" role="status"></p>' +
     '</div>';
   document.body.appendChild(modal);
 
   const statusEl = modal.querySelector('.auth-status');
   const inputEl = modal.querySelector('.auth-input');
+  const codeWrap = modal.querySelector('.auth-code');
+  const codeInput = modal.querySelector('.auth-code-input');
+  let pendingEmail = null;
 
   const openModal = () => { modal.hidden = false; setTimeout(() => inputEl.focus(), 40); };
-  const closeModal = () => { modal.hidden = true; statusEl.textContent = ''; };
+  const closeModal = () => { modal.hidden = true; statusEl.textContent = ''; codeWrap.hidden = true; };
 
   modal.querySelector('.auth-x').addEventListener('click', closeModal);
   modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
@@ -63,9 +75,21 @@ if (!CONFIGURED) {
       email,
       options: { emailRedirectTo: window.location.origin + '/app/' }
     });
-    statusEl.textContent = error
-      ? '⚠ ' + error.message
-      : '✓ Check your inbox — the link boards you straight into your TripOS.';
+    if (error) { statusEl.textContent = '⚠ ' + error.message; return; }
+    pendingEmail = email;
+    statusEl.textContent = '✓ Boarding email sent.';
+    codeWrap.hidden = false;
+    setTimeout(() => codeInput.focus(), 40);
+  });
+
+  modal.querySelector('.auth-code-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const token = codeInput.value.trim();
+    if (!token || !pendingEmail) return;
+    statusEl.textContent = 'Boarding…';
+    const { error } = await sb.auth.verifyOtp({ email: pendingEmail, token, type: 'email' });
+    if (error) { statusEl.textContent = '⚠ That code didn’t match. Codes last 60 minutes — resend?'; return; }
+    window.location.href = '/app/';
   });
 
   /* ── save the wizard's plan to the user's account ──

@@ -755,7 +755,7 @@ function slotCard(p, planned, railKey) {
   return '<a class="slot-card' + (planned ? ' is-planned' : '') + '" href="#places" data-place="' + esc(p.id) + '" style="--cc:' + meta.cc + '">' +
     '<span class="slot-dot"></span>' +
     '<span class="slot-name">' + esc(p.name) + (p.verified ? ' ✓' : '') + '</span>' +
-    (planned ? '<span class="slot-planned">▸ planned</span>' : '') +
+    (planned ? '<span class="slot-planned">' + (DAY_PLAN_OFFROUTE ? '▸ pick · off-route' : '▸ planned') + '</span>' : '') +
     '<span class="slot-hint">' + esc(p.area.split('/')[0].trim()) + '</span>' +
     (planned && railKey ? '<button type="button" class="slot-swap" data-swap-rail="' + esc(railKey) + '" aria-label="swap">↻</button>' : '') +
   '</a>';
@@ -772,6 +772,11 @@ let DAY_PLAN = null;
 /* AI-3: an adjusted day (concierge replied to the traveler's situation).
    Adjusted plans render even off-route — they were made FOR where you are. */
 let DAY_PLAN_ADJUSTED = false;
+/* F1 (UX audit): an off-route day plan — generated FOR the override area
+   (leg_seq 0 rows). The concierge follows you; suppression was right,
+   silence was the break. */
+let DAY_PLAN_OFFROUTE = false;
+let OFFDAY_GENERATING = false;
 let CX_NOTE = null;
 
 function renderToday(trip, firstName, places, dateOpt) {
@@ -795,9 +800,10 @@ function renderToday(trip, firstName, places, dateOpt) {
 
   /* resolve planned slots to real place rows (id must exist in our data —
      engine guarantees it, but the client never trusts blindly). Adjusted
-     plans (AI-3) render even off-route — they were made for where you are. */
+     plans (AI-3) and off-route plans (F1) render off-route — both were
+     made for where you actually are. */
   const plannedByRail = {};
-  if (!ov || DAY_PLAN_ADJUSTED) (DAY_PLAN || []).forEach((sl) => {
+  if (!ov || DAY_PLAN_ADJUSTED || DAY_PLAN_OFFROUTE) (DAY_PLAN || []).forEach((sl) => {
     const p = places.find((x) => String(x.id) === String(sl.place_id));
     if (p && !plannedByRail[sl.rail]) plannedByRail[sl.rail] = { p, why: (sl.why || '').trim() };
   });
@@ -846,7 +852,7 @@ function renderToday(trip, firstName, places, dateOpt) {
            plans in ▸ lines, the rails carry the same mark. planned-lead is the
            only card that ever overrides the category accent. */
         cards.push(pickCard(planned.p, plan && isMatch(scorePlace(planned.p, plan)) ? scoreBreakdown(planned.p, plan) : null,
-          '▸ PLANNED — ' + (planned.why || 'on today’s plan'), true, r.key));
+          (DAY_PLAN_OFFROUTE ? '▸ PICK · off-route — ' : '▸ PLANNED — ') + (planned.why || 'on today’s plan'), true, r.key));
       }
       const nowPicks = (plan ? pickNow(pool, plan, now, 2) : [])
         .filter((pp) => !planned || String(pp.id) !== String(planned.p.id));
@@ -870,6 +876,14 @@ function renderToday(trip, firstName, places, dateOpt) {
   const tl = $('timeline');
   /* AI-3: the concierge's reply leads the adjusted day */
   if (CX_NOTE) html = '<p class="cx-reply">◦ ' + esc(CX_NOTE) + '</p>' + html;
+  /* F1: the state change announces itself ON the surface it changes — one
+     amber instrument line, back-affordance in the line (Rachel's copy) */
+  if (ov) {
+    html = '<div class="offroute-line"><span>off-route · in ' + esc(ov.toUpperCase()) + ' — ' +
+      (OFFDAY_GENERATING ? 'planning your ' + esc(ov.toLowerCase()) + ' day…'
+        : 'showing ' + esc(ov.toLowerCase()) + ' options') +
+      '</span><button type="button" class="or-return">↩ ROUTE</button></div>' + html;
+  }
   tl.innerHTML = html;
   dropIn(tl);
   /* past rails expand on tap (dimmed, no lift) */
@@ -1026,6 +1040,11 @@ window.__appDebug = {
   routeState, renderRoute, canReplan,
   injectDayPlan: (slots) => { DAY_PLAN = slots || null; },
   injectAdjust: (reply, slots) => { CX_NOTE = reply || null; if (slots) DAY_PLAN = slots; DAY_PLAN_ADJUSTED = true; },
+  /* preview: drive the F1 off-route matrix — plan / generating / fallback */
+  injectOffDay: (slots, generating) => {
+    DAY_PLAN = slots || null; DAY_PLAN_OFFROUTE = !!slots;
+    OFFDAY_GENERATING = !!generating; DAY_PLAN_ADJUSTED = false; CX_NOTE = null;
+  },
   injectPassport: (trip, places, checkins, dayPlans, opts) => {
     CHECKINS = checkins || []; TRIP_DAY_PLANS = dayPlans || [];
     renderPassport(trip, places || [], opts || {});
@@ -1281,6 +1300,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       if (p) checkinAt(p, here);
       return;
     }
+    /* F1: ↩ ROUTE lives in the amber line — the way back is where the state is felt */
+    const orb = e.target.closest('.or-return');
+    if (orb && e.target.closest('#timeline')) {
+      e.preventDefault();
+      setOverride(null);
+      return;
+    }
     /* 4: the plan isn't set in stone — rotate the slot through alternatives */
     const sw = e.target.closest('.pl-swap, .slot-swap');
     if (sw && e.target.closest('#timeline')) {
@@ -1321,6 +1347,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (rs && rs.cur && !ov) {
       sb.from('day_plans').update({ slots: DAY_PLAN })
         .eq('trip_id', todayCtx.trip.id).eq('leg_seq', rs.cur.idx + 1).eq('day_in_leg', rs.cur.nightOf)
+        .then(({ error }) => { if (error) console.warn('[TripOS] swap persist failed:', error.message); });
+    } else if (ov && DAY_PLAN_OFFROUTE && !DAY_PLAN_ADJUSTED) {
+      /* F1: off-route picks are full citizens — swaps persist to the leg_seq-0 row */
+      const day = Math.max(1, tripDayNumber(todayCtx.trip, baliNow()) || 1);
+      sb.from('day_plans').update({ slots: DAY_PLAN })
+        .eq('trip_id', todayCtx.trip.id).eq('leg_seq', 0).eq('day_in_leg', day)
         .then(({ error }) => { if (error) console.warn('[TripOS] swap persist failed:', error.message); });
     }
   }
@@ -1789,7 +1821,6 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   /* ─── AI-1a: call the plan-engine, refresh legs. Returns true only when a
      real ≥2-leg route landed. Every failure path is silent-classic. ─── */
-  let revealRouteNext = false;
   async function genRoute() {
     try {
       const { data, error } = await sb.functions.invoke('plan-engine', { body: { action: 'route' } });
@@ -1802,6 +1833,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       if (trip) {
         trip.route_summary = data.summary || null;
         trip.route_generated_at = new Date().toISOString();
+        /* F2: a new route is an unrevealed route — the reveal is a trip state */
+        trip.route_revealed_at = null;
+        await sb.from('trips').update({ route_revealed_at: null }).eq('id', trip.id);
       }
       return TRIP_LEGS.length >= 2;
     } catch (e) {
@@ -1810,15 +1844,89 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
   }
 
+  /* F2 · the landing-path interstitial: auth on the lock → the app opens
+     INTO the build terminal — honest lines, generation genuinely running
+     behind them. Resolves when the route lands (or honestly doesn't). */
+  function routeInterstitial() {
+    return new Promise((resolve) => {
+      show('checkin');
+      $('appCkMount').hidden = true;
+      $('appCkDots').style.display = 'none';
+      $('appCkBuild').hidden = false;
+      $('appCkFill').style.width = '0';
+      const term = $('appCkTerm');
+      term.innerHTML = '';
+      const addLn = (html) => {
+        const ln = document.createElement('span');
+        ln.className = 'ln'; ln.innerHTML = html; term.appendChild(ln);
+      };
+      addLn('▸ brief received <span class="ok">✓</span>');
+      setTimeout(() => { $('appCkFill').style.width = '100%'; }, 60);
+      const nights = trip && trip.duration_days ? trip.duration_days : 30;
+      setTimeout(() => addLn('▸ routing your ' + nights + ' nights across the island…'), 480);
+      genRoute().then((ok) => {
+        addLn(ok ? '▸ route ready <span class="ok">✓</span>'
+                 : '▸ routing unavailable — your base plan is ready');
+        setTimeout(() => { $('appCkDots').style.display = ''; resolve(ok); }, ok ? 700 : 1400);
+      });
+    });
+  }
+
   /* ─── AI-2a: today's plan for the current (leg, day). Generation is lazy —
      one engine call per leg, cached in day_plans; failures stay silent and
      the rails simply keep their classic suggestion behavior. ─── */
   const daysTried = {}; /* leg_seq → true, stops same-session retry loops */
+  const offdayTried = {}; /* `${area}:${day}` → true, same guard for off-route */
+
+  /* F1 · the concierge follows you: off-route days get their OWN generated
+     plan for the actual area (leg_seq 0 rows, keyed by trip-day). Engine
+     fails → suggestions-only + the amber line — today's behavior, explained. */
+  async function loadOffDayPlan(ov) {
+    const day = Math.max(1, tripDayNumber(trip, baliNow()) || 1);
+    const { data } = await sb.from('day_plans').select('slots, area')
+      .eq('trip_id', trip.id).eq('leg_seq', 0).eq('day_in_leg', day).limit(1);
+    if (data && data[0] && data[0].area === ov) {
+      DAY_PLAN = data[0].slots || null;
+      DAY_PLAN_OFFROUTE = !!DAY_PLAN;
+      return;
+    }
+    const k = ov + ':' + day;
+    if (offdayTried[k]) return;
+    offdayTried[k] = true;
+    OFFDAY_GENERATING = true;
+    if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
+    try {
+      const { data: gen, error } = await sb.functions.invoke('plan-engine', { body: { action: 'offday', area: ov } });
+      OFFDAY_GENERATING = false;
+      if (error || !gen || gen.error || !(gen.slots || []).length) {
+        console.warn('[TripOS] offday:', (gen && gen.error) || (error && error.message) || 'empty');
+        if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
+        return;
+      }
+      DAY_PLAN = gen.slots;
+      DAY_PLAN_OFFROUTE = true;
+      /* discovery may have grown the dataset mid-call (same as leg plans) */
+      if (todayCtx && DAY_PLAN.some((sl) =>
+            !todayCtx.places.find((x) => String(x.id) === String(sl.place_id)))) {
+        const { data: allP } = await sb.from('curated_places').select('*').eq('destination', 'bali');
+        if (allP && allP.length) { todayCtx.places = allP; mountPlacesTab(allP); }
+      }
+      if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
+    } catch (e) {
+      OFFDAY_GENERATING = false;
+      console.warn('[TripOS] offday unreachable:', e && e.message);
+      if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
+    }
+  }
+
   async function loadDayPlan() {
     DAY_PLAN = null;
     DAY_PLAN_ADJUSTED = false; /* a fresh (leg, day) clears yesterday's adjustment */
+    DAY_PLAN_OFFROUTE = false;
     CX_NOTE = null;
     const rs = routeState(trip, TRIP_LEGS, baliNow());
+    const ovNow = offRoute(trip, rs);
+    if (ovNow) { await loadOffDayPlan(ovNow); return; }
     if (!rs || !rs.cur) return;
     const legSeq = rs.cur.idx + 1;
     const { data } = await sb.from('day_plans').select('slots')
@@ -1866,6 +1974,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const ok = await genRoute();
     if (ok) {
       renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride });
+      /* the replan IS this route's reveal — don't replay it next open (F2) */
+      trip.route_revealed_at = new Date().toISOString();
+      sb.from('trips').update({ route_revealed_at: trip.route_revealed_at }).eq('id', trip.id)
+        .then(({ error }) => { if (error) console.warn('[TripOS] reveal mark failed:', error.message); });
       updateStrip(trip, greetName(), baliNow());
       paintNudge();
       /* the old route's day plans died with it (server-side) — start fresh */
@@ -1889,6 +2001,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (todayCtx) { todayCtx.trip = trip; renderToday(trip, todayCtx.name, todayCtx.places); }
     else updateStrip(trip, greetName(), baliNow());
     paintNudge();
+    /* F1: the plan follows the override — leg plan back on-route, generated
+       off-route plan otherwise (lazy; the amber line narrates the wait) */
+    loadDayPlan().then(() => { if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places); });
     setTab('today'); /* the goal was "fix Today" — don't strand them on You (Rachel §4) */
   }
 
@@ -2041,14 +2156,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
                    : '▸ routing unavailable — your base plan is ready');
           $('appCkDots').style.display = '';
           freshLogin = true; /* re-use the arrival moment for a fresh brief */
-          revealRouteNext = ok;
+          /* F2: genRoute cleared route_revealed_at — loadShell owns the
+             reveal now (one code path for every entry into a fresh route) */
           await loadShell();
-          /* the reveal: land on the route itself (You, under the pass) */
-          if (ok) {
-            setTab('you');
-            const el = $('youRoute');
-            if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400);
-          }
         }, 600);
       };
       tick();
@@ -2089,9 +2199,17 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const { data: legRows } = await sb.from('trip_legs').select('*')
       .eq('trip_id', trip.id).order('seq');
     TRIP_LEGS = legRows || [];
-    renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: revealRouteNext, onReplan: replanRoute, onOverride: setOverride });
-    revealRouteNext = false;
+
+    /* F2: a never-routed, never-revealed brief opens INTO the build terminal
+       (the landing path finally gets the reveal). Generation failure falls
+       through to Today, classic — never blocked on a reveal that can't happen. */
+    if (TRIP_LEGS.length < 2 && !trip.route_generated_at && !trip.route_revealed_at) {
+      await routeInterstitial();
+      show('shell');
+    }
+    renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride });
     if (TRIP_LEGS.length < 2 && !trip.route_generated_at) {
+      /* already-revealed brief that lost its route (rare) → quiet background gen */
       genRoute().then((ok) => {
         if (ok) {
           renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride });
@@ -2108,6 +2226,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     renderBrief(trip);
     renderPresets();
     setPassenger(profile && profile.title, profile && profile.full_name);
+    updatePassRecord(); /* F3: "who's this route for?" on the pass, not a gate */
     updateStrip(trip, greetName(), baliNow());
 
     const { data: places } = await sb.from('curated_places').select('*').eq('destination', 'bali');
@@ -2137,6 +2256,27 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       freshLogin = false;
     }
     setTab(location.hash.slice(1) || 'today', false);
+
+    /* F2: any first signed-in open with a fresh routed brief lands on the
+       reveal — You, scrolled to the route, stagger. Once per route, persisted
+       (never localStorage — the PWA lesson). */
+    if (!trip.route_revealed_at && TRIP_LEGS.length >= 2) {
+      trip.route_revealed_at = new Date().toISOString();
+      sb.from('trips').update({ route_revealed_at: trip.route_revealed_at }).eq('id', trip.id)
+        .then(({ error }) => { if (error) console.warn('[TripOS] reveal mark failed:', error.message); });
+      setTab('you');
+      renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride });
+      const el = $('youRoute');
+      if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400);
+      /* F3: identity is the victory lap — once the route has landed, glide up
+         to the pass asking "who's this route for?" */
+      if (profile && !profile.full_name && !profile.record_skipped_at) {
+        setTimeout(() => {
+          const yp = $('youPass');
+          if (yp) yp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 2800);
+      }
+    }
   }
 
   function openRecord() {
@@ -2173,16 +2313,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   async function route() {
     if (!user) { show('welcome'); return; }
-    const { data } = await sb.from('profiles').select('title, full_name, presets, via_token').eq('id', user.id).limit(1);
+    const { data } = await sb.from('profiles').select('title, full_name, presets, via_token, record_skipped_at').eq('id', user.id).limit(1);
     profile = (data && data[0]) || null;
     pickupProvenance();                      /* background — never blocks boarding */
-    let skipped = false;
-    try { skipped = !!localStorage.getItem('tripos_record_done'); } catch (_) {}
-    if (profile && !profile.full_name && !skipped) {
-      openRecord();
-    } else {
-      loadShell();
-    }
+    /* F3 (UX audit): the record gate is DEAD as a standalone screen — value
+       first, identity as the victory lap. The pass asks "who's this route
+       for?" on You after the route lands; skip persists to the profile. */
+    loadShell();
   }
 
   /* welcome — Google primary */
@@ -2254,6 +2391,55 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   $('recSkip').addEventListener('click', () => {
     try { localStorage.setItem('tripos_record_done', '1'); } catch (_) {}
     loadShell();
+  });
+
+  /* ─── F3 · the record ON the pass: shows only while the profile has no
+     name and no persisted skip; typing fills the PASSENGER line live (N3).
+     Skip persists to profiles.record_skipped_at — the localStorage flag
+     re-gated PWA users (the audit's residue find). ─── */
+  let bpRecTitle = '';
+  function updatePassRecord() {
+    const block = $('bpRecord');
+    if (!block) return;
+    const pending = profile && !profile.full_name && !profile.record_skipped_at;
+    block.hidden = !pending;
+    if (!pending) return;
+    bpRecTitle = (profile && profile.title) || '';
+    document.querySelectorAll('#bpTitleChips .chip-btn').forEach((b) =>
+      b.classList.toggle('on', b.getAttribute('data-title') === bpRecTitle));
+  }
+  $('bpTitleChips').addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip-btn');
+    if (!btn) return;
+    bpRecTitle = btn.getAttribute('data-title');
+    document.querySelectorAll('#bpTitleChips .chip-btn').forEach((b) =>
+      b.classList.toggle('on', b === btn));
+    setPassenger(bpRecTitle, $('bpRecName').value.trim());
+  });
+  $('bpRecName').addEventListener('input', () => {
+    setPassenger(bpRecTitle, $('bpRecName').value.trim());
+  });
+  $('bpRecSave').addEventListener('click', async () => {
+    const name = $('bpRecName').value.trim();
+    if (!name) { $('bpRecStatus').textContent = 'Your name prints on the pass — or skip for now.'; return; }
+    const { error } = await sb.from('profiles')
+      .update({ title: bpRecTitle || null, full_name: name }).eq('id', user.id);
+    if (error) {
+      $('bpRecStatus').textContent = '⚠ didn’t save — tap to retry';
+      return;
+    }
+    profile = Object.assign({}, profile, { title: bpRecTitle || null, full_name: name });
+    setPassenger(profile.title, profile.full_name);
+    updatePassRecord();
+    updateStrip(trip, greetName(), baliNow());
+    if (todayCtx) { todayCtx.name = greetName(); renderToday(todayCtx.trip, todayCtx.name, todayCtx.places); }
+  });
+  $('bpRecSkip').addEventListener('click', async () => {
+    const ts = new Date().toISOString();
+    profile = Object.assign({}, profile, { record_skipped_at: ts });
+    updatePassRecord();
+    const { error } = await sb.from('profiles').update({ record_skipped_at: ts }).eq('id', user.id);
+    if (error) console.warn('[TripOS] record skip persist failed:', error.message);
   });
 
   /* shell wiring */

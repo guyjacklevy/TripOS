@@ -306,6 +306,21 @@
             </div>
             <p class="bp-sub" id="briefLine">Loading your brief…</p>
             <div class="bp-grid" id="briefGrid"></div>
+            <!-- F3 (UX audit): the record lives ON the pass — identity is the
+                 victory lap after the route lands, never a toll booth before it -->
+            <div class="bp-record" id="bpRecord" hidden>
+              <p class="bp-rec-ask">Who’s this route for?</p>
+              <div class="title-chips" id="bpTitleChips">
+                <button type="button" class="chip chip-btn" data-title="Mr.">Mr.</button>
+                <button type="button" class="chip chip-btn" data-title="Ms.">Ms.</button>
+              </div>
+              <input class="auth-input rec-name" id="bpRecName" type="text" placeholder="full name" autocomplete="name">
+              <div class="rec-actions">
+                <button type="button" class="btn btn-primary" id="bpRecSave">Print my pass</button>
+                <button type="button" class="ck-reset" id="bpRecSkip">skip</button>
+              </div>
+              <p class="auth-status" id="bpRecStatus" role="status"></p>
+            </div>
             <div style="display:flex;gap:18px;flex-wrap:wrap">
               <a class="ck-reset" href="../bali/#checkin" id="briefEdit">↺ change my brief</a>
               <a class="ck-reset" id="recEdit">✎ update passenger record</a>
