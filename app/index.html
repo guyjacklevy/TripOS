@@ -167,7 +167,7 @@
         <!-- AI-3 · the live concierge: say what's true, today adjusts around it -->
         <form class="log-form add-form cx-form" id="cxForm" hidden>
           <input class="auth-input" id="cxInput" type="text" maxlength="200" autocomplete="off"
-            placeholder="tell your concierge — 'raining', 'low energy', 'friend in town'">
+            placeholder="rain? tired? plans changed? — tell me">
           <button class="btn btn-primary log-btn" type="submit">adjust</button>
         </form>
         <p class="pulse-note" id="cxNote" hidden></p>
@@ -431,6 +431,12 @@
         </div>
       </section>
     </main>
+
+    <!-- F4 (UX audit): stale PWA builds get the quiet chip — no modal, no
+         auto-reload (could eat an in-progress check-in) -->
+    <button type="button" class="update-chip" id="updateChip" hidden>
+      ↻ new version · tap to refresh<span class="uc-x" role="button" aria-label="dismiss">✕</span>
+    </button>
 
     <!-- ─── tab bar ─── -->
     <nav class="tab-bar" id="tabBar">

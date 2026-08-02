@@ -446,6 +446,15 @@ export function mountPlaces(cfg) {
       state.view = p.category;
       renderCatGrid(p.category, String(id));
       applyFilters(false);
+    },
+    /* build #5 (audit J3): Today's rail footers land here — category rows,
+       pre-filtered to the day's area. Unknown area falls back to all. */
+    focusArea(area) {
+      if (state.view !== 'rows') { state.view = 'rows'; renderRows(); }
+      const cards = els.areaBar ? [...els.areaBar.querySelectorAll('.area-card')] : [];
+      const hit = cards.find((b) => b.getAttribute('data-v') === String(area || ''))
+        || cards.find((b) => b.getAttribute('data-v') === 'all');
+      if (hit) hit.click(); else applyFilters(false);
     }
   };
 }

@@ -2153,6 +2153,65 @@ div.stamp { cursor: default; }
   margin-bottom: 18px;
 }
 
+/* build #5 (UX audit): swap is a TEXT chip everywhere — bordered mono,
+   visible-affordance rule (Guy couldn't see the icon) */
+.swap-chip {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+  color: var(--teal); background: none; cursor: pointer; white-space: nowrap;
+  border: 1px solid rgba(61, 255, 208, 0.35); border-radius: 8px;
+  padding: 5px 9px; min-height: 30px;
+}
+.swap-chip:active { border-color: rgba(61, 255, 208, 0.7); }
+.slot-card .swap-chip { margin-left: auto; min-height: 26px; padding: 3px 7px; }
+
+/* build #5: the rail footer — the menu must be felt */
+.rail-more {
+  display: block; margin: 8px 0 2px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
+  color: var(--muted); text-decoration: none;
+}
+.rail-more:active { color: var(--teal); }
+
+/* F7: generation gets a visible moment — the quiet scan row, rails-scale */
+.rail-scan {
+  position: relative; overflow: hidden;
+  border: 1px dashed var(--line); border-radius: 12px;
+  padding: 14px 12px; margin-bottom: 10px;
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em;
+  color: var(--teal);
+}
+.rail-scan .scan-line { position: absolute; inset: 0 auto 0 0; }
+
+/* F5: pride-moment share bridges — quiet, earned, never nagging */
+.nudge-share {
+  display: block; margin-top: 6px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+  color: var(--am); opacity: 0.9;
+}
+.pp-share-nudge { font-family: var(--mono); letter-spacing: 0.08em; color: var(--teal); }
+
+/* F9: the worth-it echo on the traveler's own stamps (never on the share page) */
+.st-worth { color: var(--teal); }
+
+/* F4: the update chip — above the tab bar, dismissible, never a modal */
+.update-chip {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+  z-index: 60; display: flex; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
+  color: var(--teal); cursor: pointer; white-space: nowrap;
+  background: rgba(18, 18, 30, 0.92); backdrop-filter: blur(8px);
+  border: 1px solid rgba(61, 255, 208, 0.4); border-radius: 999px;
+  padding: 9px 14px; min-height: 36px;
+}
+.update-chip .uc-x { color: var(--muted); padding: 2px 4px; }
+
+/* F6: the provenance thread on the landing hero */
+.via-line {
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.05em;
+  color: var(--teal); margin: 10px 0 4px;
+}
+
 /* F1 (UX audit): off-route announces itself ON Today — one amber instrument
    line at the top of the rails, the way back lives in the line */
 .offroute-line {

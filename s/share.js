@@ -84,7 +84,9 @@ function stampHTML(s, count, viaName) {
   const seedVia = (place) => {
     try {
       localStorage.setItem('tripos_via', JSON.stringify({
-        via: name, place: place || null, token: token, at: Date.now()
+        via: name, place: place || null, token: token, at: Date.now(),
+        places: (data.counts && data.counts.places) || null,
+        month: data.month || null
       }));
     } catch (_) {}
   };

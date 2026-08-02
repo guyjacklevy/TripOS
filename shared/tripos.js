@@ -86,3 +86,28 @@
     }
   }
 })();
+
+/* ─── F6 (UX audit) · the provenance thread survives the landing ───
+   A visitor arriving from a shared passport carries tripos_via — the hero
+   acknowledges the thread in one mono line and the CTA speaks to them.
+   S4 becomes a signup in the questionnaire, not on the share page. */
+(function () {
+  var hero = document.querySelector('.hero[data-stage]');
+  if (!hero) return;
+  var seed = null;
+  try { seed = JSON.parse(localStorage.getItem('tripos_via') || 'null'); } catch (e) { seed = null; }
+  if (!seed || !seed.via) return;
+  var monthWord = null;
+  if (seed.month) {
+    monthWord = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august',
+      'september', 'october', 'november', 'december'][+String(seed.month).split('-')[1] - 1] || null;
+  }
+  var line = document.createElement('p');
+  line.className = 'via-line';
+  line.textContent = '// planning from ' + seed.via + '’s ' + (monthWord || 'trip') +
+    (seed.places ? ' · ' + seed.places + ' places saved' : '');
+  var call = hero.querySelector('.boarding-call');
+  if (call) call.insertAdjacentElement('afterend', line); else hero.appendChild(line);
+  var cta = hero.querySelector('.btn.btn-primary');
+  if (cta) cta.textContent = 'Build yours — free';
+})();
