@@ -639,17 +639,6 @@ function renderPassport(trip, places, opts) {
       '</div>').join('') ||
       '<p class="sec-context">Nothing in that category yet.</p>';
     host.querySelectorAll('.pp-pulse').forEach((b) => { b.onclick = () => setTab('pulse'); });
-    /* F5: deterministic milestone → one quiet earned line under the new stamp */
-    if (o.milestone && o.ceremony) {
-      const st = host.querySelector('.st-new');
-      if (st) {
-        const n = document.createElement('button');
-        n.type = 'button';
-        n.className = 'ck-reset pp-share-nudge';
-        n.textContent = '↗ share your passport';
-        st.insertAdjacentElement('afterend', n);
-      }
-    }
   } else {
     /* BY DAY — memory-zoom: the route grammar's third altitude */
     $('ppFilter').innerHTML = '';
@@ -728,6 +717,19 @@ function renderPassport(trip, places, opts) {
     }
     host.innerHTML = '<div class="pp-days">' + rows.join('') + '</div>';
   }
+
+  /* F5: deterministic milestone → one quiet earned line under the new stamp —
+     in EITHER view. If a filter hides the ceremony stamp, the line leads the
+     passport instead: an earned moment never fails silently (Guy's phone). */
+  if (o.milestone && o.ceremony) {
+    const n = document.createElement('button');
+    n.type = 'button';
+    n.className = 'ck-reset pp-share-nudge';
+    n.textContent = '↗ share your passport';
+    const st = host.querySelector('.st-new');
+    if (st) st.insertAdjacentElement('afterend', n);
+    else host.insertAdjacentElement('afterbegin', n);
+  }
 }
 function REDUCED_MOTION() {
   return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -795,6 +797,7 @@ let DAY_PLAN_ADJUSTED = false;
 let DAY_PLAN_OFFROUTE = false;
 let OFFDAY_GENERATING = false;
 let DAYS_GENERATING = false; /* F7: leg-plan generation in flight → scan row */
+let TL_KEEP_SCROLL = false;  /* one-shot: next renderToday keeps scroll position */
 let CX_NOTE = null;
 
 function renderToday(trip, firstName, places, dateOpt) {
@@ -935,9 +938,11 @@ function renderToday(trip, firstName, places, dateOpt) {
       btn.closest('.rail').classList.toggle('open', !body.hidden);
     };
   });
-  /* auto-scroll the current rail into the top third (once per render) */
+  /* auto-scroll the current rail into the top third (once per render) —
+     suppressed for in-place re-renders like swap (Guy: the screen jumped) */
   const cur = tl.querySelector('.rail.current');
-  if (cur && dateOpt === undefined) {
+  if (TL_KEEP_SCROLL) { TL_KEEP_SCROLL = false; }
+  else if (cur && dateOpt === undefined) {
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     cur.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
   }
@@ -1258,12 +1263,16 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
        10th trip-wide. Never random, never nagging. */
     let milestone = false;
     if (todayCtx) {
+      /* Guy's phone: the checked-in place may be newer than todayCtx.places
+         (discovery adds mid-session) — its area comes from p ITSELF, never
+         a pool lookup that can miss */
+      const a = String(p.area || '').split('/')[0].trim() || null;
       const areaOf = (pid) => {
         const pl = todayCtx.places.find((x) => String(x.id) === String(pid));
         return pl ? String(pl.area || '').split('/')[0].trim() : null;
       };
-      const a = areaOf(p.id);
-      const inArea = a ? CHECKINS.filter((c) => areaOf(c.place_id) === a).length : 0;
+      const inArea = a ? CHECKINS.filter((c) =>
+        String(c.place_id) === String(p.id) ? true : areaOf(c.place_id) === a).length : 0;
       milestone = inArea === 1 || (CHECKINS.length > 0 && CHECKINS.length % 10 === 0);
     }
     if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places, { ceremony: p.id, milestone });
@@ -1306,8 +1315,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         setTimeout(() => sug.remove(), 3000);
       });
       sug.querySelector('.ss-skip').addEventListener('click', () => sug.remove());
-      const auto = setTimeout(() => { if (sug.parentNode) sug.remove(); }, 20000);
+      /* Guy's phone: 20s vanished under him mid-decision — 45s, and ANY touch
+         on the suggestion cancels the clock (deciding IS interacting) */
+      const auto = setTimeout(() => { if (sug.parentNode) sug.remove(); }, 45000);
       sug.querySelector('.ss-amt').addEventListener('focus', () => clearTimeout(auto));
+      sug.addEventListener('touchstart', () => clearTimeout(auto), { once: true, passive: true });
+      sug.addEventListener('pointerdown', () => clearTimeout(auto), { once: true });
     }
   }
 
@@ -1415,7 +1428,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (!alt || String(alt.id) === String(slot.place_id)) return;
     slot.place_id = alt.id;
     slot.why = 'your swap — ↻ again for another';
+    /* in-place re-render: the traveler is LOOKING at this card — no jumping */
+    TL_KEEP_SCROLL = true;
+    const scrollY = window.scrollY;
     renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
+    window.scrollTo(0, scrollY);
     if (rs && rs.cur && !ov) {
       sb.from('day_plans').update({ slots: DAY_PLAN })
         .eq('trip_id', todayCtx.trip.id).eq('leg_seq', rs.cur.idx + 1).eq('day_in_leg', rs.cur.nightOf)
