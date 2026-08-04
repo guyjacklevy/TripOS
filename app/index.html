@@ -120,6 +120,86 @@
     </div>
   </section>
 
+  <!-- ─── §A · PRE-QUESTIONNAIRE — Bali is already alive (FIRST_OPEN_SPEC) ───
+       Pure corridor (Guy 2026-08-04): exactly ONE action. This screen IS the
+       pre-brief Today (§G) — no separate empty state exists. -->
+  <section id="corridorA" class="corr-a" hidden>
+    <div class="corr-a-inner">
+      <div class="orbit-dial corr-dial" id="corrDial" data-phase="day" style="--od-angle:210deg">
+        <svg viewBox="0 0 48 48" width="64" height="64" aria-hidden="true">
+          <circle cx="24" cy="24" r="20" fill="url(#odSphere)"/>
+          <path d="M12 27 q4-3 8-2 t8 0 q3 0 5 2" stroke="rgba(255,255,255,0.16)" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <g class="od-night"><path d="M24 4 a20 20 0 0 1 0 40 z" fill="rgba(4,5,11,0.78)"/></g>
+          <circle class="od-rim" cx="24" cy="24" r="20.75" fill="none" stroke-width="1.5"/>
+          <circle class="od-pin" cx="31" cy="28" r="2.2"/>
+          <circle class="od-ping" cx="31" cy="28" r="2.2" fill="none" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="inst-strip corr-clock" id="corrClock">BALI · —:— · —</div>
+      <h1 class="corr-h1">Your month here, decoded.</h1>
+      <div class="corr-tonight" id="corrTonight" hidden></div>
+      <p class="corr-counts" id="corrCounts"></p>
+      <button type="button" class="btn btn-primary corr-cta" id="corrCta">PLAN YOUR BALI →</button>
+    </div>
+  </section>
+
+  <!-- ─── §C · REVEAL CEREMONY — the gift being unwrapped ─── -->
+  <section id="ceremony" class="ceremony" hidden>
+    <div class="cer-inner">
+      <div class="ck-build" id="cerBuild" hidden>
+        <div class="ck-term" id="cerTerm"></div>
+        <div class="ck-bar"><div class="ck-bar-fill" id="cerFill"></div></div>
+      </div>
+      <div class="cer-map" id="cerMap" hidden>
+        <svg viewBox="0 0 320 260" width="100%" aria-hidden="true">
+          <path id="cerIsland" d="M56,150 C60,110 92,74 140,62 C190,50 246,66 262,96 C276,122 268,148 244,160 C214,174 178,172 156,176 C150,186 146,196 136,202 C132,216 122,228 108,226 C96,224 96,210 104,200 C110,192 108,184 96,178 C76,170 58,168 56,150 Z"
+            fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.55"/>
+          <ellipse cx="222" cy="204" rx="9" ry="6" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.55"/>
+          <ellipse cx="243" cy="213" rx="5" ry="3.5" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.45"/>
+          <path id="cerTrace" d="" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>
+          <g id="cerOrbs"></g>
+        </svg>
+      </div>
+      <div class="cer-legs" id="cerLegs"></div>
+      <div class="cer-summary" id="cerSummary" hidden></div>
+      <div class="cer-pass" id="cerPass" hidden>
+        <div class="bpass">
+          <div class="bp-main">
+            <div class="bp-air">TripOS Air · personal boarding pass</div>
+            <div class="bp-route">
+              <span class="bp-city">YOU</span><span class="bp-dash"></span><span class="bp-city bp-to">DPS</span>
+            </div>
+            <div class="bp-grid" style="margin-bottom:14px">
+              <div><span>Passenger</span><strong id="cerPassenger">—</strong></div>
+              <div><span>Class</span><strong id="cerClass">—</strong></div>
+            </div>
+            <p class="bp-rec-ask">Who’s this route for?</p>
+            <div class="title-chips" id="cerTitleChips">
+              <button type="button" class="chip chip-btn" data-title="Mr.">Mr.</button>
+              <button type="button" class="chip chip-btn" data-title="Ms.">Ms.</button>
+            </div>
+            <input class="auth-input rec-name" id="cerRecName" type="text" placeholder="full name" autocomplete="name">
+            <div class="rec-actions">
+              <button type="button" class="btn btn-primary" id="cerRecSave">Print my pass</button>
+              <button type="button" class="ck-reset" id="cerRecSkip">skip</button>
+            </div>
+          </div>
+          <div class="bp-stub"><div class="bp-barcode"></div><span class="bp-code">DPS · BALI</span></div>
+        </div>
+      </div>
+      <div class="cer-share" id="cerShare" hidden>
+        <button type="button" class="ck-reset cer-share-line" id="cerShareBtn">↗ send it to whoever’s coming</button>
+      </div>
+      <div class="cer-ask" id="cerAsk" hidden>
+        <p class="cer-ask-line">☀ want your day plan each morning?</p>
+        <div class="cer-ask-chips">
+          <button type="button" class="swap-chip" id="cerAskYes">yes</button>
+          <button type="button" class="swap-chip" id="cerAskNo">not now</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ─── SHELL (logged in) ─── -->
   <div id="shell" hidden>
     <nav class="nav app-top">

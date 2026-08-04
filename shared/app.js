@@ -20,6 +20,8 @@ const welcome = $('welcome');
 const record = $('record');
 const shell = $('shell');
 const checkinScreen = $('checkinScreen');
+const corridorA = $('corridorA');
+const ceremonyEl = $('ceremony');
 
 const TIER_IDR = { back: 350, comf: 700, prem: 1500 };
 const ANCHORS = [[300, 'beach club day'], [150, 'massage'], [35, 'warung meal']];
@@ -383,7 +385,18 @@ function renderRoute(trip, legs, now, opts) {
   const host = $('youRoute');
   if (!host) return;
   const rs = routeState(trip, legs, now);
-  if (!rs) { host.hidden = true; host.innerHTML = ''; return; }
+  if (!rs) {
+    /* §G: while a route is actually generating, the field says so — grey
+       + scan sweep. Otherwise <2 legs suppresses the instrument entirely
+       (classic app; an "awaiting" line for a 1-leg choice would be a lie). */
+    if (trip && ROUTE_GENERATING) {
+      host.hidden = false;
+      host.innerHTML = '<div class="route-instr ri-awaiting">' +
+        '<div class="scan-line"></div>' +
+        '<div class="ri-head">ROUTE · awaiting your plan</div></div>';
+    } else { host.hidden = true; host.innerHTML = ''; }
+    return;
+  }
   const o = opts || {};
   const d = tripDayNumber(trip, now) || 0;
 
@@ -444,6 +457,8 @@ function renderRoute(trip, legs, now, opts) {
               '<button type="button" class="ck-reset" id="riKeep">keep</button>' +
             '</div>'
           : '<p class="ri-locked">route locked in flight · days adapt daily</p>') +
+        /* §D: the deliberate share path — the card's permanent second home */
+        (o.onShare ? '<button type="button" class="ri-replan" id="riShare">↗ SHARE ROUTE</button>' : '') +
       '</div>' +
     '</div>';
 
@@ -475,7 +490,9 @@ function renderRoute(trip, legs, now, opts) {
     };
   });
   if (o.onReplan) {
-    const chip = $('riReplan'), conf = $('riConfirm');
+    const shareChip = $('riShare');
+  if (shareChip && o.onShare) shareChip.onclick = () => o.onShare(shareChip);
+  const chip = $('riReplan'), conf = $('riConfirm');
     if (chip) chip.onclick = () => { chip.hidden = true; conf.hidden = false; };
     const keep = $('riKeep'), go = $('riGo');
     if (keep) keep.onclick = () => { conf.hidden = true; chip.hidden = false; };
@@ -797,6 +814,8 @@ let DAY_PLAN_ADJUSTED = false;
 let DAY_PLAN_OFFROUTE = false;
 let OFFDAY_GENERATING = false;
 let DAYS_GENERATING = false; /* F7: leg-plan generation in flight → scan row */
+let ROUTE_GENERATING = false; /* §G: route generation in flight → You field says so */
+let CONCIERGE_DOWN = false;  /* §G: engine unreachable → honest amber line on Today */
 let TL_KEEP_SCROLL = false;  /* one-shot: next renderToday keeps scroll position */
 let CX_NOTE = null;
 
@@ -921,6 +940,9 @@ function renderToday(trip, firstName, places, dateOpt) {
     html = '<div class="offroute-line"><span>off-route · in ' + esc(ov.toUpperCase()) + ' — showing ' +
       esc(ov.toLowerCase()) + ' options</span>' +
       '<button type="button" class="or-return">↩ ROUTE</button></div>' + html;
+  } else if (CONCIERGE_DOWN && !DAY_PLAN) {
+    /* §G engine-down: verified picks keep working; the silence is explained */
+    html = '<div class="offroute-line"><span>concierge offline · showing verified picks</span></div>' + html;
   }
   tl.innerHTML = html;
   dropIn(tl);
@@ -948,7 +970,7 @@ function renderToday(trip, firstName, places, dateOpt) {
   }
 }
 
-function renderPulse(dailyK, spentK) {
+function renderPulse(dailyK, spentK, tripDay) {
   const leftK = Math.max(0, dailyK - spentK);
   $('pulseSpent').textContent = fmtK(spentK);
   $('pulseBudget').textContent = fmtK(dailyK) + ' IDR';
@@ -957,6 +979,13 @@ function renderPulse(dailyK, spentK) {
   $('pulseFill').style.width = pct + '%';
   $('pulseFill').style.background = pct >= 100
     ? 'linear-gradient(90deg, rgba(255,107,107,0.5), var(--rd))' : '';
+  /* §G zero-state: the plan is the content until spending exists — the daily
+     line is a real tier-derived number, never a blank gauge */
+  if (spentK === 0) {
+    $('pulseNote').textContent = (tripDay && tripDay > 0 ? 'day ' + tripDay + ' · ' : '') +
+      'nothing logged yet · your daily line is ' + fmtK(dailyK) + ' IDR';
+    return;
+  }
   if (spentK >= dailyK) {
     $('pulseNote').textContent = 'Over today’s line — tomorrow resets the runway.';
   } else {
@@ -1071,6 +1100,8 @@ function show(which) {
   record.hidden = which !== 'record';
   shell.hidden = which !== 'shell';
   checkinScreen.hidden = which !== 'checkin';
+  if (corridorA) corridorA.hidden = which !== 'corridorA';
+  if (ceremonyEl) ceremonyEl.hidden = which !== 'ceremony';
 }
 
 window.__appDebug = {
@@ -1162,7 +1193,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const t0 = startOfToday().getTime();
     const todayK = rows.reduce((s, r) =>
       s + (new Date(r.spent_at).getTime() >= t0 ? (r.amount_idr || 0) : 0), 0) / 1000;
-    renderPulse(dailyK, todayK);
+    renderPulse(dailyK, todayK, tripDayNumber(trip, baliNow()));
     renderPace(dailyK, rows, new Date());
     renderCats(rows);
     renderRecent(rows);
@@ -1348,7 +1379,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       plan: planFromTrip(trip),
       onCheckin: checkinAt,
       onGoogleSearch: googleSearch,
-      onGoogleAdd: googleAdd
+      onGoogleAdd: googleAdd,
+      onBrief: () => openCheckin() /* §G no-brief banner runs the questionnaire in-app */
     });
   }
 
@@ -1914,13 +1946,17 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   /* ─── AI-1a: call the plan-engine, refresh legs. Returns true only when a
      real ≥2-leg route landed. Every failure path is silent-classic. ─── */
   async function genRoute() {
+    ROUTE_GENERATING = true;
     try {
       const { data, error } = await sb.functions.invoke('plan-engine', { body: { action: 'route' } });
+      ROUTE_GENERATING = false;
       if (error || !data || data.error) {
         console.warn('[TripOS] plan-engine:', (data && data.error) || (error && error.message) || 'unreachable');
+        CONCIERGE_DOWN = true; /* §G: Today explains the silence honestly */
         if (trip) trip.route_generated_at = trip.route_generated_at || new Date().toISOString();
         return false;
       }
+      CONCIERGE_DOWN = false;
       TRIP_LEGS = data.legs || [];
       if (trip) {
         trip.route_summary = data.summary || null;
@@ -1931,6 +1967,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       }
       return TRIP_LEGS.length >= 2;
     } catch (e) {
+      ROUTE_GENERATING = false;
+      CONCIERGE_DOWN = true;
       console.warn('[TripOS] plan-engine unreachable:', e && e.message);
       return false;
     }
@@ -2073,7 +2111,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }, 220);
     const ok = await genRoute();
     if (ok) {
-      renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride });
+      renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
       /* the replan IS this route's reveal — don't replay it next open (F2) */
       trip.route_revealed_at = new Date().toISOString();
       sb.from('trips').update({ route_revealed_at: trip.route_revealed_at }).eq('id', trip.id)
@@ -2087,7 +2125,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     } else {
       instr.querySelector('.ck-term').innerHTML =
         '<span class="ln">▸ routing unavailable — your current route stands</span>';
-      setTimeout(() => renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride }), 1600);
+      setTimeout(() => renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute }), 1600);
     }
   }
 
@@ -2097,7 +2135,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const { error } = await sb.from('trips').update({ area_override: val }).eq('id', trip.id);
     if (error) { console.error('[TripOS] override save failed:', error.message); return; }
     trip.area_override = val;
-    renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride });
+    renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
     if (todayCtx) { todayCtx.trip = trip; renderToday(trip, todayCtx.name, todayCtx.places); }
     else updateStrip(trip, greetName(), baliNow());
     paintNudge();
@@ -2267,13 +2305,387 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     });
   }
 
+  /* ═══════════ FIRST-OPEN CORRIDOR — FIRST_OPEN_SPEC §A–§E ═══════════
+     open → Bali is already alive → 3 questions → the route unwraps → your
+     name types onto the pass → send it → morning-note ask → tab bar rises.
+     Once, ever: profiles.first_open_done_at (server-side — the F3 lesson).
+     Engine down → NO ceremony (a ceremony for a fallback is theater). */
+
+  const AREA_XY = {
+    Canggu: [96, 150], Seminyak: [104, 168], Denpasar: [130, 172], Sanur: [150, 166],
+    Ubud: [138, 118], Uluwatu: [118, 215], Islands: [222, 204]
+  };
+  const AREA_HEX = { /* canvas + SVG need literal colors — mirrors the CSS tokens */
+    Canggu: '#3dffd0', Ubud: '#4ade80', Seminyak: '#ffb454', Uluwatu: '#a78bfa',
+    Islands: '#4cc9f0', Sanur: '#4cc9f0', Denpasar: '#ff6b6b'
+  };
+  const ISLAND_PATH = 'M56,150 C60,110 92,74 140,62 C190,50 246,66 262,96 C276,122 268,148 244,160 C214,174 178,172 156,176 C150,186 146,196 136,202 C132,216 122,228 108,226 C96,224 96,210 104,200 C110,192 108,184 96,178 C76,170 58,168 56,150 Z';
+  const wait = (ms) => new Promise((r) => setTimeout(r, REDUCED_MOTION() ? 0 : ms));
+  let corridorPool = null; /* §A fetches the pool early; loadShell reuses it */
+
+  /* §A · Bali is already alive — one screen, one action */
+  async function corridorScreenA() {
+    show('corridorA');
+    const paint = () => {
+      const s = dayState(baliNow());
+      const dial = $('corrDial');
+      dial.dataset.phase = s.phase;
+      dial.style.setProperty('--od-angle', s.angle.toFixed(1) + 'deg');
+      const c = PHASE_COLOR[s.phase];
+      const rim = dial.querySelector('.od-rim'), pin = dial.querySelector('.od-pin'), ping = dial.querySelector('.od-ping');
+      if (rim) rim.style.stroke = c;
+      if (pin) { pin.style.fill = c; pin.style.filter = 'drop-shadow(0 0 4px ' + c + ')'; }
+      if (ping) ping.style.stroke = c;
+      $('corrClock').textContent = 'BALI · ' + String(s.h).padStart(2, '0') + ':' +
+        String(s.m).padStart(2, '0') + ' · ' + PHASE_WORD[s.phase];
+    };
+    paint();
+    const tick = setInterval(paint, 30000);
+    const { data: pool } = await sb.from('curated_places').select('*').eq('destination', 'bali');
+    corridorPool = pool || [];
+    /* tonight's ONE highlight — time-matched like a NOW card, verified
+       preferred. Nothing matches → the card does not render (never-fake). */
+    const dayKey = DAY_KEYS[baliNow().getDay()];
+    const tonightTags = ['sunset', 'evening', 'night'];
+    const cands = corridorPool
+      .filter((p) => (p.best_time || []).some((t) => tonightTags.indexOf(t) !== -1))
+      .sort((a, b) => ((b.verified ? 1 : 0) - (a.verified ? 1 : 0)) ||
+        ((((b.best_days || []).indexOf(dayKey) !== -1) ? 1 : 0) - (((a.best_days || []).indexOf(dayKey) !== -1) ? 1 : 0)));
+    const t = cands[0];
+    if (t) {
+      const meta = CAT_META[t.category] || { orb: 'planet-teal' };
+      $('corrTonight').innerHTML =
+        '<span class="orb ' + meta.orb + ' corr-t-orb"></span>' +
+        '<div class="corr-t-text"><div class="corr-t-name">' + esc(t.name) +
+        (t.verified ? '<span class="place-verified">✓</span>' : '') +
+        ' <span class="corr-t-area">' + esc(String(t.area).split('/')[0].trim().toUpperCase()) + '</span></div>' +
+        (t.why ? '<p class="corr-t-why">' + esc(t.why) + '</p>' : '') + '</div>';
+      $('corrTonight').hidden = false;
+    }
+    const nVer = corridorPool.filter((p) => p.verified).length;
+    $('corrCounts').textContent = nVer + ' verified places · updated ' + baliNow().getFullYear();
+    await new Promise((res) => { $('corrCta').onclick = res; });
+    clearInterval(tick);
+  }
+
+  /* corridor questionnaire — the checkin screen, resolving with answers
+     (the corridor owns what happens next; no recursive loadShell) */
+  function corridorQuestions() {
+    return new Promise((resolve) => {
+      show('checkin');
+      $('appCkBuild').hidden = true;
+      $('appCkFill').style.width = '0';
+      $('appCkMount').hidden = false;
+      $('appCkDots').style.display = '';
+      mountCheckin($('appCkMount'), $('appCkDots'), (answers) => {
+        $('appCkMount').hidden = true;
+        $('appCkDots').style.display = 'none';
+        resolve(answers);
+      });
+    });
+  }
+
+  function cerLine(html) {
+    const ln = document.createElement('span');
+    ln.className = 'ln'; ln.innerHTML = html;
+    $('cerTerm').appendChild(ln);
+  }
+
+  /* §C beat 1 · the terminal — every number REAL or absent */
+  async function ceremonyGenerate() {
+    show('ceremony');
+    $('cerBuild').hidden = false;
+    $('cerTerm').innerHTML = '';
+    $('cerFill').style.width = '0';
+    setTimeout(() => { $('cerFill').style.width = '100%'; }, 60);
+    const plan = planFromTrip(trip);
+    const pool = corridorPool || [];
+    const briefWords = [VIBE_LABEL[trip.vibe] || trip.vibe, TIER_LABEL[trip.budget_tier] || trip.budget_tier]
+      .filter(Boolean).join(' + ').toLowerCase();
+    cerLine('▸ reading your brief — ' + esc(briefWords));
+    let matched = null;
+    if (pool.length && plan) {
+      matched = pool.filter((p) => isMatch(scorePlace(p, plan))).length;
+      cerLine('▸ ' + matched + ' places match ' + esc(briefWords));
+    }
+    cerLine('▸ routing your month…');
+    const ok = await genRoute();
+    if (ok) {
+      cerLine('▸ planning ' + TRIP_LEGS.length + ' bases <span class="ok">✓</span>');
+      await wait(600);
+    } else {
+      cerLine('▸ routing unavailable — your base plan is ready');
+      await wait(1400);
+    }
+    return { ok, matched };
+  }
+
+  /* §C beats 2–7 · the gift being unwrapped */
+  async function ceremonyBeats(matched) {
+    show('ceremony');
+    $('cerBuild').hidden = true;
+    const reduce = REDUCED_MOTION();
+    const legs = TRIP_LEGS;
+    const pts = legs.map((l) => AREA_XY[l.area] || [160, 150]);
+    /* beat 2 · the route line draws — `trace`, §5.5 v1.2, ceremony-class only */
+    const traceEl = $('cerTrace');
+    traceEl.setAttribute('d', pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ',' + p[1]).join(' '));
+    $('cerOrbs').innerHTML = '';
+    $('cerLegs').innerHTML = '';
+    $('cerMap').hidden = false;
+    if (!reduce) {
+      const len = traceEl.getTotalLength();
+      traceEl.style.strokeDasharray = len;
+      traceEl.style.strokeDashoffset = len;
+      traceEl.getBoundingClientRect();
+      traceEl.style.transition = 'stroke-dashoffset 800ms ease-in-out';
+      traceEl.style.strokeDashoffset = '0';
+      await wait(800);
+    }
+    /* beat 3 · orbs pop, 150ms stagger */
+    for (let i = 0; i < legs.length; i++) {
+      const xy = pts[i];
+      const hex = AREA_HEX[legs[i].area] || '#3dffd0';
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.innerHTML = '<circle cx="' + xy[0] + '" cy="' + xy[1] + '" r="6" fill="' + hex + '"/>' +
+        '<text x="' + (xy[0] + 10) + '" y="' + (xy[1] + 3) + '" fill="' + hex + '">' + esc(legs[i].area.toUpperCase()) + '</text>';
+      if (!reduce) g.classList.add('cer-pop');
+      $('cerOrbs').appendChild(g);
+      const row = document.createElement('div');
+      row.className = 'cer-leg' + (reduce ? '' : ' cer-pop');
+      row.innerHTML = '<div class="cer-leg-row"><span class="cer-leg-orb" style="background:' + hex + '"></span>' +
+        '<span class="cer-leg-name">' + esc(legs[i].area.toUpperCase()) + '</span>' +
+        '<span class="cer-leg-n">' + legs[i].nights + ' NIGHTS</span></div>' +
+        (legs[i].why ? '<p class="cer-leg-why">' + esc(legs[i].why) + '</p>' : '');
+      $('cerLegs').appendChild(row);
+      await wait(150);
+    }
+    /* beat 4 · summary — computed numbers only; silence over fiction */
+    const days = legs.reduce((s, l) => s + (l.nights || 0), 0);
+    const parts = ['your ' + days + ' days', legs.length + ' bases'];
+    if (matched != null) parts.push(matched + ' matched places');
+    const nVer = (corridorPool || []).filter((p) => p.verified).length;
+    const sub = [];
+    if (nVer) sub.push('built from ' + nVer + ' verified places');
+    if (trip.vibe) {
+      sub.push('matched to ' + String(VIBE_LABEL[trip.vibe] || trip.vibe).toLowerCase() +
+        (trip.budget_tier ? ' + ' + String(TIER_LABEL[trip.budget_tier] || trip.budget_tier).toLowerCase() : ''));
+    }
+    $('cerSummary').innerHTML = '<p class="cer-sum-main">' + esc(parts.join(' · ')) + '</p>' +
+      (sub.length ? '<p class="cer-sum-sub">' + esc(sub.join(' · ')) + '</p>' : '');
+    $('cerSummary').hidden = false;
+    await wait(400);
+    /* beat 5 · the pass rises — the record ON it (F3, absorbed) */
+    $('cerClass').textContent = VIBE_LABEL[trip.vibe] || '—';
+    const named = !!(profile && profile.full_name);
+    if (named) {
+      $('cerPassenger').textContent = passengerLine(profile.title, profile.full_name) || '—';
+      $('cerPass').querySelector('.bp-rec-ask').hidden = true;
+      $('cerTitleChips').hidden = true;
+      $('cerRecName').hidden = true;
+      $('cerPass').querySelector('.rec-actions').hidden = true;
+    }
+    $('cerPass').hidden = false;
+    if (!reduce) $('cerPass').classList.add('cer-pop');
+    await wait(300);
+    if (!named) {
+      await new Promise((res) => {
+        let cerTitle = (profile && profile.title) || '';
+        $('cerTitleChips').onclick = (e) => {
+          const b = e.target.closest('.chip-btn'); if (!b) return;
+          cerTitle = b.getAttribute('data-title');
+          document.querySelectorAll('#cerTitleChips .chip-btn').forEach((x) => x.classList.toggle('on', x === b));
+          $('cerPassenger').textContent = passengerLine(cerTitle, $('cerRecName').value.trim()) || '—';
+        };
+        $('cerRecName').oninput = () => {
+          $('cerPassenger').textContent = passengerLine(cerTitle, $('cerRecName').value.trim()) || '—';
+        };
+        $('cerRecSave').onclick = async () => {
+          const name = $('cerRecName').value.trim();
+          if (name && user) {
+            const { error } = await sb.from('profiles').update({ title: cerTitle || null, full_name: name }).eq('id', user.id);
+            if (!error) profile = Object.assign({}, profile, { title: cerTitle || null, full_name: name });
+          }
+          res();
+        };
+        $('cerRecSkip').onclick = () => {
+          const ts = new Date().toISOString();
+          profile = Object.assign({}, profile, { record_skipped_at: ts });
+          if (user) sb.from('profiles').update({ record_skipped_at: ts }).eq('id', user.id)
+            .then(({ error }) => { if (error) console.warn('[TripOS] skip persist failed:', error.message); });
+          res();
+        };
+      });
+    }
+    /* beat 6 · the share moment */
+    $('cerShare').hidden = false;
+    $('cerShareBtn').onclick = () => shareRoute($('cerShareBtn'));
+    await wait(900);
+    /* beat 7 · notification warm-ask (§E) */
+    await warmAsk();
+  }
+
+  /* §E · the warm ask — the OS prompt is never the first touch */
+  function warmAsk() {
+    return new Promise((res) => {
+      const granted = ('Notification' in window) && Notification.permission === 'granted';
+      if (granted || (profile && profile.morning_note_asked_at)) { res(); return; }
+      $('cerAsk').hidden = false;
+      const settle = (optin) => {
+        const ts = new Date().toISOString();
+        profile = Object.assign({}, profile, { morning_note_optin: optin, morning_note_asked_at: ts });
+        if (user) sb.from('profiles').update({ morning_note_optin: optin, morning_note_asked_at: ts }).eq('id', user.id)
+          .then(({ error }) => { if (error) console.warn('[TripOS] ask persist failed:', error.message); });
+        $('cerAsk').hidden = true;
+        res();
+      };
+      $('cerAskYes').onclick = () => {
+        if ('Notification' in window && Notification.permission === 'default') {
+          try { Notification.requestPermission().finally(() => settle(true)); return; } catch (_) { /* fall through */ }
+        }
+        settle(true);
+      };
+      $('cerAskNo').onclick = () => settle(false);
+    });
+  }
+
+  /* §B · the tab bar rises — once, ever */
+  function tabRise() {
+    const bar = $('tabBar');
+    if (!bar || REDUCED_MOTION()) return;
+    bar.classList.add('rising');
+    setTimeout(() => bar.classList.remove('rising'), 1300);
+  }
+
+  /* §D · the day-1 share card + token-gated public route link */
+  async function routeShareRow() {
+    let { data: rows } = await sb.from('trip_shares').select('*')
+      .eq('trip_id', trip.id).eq('kind', 'route').is('revoked_at', null).limit(1);
+    let share = rows && rows[0];
+    if (!share) {
+      const ins = await sb.from('trip_shares').insert({ trip_id: trip.id, token: shareSlug(), kind: 'route' }).select().single();
+      if (ins.error) { console.warn('[TripOS] route share failed:', ins.error.message); return null; }
+      share = ins.data;
+    }
+    return share;
+  }
+
+  async function renderRouteCard() {
+    const legs = TRIP_LEGS;
+    const pts = legs.map((l) => AREA_XY[l.area] || [160, 150]);
+    const c = document.createElement('canvas');
+    c.width = 1080; c.height = 1080;
+    const x = c.getContext('2d');
+    if (!x) return null;
+    const mono = 'ui-monospace, Menlo, monospace';
+    x.fillStyle = '#0a0a14'; x.fillRect(0, 0, 1080, 1080);
+    x.save();
+    x.translate(60, 90); x.scale(3.0, 3.0);
+    x.strokeStyle = 'rgba(123,123,154,0.55)'; x.lineWidth = 0.6;
+    x.stroke(new Path2D(ISLAND_PATH));
+    x.beginPath(); x.ellipse(222, 204, 9, 6, 0, 0, Math.PI * 2); x.stroke();
+    x.beginPath(); x.ellipse(243, 213, 5, 3.5, 0, 0, Math.PI * 2); x.stroke();
+    x.strokeStyle = '#3dffd0'; x.lineWidth = 1.1; x.lineCap = 'round'; x.lineJoin = 'round';
+    x.beginPath();
+    pts.forEach((p, i) => { if (i) x.lineTo(p[0], p[1]); else x.moveTo(p[0], p[1]); });
+    x.stroke();
+    legs.forEach((l, i) => {
+      x.fillStyle = AREA_HEX[l.area] || '#3dffd0';
+      x.beginPath(); x.arc(pts[i][0], pts[i][1], 4.5, 0, Math.PI * 2); x.fill();
+      x.font = '600 8px ' + mono;
+      x.fillText(l.area.toUpperCase(), pts[i][0] + 9, pts[i][1] + 3);
+    });
+    x.restore();
+    const days = legs.reduce((s, l) => s + (l.nights || 0), 0);
+    x.fillStyle = '#3dffd0'; x.font = '700 64px ' + mono;
+    x.fillText(days + ' DAYS · ' + legs.length + ' BASES', 72, 880);
+    /* brief line: vibe · month — tier NEVER ships (Guy 2026-08-04) */
+    const bits = [];
+    if (trip.vibe) bits.push(String(VIBE_LABEL[trip.vibe] || trip.vibe).toLowerCase());
+    if (trip.arrive) {
+      const m = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august',
+        'september', 'october', 'november', 'december'][+String(trip.arrive).split('-')[1] - 1];
+      if (m) bits.push(m);
+    }
+    x.fillStyle = '#7b7b9a'; x.font = '36px ' + mono;
+    if (bits.length) x.fillText(bits.join(' · '), 72, 938);
+    const nVer = (corridorPool || []).filter((p) => p.verified).length;
+    x.font = '28px ' + mono;
+    if (nVer) x.fillText(nVer + ' verified places · 0 tabs', 72, 990);
+    x.fillStyle = '#3dffd0'; x.font = '32px ' + mono; x.textAlign = 'right';
+    x.fillText('@prevoya', 1008, 1020);
+    x.textAlign = 'left';
+    return new Promise((res) => c.toBlob(res, 'image/png'));
+  }
+
+  async function shareRoute(btn) {
+    if (!trip || TRIP_LEGS.length < 2) return;
+    const label = btn ? btn.textContent : '';
+    if (btn) btn.textContent = '↗ preparing…';
+    try {
+      const share = await routeShareRow();
+      const link = share ? location.origin + '/route/?t=' + share.token : null;
+      const blob = await renderRouteCard();
+      const file = blob ? new File([blob], 'prevoya-route.png', { type: 'image/png' }) : null;
+      const text = 'My Bali route' + (link ? ' — plan yours: ' + link : '');
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], text });
+      } else if (navigator.share) {
+        await navigator.share({ text: 'My Bali route — plan yours:', url: link || location.origin });
+      } else if (link) {
+        await navigator.clipboard.writeText(link);
+        if (btn) btn.textContent = '✓ link copied';
+        return;
+      }
+      if (btn) btn.textContent = label;
+    } catch (_) {
+      if (btn) btn.textContent = label; /* sheet dismissed — not an error */
+    }
+  }
+
+  /* the corridor spine — returns true when the ceremony fired */
+  async function runCorridor() {
+    let matched = null;
+    if (!trip || !trip.vibe) {
+      await corridorScreenA();
+      const answers = await corridorQuestions();
+      trip = await saveBrief(answers);
+      if (!trip) return false;
+    }
+    if (!corridorPool) {
+      const { data: pool } = await sb.from('curated_places').select('*').eq('destination', 'bali');
+      corridorPool = pool || [];
+    }
+    let ok = TRIP_LEGS.length >= 2;
+    if (!ok && !trip.route_generated_at) {
+      const g = await ceremonyGenerate();
+      ok = g.ok; matched = g.matched;
+    } else if (ok) {
+      const plan = planFromTrip(trip);
+      matched = plan && corridorPool.length
+        ? corridorPool.filter((p) => isMatch(scorePlace(p, plan))).length : null;
+    }
+    if (ok) await ceremonyBeats(matched);
+    /* flag set on EVERY corridor completion — the fallback must not loop */
+    const ts = new Date().toISOString();
+    profile = Object.assign({}, profile, { first_open_done_at: ts });
+    sb.from('profiles').update({ first_open_done_at: ts }).eq('id', user.id)
+      .then(({ error }) => { if (error) console.warn('[TripOS] first-open mark failed:', error.message); });
+    if (ok) {
+      trip.route_revealed_at = ts; /* the ceremony IS the reveal */
+      sb.from('trips').update({ route_revealed_at: ts }).eq('id', trip.id)
+        .then(({ error }) => { if (error) console.warn('[TripOS] reveal mark failed:', error.message); });
+    }
+    return ok;
+  }
+
   async function loadShell() {
-    show('shell');
     $('acctEmail').textContent = (user.email || '—');
 
     const { data: trips } = await sb.from('trips').select('*')
       .eq('destination', 'bali').order('created_at', { ascending: false }).limit(1);
     trip = (trips && trips[0]) || null;
+    const firstOpen = profile && !profile.first_open_done_at;
     if (trip && trip.vibe) {
       try {
         localStorage.setItem('tripos_plan', JSON.stringify({
@@ -2286,35 +2698,42 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const local = readPlan();
       if (local) {
         trip = await saveBrief(local);
-      } else {
+      } else if (!firstOpen) {
         /* signed in, no brief anywhere — stage B: check in right here */
         openCheckin();
         return;
       }
+      /* first open with no brief → the corridor owns it (§A → 3 questions) */
     }
-    dailyK = (trip && trip.budget_daily_k) || TIER_IDR[trip && trip.budget_tier] || 700;
 
     /* AI-1a: the route rides with the trip. First-ever load of a brief that has
        never been routed → generate once in the background (route_generated_at
        stops loops — a 1-leg result won't retry forever). Engine missing/failing
        leaves every surface exactly as the classic single-base app. */
-    const { data: legRows } = await sb.from('trip_legs').select('*')
-      .eq('trip_id', trip.id).order('seq');
-    TRIP_LEGS = legRows || [];
+    if (trip) {
+      const { data: legRows } = await sb.from('trip_legs').select('*')
+        .eq('trip_id', trip.id).order('seq');
+      TRIP_LEGS = legRows || [];
+    } else TRIP_LEGS = [];
 
-    /* F2: a never-routed, never-revealed brief opens INTO the build terminal
-       (the landing path finally gets the reveal). Generation failure falls
-       through to Today, classic — never blocked on a reveal that can't happen. */
-    if (TRIP_LEGS.length < 2 && !trip.route_generated_at && !trip.route_revealed_at) {
+    /* FIRST-OPEN CORRIDOR (§A–§E) — once, ever. Otherwise F2's quiet
+       interstitial covers never-routed, never-revealed briefs. */
+    let corridorRan = false, ceremonyFired = false;
+    if (firstOpen) {
+      corridorRan = true;
+      ceremonyFired = await runCorridor();
+      if (!trip) { openCheckin(); return; }
+    } else if (TRIP_LEGS.length < 2 && !trip.route_generated_at && !trip.route_revealed_at) {
       await routeInterstitial();
-      show('shell');
     }
-    renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride });
+    show('shell');
+    dailyK = (trip && trip.budget_daily_k) || TIER_IDR[trip && trip.budget_tier] || 700;
+    renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
     if (TRIP_LEGS.length < 2 && !trip.route_generated_at) {
       /* already-revealed brief that lost its route (rare) → quiet background gen */
       genRoute().then((ok) => {
         if (ok) {
-          renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride });
+          renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
           updateStrip(trip, greetName(), baliNow());
           paintNudge();
           loadDayPlan().then(() => { if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places); });
@@ -2331,7 +2750,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     updatePassRecord(); /* F3: "who's this route for?" on the pass, not a gate */
     updateStrip(trip, greetName(), baliNow());
 
-    const { data: places } = await sb.from('curated_places').select('*').eq('destination', 'bali');
+    const places = corridorPool && corridorPool.length
+      ? corridorPool /* the corridor already fetched the pool — reuse, no double trip */
+      : (await sb.from('curated_places').select('*').eq('destination', 'bali')).data;
+    corridorPool = null;
     placesCount = (places || []).length || placesCount;
     mountPlacesTab(places || []);
     renderToday(trip, greetName(), places || []);
@@ -2367,7 +2789,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       sb.from('trips').update({ route_revealed_at: trip.route_revealed_at }).eq('id', trip.id)
         .then(({ error }) => { if (error) console.warn('[TripOS] reveal mark failed:', error.message); });
       setTab('you');
-      renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride });
+      renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
       const el = $('youRoute');
       if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400);
       /* F3: identity is the victory lap — once the route has landed, glide up
@@ -2378,6 +2800,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           if (yp) yp.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 2800);
       }
+    }
+
+    /* §B beat 8: the corridor ends with the bar rising onto Today —
+       ceremony path gets the rise; the fallback mounts plainly (no theater) */
+    if (corridorRan) {
+      setTab('today', false);
+      if (ceremonyFired) tabRise();
     }
   }
 
@@ -2724,6 +3153,16 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     setRepackUI();
   });
   $('repackDone').addEventListener('click', finishRepack);
+
+  /* preview harness: the corridor pieces, drivable without a session */
+  Object.assign(window.__appDebug, {
+    corridorScreenA, ceremonyBeats, ceremonyGenerate: null /* needs engine */,
+    tabRise, warmAsk, renderRouteCard,
+    setCorridorState: (t, legs, pool) => {
+      trip = t; TRIP_LEGS = legs || []; corridorPool = pool || null;
+    },
+    setProfile: (p) => { profile = p; }
+  });
 
   /* boot */
   (async () => {

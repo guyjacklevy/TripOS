@@ -424,6 +424,22 @@ export function mountPlaces(cfg) {
   buildAreaCards(regions);
   if (els.catBar) { els.catBar.innerHTML = ''; els.catBar.hidden = true; } /* legend retired — rows ARE the categories */
 
+  /* §G · no-brief state: the full shelf, browsable, nothing locked or blurred
+     — the blur-gate belongs to the funnel's teaser, not the library. One
+     honest banner: matching switches on after the brief. */
+  if (!plan && els.bannerHost) {
+    const b = document.createElement('div');
+    b.className = 'nobrief-banner';
+    b.innerHTML = 'matching switches on after your brief · ';
+    const chip = document.createElement(cfg.onBrief ? 'button' : 'a');
+    chip.className = 'ck-reset';
+    chip.textContent = 'answer 3 questions →';
+    if (cfg.onBrief) { chip.type = 'button'; chip.onclick = () => cfg.onBrief(); }
+    else chip.href = '/bali/#checkin';
+    b.appendChild(chip);
+    els.bannerHost.insertAdjacentElement('beforebegin', b);
+  }
+
   /* ── search input: instant local filter (debounced) ── */
   if (els.search) {
     let t = null;

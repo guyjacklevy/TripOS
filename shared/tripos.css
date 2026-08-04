@@ -845,7 +845,7 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
 .bp-record { margin: 6px 0 14px; }
 .bp-rec-ask {
   font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+  text-transform: uppercase; color: var(--mut); margin-bottom: 10px;
 }
 .bp-record .rec-name { margin-bottom: 12px; }
 .bp-record .auth-status { margin-top: 8px; }
@@ -2157,6 +2157,103 @@ div.stamp { cursor: default; }
   margin-bottom: 18px;
 }
 
+/* ═══ FIRST-OPEN CORRIDOR (FIRST_OPEN_SPEC §A–§E) ═══ */
+
+/* §A · Bali is already alive — one surface, one action */
+.corr-a {
+  min-height: 100dvh; display: flex; align-items: center;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 24px 40px;
+}
+.corr-a-inner { width: 100%; max-width: 420px; margin: 0 auto; text-align: center; }
+.corr-dial { display: inline-block; margin-bottom: 12px; }
+.corr-clock { justify-content: center; padding: 0; margin-bottom: 26px; letter-spacing: 0.18em; }
+.corr-h1 { font-size: 34px; font-weight: 800; line-height: 1.15; margin-bottom: 26px; }
+.corr-tonight {
+  display: flex; gap: 12px; align-items: flex-start; text-align: left;
+  background: var(--glass); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px; min-height: 76px; margin-bottom: 14px;
+}
+.corr-t-orb { width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px; }
+.corr-t-name { font-weight: 700; font-size: 15px; }
+.corr-t-area { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: var(--mut); margin-left: 6px; }
+.corr-t-why {
+  font-size: 12.5px; color: var(--mut); line-height: 1.5; margin-top: 3px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.corr-counts { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--mut); margin-bottom: 26px; }
+.corr-cta {
+  width: 100%; font-family: var(--mono); letter-spacing: 0.14em;
+  text-transform: uppercase; font-size: 14px; padding: 16px;
+}
+
+/* §C · the ceremony — the gift being unwrapped */
+.ceremony {
+  min-height: 100dvh;
+  padding: calc(28px + env(safe-area-inset-top, 0px)) 20px 48px;
+}
+.cer-inner { max-width: 460px; margin: 0 auto; }
+.cer-map { margin: 8px 0 4px; }
+.cer-map text { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; }
+.cer-legs { margin: 10px 0; }
+.cer-leg { padding: 10px 2px; border-bottom: 1px dashed var(--line); }
+.cer-leg:last-child { border-bottom: none; }
+.cer-leg-row { display: flex; align-items: center; gap: 10px; }
+.cer-leg-orb { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.cer-leg-name { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; font-weight: 700; }
+.cer-leg-n { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--mut); margin-left: auto; }
+.cer-leg-why { font-size: 12.5px; color: var(--mut); line-height: 1.55; margin: 6px 0 0 22px; }
+.cer-summary { margin: 16px 0 20px; }
+.cer-sum-main { font-family: var(--mono); font-size: 14px; letter-spacing: 0.06em; color: var(--teal); }
+.cer-sum-sub { font-family: var(--mono); font-size: 11px; letter-spacing: 0.05em; color: var(--mut); margin-top: 6px; }
+.cer-share { margin: 18px 0 6px; }
+.cer-share-line { font-family: var(--mono); font-size: 13px; letter-spacing: 0.06em; color: var(--teal); }
+.cer-ask { margin-top: 22px; border-top: 1px dashed var(--line); padding-top: 18px; }
+.cer-ask-line { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.05em; margin-bottom: 12px; }
+.cer-ask-chips { display: flex; gap: 12px; }
+.cer-ask-chips .swap-chip { min-height: 40px; padding: 9px 18px; font-size: 12px; }
+
+/* ceremony pops — existing drop-in vocabulary, ceremony-scale */
+.cer-pop { animation: cerPop 0.3s ease-out backwards; }
+@keyframes cerPop {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* §B · the tab bar rises — once, ever */
+.tab-bar.rising .tab-slot {
+  opacity: 0; transform: translateY(16px);
+  animation: tabRise 0.3s ease-out forwards;
+}
+.tab-bar.rising .tab-slot:nth-of-type(2) { animation-delay: 0.04s; }
+.tab-bar.rising .tab-slot:nth-of-type(3) { animation-delay: 0.08s; }
+.tab-bar.rising .tab-slot:nth-of-type(4) { animation-delay: 0.12s; }
+@keyframes tabRise { to { opacity: 1; transform: none; } }
+
+/* §G · route awaiting (You) — grey field + the quiet sweep */
+.ri-awaiting { position: relative; overflow: hidden; opacity: 0.75; }
+.ri-awaiting .ri-head { color: var(--mut); }
+
+/* §D · the public route page */
+.rt-wrap { max-width: 480px; margin: 0 auto; padding: 48px 22px 64px; min-height: 100dvh; }
+.rt-center { text-align: center; padding-top: 18vh; }
+.rt-kicker { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; color: var(--teal); margin-bottom: 10px; }
+.rt-h1 { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+.rt-sub { color: var(--mut); font-size: 14px; margin-bottom: 22px; }
+.rt-facts { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; color: var(--mut); margin-bottom: 10px; }
+.rt-summary { color: var(--tx); font-size: 14.5px; line-height: 1.6; margin: 14px 0; }
+.rt-counts { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--mut); margin-bottom: 26px; }
+.rt-cta { text-align: center; margin-top: 26px; }
+.rt-cta .btn { width: 100%; }
+.rt-cta .note { margin-top: 10px; }
+
+/* §G · no-brief Places banner — nothing locked, nothing blurred */
+.nobrief-banner {
+  background: var(--glass); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; margin: 12px 0;
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.05em; color: var(--mut);
+}
+.nobrief-banner .ck-reset { margin: 0; color: var(--teal); }
+
 /* build #5 (UX audit): swap is a TEXT chip everywhere — bordered mono,
    visible-affordance rule (Guy couldn't see the icon) */
 .swap-chip {
@@ -2172,7 +2269,7 @@ div.stamp { cursor: default; }
 .rail-more {
   display: block; margin: 8px 0 2px;
   font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
-  color: var(--muted); text-decoration: none;
+  color: var(--mut); text-decoration: none;
 }
 .rail-more:active { color: var(--teal); }
 
@@ -2208,7 +2305,7 @@ div.stamp { cursor: default; }
   border: 1px solid rgba(61, 255, 208, 0.4); border-radius: 999px;
   padding: 9px 14px; min-height: 36px;
 }
-.update-chip .uc-x { color: var(--muted); padding: 2px 4px; }
+.update-chip .uc-x { color: var(--mut); padding: 2px 4px; }
 
 /* F6: the provenance thread on the landing hero */
 .via-line {
