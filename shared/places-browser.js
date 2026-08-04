@@ -195,9 +195,20 @@ export function mountPlaces(cfg) {
     return groups;
   }
 
+  /* §F layer 1: matched rows only — the full shelf arrives at first check-in
+     or the day-2 open. Deep-links (focusPlace/focusArea) bypass the layer:
+     a user who asks for more is never shown a gate. */
+  let shelfUnlocked = cfg.fullShelf !== false;
+
   /* rows view — the category carousels ARE the categories (legend retired) */
   function renderRows() {
-    els.grid.innerHTML = '<div class="cat-rows">' + catGroups().map((g) => {
+    let groups = catGroups();
+    if (!shelfUnlocked) {
+      const matchedOnly = groups.filter((g) => g.matched);
+      if (matchedOnly.length) groups = matchedOnly; /* zero matches → full rows (never blank) */
+    }
+    if (els.search) els.search.hidden = !shelfUnlocked;
+    els.grid.innerHTML = '<div class="cat-rows">' + groups.map((g) => {
       const meta = CAT[g.cat] || { cc: 'var(--teal)', label: g.cat };
       return '<div class="plb-row" data-cat="' + esc(g.cat) + '" style="--cc:' + meta.cc + '">' +
         '<header class="row-head">' +
@@ -453,6 +464,7 @@ export function mountPlaces(cfg) {
      on the exact card, not on an unrelated grid) ── */
   return {
     focusPlace(id) {
+      shelfUnlocked = true; /* asked-for content is never gated (§F carve-out) */
       const p = allPlaces.find((x) => String(x.id) === String(id));
       if (!p) return;
       if (state.area !== 'all') {
@@ -466,7 +478,9 @@ export function mountPlaces(cfg) {
     /* build #5 (audit J3): Today's rail footers land here — category rows,
        pre-filtered to the day's area. Unknown area falls back to all. */
     focusArea(area) {
+      shelfUnlocked = true; /* asked-for content is never gated (§F carve-out) */
       if (state.view !== 'rows') { state.view = 'rows'; renderRows(); }
+      else renderRows();
       const cards = els.areaBar ? [...els.areaBar.querySelectorAll('.area-card')] : [];
       const hit = cards.find((b) => b.getAttribute('data-v') === String(area || ''))
         || cards.find((b) => b.getAttribute('data-v') === 'all');

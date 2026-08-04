@@ -735,6 +735,17 @@ function renderPassport(trip, places, opts) {
     host.innerHTML = '<div class="pp-days">' + rows.join('') + '</div>';
   }
 
+  /* §H day-7: a mark in a logbook, not a debt — the latest completed week,
+     counts real, no ceremony. Leads the passport (nearest stable home to
+     "under the most recent stamp" across both views). */
+  const wkDone = Math.floor(((tripDayNumber(trip, baliNow()) || 0) - 1) / 7);
+  if (wkDone >= 1 && CHECKINS.length) {
+    const wl = document.createElement('p');
+    wl.className = 'pp-week-line';
+    wl.textContent = 'week ' + wkDone + ' complete · ' + CHECKINS.length + ' stamp' + (CHECKINS.length === 1 ? '' : 's');
+    host.insertAdjacentElement('afterbegin', wl);
+  }
+
   /* F5: deterministic milestone → one quiet earned line under the new stamp —
      in EITHER view. If a filter hides the ceremony stamp, the line leads the
      passport instead: an earned moment never fails silently (Guy's phone). */
@@ -819,6 +830,26 @@ let CONCIERGE_DOWN = false;  /* §G: engine unreachable → honest amber line on
 let TL_KEEP_SCROLL = false;  /* one-shot: next renderToday keeps scroll position */
 let CX_NOTE = null;
 
+/* ─── §F · progressive disclosure — layers gate BROWSING CHROME, never
+   options (the explorability carve-out: deep-links always open the full
+   data). Derived from data only; captions dismiss forever on first
+   interaction (localStorage — cosmetic, not a gate). ─── */
+const LAYERS = { today: true, places: true, pulse: true }; /* true = full (layer 2) */
+function baliDateKey(iso) {
+  const b = new Date(new Date(iso).getTime() + 8 * 3600e3);
+  return b.getUTCFullYear() + '-' + (b.getUTCMonth() + 1) + '-' + b.getUTCDate();
+}
+function isDay2Plus(firstOpenAt, now) {
+  if (!firstOpenAt) return true; /* pre-corridor accounts were backfilled — full app */
+  return baliDateKey(firstOpenAt) !== baliDateKey(now.toISOString());
+}
+function capSeen(key) { try { return !!localStorage.getItem('tripos_cap_' + key); } catch (_) { return true; } }
+function capMark(key) { try { localStorage.setItem('tripos_cap_' + key, '1'); } catch (_) {} }
+function layerCap(key, text) {
+  if (capSeen(key)) return '';
+  return '<p class="layer-cap" data-cap="' + esc(key) + '">' + esc(text) + '</p>';
+}
+
 function renderToday(trip, firstName, places, dateOpt) {
   const now = dateOpt || baliNow();
   updateStrip(trip, firstName, now);
@@ -857,6 +888,9 @@ function renderToday(trip, firstName, places, dateOpt) {
     const state = r.key === s.rail ? 'current'
       : postMidnight ? 'future'
       : (i < currentIdx ? 'past' : 'future');
+    /* §F layer 1: NOW cards + the current rail only — the full four-rail day
+       arrives on the day-2 open (browsing chrome gated, never options) */
+    if (!LAYERS.today && state !== 'current') return;
     const planned = plannedByRail[r.key] || null;
     let { picks, total } = railPicks(pool, plan, r.key, 3);
     if (planned) {
@@ -944,6 +978,8 @@ function renderToday(trip, firstName, places, dateOpt) {
     /* §G engine-down: verified picks keep working; the silence is explained */
     html = '<div class="offroute-line"><span>concierge offline · showing verified picks</span></div>' + html;
   }
+  /* §F: the unlock caption — one mono line, dismissed forever on first tap */
+  if (LAYERS.today) html = layerCap('today2', 'your full day — four rails, morning to night') + html;
   tl.innerHTML = html;
   dropIn(tl);
   /* past rails expand on tap (dimmed, no lift) */
@@ -1105,6 +1141,7 @@ function show(which) {
 }
 
 window.__appDebug = {
+  LAYERS,
   show, setTab, renderBrief, renderPulse, renderPace, renderCats,
   renderRecent, renderToday, setPassenger, passengerLine, mountPlaces,
   updateStrip, dayState, baliNow, tripDayNumber, tripDayLabel,
@@ -1197,6 +1234,17 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     renderPace(dailyK, rows, new Date());
     renderCats(rows);
     renderRecent(rows);
+    /* §F: Pulse's layer 2 (pace math, categories, recent, preset editing)
+       arrives with the 3rd logged expense — until then the gauge + daily
+       line + one-tap log ARE the screen */
+    LAYERS.pulse = rows.length >= 3;
+    document.querySelectorAll('.pace-card, .cat-card, .recent-card').forEach((el) => { el.hidden = !LAYERS.pulse; });
+    const pe = $('presetEditBtn');
+    if (pe) pe.hidden = !LAYERS.pulse;
+    if (LAYERS.pulse && !capSeen('pulse2')) {
+      const pc = document.querySelector('.pace-card');
+      if (pc) pc.insertAdjacentHTML('beforebegin', layerCap('pulse2', 'your pace — the month, projected'));
+    }
   }
 
   /* tap ✕ on a recent spend → gone (RLS guarantees it's your own row) */
@@ -1380,8 +1428,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       onCheckin: checkinAt,
       onGoogleSearch: googleSearch,
       onGoogleAdd: googleAdd,
-      onBrief: () => openCheckin() /* §G no-brief banner runs the questionnaire in-app */
+      onBrief: () => openCheckin(), /* §G no-brief banner runs the questionnaire in-app */
+      fullShelf: LAYERS.places /* §F: layer 1 = matched rows only; deep-links bypass */
     });
+    if (LAYERS.places && !capSeen('places2')) {
+      $('appPlacesGrid').insertAdjacentHTML('beforebegin',
+        layerCap('places2', 'the full shelf — ' + (places || []).length + ' places, every row, search'));
+    }
   }
 
   /* Today → Places, with relation (Guy's phone test): any tap on a card that
@@ -2151,6 +2204,19 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const nudge = $('readyNudge');
     if (!nudge) return;
     const rs = routeState(trip, TRIP_LEGS, baliNow());
+    /* §H day-2 pre-trip: the countdown + readiness line — the pass's numbers
+       are the thing being protected; our streak, without the guilt. (The
+       push variant needs push infra; this is the no-permission banner.) */
+    const tdN = tripDayNumber(trip, baliNow());
+    if (tdN != null && tdN < 1 && LAYERS.today) {
+      const pre = (checkItems || []).filter((i) => i.kind === 'pretrip');
+      if (pre.length) {
+        const pct = Math.round(pre.filter((i) => i.done).length / pre.length * 100);
+        nudge.hidden = false;
+        nudge.innerHTML = (1 - tdN) + ' DAYS · READY ' + pct + '% · open your checklist →';
+        return;
+      }
+    }
     if (rs && rs.lastDay && rs.next && !offRoute(trip, rs)) {
       nudge.hidden = false;
       /* F5: the leg boundary is a pride beat — the visa page just filled */
@@ -2750,6 +2816,28 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     updatePassRecord(); /* F3: "who's this route for?" on the pass, not a gate */
     updateStrip(trip, greetName(), baliNow());
 
+    /* A1: check-ins load BEFORE the tab mounts — §F's Places layer needs them */
+    const { data: ckAll } = await sb.from('checkins').select('*').order('created_at');
+    CHECKINS = ckAll || [];
+
+    /* §F · layer state, derived from data only. Corridor day = layer 1;
+       day-2 open (Bali clock) unlocks Today + Places; check-ins unlock
+       Places early; Pulse unlocks at the 3rd expense (set in loadPulse);
+       You's packing waits for T−7, readiness for day-2. */
+    const day2 = isDay2Plus(profile && profile.first_open_done_at, baliNow());
+    LAYERS.today = day2;
+    LAYERS.places = day2 || CHECKINS.length > 0;
+    const tdNow = tripDayNumber(trip, baliNow());
+    const packOn = tdNow != null && tdNow >= -6; /* T−7 and closer */
+    $('readyCard').hidden = !day2;
+    $('packCard').hidden = !packOn;
+    document.querySelectorAll('#youIndex [data-goto="readyCard"]').forEach((b) => { b.hidden = !day2; });
+    document.querySelectorAll('#youIndex [data-goto="packCard"]').forEach((b) => { b.hidden = !packOn; });
+    if (packOn && !capSeen('pack7')) {
+      $('packCard').insertAdjacentHTML('afterbegin',
+        layerCap('pack7', 'bags soon — your packing list is ready'));
+    }
+
     const places = corridorPool && corridorPool.length
       ? corridorPool /* the corridor already fetched the pool — reuse, no double trip */
       : (await sb.from('curated_places').select('*').eq('destination', 'bali')).data;
@@ -2759,9 +2847,6 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     renderToday(trip, greetName(), places || []);
     todayCtx = { trip, name: greetName(), places: places || [] };
 
-    /* A1: the passport rides with the trip — check-ins + planned-vs-actual */
-    const { data: ckAll } = await sb.from('checkins').select('*').order('created_at');
-    CHECKINS = ckAll || [];
     const { data: dpAll } = await sb.from('day_plans').select('leg_seq, day_in_leg, slots').eq('trip_id', trip.id);
     TRIP_DAY_PLANS = dpAll || [];
     renderPassport(trip, places || []);
@@ -2862,7 +2947,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   async function route() {
     if (!user) { show('welcome'); return; }
-    const { data } = await sb.from('profiles').select('title, full_name, presets, via_token, record_skipped_at').eq('id', user.id).limit(1);
+    const { data } = await sb.from('profiles')
+      .select('title, full_name, presets, via_token, record_skipped_at, first_open_done_at, morning_note_optin, morning_note_asked_at')
+      .eq('id', user.id).limit(1);
     profile = (data && data[0]) || null;
     pickupProvenance();                      /* background — never blocks boarding */
     /* F3 (UX audit): the record gate is DEAD as a standalone screen — value
@@ -3015,6 +3102,16 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   /* shell wiring */
   $('arriveClose').addEventListener('click', () => { $('arriveBanner').hidden = true; });
+
+  /* §F: captions die on the first interaction with their area — forever */
+  document.addEventListener('click', (e) => {
+    const panel = e.target.closest('.panel');
+    if (!panel) return;
+    panel.querySelectorAll('.layer-cap').forEach((c) => {
+      capMark(c.getAttribute('data-cap'));
+      c.remove();
+    });
+  }, true);
 
   /* ─── F4 · the update chip: stale builds linger in the standalone PWA (bit
      Guy on the 7-point day). No service worker to ask, so the deploy stamp is

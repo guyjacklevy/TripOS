@@ -2233,6 +2233,19 @@ div.stamp { cursor: default; }
 .ri-awaiting { position: relative; overflow: hidden; opacity: 0.75; }
 .ri-awaiting .ri-head { color: var(--mut); }
 
+/* §F · layer-unlock captions — the boot-caption pattern, one line, mono */
+.layer-cap {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+  color: var(--teal); opacity: 0.85; margin: 4px 0 12px;
+  animation: cerPop 0.3s ease-out backwards;
+}
+
+/* §H day-7 · a mark in a logbook */
+.pp-week-line {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--mut); margin: 2px 0 10px;
+}
+
 /* §D · the public route page */
 .rt-wrap { max-width: 480px; margin: 0 auto; padding: 48px 22px 64px; min-height: 100dvh; }
 .rt-center { text-align: center; padding-top: 18vh; }
