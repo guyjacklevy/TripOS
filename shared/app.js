@@ -1401,6 +1401,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
     const el = e.target.closest('[data-place]');
     if (!el || e.target.closest('a.place-maps')) return;
+    /* Guy's phone: the spend suggestion lives INSIDE the card — editing the
+       amount must never ride the card's deep-link to Places */
+    if (e.target.closest('.spend-suggest')) return;
     e.preventDefault();
     const id = el.getAttribute('data-place');
     setTab('places');
@@ -2397,6 +2400,24 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   async function pickupProvenance() {
     let seed = null;
     try { seed = JSON.parse(localStorage.getItem('tripos_via') || 'null'); } catch (_) {}
+    /* S4 hardening (Guy's B-pass found the drop): the magic link lands in a
+       different browser context where localStorage never saw the share page.
+       The token rides the redirect URL — resolve the sharer's name through
+       the same public endpoint the share page uses. */
+    if (!seed || !seed.via || !seed.token) {
+      const tok = new URLSearchParams(location.search).get('via');
+      if (tok) {
+        try {
+          const r = await fetch(cfg.url + '/functions/v1/shared-trip?t=' + encodeURIComponent(tok));
+          if (r.ok) {
+            const d = await r.json();
+            if (d && d.name) seed = { via: d.name, place: null, token: tok, at: Date.now() };
+          }
+        } catch (_) {}
+        /* consumed either way — the param must not re-fire on every open */
+        try { history.replaceState(null, '', location.pathname + location.hash); } catch (_) {}
+      }
+    }
     if (!seed || !seed.via || !seed.token) return;
     const clear = () => { try { localStorage.removeItem('tripos_via'); } catch (_) {} };
     if (!profile) return;                    /* profile row not there yet — keep the seed */
@@ -2421,12 +2442,20 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     loadShell();
   }
 
+  /* the via token survives auth round-trips via the redirect URL (S4) */
+  function viaSuffix() {
+    try {
+      const s = JSON.parse(localStorage.getItem('tripos_via') || 'null');
+      return s && s.token ? '?via=' + encodeURIComponent(s.token) : '';
+    } catch (_) { return ''; }
+  }
+
   /* welcome — Google primary */
   $('googleBtn').addEventListener('click', async () => {
     $('welcomeStatus').textContent = 'Opening Google…';
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/app/' }
+      options: { redirectTo: window.location.origin + '/app/' + viaSuffix() }
     });
     if (error) $('welcomeStatus').textContent = '⚠ Google didn’t finish — try again or use email.';
   });
@@ -2444,7 +2473,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     pendingEmail = email;
     $('welcomeStatus').textContent = 'Sending…';
     const { error } = await sb.auth.signInWithOtp({
-      email, options: { emailRedirectTo: window.location.origin + '/app/' }
+      email, options: { emailRedirectTo: window.location.origin + '/app/' + viaSuffix() }
     });
     if (error) { $('welcomeStatus').textContent = '⚠ ' + error.message; return; }
     $('welcomeStatus').textContent = '✓ Boarding email sent.';

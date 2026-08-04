@@ -59,6 +59,16 @@ if (!CONFIGURED) {
   const codeInput = modal.querySelector('.auth-code-input');
   let pendingEmail = null;
 
+  /* S4 hardening (Guy's B-pass): the magic link opens in a DIFFERENT browser
+     context — localStorage stays behind and provenance dies. The via token
+     rides the redirect URL instead; the app picks it up on the other side. */
+  const viaSuffix = () => {
+    try {
+      const s = JSON.parse(localStorage.getItem('tripos_via') || 'null');
+      return s && s.token ? '?via=' + encodeURIComponent(s.token) : '';
+    } catch (_) { return ''; }
+  };
+
   const openModal = () => { modal.hidden = false; setTimeout(() => inputEl.focus(), 40); };
   const closeModal = () => { modal.hidden = true; statusEl.textContent = ''; codeWrap.hidden = true; };
 
@@ -73,7 +83,7 @@ if (!CONFIGURED) {
     /* one door: every login lands in the app, no matter where it started */
     const { error } = await sb.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin + '/app/' }
+      options: { emailRedirectTo: window.location.origin + '/app/' + viaSuffix() }
     });
     if (error) { statusEl.textContent = '⚠ ' + error.message; return; }
     pendingEmail = email;
@@ -222,7 +232,7 @@ if (!CONFIGURED) {
       if (user) { window.location.href = '/app/'; return; }
       const { error } = await sb.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin + '/app/' }
+        options: { redirectTo: window.location.origin + '/app/' + viaSuffix() }
       });
       if (error) console.error('[TripOS] google sign-in failed:', error.message);
     });
