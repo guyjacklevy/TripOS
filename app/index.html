@@ -244,6 +244,16 @@
         <!-- 1.2 (Guy): the budget strip left Today — money lives in Pulse -->
         <a class="fuel-strip ready-nudge" href="#you" id="readyNudge" hidden></a>
 
+        <!-- §E · the one re-ask: 'not now' yesterday → this banner, morning of
+             day 2, dismissible forever. Never a push, never a third ask. -->
+        <div class="cer-ask reask" id="reaskBanner" hidden>
+          <p class="cer-ask-line">☀ want your day plan each morning?</p>
+          <div class="cer-ask-chips">
+            <button type="button" class="swap-chip" id="reaskYes">yes</button>
+            <button type="button" class="swap-chip" id="reaskNo">not now</button>
+          </div>
+        </div>
+
         <!-- AI-3 · the live concierge: say what's true, today adjusts around it -->
         <form class="log-form add-form cx-form" id="cxForm" hidden>
           <input class="auth-input" id="cxInput" type="text" maxlength="200" autocomplete="off"

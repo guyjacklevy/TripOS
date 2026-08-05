@@ -2211,6 +2211,12 @@ div.stamp { cursor: default; }
 .cer-ask-line { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.05em; margin-bottom: 12px; }
 .cer-ask-chips { display: flex; gap: 12px; }
 .cer-ask-chips .swap-chip { min-height: 40px; padding: 9px 18px; font-size: 12px; }
+/* §E re-ask: banner form — glass card, not the ceremony's ruled section */
+.cer-ask.reask {
+  border: 1px solid var(--line); border-top: 1px solid var(--line);
+  border-radius: 12px; background: var(--glass);
+  padding: 13px 14px; margin: 0 0 12px;
+}
 
 /* ceremony pops — existing drop-in vocabulary, ceremony-scale */
 .cer-pop { animation: cerPop 0.3s ease-out backwards; }

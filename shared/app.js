@@ -2838,6 +2838,32 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         layerCap('pack7', 'bags soon — your packing list is ready'));
     }
 
+    /* §E · the one re-ask: a standing 'not now' + day-2 open → the banner,
+       same copy, dismissible forever. Only a yes touches the OS dialog. */
+    const reaskDue = day2 && profile && profile.morning_note_asked_at &&
+      profile.morning_note_optin === false && !profile.morning_note_closed_at &&
+      !(('Notification' in window) && Notification.permission === 'granted');
+    const rb = $('reaskBanner');
+    if (rb) {
+      rb.hidden = !reaskDue;
+      if (reaskDue) {
+        const closeReask = (optin) => {
+          const ts = new Date().toISOString();
+          profile = Object.assign({}, profile, { morning_note_optin: optin, morning_note_closed_at: ts });
+          if (user) sb.from('profiles').update({ morning_note_optin: optin, morning_note_closed_at: ts }).eq('id', user.id)
+            .then(({ error }) => { if (error) console.warn('[TripOS] re-ask persist failed:', error.message); });
+          rb.hidden = true;
+        };
+        $('reaskYes').onclick = () => {
+          if ('Notification' in window && Notification.permission === 'default') {
+            try { Notification.requestPermission().finally(() => closeReask(true)); return; } catch (_) {}
+          }
+          closeReask(true);
+        };
+        $('reaskNo').onclick = () => closeReask(false);
+      }
+    }
+
     const places = corridorPool && corridorPool.length
       ? corridorPool /* the corridor already fetched the pool — reuse, no double trip */
       : (await sb.from('curated_places').select('*').eq('destination', 'bali')).data;
@@ -2948,7 +2974,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   async function route() {
     if (!user) { show('welcome'); return; }
     const { data } = await sb.from('profiles')
-      .select('title, full_name, presets, via_token, record_skipped_at, first_open_done_at, morning_note_optin, morning_note_asked_at')
+      .select('title, full_name, presets, via_token, record_skipped_at, first_open_done_at, morning_note_optin, morning_note_asked_at, morning_note_closed_at')
       .eq('id', user.id).limit(1);
     profile = (data && data[0]) || null;
     pickupProvenance();                      /* background — never blocks boarding */
