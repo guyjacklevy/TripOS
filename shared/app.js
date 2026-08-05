@@ -2762,14 +2762,18 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       } catch (_) {}
     } else {
       const local = readPlan();
-      if (local) {
+      /* first-open: only a FRESH wizard hand-off (<24h) rides into the account —
+         stale residue on a shared browser must never hijack the corridor
+         (Guy's own §A test was skipped by exactly this) */
+      const freshLocal = !!(local && local.ts && Date.now() - local.ts < 86400e3);
+      if (local && (freshLocal || !firstOpen)) {
         trip = await saveBrief(local);
       } else if (!firstOpen) {
         /* signed in, no brief anywhere — stage B: check in right here */
         openCheckin();
         return;
       }
-      /* first open with no brief → the corridor owns it (§A → 3 questions) */
+      /* first open with no (fresh) brief → the corridor owns it (§A → 3 questions) */
     }
 
     /* AI-1a: the route rides with the trip. First-ever load of a brief that has
