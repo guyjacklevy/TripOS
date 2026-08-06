@@ -179,6 +179,7 @@ section { padding: 56px 0; }
   text-decoration: none;
 }
 .brand .orb { width: 22px; height: 22px; }
+.brand .nav-mark { display: block; } /* brand pack: mark-only in the nav (Rachel) */
 .nav-cta {
   font-size: 13px;
   font-weight: 600;
