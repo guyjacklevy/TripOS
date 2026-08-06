@@ -2236,6 +2236,10 @@ div.stamp { cursor: default; }
 .tab-bar.rising .tab-slot:nth-of-type(4) { animation-delay: 0.12s; }
 @keyframes tabRise { to { opacity: 1; transform: none; } }
 
+/* M1 · the living map on the route instrument (LIVING_MAP_SPEC) */
+.ri-map { margin: 2px 0 12px; }
+.ri-map text { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; }
+
 /* §G · route awaiting (You) — grey field + the quiet sweep */
 .ri-awaiting { position: relative; overflow: hidden; opacity: 0.75; }
 .ri-awaiting .ri-head { color: var(--mut); }

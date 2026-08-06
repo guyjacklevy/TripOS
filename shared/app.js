@@ -283,6 +283,79 @@ const AREA_TINT = {
   Seminyak: 'var(--area-seminyak)', Sanur: 'var(--area-sanur)', Denpasar: 'var(--area-denpasar)',
   Islands: 'var(--area-islands)'
 };
+
+/* ─── THE LIVING MAP (LIVING_MAP_SPEC M1) — one abstract island, four homes:
+   ceremony (animated trace) · route instrument (static, lived) · share card ·
+   later the wrapped replay. Abstract-not-cartographic by charter. ─── */
+const AREA_XY = {
+  Canggu: [96, 150], Seminyak: [104, 168], Denpasar: [130, 172], Sanur: [150, 166],
+  Ubud: [138, 118], Uluwatu: [118, 215], Islands: [222, 204]
+};
+const AREA_HEX = { /* canvas + SVG need literal colors — mirrors the CSS tokens */
+  Canggu: '#3dffd0', Ubud: '#4ade80', Seminyak: '#ffb454', Uluwatu: '#a78bfa',
+  Islands: '#4cc9f0', Sanur: '#4cc9f0', Denpasar: '#ff6b6b'
+};
+const ISLAND_PATH = 'M56,150 C60,110 92,74 140,62 C190,50 246,66 262,96 C276,122 268,148 244,160 C214,174 178,172 156,176 C150,186 146,196 136,202 C132,216 122,228 108,226 C96,224 96,210 104,200 C110,192 108,184 96,178 C76,170 58,168 56,150 Z';
+
+/* same bucketing the backend uses (places-search v6) — dots claim an AREA,
+   never GPS precision (the island is abstract; pretending otherwise would lie) */
+function latLngRegion(lat, lng) {
+  if (typeof lat !== 'number' || typeof lng !== 'number') return null;
+  if (lng > 115.40) return 'Islands';
+  if (lat < -8.75 && lng < 115.25) return 'Uluwatu';
+  const C = { Canggu: [-8.66, 115.13], Uluwatu: [-8.82, 115.10], Ubud: [-8.51, 115.26],
+    Seminyak: [-8.69, 115.17], Sanur: [-8.69, 115.26], Denpasar: [-8.65, 115.21] };
+  let best = null, bestD = Infinity;
+  Object.keys(C).forEach((n) => {
+    const d = (lat - C[n][0]) ** 2 + (lng - C[n][1]) ** 2;
+    if (d < bestD) { bestD = d; best = n; }
+  });
+  return bestD < 0.25 ? best : null;
+}
+
+/* the lived map: done legs solid, current bright + ringed, future dimmed;
+   one dot per stamped place, area-bucketed with a deterministic offset */
+function routeMapSVG(legs, checkins, curIdx) {
+  const pts = legs.map((l) => AREA_XY[l.area] || [160, 150]);
+  const seg = (a, b) => 'M' + a[0] + ',' + a[1] + ' L' + b[0] + ',' + b[1];
+  let done = '', rest = '';
+  for (let i = 0; i < pts.length - 1; i++) {
+    if (curIdx >= 0 && i < curIdx) done += ' ' + seg(pts[i], pts[i + 1]);
+    else rest += ' ' + seg(pts[i], pts[i + 1]);
+  }
+  const restOpacity = curIdx < 0 ? '0.7' : '0.35'; /* pre-arrival: the plan IS the story */
+  const orbs = legs.map((l, i) => {
+    const x = pts[i][0], y = pts[i][1];
+    const hex = AREA_HEX[l.area] || '#3dffd0';
+    const cur = i === curIdx;
+    const dim = curIdx >= 0 && i > curIdx ? ' opacity="0.55"' : '';
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + (cur ? 6.5 : 5) + '" fill="' + hex + '"' + dim + '/>' +
+      (cur ? '<circle cx="' + x + '" cy="' + y + '" r="9.5" fill="none" stroke="' + hex + '" stroke-width="1" opacity="0.6"/>' : '') +
+      '<text x="' + (x + 10) + '" y="' + (y + 3) + '" fill="' + hex + '"' + dim + '>' + esc(l.area.toUpperCase()) + '</text>';
+  }).join('');
+  const seen = new Set();
+  let dots = '';
+  (checkins || []).forEach((c) => {
+    const k = String(c.place_id);
+    if (seen.has(k)) return;
+    seen.add(k);
+    const reg = latLngRegion(c.lat, c.lng);
+    if (!reg || !AREA_XY[reg]) return;
+    let h = 0;
+    for (let i = 0; i < k.length; i++) h = ((h * 31) + k.charCodeAt(i)) >>> 0;
+    const ang = (h % 360) * Math.PI / 180;
+    const rad = 7 + ((h >> 4) % 8);
+    dots += '<circle cx="' + (AREA_XY[reg][0] + Math.cos(ang) * rad).toFixed(1) +
+      '" cy="' + (AREA_XY[reg][1] + Math.sin(ang) * rad).toFixed(1) + '" r="1.9" fill="#e8e8f0" opacity="0.85"/>';
+  });
+  return '<svg viewBox="0 0 320 260" width="100%" aria-hidden="true">' +
+    '<path d="' + ISLAND_PATH + '" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.5"/>' +
+    '<ellipse cx="222" cy="204" rx="9" ry="6" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.5"/>' +
+    '<ellipse cx="243" cy="213" rx="5" ry="3.5" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.4"/>' +
+    (rest ? '<path d="' + rest.trim() + '" fill="none" stroke="var(--teal)" stroke-width="1.6" stroke-linecap="round" opacity="' + restOpacity + '"/>' : '') +
+    (done ? '<path d="' + done.trim() + '" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>' : '') +
+    orbs + dots + '</svg>';
+}
 let TRIP_LEGS = []; /* loaded with the trip; single source for routeState callers */
 function routeState(trip, legs, now) {
   if (!trip || !legs || legs.length < 2) return null;
@@ -445,8 +518,12 @@ function renderRoute(trip, legs, now, opts) {
       '</div>';
 
   host.hidden = false;
+  /* M1 · the living map comes home: static (trace motion stays ceremony-class),
+     done legs solid, current ringed, the traveler's own stamps as marks */
+  const mapCur = rs.cur ? rs.cur.idx : (rs.over ? rs.legs.length - 1 : -1);
   host.innerHTML =
     '<div class="route-instr">' +
+      '<div class="ri-map">' + routeMapSVG(rs.legs, CHECKINS, mapCur) + '</div>' +
       '<div class="ri-head">YOUR ROUTE · <em>' + rs.total + '</em> NIGHTS · <em>' + rs.count + '</em> LEGS</div>' +
       (rs.summary ? '<p class="ri-summary">' + esc(rs.summary) + '</p>' : '') +
       '<div class="ri-legs">' + rows.join('') + '</div>' +
@@ -2380,15 +2457,6 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
      Once, ever: profiles.first_open_done_at (server-side — the F3 lesson).
      Engine down → NO ceremony (a ceremony for a fallback is theater). */
 
-  const AREA_XY = {
-    Canggu: [96, 150], Seminyak: [104, 168], Denpasar: [130, 172], Sanur: [150, 166],
-    Ubud: [138, 118], Uluwatu: [118, 215], Islands: [222, 204]
-  };
-  const AREA_HEX = { /* canvas + SVG need literal colors — mirrors the CSS tokens */
-    Canggu: '#3dffd0', Ubud: '#4ade80', Seminyak: '#ffb454', Uluwatu: '#a78bfa',
-    Islands: '#4cc9f0', Sanur: '#4cc9f0', Denpasar: '#ff6b6b'
-  };
-  const ISLAND_PATH = 'M56,150 C60,110 92,74 140,62 C190,50 246,66 262,96 C276,122 268,148 244,160 C214,174 178,172 156,176 C150,186 146,196 136,202 C132,216 122,228 108,226 C96,224 96,210 104,200 C110,192 108,184 96,178 C76,170 58,168 56,150 Z';
   const wait = (ms) => new Promise((r) => setTimeout(r, REDUCED_MOTION() ? 0 : ms));
   let corridorPool = null; /* §A fetches the pool early; loadShell reuses it */
 
