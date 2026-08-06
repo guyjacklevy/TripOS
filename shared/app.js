@@ -2625,8 +2625,25 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const t = $('morningToggle');
     if (!t) return;
     const on = profile && profile.morning_note_optin === true;
-    t.textContent = on ? '☀ on · tap to stop' : 'off · tap to get one';
+    /* the toggle tells the platform truth (Guy tapped in Safari and nothing
+       said why no note would come): iOS delivers push ONLY to the installed
+       home-screen app — the wish is recorded either way */
+    let label;
+    if (!on) label = 'off · tap to get one';
+    else if (!('Notification' in window)) label = '☀ on · install to home screen to receive it';
+    else if (Notification.permission === 'default') label = '☀ on · tap to allow notifications';
+    else if (Notification.permission === 'denied') label = '☀ on · allow notifications in Settings';
+    else label = '☀ on · tap to stop';
+    t.textContent = label;
     t.onclick = async () => {
+      /* already on but the OS was never asked (installed-app first tap):
+         this tap ASKS — it must not flip the wish off */
+      if (on && 'Notification' in window && Notification.permission === 'default') {
+        try { await Notification.requestPermission(); } catch (_) {}
+        await ensurePush();
+        paintMorningToggle();
+        return;
+      }
       const turnOn = !(profile && profile.morning_note_optin === true);
       if (turnOn && 'Notification' in window && Notification.permission === 'default') {
         try { await Notification.requestPermission(); } catch (_) {}
