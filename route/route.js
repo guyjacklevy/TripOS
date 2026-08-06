@@ -67,8 +67,12 @@ const AREA_HEX = {
       }));
     } catch (_) {}
   };
-  $('rtCta').addEventListener('click', seedVia);
+  $('rtCta').addEventListener('click', () => {
+    try { window.pvTrack && window.pvTrack('share_save_tap', { kind: 'route' }); } catch (_) {}
+    seedVia();
+  });
 
   $('rtLoading').hidden = true;
   $('rtBody').hidden = false;
+  try { window.pvTrack && window.pvTrack('share_visit', { kind: 'route' }); } catch (_) {}
 })();

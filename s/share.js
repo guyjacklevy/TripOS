@@ -82,6 +82,7 @@ function stampHTML(s, count, viaName) {
   /* provenance travels with the new user into sign-up (S4 seed) — every
    * exit from this page carries it, not only the stamp mini-card */
   const seedVia = (place) => {
+    try { window.pvTrack && window.pvTrack('share_save_tap', { kind: 'passport' }); } catch (_) {}
     try {
       localStorage.setItem('tripos_via', JSON.stringify({
         via: name, place: place || null, token: token, at: Date.now(),
@@ -175,6 +176,7 @@ function stampHTML(s, count, viaName) {
 
   $('shLoading').hidden = true;
   $('shBody').hidden = false;
+  try { window.pvTrack && window.pvTrack('share_visit', { kind: 'passport' }); } catch (_) {}
 
   /* counts count-up — with the stall-proof fallback */
   const ems = $('shCounts').querySelectorAll('em');

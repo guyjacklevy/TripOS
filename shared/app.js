@@ -14,6 +14,9 @@ import { mountCheckin } from './checkin.js';
 import { mountPlaces } from './places-browser.js';
 
 const cfg = window.TRIPOS_SUPABASE || {};
+/* launch analytics: DB tables stay the source of truth (checkins, optins,
+   via_*) — events cover only what they can't: funnel steps + share taps */
+const track = (n, p) => { try { window.pvTrack && window.pvTrack(n, p); } catch (_) {} };
 const $ = (id) => document.getElementById(id);
 
 const welcome = $('welcome');
@@ -2770,6 +2773,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   async function shareRoute(btn) {
     if (!trip || TRIP_LEGS.length < 2) return;
+    track('share_route_tap');
     const label = btn ? btn.textContent : '';
     if (btn) btn.textContent = '↗ preparing…';
     try {
@@ -2821,6 +2825,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     profile = Object.assign({}, profile, { first_open_done_at: ts });
     sb.from('profiles').update({ first_open_done_at: ts }).eq('id', user.id)
       .then(({ error }) => { if (error) console.warn('[Prevoya] first-open mark failed:', error.message); });
+    track(ok ? 'ceremony' : 'ceremony_fallback');
     if (ok) {
       trip.route_revealed_at = ts; /* the ceremony IS the reveal */
       sb.from('trips').update({ route_revealed_at: ts }).eq('id', trip.id)
@@ -2881,6 +2886,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       await routeInterstitial();
     }
     show('shell');
+    track('open', { first: !!firstOpen });
     dailyK = (trip && trip.budget_daily_k) || TIER_IDR[trip && trip.budget_tier] || 700;
     renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
     if (TRIP_LEGS.length < 2 && !trip.route_generated_at) {
@@ -3219,6 +3225,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   /* shell wiring */
   $('arriveClose').addEventListener('click', () => { $('arriveBanner').hidden = true; });
+
+  const ppShareTrack = $('ppShare');
+  if (ppShareTrack) ppShareTrack.addEventListener('click', () => track('share_passport_tap'));
 
   /* §F: captions die on the first interaction with their area — forever */
   document.addEventListener('click', (e) => {

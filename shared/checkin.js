@@ -257,6 +257,7 @@ export function mountCheckin(container, dotsEl, onComplete) {
   function finish() {
     answers.vibe_detail_label = DETAIL_LABEL[answers.vibe_detail] || null;
     container.onclick = null;
+    try { window.pvTrack && window.pvTrack('brief_built', { vibe: answers.vibe || null }); } catch (_) {}
     onComplete(answers);
   }
 

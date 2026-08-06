@@ -87,6 +87,7 @@ if (!CONFIGURED) {
     });
     if (error) { statusEl.textContent = '⚠ ' + error.message; return; }
     pendingEmail = email;
+    try { window.pvTrack && window.pvTrack('lock_email_sent'); } catch (_) {}
     statusEl.textContent = '✓ Boarding email sent.';
     codeWrap.hidden = false;
     setTimeout(() => codeInput.focus(), 40);
@@ -99,6 +100,7 @@ if (!CONFIGURED) {
     statusEl.textContent = 'Boarding…';
     const { error } = await sb.auth.verifyOtp({ email: pendingEmail, token, type: 'email' });
     if (error) { statusEl.textContent = '⚠ That code didn’t match. Codes last 60 minutes — resend?'; return; }
+    try { window.pvTrack && window.pvTrack('boarded_code'); } catch (_) {}
     window.location.href = '/app/';
   });
 
@@ -229,6 +231,7 @@ if (!CONFIGURED) {
   const lockGoogle = document.getElementById('lockGoogle');
   if (lockGoogle) {
     lockGoogle.addEventListener('click', async () => {
+      try { window.pvTrack && window.pvTrack('lock_google_tap'); } catch (_) {}
       if (user) { window.location.href = '/app/'; return; }
       const { error } = await sb.auth.signInWithOAuth({
         provider: 'google',

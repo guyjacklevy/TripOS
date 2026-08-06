@@ -111,3 +111,12 @@
   var cta = hero.querySelector('.btn.btn-primary');
   if (cta) cta.textContent = 'Build yours — free';
 })();
+
+/* launch analytics: one honest 'land' per public page view (prod only) */
+(function () {
+  try {
+    var via = false;
+    try { via = !!JSON.parse(localStorage.getItem('tripos_via') || 'null'); } catch (e) {}
+    if (window.pvTrack) window.pvTrack('land', { page: location.pathname, via: via });
+  } catch (e) {}
+})();
