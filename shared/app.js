@@ -1,4 +1,4 @@
-/* ─── TripOS · the app (/app) — v3 slice 1 ────────────────────
+/* ─── Prevoya · the app (/app) — v3 slice 1 ────────────────────
  * Foundation: welcome (Google primary + email code fallback),
  * tab shell (Today/Places/Pulse/You, hash routing, runway light),
  * Stage 6 passenger record typed onto the boarding pass, and the
@@ -1225,7 +1225,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       .select('id, amount_idr, category, spent_at')
       .gte('spent_at', startOfMonth().toISOString())
       .order('spent_at', { ascending: false });
-    if (error) { console.error('[TripOS] expenses load failed:', error.message); return; }
+    if (error) { console.error('[Prevoya] expenses load failed:', error.message); return; }
     const rows = data || [];
     const t0 = startOfToday().getTime();
     const todayK = rows.reduce((s, r) =>
@@ -1256,7 +1256,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (!id) return;
     li.style.opacity = '0.4';
     const { error } = await sb.from('expenses').delete().eq('id', id);
-    if (error) { console.error('[TripOS] delete failed:', error.message); li.style.opacity = ''; return; }
+    if (error) { console.error('[Prevoya] delete failed:', error.message); li.style.opacity = ''; return; }
     loadPulse();
   });
 
@@ -1312,7 +1312,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     profile.presets = next;
     renderPresets();
     const { error } = await sb.from('profiles').update({ presets: next }).eq('id', user.id);
-    if (error) console.error('[TripOS] presets save failed:', error.message);
+    if (error) console.error('[Prevoya] presets save failed:', error.message);
   }
 
   /* Layer 2 mechanics, dark: "I'm here" writes a check-in row.
@@ -1330,7 +1330,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       user_id: user.id, place_id: p.id, place_name: p.name, lat: p.lat, lng: p.lng
     }).select().single();
     if (error) {
-      console.error('[TripOS] check-in failed:', error.message);
+      console.error('[Prevoya] check-in failed:', error.message);
       btn.textContent = '⚠ didn’t save — tap to retry';
       btn.disabled = false;
       return;
@@ -1524,13 +1524,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (rs && rs.cur && !ov) {
       sb.from('day_plans').update({ slots: DAY_PLAN })
         .eq('trip_id', todayCtx.trip.id).eq('leg_seq', rs.cur.idx + 1).eq('day_in_leg', rs.cur.nightOf)
-        .then(({ error }) => { if (error) console.warn('[TripOS] swap persist failed:', error.message); });
+        .then(({ error }) => { if (error) console.warn('[Prevoya] swap persist failed:', error.message); });
     } else if (ov && DAY_PLAN_OFFROUTE && !DAY_PLAN_ADJUSTED) {
       /* F1: off-route picks are full citizens — swaps persist to the leg_seq-0 row */
       const day = Math.max(1, tripDayNumber(todayCtx.trip, baliNow()) || 1);
       sb.from('day_plans').update({ slots: DAY_PLAN })
         .eq('trip_id', todayCtx.trip.id).eq('leg_seq', 0).eq('day_in_leg', day)
-        .then(({ error }) => { if (error) console.warn('[TripOS] swap persist failed:', error.message); });
+        .then(({ error }) => { if (error) console.warn('[Prevoya] swap persist failed:', error.message); });
     }
   }
 
@@ -1694,7 +1694,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     e.stopPropagation();
     const id = x.getAttribute('data-ck');
     const { error } = await sb.from('checkins').delete().eq('id', id);
-    if (error) { console.error('[TripOS] stamp delete failed:', error.message); return; }
+    if (error) { console.error('[Prevoya] stamp delete failed:', error.message); return; }
     CHECKINS = CHECKINS.filter((c) => String(c.id) !== String(id));
     if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
   });
@@ -1774,14 +1774,14 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
      Key never touches the client; supabase-js sends the user's JWT. */
   async function googleSearch(query) {
     const { data, error } = await sb.functions.invoke('places-search', { body: { action: 'search', query } });
-    if (error) { console.error('[TripOS] google search failed:', error.message); return null; }
-    if (data && data.error) { console.error('[TripOS] search:', data.error); return data.error === 'search-not-configured' ? null : []; }
+    if (error) { console.error('[Prevoya] google search failed:', error.message); return null; }
+    if (data && data.error) { console.error('[Prevoya] search:', data.error); return data.error === 'search-not-configured' ? null : []; }
     return (data && data.candidates) || [];
   }
   async function googleAdd(candidate) {
     const { data, error } = await sb.functions.invoke('places-search', { body: { action: 'add', place_id: candidate.google_place_id } });
-    if (error) { console.error('[TripOS] add place failed:', error.message); return null; }
-    if (data && data.error) { console.error('[TripOS] add:', data.error); return null; }
+    if (error) { console.error('[Prevoya] add place failed:', error.message); return null; }
+    if (data && data.error) { console.error('[Prevoya] add:', data.error); return null; }
     return (data && data.place) || null;
   }
 
@@ -1862,12 +1862,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   async function loadReadiness() {
     const { data, error } = await sb.from('checklist_items').select('*').order('created_at');
-    if (error) { console.error('[TripOS] checklist load failed:', error.message); return; }
+    if (error) { console.error('[Prevoya] checklist load failed:', error.message); return; }
     checkItems = data || [];
     if (trip && trip.vibe && !checkItems.some((i) => i.auto)) {
       const gen = buildAutoItems(trip).map((g) => ({ ...g, user_id: user.id }));
       const { data: ins, error: e2 } = await sb.from('checklist_items').insert(gen).select();
-      if (e2) console.error('[TripOS] checklist generate failed:', e2.message);
+      if (e2) console.error('[Prevoya] checklist generate failed:', e2.message);
       else checkItems = checkItems.concat(ins || []);
     }
     renderChecklists();
@@ -1877,7 +1877,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   async function loadMissing() {
     const { data, error } = await sb.from('repack_runs').select('*')
       .order('created_at', { ascending: false }).limit(3);
-    if (error) { console.error('[TripOS] repack load failed:', error.message); return; }
+    if (error) { console.error('[Prevoya] repack load failed:', error.message); return; }
     const runs = (data || []).filter((r) => r.missing && r.missing.length);
     $('missingWrap').hidden = !runs.length;
     $('missingList').innerHTML = runs.map((r) =>
@@ -1902,21 +1902,21 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     item.done = !item.done;
     renderChecklists();
     const { error } = await sb.from('checklist_items').update({ done: item.done }).eq('id', id);
-    if (error) { console.error('[TripOS] toggle failed:', error.message); item.done = !item.done; renderChecklists(); }
+    if (error) { console.error('[Prevoya] toggle failed:', error.message); item.done = !item.done; renderChecklists(); }
   }
 
   async function deleteItem(id) {
     checkItems = checkItems.filter((i) => i.id !== id);
     renderChecklists();
     const { error } = await sb.from('checklist_items').delete().eq('id', id);
-    if (error) { console.error('[TripOS] item delete failed:', error.message); loadReadiness(); }
+    if (error) { console.error('[Prevoya] item delete failed:', error.message); loadReadiness(); }
   }
 
   async function addItem(kind, label) {
     if (!label.trim()) return;
     const { data, error } = await sb.from('checklist_items')
       .insert({ user_id: user.id, kind, label: label.trim(), auto: false }).select();
-    if (error) { console.error('[TripOS] item add failed:', error.message); return; }
+    if (error) { console.error('[Prevoya] item add failed:', error.message); return; }
     checkItems = checkItems.concat(data || []);
     renderChecklists();
   }
@@ -1935,7 +1935,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const missing = pack.filter((i) => !repack.packed.has(i.id)).map((i) => i.label);
     const location = repack.location;
     const { error } = await sb.from('repack_runs').insert({ user_id: user.id, location, missing });
-    if (error) { console.error('[TripOS] repack save failed:', error.message); return; }
+    if (error) { console.error('[Prevoya] repack save failed:', error.message); return; }
     if (packedIds.length) await sb.from('checklist_items').update({ done: true }).in('id', packedIds);
     const missingIds = pack.filter((i) => !repack.packed.has(i.id)).map((i) => i.id);
     if (missingIds.length) await sb.from('checklist_items').update({ done: false }).in('id', missingIds);
@@ -1960,7 +1960,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     $('installBtn').hidden = standalone || !deferredInstall;
     $('iosSteps').hidden = standalone || !isIOS;
     $('installFallback').hidden = standalone || isIOS || !!deferredInstall;
-    if (standalone) $('installWhy').textContent = 'TripOS lives on your home screen. See you out there.';
+    if (standalone) $('installWhy').textContent = 'Prevoya lives on your home screen. See you out there.';
   }
   $('installBtn').addEventListener('click', async () => {
     if (!deferredInstall) return;
@@ -1991,7 +1991,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       priorities: a.priorities && a.priorities.length ? a.priorities : null,
       arrive: a.arrive || null
     }, { onConflict: 'user_id,destination' }).select();
-    if (error) console.error('[TripOS] brief save failed:', error.message);
+    if (error) console.error('[Prevoya] brief save failed:', error.message);
     try { localStorage.setItem('tripos_plan', JSON.stringify(a)); } catch (_) {}
     return (up && up[0]) || null;
   }
@@ -2004,7 +2004,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const { data, error } = await sb.functions.invoke('plan-engine', { body: { action: 'route' } });
       ROUTE_GENERATING = false;
       if (error || !data || data.error) {
-        console.warn('[TripOS] plan-engine:', (data && data.error) || (error && error.message) || 'unreachable');
+        console.warn('[Prevoya] plan-engine:', (data && data.error) || (error && error.message) || 'unreachable');
         CONCIERGE_DOWN = true; /* §G: Today explains the silence honestly */
         if (trip) trip.route_generated_at = trip.route_generated_at || new Date().toISOString();
         return false;
@@ -2022,7 +2022,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     } catch (e) {
       ROUTE_GENERATING = false;
       CONCIERGE_DOWN = true;
-      console.warn('[TripOS] plan-engine unreachable:', e && e.message);
+      console.warn('[Prevoya] plan-engine unreachable:', e && e.message);
       return false;
     }
   }
@@ -2082,7 +2082,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const { data: gen, error } = await sb.functions.invoke('plan-engine', { body: { action: 'offday', area: ov } });
       OFFDAY_GENERATING = false;
       if (error || !gen || gen.error || !(gen.slots || []).length) {
-        console.warn('[TripOS] offday:', (gen && gen.error) || (error && error.message) || 'empty');
+        console.warn('[Prevoya] offday:', (gen && gen.error) || (error && error.message) || 'empty');
         if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
         return;
       }
@@ -2097,7 +2097,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
     } catch (e) {
       OFFDAY_GENERATING = false;
-      console.warn('[TripOS] offday unreachable:', e && e.message);
+      console.warn('[Prevoya] offday unreachable:', e && e.message);
       if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
     }
   }
@@ -2124,7 +2124,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const { data: gen, error } = await sb.functions.invoke('plan-engine', { body: { action: 'days', leg_seq: legSeq } });
       DAYS_GENERATING = false;
       if (error || !gen || gen.error) {
-        console.warn('[TripOS] day-plan:', (gen && gen.error) || (error && error.message) || 'unreachable');
+        console.warn('[Prevoya] day-plan:', (gen && gen.error) || (error && error.message) || 'unreachable');
         if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
         return;
       }
@@ -2144,7 +2144,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       }
     } catch (e) {
       DAYS_GENERATING = false;
-      console.warn('[TripOS] day-plan unreachable:', e && e.message);
+      console.warn('[Prevoya] day-plan unreachable:', e && e.message);
       if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
     }
   }
@@ -2168,7 +2168,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       /* the replan IS this route's reveal — don't replay it next open (F2) */
       trip.route_revealed_at = new Date().toISOString();
       sb.from('trips').update({ route_revealed_at: trip.route_revealed_at }).eq('id', trip.id)
-        .then(({ error }) => { if (error) console.warn('[TripOS] reveal mark failed:', error.message); });
+        .then(({ error }) => { if (error) console.warn('[Prevoya] reveal mark failed:', error.message); });
       updateStrip(trip, greetName(), baliNow());
       paintNudge();
       /* the old route's day plans died with it (server-side) — start fresh */
@@ -2186,7 +2186,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   async function setOverride(area) {
     const val = area || null;
     const { error } = await sb.from('trips').update({ area_override: val }).eq('id', trip.id);
-    if (error) { console.error('[TripOS] override save failed:', error.message); return; }
+    if (error) { console.error('[Prevoya] override save failed:', error.message); return; }
     trip.area_override = val;
     renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
     if (todayCtx) { todayCtx.trip = trip; renderToday(trip, todayCtx.name, todayCtx.places); }
@@ -2578,7 +2578,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           const ts = new Date().toISOString();
           profile = Object.assign({}, profile, { record_skipped_at: ts });
           if (user) sb.from('profiles').update({ record_skipped_at: ts }).eq('id', user.id)
-            .then(({ error }) => { if (error) console.warn('[TripOS] skip persist failed:', error.message); });
+            .then(({ error }) => { if (error) console.warn('[Prevoya] skip persist failed:', error.message); });
           res();
         };
       });
@@ -2616,7 +2616,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       await sb.from('push_subscriptions').upsert({
         user_id: user.id, endpoint: sub.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth
       }, { onConflict: 'endpoint' });
-    } catch (e) { console.warn('[TripOS] push subscribe failed:', e && e.message); }
+    } catch (e) { console.warn('[Prevoya] push subscribe failed:', e && e.message); }
   }
 
   /* the You-tab toggle: the user-initiated door (a settings change is its
@@ -2656,7 +2656,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       };
       profile = Object.assign({}, profile, patch);
       if (user) sb.from('profiles').update(patch).eq('id', user.id)
-        .then(({ error }) => { if (error) console.warn('[TripOS] morning toggle failed:', error.message); });
+        .then(({ error }) => { if (error) console.warn('[Prevoya] morning toggle failed:', error.message); });
       if (turnOn) ensurePush();
       else {
         /* best-effort: release THIS device; the sender's optin check is the
@@ -2684,7 +2684,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         const ts = new Date().toISOString();
         profile = Object.assign({}, profile, { morning_note_optin: optin, morning_note_asked_at: ts });
         if (user) sb.from('profiles').update({ morning_note_optin: optin, morning_note_asked_at: ts }).eq('id', user.id)
-          .then(({ error }) => { if (error) console.warn('[TripOS] ask persist failed:', error.message); });
+          .then(({ error }) => { if (error) console.warn('[Prevoya] ask persist failed:', error.message); });
         $('cerAsk').hidden = true;
         if (optin) ensurePush(); /* permission may have just been granted */
         res();
@@ -2714,7 +2714,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     let share = rows && rows[0];
     if (!share) {
       const ins = await sb.from('trip_shares').insert({ trip_id: trip.id, token: shareSlug(), kind: 'route' }).select().single();
-      if (ins.error) { console.warn('[TripOS] route share failed:', ins.error.message); return null; }
+      if (ins.error) { console.warn('[Prevoya] route share failed:', ins.error.message); return null; }
       share = ins.data;
     }
     return share;
@@ -2820,11 +2820,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const ts = new Date().toISOString();
     profile = Object.assign({}, profile, { first_open_done_at: ts });
     sb.from('profiles').update({ first_open_done_at: ts }).eq('id', user.id)
-      .then(({ error }) => { if (error) console.warn('[TripOS] first-open mark failed:', error.message); });
+      .then(({ error }) => { if (error) console.warn('[Prevoya] first-open mark failed:', error.message); });
     if (ok) {
       trip.route_revealed_at = ts; /* the ceremony IS the reveal */
       sb.from('trips').update({ route_revealed_at: ts }).eq('id', trip.id)
-        .then(({ error }) => { if (error) console.warn('[TripOS] reveal mark failed:', error.message); });
+        .then(({ error }) => { if (error) console.warn('[Prevoya] reveal mark failed:', error.message); });
     }
     return ok;
   }
@@ -2939,7 +2939,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           const ts = new Date().toISOString();
           profile = Object.assign({}, profile, { morning_note_optin: optin, morning_note_closed_at: ts });
           if (user) sb.from('profiles').update({ morning_note_optin: optin, morning_note_closed_at: ts }).eq('id', user.id)
-            .then(({ error }) => { if (error) console.warn('[TripOS] re-ask persist failed:', error.message); });
+            .then(({ error }) => { if (error) console.warn('[Prevoya] re-ask persist failed:', error.message); });
           rb.hidden = true;
           if (optin) ensurePush();
         };
@@ -2989,7 +2989,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (!trip.route_revealed_at && TRIP_LEGS.length >= 2) {
       trip.route_revealed_at = new Date().toISOString();
       sb.from('trips').update({ route_revealed_at: trip.route_revealed_at }).eq('id', trip.id)
-        .then(({ error }) => { if (error) console.warn('[TripOS] reveal mark failed:', error.message); });
+        .then(({ error }) => { if (error) console.warn('[Prevoya] reveal mark failed:', error.message); });
       setTab('you');
       renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
       const el = $('youRoute');
@@ -3157,7 +3157,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (name) {
       const { error } = await sb.from('profiles')
         .update({ title: recTitle || null, full_name: name }).eq('id', user.id);
-      if (error) console.error('[TripOS] passenger record save failed:', error.message);
+      if (error) console.error('[Prevoya] passenger record save failed:', error.message);
       profile = { title: recTitle || null, full_name: name };
     }
     try { localStorage.setItem('tripos_record_done', '1'); } catch (_) {}
@@ -3214,7 +3214,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     profile = Object.assign({}, profile, { record_skipped_at: ts });
     updatePassRecord();
     const { error } = await sb.from('profiles').update({ record_skipped_at: ts }).eq('id', user.id);
-    if (error) console.warn('[TripOS] record skip persist failed:', error.message);
+    if (error) console.warn('[Prevoya] record skip persist failed:', error.message);
   });
 
   /* shell wiring */
@@ -3330,7 +3330,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     loadPulse();
     if (trip && trip.id) {
       const { error } = await sb.from('trips').update({ budget_daily_k: k }).eq('id', trip.id);
-      if (error) console.error('[TripOS] budget save failed:', error.message);
+      if (error) console.error('[Prevoya] budget save failed:', error.message);
       else trip.budget_daily_k = k;
     }
   });

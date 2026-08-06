@@ -1,4 +1,4 @@
-/* ─── TripOS · plan → places matching engine ─────────────────
+/* ─── Prevoya · plan → places matching engine ─────────────────
  * Pure scoring logic shared by the check-in wizard (real picks in
  * the generated plan) and the places browser (badge + float your
  * matches). One brain, two surfaces.
@@ -276,6 +276,6 @@ export function initMatch() {
   /* classic scripts run before deferred modules — let them catch up */
   document.dispatchEvent(new CustomEvent('tripos:match-ready'));
   ready.then((list) => { window.tripMatch.count = list.length; }).catch((e) => {
-    console.error('[TripOS] match engine load failed:', e.message || e);
+    console.error('[Prevoya] match engine load failed:', e.message || e);
   });
 }

@@ -1,4 +1,4 @@
-/* ─── TripOS service worker — PUSH ONLY (PUSH_SPEC §1.1) ─────────────
+/* ─── Prevoya service worker — PUSH ONLY (PUSH_SPEC §1.1) ─────────────
  * Deliberately NO fetch/caching handlers: the F4 update chip owns
  * staleness via ETag, and a misbehaving caching SW can freeze a PWA.
  * This file wakes for a push, shows the morning note, routes the tap. */
@@ -10,7 +10,7 @@ self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (_) {}
   if (!d.body && !d.title) return; /* empty pushes show nothing — never noise */
-  e.waitUntil(self.registration.showNotification(d.title || 'TripOS', {
+  e.waitUntil(self.registration.showNotification(d.title || 'Prevoya', {
     body: d.body || '',
     icon: '/app/icon-180.png',
     badge: '/app/icon-180.png',

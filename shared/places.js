@@ -1,4 +1,4 @@
-/* ─── TripOS · public places page adapter (/bali/places) ─────
+/* ─── Prevoya · public places page adapter (/bali/places) ─────
  * Thin mount: fetches curated_places, reads the browser's saved
  * brief, and hands everything to the shared spatial browser core
  * (shared/places-browser.js) — the same core the app's Places tab
@@ -44,7 +44,7 @@ const statusEl = document.getElementById('placesStatus');
       plan: readPlan()
     });
   } catch (err) {
-    console.error('[TripOS] places load failed:', err.message || err);
+    console.error('[Prevoya] places load failed:', err.message || err);
     statusEl.textContent = 'Could not load places right now.';
   }
 })();

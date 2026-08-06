@@ -1,4 +1,4 @@
-/* ─── TripOS · public route page (FIRST_OPEN_SPEC §D) ───────────────
+/* ─── Prevoya · public route page (FIRST_OPEN_SPEC §D) ───────────────
  * Renders EXCLUSIVELY what shared-trip?kind=route sends: areas, nights,
  * summary, vibe word, month word, verified count. No dates, no money,
  * no coordinates — this file has no slot for them (defense by anatomy).

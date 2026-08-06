@@ -1,4 +1,4 @@
-/* ─── TripOS · the shared passport page (A3) ─────────────────────────
+/* ─── Prevoya · the shared passport page (A3) ─────────────────────────
  * Renders EXCLUSIVELY what the sanitizing endpoint sends — this file has
  * no slot for spend, coordinates, times, or the current day (defense by
  * anatomy, ASSET_SURFACES_SPEC §2.2). Anonymous, token-gated, no login. */

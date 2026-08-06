@@ -1,4 +1,4 @@
-/* ─── TripOS · spatial places browser (shared core) ──────────
+/* ─── Prevoya · spatial places browser (shared core) ──────────
  * One browser, two mounts: the public /bali/places page and the
  * app's Places tab. Terrain area cards, altitude header, legend,
  * POI cards, match badges + float-to-top. The caller supplies the
@@ -317,7 +317,7 @@ export function mountPlaces(cfg) {
           '<div class="poi-type">' + esc(c.area || 'Bali') + ' · ' + esc(c.category) +
             (c.rating ? ' · ★ ' + c.rating : '') + '</div></div>' +
         (c.already
-          ? '<span class="disc-have">already in TripOS</span>'
+          ? '<span class="disc-have">already in Prevoya</span>'
           : '<button type="button" class="place-maps disc-add">＋ Add</button>') +
       '</div>'
     ).join('');

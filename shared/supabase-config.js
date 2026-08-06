@@ -1,4 +1,4 @@
-/* ─── TripOS · Supabase config ───────────────────────────────
+/* ─── Prevoya · Supabase config ───────────────────────────────
  * Paste your two values from Supabase → Project Settings → API.
  *
  * SAFE TO COMMIT: the anon key is a PUBLISHABLE key, meant for the

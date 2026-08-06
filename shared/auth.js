@@ -1,4 +1,4 @@
-/* ─── TripOS · auth + personal data (Supabase) ───────────────
+/* ─── Prevoya · auth + personal data (Supabase) ───────────────
  * Progressive enhancement: if supabase-config.js still has
  * placeholders, this whole module quietly no-ops and every link
  * keeps working. Once real keys are in, it adds magic-link login
@@ -21,7 +21,7 @@ window.tripAuth = { ready: CONFIGURED };
 
 if (!CONFIGURED) {
   // No-auth mode — leave the site fully functional, just not personal yet.
-  console.info('[TripOS] Supabase not configured yet — running in no-auth mode.');
+  console.info('[Prevoya] Supabase not configured yet — running in no-auth mode.');
 } else {
   const sb = createClient(cfg.url, cfg.anonKey);
   let user = null;
@@ -31,7 +31,7 @@ if (!CONFIGURED) {
   modal.className = 'auth-modal';
   modal.hidden = true;
   modal.innerHTML =
-    '<div class="auth-card" role="dialog" aria-modal="true" aria-label="Sign in to TripOS">' +
+    '<div class="auth-card" role="dialog" aria-modal="true" aria-label="Sign in to Prevoya">' +
       '<button class="auth-x" type="button" aria-label="Close">✕</button>' +
       '<div class="orb planet-teal auth-orb"></div>' +
       '<h3 class="auth-title">Unlock your Bali plan</h3>' +
@@ -126,7 +126,7 @@ if (!CONFIGURED) {
         priorities: plan.priorities && plan.priorities.length ? plan.priorities : null,
         arrive: plan.arrive || null
       }, { onConflict: 'user_id,destination' });
-      if (error) console.error('[TripOS] Could not save plan:', error.message);
+      if (error) console.error('[Prevoya] Could not save plan:', error.message);
     } finally {
       savingPlan = false;
     }
@@ -162,7 +162,7 @@ if (!CONFIGURED) {
     if (list) list.classList.remove('locked');
     if (lock) lock.hidden = true;
     document.querySelectorAll('[data-auth-gate]').forEach((g) => {
-      g.textContent = 'Open your TripOS →';
+      g.textContent = 'Open Prevoya →';
     });
   }
 
@@ -191,7 +191,7 @@ if (!CONFIGURED) {
       .eq('destination', 'bali')
       .order('created_at', { ascending: false })
       .limit(1);
-    if (error) { console.error('[TripOS] trip sync failed:', error.message); return; }
+    if (error) { console.error('[Prevoya] trip sync failed:', error.message); return; }
     const t = data && data[0];
     if (t && t.vibe) {
       const local = {
@@ -234,7 +234,7 @@ if (!CONFIGURED) {
         provider: 'google',
         options: { redirectTo: window.location.origin + '/app/' + viaSuffix() }
       });
-      if (error) console.error('[TripOS] google sign-in failed:', error.message);
+      if (error) console.error('[Prevoya] google sign-in failed:', error.message);
     });
   }
 

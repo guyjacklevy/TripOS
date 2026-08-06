@@ -1,4 +1,4 @@
-/* ─── TripOS · branched check-in questionnaire (APP_SPEC §3 Stage 2) ───
+/* ─── Prevoya · branched check-in questionnaire (APP_SPEC §3 Stage 2) ───
  * One engine, two surfaces: the /bali landing funnel and the in-app
  * check-in. Renders one question per screen with progress dots and
  * branches Q2 by vibe. Answers shape:

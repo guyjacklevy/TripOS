@@ -1,4 +1,4 @@
-/* ─── TripOS landing — shared behaviour ─── */
+/* ─── Prevoya landing — shared behaviour ─── */
 (function () {
   document.documentElement.classList.add('js');
 
