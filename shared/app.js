@@ -2591,6 +2591,72 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     await warmAsk();
   }
 
+  /* ─── PUSH_SPEC · the delivery layer: subscribe when (and only when) the
+     user has opted in AND the OS permission is granted. SW is push-only. ─── */
+  const VAPID_PUBLIC = 'BJ_bGt-zCzjuTWjfe7zpKy6oyTR10udmyV_bvpHtkP5X3SXtAEVGd6AUf8Pg3nlyqjX7vWdA4o37s5K8iFwjxtg';
+  function vapidKeyBytes(b64u) {
+    const pad = '='.repeat((4 - b64u.length % 4) % 4);
+    const raw = atob((b64u + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+  async function ensurePush() {
+    try {
+      if (!user || !profile || profile.morning_note_optin !== true) return;
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const reg = await navigator.serviceWorker.register('/app/sw.js');
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: vapidKeyBytes(VAPID_PUBLIC)
+      });
+      const j = sub.toJSON();
+      if (!j.keys) return;
+      await sb.from('push_subscriptions').upsert({
+        user_id: user.id, endpoint: sub.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth
+      }, { onConflict: 'endpoint' });
+    } catch (e) { console.warn('[TripOS] push subscribe failed:', e && e.message); }
+  }
+
+  /* the You-tab toggle: the user-initiated door (a settings change is its
+     own ask — §E's no-third-ask rule governs ASKS, not user actions) */
+  function paintMorningToggle() {
+    const t = $('morningToggle');
+    if (!t) return;
+    const on = profile && profile.morning_note_optin === true;
+    t.textContent = on ? '☀ on · tap to stop' : 'off · tap to get one';
+    t.onclick = async () => {
+      const turnOn = !(profile && profile.morning_note_optin === true);
+      if (turnOn && 'Notification' in window && Notification.permission === 'default') {
+        try { await Notification.requestPermission(); } catch (_) {}
+      }
+      const ts = new Date().toISOString();
+      const patch = {
+        morning_note_optin: turnOn,
+        morning_note_asked_at: (profile && profile.morning_note_asked_at) || ts,
+        morning_note_closed_at: ts
+      };
+      profile = Object.assign({}, profile, patch);
+      if (user) sb.from('profiles').update(patch).eq('id', user.id)
+        .then(({ error }) => { if (error) console.warn('[TripOS] morning toggle failed:', error.message); });
+      if (turnOn) ensurePush();
+      else {
+        /* best-effort: release THIS device; the sender's optin check is the
+           real gate, so stale rows on other devices can never fire */
+        try {
+          const reg = await navigator.serviceWorker.getRegistration('/app/sw.js');
+          const sub = reg && await reg.pushManager.getSubscription();
+          if (sub) {
+            await sb.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+            await sub.unsubscribe();
+          }
+        } catch (_) {}
+      }
+      paintMorningToggle();
+    };
+  }
+
   /* §E · the warm ask — the OS prompt is never the first touch */
   function warmAsk() {
     return new Promise((res) => {
@@ -2603,6 +2669,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         if (user) sb.from('profiles').update({ morning_note_optin: optin, morning_note_asked_at: ts }).eq('id', user.id)
           .then(({ error }) => { if (error) console.warn('[TripOS] ask persist failed:', error.message); });
         $('cerAsk').hidden = true;
+        if (optin) ensurePush(); /* permission may have just been granted */
         res();
       };
       $('cerAskYes').onclick = () => {
@@ -2857,6 +2924,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           if (user) sb.from('profiles').update({ morning_note_optin: optin, morning_note_closed_at: ts }).eq('id', user.id)
             .then(({ error }) => { if (error) console.warn('[TripOS] re-ask persist failed:', error.message); });
           rb.hidden = true;
+          if (optin) ensurePush();
         };
         $('reaskYes').onclick = () => {
           if ('Notification' in window && Notification.permission === 'default') {
@@ -2881,6 +2949,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     TRIP_DAY_PLANS = dpAll || [];
     renderPassport(trip, places || []);
     startClock();
+    ensurePush();          /* opted-in + granted devices re-subscribe silently */
+    paintMorningToggle();
     loadCurationDesk(places || []);
     try { $('logDate').value = new Date().toISOString().slice(0, 10); } catch (_) {}
     updateInstallCard();
