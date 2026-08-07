@@ -2816,10 +2816,32 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       x.font = '600 8px ' + mono;
       x.fillText(l.area.toUpperCase(), pts[i][0] + 9, pts[i][1] + 3);
     });
+    /* M2 (LIVING_MAP_SPEC): the card ages — the traveler's stamps join the
+       island once they exist. Same bucketing + deterministic offsets as the
+       instrument map; the day-1 plan card becomes the journey card. */
+    const stampedPlaces = new Set();
+    (CHECKINS || []).forEach((c) => {
+      const k = String(c.place_id);
+      if (stampedPlaces.has(k)) return;
+      const reg = latLngRegion(c.lat, c.lng);
+      if (!reg || !AREA_XY[reg]) return;
+      stampedPlaces.add(k);
+      let h = 0;
+      for (let i = 0; i < k.length; i++) h = ((h * 31) + k.charCodeAt(i)) >>> 0;
+      const ang = (h % 360) * Math.PI / 180;
+      const rad = 7 + ((h >> 4) % 8);
+      x.fillStyle = 'rgba(232,232,240,0.85)';
+      x.beginPath();
+      x.arc(AREA_XY[reg][0] + Math.cos(ang) * rad, AREA_XY[reg][1] + Math.sin(ang) * rad, 1.5, 0, Math.PI * 2);
+      x.fill();
+    });
     x.restore();
     const days = legs.reduce((s, l) => s + (l.nights || 0), 0);
+    let headline = days + ' DAYS · ' + legs.length + ' BASES';
+    if (stampedPlaces.size) headline += ' · ' + stampedPlaces.size + ' STAMPED';
     x.fillStyle = '#3dffd0'; x.font = '700 64px ' + mono;
-    x.fillText(days + ' DAYS · ' + legs.length + ' BASES', 72, 880);
+    if (x.measureText(headline).width > 936) x.font = '700 52px ' + mono;
+    x.fillText(headline, 72, 880);
     /* brief line: vibe · month — tier NEVER ships (Guy 2026-08-04) */
     const bits = [];
     if (trip.vibe) bits.push(String(VIBE_LABEL[trip.vibe] || trip.vibe).toLowerCase());
