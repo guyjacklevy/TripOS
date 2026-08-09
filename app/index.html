@@ -217,23 +217,41 @@
     <main class="panels">
       <!-- TODAY — the concierge (orbit dial instrument per WAVE3_GLOBE_SPEC) -->
       <section class="panel" id="panel-today">
-        <div class="today-head">
-          <div class="orbit-dial" id="orbitDial" data-phase="day" style="--od-angle:210deg">
-            <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
+        <!-- Guy's hero globe (2026-08-09): the old app's centerpiece rebuilt in
+             the dial's own grammar — same 48-unit viewBox, same dayState wiring
+             (terminator/pin/rim ids untouched), rendered at hero scale with
+             graticule + glowing land + the BALI pin. Rachel: flagged for pass. -->
+        <div class="today-head today-hero">
+          <div class="orbit-dial orbit-hero" id="orbitDial" data-phase="day" style="--od-angle:210deg">
+            <svg viewBox="0 0 48 48" aria-hidden="true">
               <defs>
                 <radialGradient id="odSphere" cx="38%" cy="32%" r="75%">
                   <stop offset="0%" stop-color="#1e2746"/>
                   <stop offset="70%" stop-color="#101528"/>
                   <stop offset="100%" stop-color="#0a0a14"/>
                 </radialGradient>
+                <radialGradient id="odLand" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#3dffd0" stop-opacity="0.5"/>
+                  <stop offset="65%" stop-color="#3dffd0" stop-opacity="0.16"/>
+                  <stop offset="100%" stop-color="#3dffd0" stop-opacity="0"/>
+                </radialGradient>
               </defs>
               <circle cx="24" cy="24" r="20" fill="url(#odSphere)"/>
-              <path d="M12 27 q4-3 8-2 t8 0 q3 0 5 2" stroke="rgba(255,255,255,0.16)" stroke-width="2" stroke-linecap="round" fill="none"/>
-              <path d="M15 20 q3-1.5 6-1" stroke="rgba(255,255,255,0.10)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+              <ellipse cx="24" cy="24" rx="20" ry="7.5" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.35"/>
+              <ellipse cx="24" cy="24" rx="20" ry="14.5" fill="none" stroke="rgba(255,255,255,0.045)" stroke-width="0.35"/>
+              <ellipse cx="24" cy="24" rx="7.5" ry="20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.35"/>
+              <ellipse cx="24" cy="24" rx="14.5" ry="20" fill="none" stroke="rgba(255,255,255,0.045)" stroke-width="0.35"/>
+              <ellipse cx="16.5" cy="16.5" rx="7" ry="4.6" fill="url(#odLand)" transform="rotate(-18 16.5 16.5)"/>
+              <ellipse cx="32.5" cy="20" rx="5" ry="3.4" fill="url(#odLand)" transform="rotate(14 32.5 20)" opacity="0.85"/>
+              <ellipse cx="19.5" cy="31.5" rx="4.6" ry="3" fill="url(#odLand)" transform="rotate(8 19.5 31.5)" opacity="0.7"/>
+              <path d="M12 27 q4-3 8-2 t8 0 q3 0 5 2" stroke="rgba(255,255,255,0.14)" stroke-width="0.8" stroke-linecap="round" fill="none"/>
+              <path d="M15 20 q3-1.5 6-1" stroke="rgba(255,255,255,0.09)" stroke-width="0.6" stroke-linecap="round" fill="none"/>
               <g class="od-night"><path d="M24 4 a20 20 0 0 1 0 40 z" fill="rgba(4,5,11,0.78)"/></g>
-              <circle class="od-rim" cx="24" cy="24" r="20.75" fill="none" stroke-width="1.5"/>
-              <circle class="od-pin" cx="31" cy="28" r="2.2"/>
-              <circle class="od-ping" cx="31" cy="28" r="2.2" fill="none" stroke-width="1.5"/>
+              <circle class="od-rim" cx="24" cy="24" r="20.75" fill="none" stroke-width="0.6"/>
+              <circle class="od-halo" cx="31" cy="28" r="2.6" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.3"/>
+              <circle class="od-pin" cx="31" cy="28" r="1.4"/>
+              <circle class="od-ping" cx="31" cy="28" r="1.4" fill="none" stroke-width="0.55"/>
+              <text class="od-lbl" x="31" y="33.8" text-anchor="middle">BALI</text>
             </svg>
           </div>
           <div class="today-head-text">

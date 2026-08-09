@@ -1104,6 +1104,27 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
   border-radius: 50%;
   animation: odBreath 8s ease-in-out infinite;
 }
+
+/* Guy's hero globe (2026-08-09) — the dial at centerpiece scale. Same svg
+   grammar and dayState wiring; only the presence changes. */
+.today-head.today-hero { flex-direction: column; align-items: center; gap: 16px; padding: 8px 0 2px; }
+.today-hero .orbit-dial {
+  width: clamp(180px, 56vw, 230px);
+  height: clamp(180px, 56vw, 230px);
+}
+.today-hero .orbit-dial svg { width: 100%; height: 100%; display: block; }
+.today-hero .today-head-text { text-align: center; }
+.today-hero .inst-strip { justify-content: center; }
+#panel-today .panel-h { text-align: center; }
+.od-lbl {
+  font-family: var(--mono); font-size: 2.4px; letter-spacing: 0.35px;
+  fill: #e8e8f0; opacity: 0.9;
+}
+
+/* belt for the pinch-to-zoom report: nothing may widen the page. Root-level
+   on purpose (elsewhere it would clip the y-axis too); hidden not clip —
+   clip at the viewport froze vertical scroll in WebKit. */
+html, body { overflow-x: hidden; }
 .orbit-dial[data-phase="dawn"]   { --od-glow: rgba(255, 180, 84, 0.40); }
 .orbit-dial[data-phase="day"]    { --od-glow: rgba(61, 255, 208, 0.40); }
 .orbit-dial[data-phase="golden"] { --od-glow: rgba(255, 180, 84, 0.50); }
@@ -1168,6 +1189,9 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
 .tl-now-tick { position: absolute; top: -4px; width: 2px; height: 10px; background: var(--teal); box-shadow: 0 0 6px rgba(61, 255, 208, 0.7); transform: translateX(-50%); }
 .tl-now-label { position: absolute; top: 12px; transform: translateX(-50%); white-space: nowrap; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; color: var(--teal); }
 .rail-cards { display: grid; gap: 14px; }
+/* grid items default to min-width:auto = min-content — the action row's
+   min-content forced Today cards past the viewport (Guy's pinch-to-zoom bug) */
+.rail-cards > * { min-width: 0; }
 /* future rail slot cards */
 .rail-slots { display: grid; gap: 8px; }
 .slot-card {
@@ -2400,7 +2424,7 @@ div.stamp { cursor: default; }
 /* Today NOW cards are tappable through to their place (affordance rule) */
 .place-card.now-tap { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .place-card.now-tap:active { transform: scale(0.98); }
-.place-card.now-tap .pf-actions { display: inline-flex; gap: 14px; align-items: center; }
+.place-card.now-tap .pf-actions { display: inline-flex; gap: 12px; align-items: center; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; row-gap: 8px; }
 /* the plan outranks category: planned-lead is the ONE card that overrides the accent */
 .place-card.planned-lead { --cc: var(--teal) !important; }
 /* off-route strip token agrees with the amber marker (attention, not error) */

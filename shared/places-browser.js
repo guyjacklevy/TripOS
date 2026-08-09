@@ -36,7 +36,7 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
 
 /* 2c: graded category photo behind the glass (~22% presence — atmosphere,
    never subject). Both mounts sit one level deep, so ../shared works. */
-const catPhoto = (cat) => CAT[cat]
+export const catPhoto = (cat) => CAT[cat]
   ? '<span class="card-photo" aria-hidden="true"><img loading="lazy" alt="" ' +
     'src="../shared/img/cat-' + esc(cat) + '.webp" onerror="this.parentNode.remove()"></span>'
   : '';

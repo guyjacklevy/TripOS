@@ -11,7 +11,7 @@ import {
   pickNow, pickUpcoming, whyNow, timeBlock, DAY_KEYS
 } from './match.js';
 import { mountCheckin } from './checkin.js';
-import { mountPlaces } from './places-browser.js';
+import { mountPlaces, catPhoto } from './places-browser.js';
 
 const cfg = window.TRIPOS_SUPABASE || {};
 /* launch analytics: DB tables stay the source of truth (checkins, optins,
@@ -185,6 +185,7 @@ function pickCard(p, matched, nowLine, plannedLead, railKey) {
     : (matched ? '✦ your match' : null);
   return (
     '<article class="place-card now-tap' + (plannedLead ? ' planned-lead' : '') + '" data-place="' + esc(p.id) + '" style="--cc:' + meta.cc + '">' +
+      catPhoto(p.category) + /* Guy: Today cards wear the same graded photos as Places */
       (badge ? '<span class="match-badge">' + badge + '</span>' : '') +
       '<div class="place-top"><span class="orb ' + meta.orb + '"></span><div>' +
         '<div class="place-name">' + esc(p.name) + (p.verified ? '<span class="place-verified">✓</span>' : '') + '</div>' +
@@ -1003,9 +1004,10 @@ function renderToday(trip, firstName, places, dateOpt) {
       if (r.key === 'night' && s.mins < 300) nowAdj = s.mins + 1440;
       const p = Math.min(1, Math.max(0, (nowAdj - r.start) / (r.end - r.start)));
       const hh = String(s.h).padStart(2, '0'), mm = String(s.m).padStart(2, '0');
+      const labelP = Math.min(80, Math.max(20, p * 100)); /* the tick is truth; the label stays on-screen */
       html += '<div class="tl-now"><div class="tl-now-bar"><span class="tl-now-tick" style="left:' +
         (p * 100).toFixed(1) + '%"></span></div>' +
-        '<span class="tl-now-label" style="left:' + (p * 100).toFixed(1) + '%">' + hh + ':' + mm + ' · you are here</span></div>';
+        '<span class="tl-now-label" style="left:' + labelP.toFixed(1) + '%">' + hh + ':' + mm + ' · you are here</span></div>';
       /* the planned pick leads the rail; NOW suggestions follow (deduped) */
       const cards = [];
       if (planned) {
