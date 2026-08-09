@@ -2762,3 +2762,12 @@ html.js .reveal.in { opacity: 1; transform: none; }
   .hook .hook-arrow, .boarding-call .blink, .board-head .live, .board-row .b-status.boarding { animation: none; }
   html { scroll-behavior: auto; }
 }
+
+/* ═══ iOS AUTO-ZOOM GUARD — the floating-tab-bar bug (Guy, 2026-08-07) ═══
+   Safari auto-zooms the layout viewport when a focused form control's
+   font-size is under 16px, and position:fixed elements (the tab bar)
+   attach to the LAYOUT viewport — so after touching any input, the bar
+   floats mid-screen while scrolling. 16px is Safari's exact no-zoom
+   threshold. !important is deliberate: input sizes are set across many
+   scoped rules (13–15px); a platform guard must beat every one of them. */
+input, select, textarea { font-size: 16px !important; }
