@@ -1650,7 +1650,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
          feeds the curation queue. */
       const nameFlow = () => {
         sheet.innerHTML =
-          '<p class="pulse-note">name it — the stamp stays private to you:</p>' +
+          '<p class="pulse-note">name it · stays private to you</p>' +
           '<div class="gps-namerow">' +
             '<input class="auth-input gps-name" maxlength="80" placeholder="what’s this place called?">' +
             '<button type="button" class="ri-replan gps-save">stamp it</button>' +
@@ -1669,7 +1669,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           CHECKINS.push(ckRow);
           try { window.pvTrack && window.pvTrack('place_named', {}); } catch (_) {}
           if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
-          sheet.innerHTML = '<p class="pulse-note">✓ stamped — private to you. New places join public maps only once they’re on the verified map.</p>';
+          sheet.innerHTML = '<p class="pulse-note">✓ stamped · private to you — public only once it’s verified</p>';
           setTimeout(() => { sheet.hidden = true; }, 2400);
         };
       };
@@ -1836,7 +1836,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
             esc(c.p.name) + ' · ' + (c.km < 1 ? Math.round(c.km * 1000) + ' m' : c.km.toFixed(1) + ' km') +
             '</button>').join('')
         : '<p class="pulse-note">nothing near it on the map yet — it stays private for now</p>') +
-        '<button type="button" class="ck-reset ppr-cancel">' + (cands.length ? 'not yet — keep it private' : 'ok') + '</button>';
+        '<button type="button" class="ck-reset ppr-cancel">' + (cands.length ? 'keep it private' : 'ok') + '</button>';
       rv.closest('.stamp').insertAdjacentElement('afterend', box);
       box.querySelector('.ppr-cancel').onclick = () => box.remove();
       box.querySelectorAll('.ppr-pick').forEach((b) => {

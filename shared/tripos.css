@@ -1112,6 +1112,11 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
   width: clamp(180px, 56vw, 230px);
   height: clamp(180px, 56vw, 230px);
 }
+/* Rachel's fold rule: the instrument may dominate the head, never the content —
+   on short phones the first pick card's edge stays visible under the greeting */
+@media (max-height: 700px) {
+  .today-hero .orbit-dial { width: clamp(180px, 56vw, 200px); height: clamp(180px, 56vw, 200px); }
+}
 .today-hero .orbit-dial svg { width: 100%; height: 100%; display: block; }
 .today-hero .today-head-text { text-align: center; }
 .today-hero .inst-strip { justify-content: center; }
