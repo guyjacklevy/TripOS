@@ -12,3 +12,6 @@ client_secret_*.json
 *credentials*.json
 .env
 .env.*
+
+# Guy's raw footage — personal videos, never in the public repo (Bryant reads _agents/content-dist/footage/)
+Footage/
