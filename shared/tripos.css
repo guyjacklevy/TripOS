@@ -2077,6 +2077,9 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .visa-date { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; color: var(--dim); }
 
 .stamp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* grid items must never inherit a child's min-content width — a long chip
+   line once inflated a circle stamp to full-screen (Guy's phone, 2026-08-10) */
+.stamp-grid > * { min-width: 0; }
 .stamp {
   position: relative;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
@@ -2168,7 +2171,8 @@ div.stamp { cursor: default; }
 /* M3 §1 · the naming path (Tier-2 private stamp) + passport promotion */
 .gps-namerow { display: flex; gap: 8px; align-items: center; width: 100%; }
 .gps-namerow .gps-name { flex: 1; min-width: 0; text-align: left; padding: 11px 13px; }
-.st-resolve { color: var(--amber, #ffb454); cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
+.st-resolve { color: var(--amber, #ffb454); cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px;
+  white-space: normal; max-width: 100%; line-height: 1.5; }
 .pp-resolve { display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
   padding: 12px; margin: 4px 0 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--glass); }
 .pp-resolve .ppr-pick { text-align: left; }
