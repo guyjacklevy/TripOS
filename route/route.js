@@ -12,8 +12,8 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
 const $ = (id) => document.getElementById(id);
 
 const AREA_XY = {
-  Canggu: [96, 150], Seminyak: [104, 168], Denpasar: [130, 172], Sanur: [150, 166],
-  Ubud: [138, 118], Uluwatu: [118, 215], Islands: [222, 204]
+  Canggu: [100, 128], Seminyak: [127, 144], Denpasar: [153, 131], Sanur: [172, 145],
+  Ubud: [142, 105], Uluwatu: [156, 180], Islands: [229, 175]
 };
 const AREA_HEX = {
   Canggu: '#3dffd0', Ubud: '#4ade80', Seminyak: '#ffb454', Uluwatu: '#a78bfa',

@@ -289,14 +289,14 @@ const AREA_TINT = {
    ceremony (animated trace) · route instrument (static, lived) · share card ·
    later the wrapped replay. Abstract-not-cartographic by charter. ─── */
 const AREA_XY = {
-  Canggu: [96, 150], Seminyak: [104, 168], Denpasar: [130, 172], Sanur: [150, 166],
-  Ubud: [138, 118], Uluwatu: [118, 215], Islands: [222, 204]
+  Canggu: [100, 128], Seminyak: [127, 144], Denpasar: [153, 131], Sanur: [172, 145],
+  Ubud: [142, 105], Uluwatu: [156, 180], Islands: [229, 175]
 };
 const AREA_HEX = { /* canvas + SVG need literal colors — mirrors the CSS tokens */
   Canggu: '#3dffd0', Ubud: '#4ade80', Seminyak: '#ffb454', Uluwatu: '#a78bfa',
   Islands: '#4cc9f0', Sanur: '#4cc9f0', Denpasar: '#ff6b6b'
 };
-const ISLAND_PATH = 'M56,150 C60,110 92,74 140,62 C190,50 246,66 262,96 C276,122 268,148 244,160 C214,174 178,172 156,176 C150,186 146,196 136,202 C132,216 122,228 108,226 C96,224 96,210 104,200 C110,192 108,184 96,178 C76,170 58,168 56,150 Z';
+const ISLAND_PATH = 'M31,130 Q43,109 67,103 Q100,91 136,85 Q178,79 217,85 Q253,89.5 277,106 Q289,115 283,125.5 Q271,136 247,139 Q223,142 202,139 Q184,137.5 172,140.5 Q167.5,148 166,157 Q178,163 181,175 Q178,190 163,196 Q145,199 136,187 Q130,175 139,164.5 Q145,158.5 154,157 Q152.5,148 148,142 Q124,136 94,134.5 Q61,133 40,137.5 Q29.5,137.5 31,130 Z';
 
 /* same bucketing the backend uses (places-search v6) — dots claim an AREA,
    never GPS precision (the island is abstract; pretending otherwise would lie) */
@@ -351,8 +351,7 @@ function routeMapSVG(legs, checkins, curIdx) {
   });
   return '<svg viewBox="0 0 320 260" width="100%" aria-hidden="true">' +
     '<path d="' + ISLAND_PATH + '" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.5"/>' +
-    '<ellipse cx="222" cy="204" rx="9" ry="6" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.5"/>' +
-    '<ellipse cx="243" cy="213" rx="5" ry="3.5" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.4"/>' +
+    '<ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.5"/>' +
     (rest ? '<path d="' + rest.trim() + '" fill="none" stroke="var(--teal)" stroke-width="1.6" stroke-linecap="round" opacity="' + restOpacity + '"/>' : '') +
     (done ? '<path d="' + done.trim() + '" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>' : '') +
     orbs + dots + '</svg>';
@@ -2890,8 +2889,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     x.translate(60, 90); x.scale(3.0, 3.0);
     x.strokeStyle = 'rgba(123,123,154,0.55)'; x.lineWidth = 0.6;
     x.stroke(new Path2D(ISLAND_PATH));
-    x.beginPath(); x.ellipse(222, 204, 9, 6, 0, 0, Math.PI * 2); x.stroke();
-    x.beginPath(); x.ellipse(243, 213, 5, 3.5, 0, 0, Math.PI * 2); x.stroke();
+    x.beginPath(); x.ellipse(229, 175, 12, 8.25, -14 * Math.PI / 180, 0, Math.PI * 2); x.stroke();
     x.strokeStyle = '#3dffd0'; x.lineWidth = 1.1; x.lineCap = 'round'; x.lineJoin = 'round';
     x.beginPath();
     pts.forEach((p, i) => { if (i) x.lineTo(p[0], p[1]); else x.moveTo(p[0], p[1]); });
