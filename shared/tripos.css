@@ -2165,6 +2165,13 @@ div.stamp { cursor: default; }
 .gps-row { margin: 10px 0 4px; }
 .gps-sheet { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; margin-bottom: 10px; }
 .gps-sheet .gps-pick { text-align: left; }
+/* M3 §1 · the naming path (Tier-2 private stamp) + passport promotion */
+.gps-namerow { display: flex; gap: 8px; align-items: center; width: 100%; }
+.gps-namerow .gps-name { flex: 1; min-width: 0; text-align: left; padding: 11px 13px; }
+.st-resolve { color: var(--amber, #ffb454); cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
+.pp-resolve { display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
+  padding: 12px; margin: 4px 0 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--glass); }
+.pp-resolve .ppr-pick { text-align: left; }
 .pp-retro-form { margin-top: 10px; }
 .pp-retro-form .auth-input { font-size: 13px; }
 

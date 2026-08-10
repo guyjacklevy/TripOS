@@ -337,7 +337,7 @@ function routeMapSVG(legs, checkins, curIdx) {
   const seen = new Set();
   let dots = '';
   (checkins || []).forEach((c) => {
-    const k = String(c.place_id);
+    const k = c.place_id ? String(c.place_id) : 'nm:' + (c.place_name || c.id);
     if (seen.has(k)) return;
     seen.add(k);
     const reg = latLngRegion(c.lat, c.lng);
@@ -636,6 +636,10 @@ function stampEl(ck, p, opts) {
   const catWord = p && p.category ? ' · ' + esc(p.category) : '';
   const delX = o.editable && o.ckId
     ? '<span class="st-x" data-ck="' + esc(o.ckId) + '" role="button" aria-label="remove stamp">✕</span>' : '';
+  /* M3 §1: a raw stamp is private by default — the chip is the promotion
+     door ("was this one of them?"). No chip, no path to a public surface. */
+  const resolveChip = (!p && ck.id && ck.place_name)
+    ? '<span class="st-meta st-resolve" data-ck="' + esc(ck.id) + '" role="button">◌ private · was this one of them? →</span>' : '';
   return '<' + (tap ? 'button type="button"' : 'div') +
     ' class="stamp ' + shape + (o.ceremony ? ' st-new' : '') + '"' +
     (tap ? ' data-place="' + esc(ck.place_id) + '"' : '') +
@@ -644,7 +648,7 @@ function stampEl(ck, p, opts) {
       '<span class="st-dot" style="background:' + cc + '"></span>' +
       '<span class="st-name">' + esc(p ? p.name : (ck.place_name || '—')) + '</span>' +
       '<span class="st-date">' + dateLbl(dd) + catWord + ' ' + badge + '</span>' +
-      worth + meta +
+      worth + meta + resolveChip +
     '</' + (tap ? 'button' : 'div') + '>';
 }
 function visaEl(area, firstIso) {
@@ -663,8 +667,10 @@ function renderPassport(trip, places, opts) {
 
   /* header counts — real, never padded */
   const ids = new Set(), areas = new Set();
+  /* named-but-unmatched stamps are distinct places, not one "null" bucket */
+  const placeKey = (c) => c.place_id ? String(c.place_id) : 'nm:' + (c.place_name || c.id);
   CHECKINS.forEach((c) => {
-    ids.add(String(c.place_id));
+    ids.add(placeKey(c));
     const p = resolve(c.place_id);
     areas.add(p ? String(p.area || '').split('/')[0].trim() : 'Bali');
   });
@@ -703,7 +709,7 @@ function renderPassport(trip, places, opts) {
     /* BY PLACE — the library: one stamp per place (×n revisits), pages = areas */
     const perPlace = new Map();
     CHECKINS.forEach((c) => {
-      const k = String(c.place_id);
+      const k = placeKey(c);
       if (!perPlace.has(k)) perPlace.set(k, { ck: c, count: 0, worth: false });
       perPlace.get(k).count++;
       if (c.worth_it) perPlace.get(k).worth = true; /* F9: any visit worth it → the place echoes it */
@@ -1638,12 +1644,45 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     sheet.innerHTML = '<p class="pulse-note">find where you are? · one tap check-ins</p>';
     navigator.geolocation.getCurrentPosition((pos) => {
       const { latitude: la, longitude: ln } = pos.coords;
+      /* M3 ruling §1 — this sheet IS "was this one of them?". A pick =
+         instant Tier-1 stamp at OUR place record. Naming a new place saves
+         a PRIVATE stamp (device fix never reaches a public surface) and
+         feeds the curation queue. */
+      const nameFlow = () => {
+        sheet.innerHTML =
+          '<p class="pulse-note">name it — the stamp stays private to you:</p>' +
+          '<div class="gps-namerow">' +
+            '<input class="auth-input gps-name" maxlength="80" placeholder="what’s this place called?">' +
+            '<button type="button" class="ri-replan gps-save">stamp it</button>' +
+          '</div>' +
+          '<button type="button" class="ck-reset gps-cancel">cancel</button>';
+        sheet.querySelector('.gps-cancel').onclick = () => { sheet.hidden = true; };
+        sheet.querySelector('.gps-save').onclick = async (ev) => {
+          const nm = sheet.querySelector('.gps-name').value.trim();
+          if (!nm) return;
+          const b = ev.currentTarget;
+          b.disabled = true;
+          const { data: ckRow, error } = await sb.from('checkins').insert({
+            user_id: user.id, place_id: null, place_name: nm, lat: la, lng: ln
+          }).select().single();
+          if (error) { b.disabled = false; b.textContent = '⚠ retry'; return; }
+          CHECKINS.push(ckRow);
+          try { window.pvTrack && window.pvTrack('place_named', {}); } catch (_) {}
+          if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+          sheet.innerHTML = '<p class="pulse-note">✓ stamped — private to you. New places join public maps only once they’re on the verified map.</p>';
+          setTimeout(() => { sheet.hidden = true; }, 2400);
+        };
+      };
       const cands = ((todayCtx && todayCtx.places) || [])
         .filter((p) => typeof p.lat === 'number' && typeof p.lng === 'number')
         .map((p) => ({ p, km: havKm(la, ln, p.lat, p.lng) }))
         .sort((a, b) => a.km - b.km).slice(0, 3);
       if (!cands.length) {
-        sheet.innerHTML = '<p class="pulse-note">nothing nearby in the data yet — pick it in Places</p>';
+        sheet.innerHTML = '<p class="pulse-note">nothing nearby in the data yet</p>' +
+          '<button type="button" class="ri-replan gps-new">📍 name this place</button>' +
+          '<button type="button" class="ck-reset gps-else">or pick it in Places →</button>';
+        sheet.querySelector('.gps-new').onclick = nameFlow;
+        sheet.querySelector('.gps-else').onclick = () => { sheet.hidden = true; setTab('places'); };
         return;
       }
       sheet.innerHTML = '<p class="pulse-note">you’re near:</p>' +
@@ -1651,6 +1690,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           '<button type="button" class="ri-replan gps-pick" data-i="' + i + '">' +
           esc(c.p.name) + ' · ' + (c.km < 1 ? Math.round(c.km * 1000) + ' m' : c.km.toFixed(1) + ' km') +
           '</button>').join('') +
+        '<button type="button" class="ck-reset gps-new">none of these — name it</button>' +
         '<button type="button" class="ck-reset gps-else">somewhere else →</button>';
       sheet.querySelectorAll('.gps-pick').forEach((b) => {
         b.onclick = async () => {
@@ -1658,6 +1698,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           setTimeout(() => { sheet.hidden = true; }, 1400);
         };
       });
+      sheet.querySelector('.gps-new').onclick = nameFlow;
       sheet.querySelector('.gps-else').onclick = () => { sheet.hidden = true; setTab('places'); };
     }, (err) => {
       /* say what actually happened — a generic line hides the fix (Guy's test) */
@@ -1770,6 +1811,49 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   };
   const ppBodyEl = $('ppBody');
   if (ppBodyEl) ppBodyEl.addEventListener('click', async (e) => {
+    /* M3 §1 · promotion: a private raw stamp becomes a Tier-1 stamp at OUR
+       database place — the device fix is REPLACED, never migrated. */
+    const rv = e.target.closest('.st-resolve');
+    if (rv) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (rv.closest('.stamp').nextElementSibling &&
+          rv.closest('.stamp').nextElementSibling.classList.contains('pp-resolve')) return;
+      const ck = CHECKINS.find((c) => String(c.id) === String(rv.getAttribute('data-ck')));
+      if (!ck) return;
+      const pool = ((todayCtx && todayCtx.places) || [])
+        .filter((p) => typeof p.lat === 'number' && typeof p.lng === 'number');
+      const cands = (typeof ck.lat === 'number' && typeof ck.lng === 'number')
+        ? pool.map((p) => ({ p, km: havKm(ck.lat, ck.lng, p.lat, p.lng) }))
+            .sort((a, b) => a.km - b.km).slice(0, 3)
+        : [];
+      const box = document.createElement('div');
+      box.className = 'pp-resolve';
+      box.innerHTML = (cands.length
+        ? '<p class="pulse-note">was it one of these?</p>' +
+          cands.map((c, i) =>
+            '<button type="button" class="ri-replan ppr-pick" data-i="' + i + '">' +
+            esc(c.p.name) + ' · ' + (c.km < 1 ? Math.round(c.km * 1000) + ' m' : c.km.toFixed(1) + ' km') +
+            '</button>').join('')
+        : '<p class="pulse-note">nothing near it on the map yet — it stays private for now</p>') +
+        '<button type="button" class="ck-reset ppr-cancel">' + (cands.length ? 'not yet — keep it private' : 'ok') + '</button>';
+      rv.closest('.stamp').insertAdjacentElement('afterend', box);
+      box.querySelector('.ppr-cancel').onclick = () => box.remove();
+      box.querySelectorAll('.ppr-pick').forEach((b) => {
+        b.onclick = async () => {
+          const p = cands[+b.getAttribute('data-i')].p;
+          b.disabled = true;
+          const { error } = await sb.from('checkins').update({
+            place_id: p.id, place_name: p.name, lat: p.lat, lng: p.lng
+          }).eq('id', ck.id);
+          if (error) { b.disabled = false; b.textContent = '⚠ retry'; return; }
+          ck.place_id = p.id; ck.place_name = p.name; ck.lat = p.lat; ck.lng = p.lng;
+          try { window.pvTrack && window.pvTrack('stamp_promoted', {}); } catch (_) {}
+          if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places, { ceremony: p.id });
+        };
+      });
+      return;
+    }
     const x = e.target.closest('.st-x');
     if (!x) return;
     e.preventDefault();

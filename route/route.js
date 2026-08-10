@@ -1,7 +1,9 @@
-/* ─── Prevoya · public route page (FIRST_OPEN_SPEC §D) ───────────────
+/* ─── Prevoya · public route page (FIRST_OPEN_SPEC §D + M3 dots) ─────
  * Renders EXCLUSIVELY what shared-trip?kind=route sends: areas, nights,
- * summary, vibe word, month word, verified count. No dates, no money,
- * no coordinates — this file has no slot for them (defense by anatomy).
+ * summary, vibe word, month word, verified count, and (M3_PRIVACY_RULING)
+ * aged stamp dots as {key, area, region, date} — region is a named bucket,
+ * never coordinates. No dates-of-travel, no money, no lat/lng anywhere —
+ * this file still has no slot for a coordinate (defense by anatomy).
  * Anonymous, token-gated. Provenance seeds exactly like the A3 page. */
 
 const cfg = window.TRIPOS_SUPABASE || {};
@@ -36,11 +38,29 @@ const AREA_HEX = {
   const facts = [data.days + ' DAYS', data.legs.length + ' BASES'];
   if (data.vibe) facts.push(String(data.vibe).toUpperCase());
   if (data.month) facts.push(String(data.month).toUpperCase());
+  /* M3: the page ages like the card — stamped count joins once it's real */
+  const stamps = Array.isArray(data.stamps) ? data.stamps : [];
+  if (stamps.length) facts.push(stamps.length + ' STAMPED');
   $('rtFacts').textContent = facts.join(' · ');
 
   /* the island + the trace — same abstract grammar as the ceremony */
   const pts = data.legs.map((l) => AREA_XY[l.area] || [160, 150]);
   $('rtTrace').setAttribute('d', pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ',' + p[1]).join(' '));
+  /* M3 dots: same deterministic grammar as the instrument + share card —
+     area-bucketed, hash-offset. Position input is the server's REGION NAME;
+     the hash comes from the public place id. Never a device coordinate. */
+  $('rtDots').innerHTML = stamps.map((s) => {
+    const xy = AREA_XY[s.region];
+    if (!xy) return '';
+    const k = String(s.key);
+    let h = 0;
+    for (let i = 0; i < k.length; i++) h = ((h * 31) + k.charCodeAt(i)) >>> 0;
+    const ang = (h % 360) * Math.PI / 180;
+    const rad = 7 + ((h >> 4) % 8);
+    return '<circle cx="' + (xy[0] + Math.cos(ang) * rad).toFixed(1) +
+      '" cy="' + (xy[1] + Math.sin(ang) * rad).toFixed(1) + '" r="1.9" fill="#e8e8f0" opacity="0.85"/>';
+  }).join('');
+
   $('rtOrbs').innerHTML = data.legs.map((l, i) =>
     '<circle cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="6" fill="' + (AREA_HEX[l.area] || '#3dffd0') + '"/>' +
     '<text x="' + (pts[i][0] + 10) + '" y="' + (pts[i][1] + 3) + '" fill="' + (AREA_HEX[l.area] || '#3dffd0') +
