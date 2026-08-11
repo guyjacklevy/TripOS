@@ -2803,6 +2803,48 @@ html.js .reveal.in { opacity: 1; transform: none; }
   html { scroll-behavior: auto; }
 }
 
+/* ═══ M4 · THE WRAPPED MOMENT — the map replays (WRAPPED_MOMENT_SPEC) ═══
+   Full-screen film UNDER the tab bar (z 80 < 90: the user is home, not in a
+   corridor). Beats add elements; motion stays in these three classes. */
+.wrap-replay {
+  position: fixed; inset: 0; z-index: 80;
+  background: color-mix(in srgb, var(--bg, #0a0a14) 96%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px 20px calc(84px + env(safe-area-inset-bottom));
+  cursor: pointer;
+}
+.wrap-replay[hidden] { display: none; }
+.wr-stage { width: min(420px, 100%); text-align: center; max-height: 100%; overflow-y: auto; }
+.wr-greet { font-size: 20px; font-weight: 700; min-height: 26px; }
+.wr-head {
+  font-family: var(--mono); font-size: 13px; letter-spacing: 0.14em;
+  color: var(--teal); margin-top: 6px; min-height: 18px;
+}
+.wr-mapwrap { position: relative; margin: 10px 0 4px; }
+.wr-ticker {
+  position: absolute; top: 6px; right: 8px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--dim);
+}
+.wr-orb-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; }
+.wr-counts { font-family: var(--mono); font-size: 13px; letter-spacing: 0.12em; color: var(--tx); min-height: 20px; }
+.wr-records { margin-top: 10px; min-height: 54px; }
+.wr-records p { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--mut); margin: 4px 0; }
+.wr-final { margin-top: 12px; cursor: default; }
+.wr-card { width: min(240px, 66%); border-radius: 14px; border: 1px solid var(--line); display: block; margin: 0 auto 10px; }
+.wr-truth { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; color: var(--dim); margin-bottom: 12px; }
+.wr-chips { display: flex; gap: 14px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.wr-progress { position: absolute; left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom)); height: 1px; background: rgba(255,255,255,0.07); }
+.wr-progress-fill { height: 100%; width: 0%; background: var(--teal); transition: width 0.3s linear; }
+.wr-in { animation: wrIn 0.45s ease-out both; }
+.wr-pop { animation: wrPop 0.3s ease-out both; transform-origin: center; transform-box: fill-box; }
+@keyframes wrIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes wrPop { 0% { opacity: 0; transform: scale(0.4); } 70% { transform: scale(1.15); } 100% { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .wr-in, .wr-pop { animation: none; }
+  .wr-progress-fill { transition: none; }
+}
+
 /* ═══ iOS AUTO-ZOOM GUARD — the floating-tab-bar bug (Guy, 2026-08-07) ═══
    Safari auto-zooms the layout viewport when a focused form control's
    font-size is under 16px, and position:fixed elements (the tab bar)

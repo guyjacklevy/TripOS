@@ -2971,6 +2971,249 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
   }
 
+  /* ═══ M4 · THE WRAPPED MOMENT (WRAPPED_MOMENT_SPEC) ═════════════════════
+     The reveal was the plan's premiere; this is the journey's. Same island,
+     same grammar, run backward through what actually happened. Privacy per
+     spec §3: wrapped content = COMPLETED legs only — completion IS the
+     buffer. Tap anywhere = skip to the final frame, always. */
+  let WR_TIMERS = [];
+  let WR_SKIP = null;
+  const wrClear = () => { WR_TIMERS.forEach(clearTimeout); WR_TIMERS = []; };
+  const wrAt = (ms, fn) => { WR_TIMERS.push(setTimeout(fn, ms)); };
+
+  /* absolute trip-day window of each leg: leg i covers days (acc, acc+nights] */
+  function legWindows() {
+    let acc = 0;
+    return TRIP_LEGS.map((l) => { const w = { from: acc + 1, to: acc + l.nights, leg: l }; acc += l.nights; return w; });
+  }
+  function wrapState() {
+    if (!trip || TRIP_LEGS.length < 2) return null;
+    const day = tripDayNumber(trip, baliNow());
+    if (day == null) return null;
+    const wins = legWindows();
+    const doneIdx = wins.map((w, i) => (day > w.to ? i : -1)).filter((i) => i >= 0);
+    return { day, wins, doneIdx, tripDone: day > wins[wins.length - 1].to };
+  }
+
+  /* the film itself. scope: {kind:'trip'} | {kind:'leg', idx} — leg wrap is
+     beats 2–4 scoped to one leg. Only completed legs ever render. */
+  async function runWrapReplay(scope) {
+    const st = wrapState();
+    if (!st || !st.doneIdx.length) return;
+    const el = $('wrapReplay');
+    if (!el || !el.hidden) return;
+    track('wrap_replay', { kind: scope.kind });
+
+    const legIdxs = scope.kind === 'leg' ? [scope.idx] : st.doneIdx;
+    if (scope.kind === 'leg' && st.doneIdx.indexOf(scope.idx) === -1) return;
+    const wins = legIdxs.map((i) => st.wins[i]);
+    const lastDay = wins[wins.length - 1].to;
+    const firstDay = wins[0].from;
+
+    /* origin midnight — same derivation the passport uses */
+    let origin;
+    if (trip.arrive) { const p = String(trip.arrive).split('-'); origin = new Date(+p[0], +p[1] - 1, +p[2]); }
+    else { const c = new Date(trip.created_at); origin = new Date(c.getFullYear(), c.getMonth(), c.getDate()); }
+    const dayOfCk = (c) => {
+      const b = baliDateOf(c.created_at);
+      return Math.round((new Date(b.y, b.m, b.d) - origin) / 86400000) + 1;
+    };
+    /* stamps inside the wrapped window, in day order; one dot per place */
+    const byDay = new Map();
+    const seenPlace = new Set();
+    (CHECKINS || []).slice().sort((a, b) => (a.created_at < b.created_at ? -1 : 1)).forEach((c) => {
+      const d = dayOfCk(c);
+      if (d < firstDay || d > lastDay) return;
+      if (!byDay.has(d)) byDay.set(d, []);
+      byDay.get(d).push(c);
+    });
+
+    const gEls = { greet: $('wrGreet'), head: $('wrHead'), trace: $('wrTrace'), dots: $('wrDots'),
+      orbs: $('wrOrbs'), ticker: $('wrTicker'), counts: $('wrCounts'), records: $('wrRecords'),
+      final: $('wrFinal'), card: $('wrCard'), fill: $('wrFill') };
+    gEls.greet.textContent = ''; gEls.head.textContent = ''; gEls.trace.setAttribute('d', '');
+    gEls.dots.innerHTML = ''; gEls.orbs.innerHTML = ''; gEls.ticker.hidden = true;
+    gEls.counts.textContent = ''; gEls.records.innerHTML = ''; gEls.final.hidden = true;
+    gEls.card.hidden = true; gEls.fill.style.width = '0%';
+    el.hidden = false;
+
+    const pts = wins.map((w) => AREA_XY[w.leg.area] || [160, 150]);
+    const dateLabel = (d) => {
+      const dd = new Date(origin.getFullYear(), origin.getMonth(), origin.getDate() + (d - 1));
+      return MONTH_ABBR[dd.getMonth()] + ' ' + dd.getDate();
+    };
+    const stampDot = (c) => {
+      const k = c.place_id ? String(c.place_id) : 'nm:' + (c.place_name || c.id);
+      if (seenPlace.has(k)) return '';
+      const reg = latLngRegion(c.lat, c.lng);
+      if (!reg || !AREA_XY[reg]) return '';
+      seenPlace.add(k);
+      let h = 0;
+      for (let i = 0; i < k.length; i++) h = ((h * 31) + k.charCodeAt(i)) >>> 0;
+      const ang = (h % 360) * Math.PI / 180;
+      const rad = 7 + ((h >> 4) % 8);
+      return '<circle class="wr-pop" cx="' + (AREA_XY[reg][0] + Math.cos(ang) * rad).toFixed(1) +
+        '" cy="' + (AREA_XY[reg][1] + Math.sin(ang) * rad).toFixed(1) + '" r="1.9" fill="#e8e8f0" opacity="0.85"/>';
+    };
+    const stamps = [...byDay.values()].flat();
+    const uniq = new Set(stamps.map((c) => c.place_id ? String(c.place_id) : 'nm:' + (c.place_name || c.id)));
+    const areasHit = new Set(stamps.map((c) => latLngRegion(c.lat, c.lng)).filter(Boolean));
+    const nights = wins.reduce((s, w) => s + w.leg.nights, 0);
+
+    /* beat 5 record lines — only facts that exist, max 3, zero fillers */
+    const recs = [];
+    const perPlace = new Map();
+    stamps.forEach((c) => {
+      const k = c.place_id ? String(c.place_id) : 'nm:' + (c.place_name || c.id);
+      perPlace.set(k, (perPlace.get(k) || { n: 0, name: c.place_name }));
+      perPlace.get(k).n++;
+    });
+    const top = [...perPlace.values()].sort((a, b) => b.n - a.n)[0];
+    if (top && top.n >= 2 && top.name) recs.push('most visited · ' + String(top.name).toLowerCase() + ' ×' + top.n);
+    if (areasHit.size) recs.push(areasHit.size + ' of 7 areas');
+    const stampDays = [...byDay.keys()];
+    if (stampDays.length >= 2) {
+      recs.push(dateLabel(Math.min(...stampDays)).toLowerCase() + ' → ' + dateLabel(Math.max(...stampDays)).toLowerCase() + ' · stamped');
+    }
+
+    const finalFrame = async () => {
+      wrClear();
+      gEls.fill.style.width = '100%';
+      /* everything lands in its end state */
+      gEls.trace.setAttribute('d', pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ',' + p[1]).join(' '));
+      gEls.orbs.innerHTML = wins.map((w, i) =>
+        '<circle cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="5.5" fill="' + (AREA_HEX[w.leg.area] || '#3dffd0') + '"/>' +
+        '<text class="wr-orb-label" x="' + (pts[i][0] + 9) + '" y="' + (pts[i][1] + 3) + '" fill="' + (AREA_HEX[w.leg.area] || '#3dffd0') + '">' +
+        esc(w.leg.area.toUpperCase()) + '</text>').join('');
+      seenPlace.clear();
+      gEls.dots.innerHTML = stamps.map(stampDot).join('');
+      gEls.ticker.hidden = true;
+      gEls.counts.textContent = countsLine;
+      gEls.records.innerHTML = recs.map((r) => '<p>' + esc(r) + '</p>').join('');
+      if (scope.kind === 'trip' || st.tripDone) {
+        const blob = await renderRouteCard().catch(() => null);
+        if (blob) { gEls.card.src = URL.createObjectURL(blob); gEls.card.hidden = false; }
+      }
+      gEls.final.hidden = false;
+      WR_SKIP = null;
+    };
+    WR_SKIP = finalFrame;
+
+    const countsLine = scope.kind === 'leg'
+      ? nights + ' NIGHTS · ' + stamps.length + ' STAMPS'
+      : lastDay + ' DAYS · ' + wins.length + ' BASES · ' + stamps.length + ' STAMPED · ' + uniq.size + ' PLACES';
+
+    if (REDUCED_MOTION()) { finalFrame(); return; }
+
+    /* ── the beats ── */
+    let t = 200;
+    const totalMs = 2500 + wins.length * 700 + Math.min(14000, Math.max(8000, byDay.size * 400)) + 2000 + (recs.length ? 3000 : 0) + 800;
+    const prog = () => { gEls.fill.style.width = Math.min(100, (t / totalMs) * 100).toFixed(1) + '%'; };
+
+    /* beat 1 · the dates */
+    wrAt(t, () => {
+      if (scope.kind === 'trip') {
+        gEls.greet.textContent = 'That’s the month' + (firstName() ? ', ' + firstName() : '') + '.';
+        gEls.greet.classList.add('wr-in');
+        gEls.head.textContent = 'YOUR BALI · ' + dateLabel(1) + ' – ' + dateLabel(st.wins[st.wins.length - 1].to);
+      } else {
+        gEls.greet.textContent = '';
+        gEls.head.textContent = wins[0].leg.area.toUpperCase() + ' · WRAPPED — ' + nights + ' nights, ' + stamps.length + ' stamps.';
+      }
+      gEls.head.classList.add('wr-in');
+      prog();
+    });
+    t += scope.kind === 'trip' ? 2500 : 1600;
+
+    /* beat 2 · the route traces leg by leg */
+    wins.forEach((w, i) => {
+      wrAt(t, () => {
+        gEls.trace.setAttribute('d', pts.slice(0, i + 1).map((p, j) => (j ? 'L' : 'M') + p[0] + ',' + p[1]).join(' '));
+        gEls.orbs.innerHTML += '<circle class="wr-pop" cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="5.5" fill="' + (AREA_HEX[w.leg.area] || '#3dffd0') + '"/>' +
+          '<text class="wr-orb-label wr-pop" x="' + (pts[i][0] + 9) + '" y="' + (pts[i][1] + 3) + '" fill="' + (AREA_HEX[w.leg.area] || '#3dffd0') + '">' +
+          esc(w.leg.area.toUpperCase() + ' · ' + w.leg.nights + 'N') + '</text>';
+        prog();
+      });
+      t += 700;
+    });
+
+    /* beat 3 · stamps pop in day order; the ticker is the narrative engine */
+    const dayGap = Math.max(120, Math.min(400, 12000 / Math.max(1, lastDay - firstDay + 1)));
+    for (let d = firstDay; d <= lastDay; d++) {
+      const cks = byDay.get(d) || [];
+      wrAt(t, () => { gEls.ticker.hidden = false; gEls.ticker.textContent = 'DAY ' + d; prog(); });
+      cks.forEach((c, j) => { wrAt(t + j * 80, () => { gEls.dots.innerHTML += stampDot(c); }); });
+      t += cks.length ? Math.max(dayGap, cks.length * 80 + 120) : Math.round(dayGap * 0.45);
+    }
+
+    /* beat 4 · counts land */
+    wrAt(t, () => { gEls.ticker.hidden = true; gEls.counts.textContent = countsLine; gEls.counts.classList.add('wr-in'); prog(); });
+    t += 2000;
+
+    /* beat 5 · the record lines */
+    if (recs.length) {
+      wrAt(t, () => { gEls.records.innerHTML = recs.map((r) => '<p class="wr-in">' + esc(r) + '</p>').join(''); prog(); });
+      t += 3000;
+    }
+
+    /* beat 6 · final frame */
+    wrAt(t, finalFrame);
+  }
+
+  function closeWrap() {
+    wrClear();
+    WR_SKIP = null;
+    const el = $('wrapReplay');
+    if (el) el.hidden = true;
+    const img = $('wrCard');
+    if (img && img.src) { try { URL.revokeObjectURL(img.src); } catch (_) {} img.removeAttribute('src'); }
+  }
+  const wrapEl = $('wrapReplay');
+  if (wrapEl) wrapEl.addEventListener('click', (e) => {
+    if (e.target.closest('.wr-chips') ) return; /* chips act, never skip */
+    if (WR_SKIP) { WR_SKIP(); return; }        /* mid-film tap = final frame */
+    if (!$('wrFinal').hidden && !e.target.closest('.wr-final')) closeWrap();
+  });
+  if ($('wrClose')) $('wrClose').onclick = closeWrap;
+  if ($('wrAgain')) $('wrAgain').onclick = () => {
+    const st = wrapState();
+    closeWrap();
+    if (st) runWrapReplay(st.tripDone ? { kind: 'trip' } : { kind: 'leg', idx: st.doneIdx[st.doneIdx.length - 1] });
+  };
+  if ($('wrShareCard')) $('wrShareCard').onclick = (e) => shareRoute(e.currentTarget);
+
+  /* triggers: first Today open after a boundary — never while the repack
+     nudge is live (spec §1: it renders after the nudge resolves) */
+  async function maybeWrap() {
+    const st = wrapState();
+    /* the permanent on-demand door: ▶ replay on the passport, from the
+       first wrap onward — plays whatever's complete so far */
+    const chip = $('ppReplay');
+    if (chip) {
+      chip.hidden = !(st && st.doneIdx.length);
+      chip.onclick = () => runWrapReplay({ kind: 'trip' }); /* full film over completed legs */
+    }
+    if (!st || !st.doneIdx.length) return;
+    const nudgeEl = $('readyNudge');
+    if (nudgeEl && !nudgeEl.hidden && /repack/i.test(nudgeEl.textContent)) return;
+    const seen = (trip.wraps_seen && typeof trip.wraps_seen === 'object') ? trip.wraps_seen : {};
+    const seenLegs = Array.isArray(seen.legs) ? seen.legs : [];
+    let fire = null;
+    if (st.tripDone && !seen.trip) fire = { kind: 'trip' };
+    else {
+      const fresh = st.doneIdx.filter((i) => seenLegs.indexOf(i) === -1);
+      if (fresh.length && !st.tripDone) fire = { kind: 'leg', idx: fresh[fresh.length - 1] };
+    }
+    if (!fire) return;
+    const next = { legs: [...new Set(seenLegs.concat(fire.kind === 'leg' ? [fire.idx] : st.doneIdx))], trip: seen.trip || fire.kind === 'trip' };
+    trip.wraps_seen = next;
+    sb.from('trips').update({ wraps_seen: next }).eq('id', trip.id)
+      .then(({ error }) => { if (error) console.warn('[Prevoya] wrap mark failed:', error.message); });
+    runWrapReplay(fire);
+  }
+
+  Object.assign(window.__appDebug, { runWrapReplay, wrapState, maybeWrap, closeWrap });
+
   /* the corridor spine — returns true when the ceremony fired */
   async function runCorridor() {
     let matched = null;
@@ -3182,6 +3425,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           if (yp) yp.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 2800);
       }
+    } else {
+      /* M4: leg/trip wrap greets the first open past a boundary — never on
+         the same open as the F2 reveal, never over a live repack nudge */
+      maybeWrap();
     }
 
     /* §B beat 8: the corridor ends with the bar rising onto Today —

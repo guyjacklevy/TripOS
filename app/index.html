@@ -449,6 +449,7 @@
           <!-- A3 · sharing: explicit, revocable, boundary stated plainly -->
           <div class="pp-share-row">
             <button type="button" class="ri-replan" id="ppShare">↗ SHARE TRIP</button>
+            <button type="button" class="ri-replan" id="ppReplay" hidden>▶ replay</button>
             <button type="button" class="ck-reset" id="ppEditBtn">edit stamps</button>
           </div>
           <div class="pp-share-sheet" id="ppShareSheet" hidden></div>
@@ -552,6 +553,38 @@
     </button>
 
     <!-- ─── tab bar ─── -->
+    <!-- ─── M4 · THE WRAPPED MOMENT (WRAPPED_MOMENT_SPEC) — the map replays.
+         Full-screen film, tab bar stays (the user is home). Tap = skip. -->
+    <section id="wrapReplay" class="wrap-replay" hidden>
+      <div class="wr-stage">
+        <div class="wr-greet" id="wrGreet"></div>
+        <div class="wr-head" id="wrHead"></div>
+        <div class="wr-mapwrap">
+          <svg viewBox="0 0 320 260" width="100%" aria-hidden="true">
+            <path id="wrIsland" d="M31,130 Q43,109 67,103 Q100,91 136,85 Q178,79 217,85 Q253,89.5 277,106 Q289,115 283,125.5 Q271,136 247,139 Q223,142 202,139 Q184,137.5 172,140.5 Q167.5,148 166,157 Q178,163 181,175 Q178,190 163,196 Q145,199 136,187 Q130,175 139,164.5 Q145,158.5 154,157 Q152.5,148 148,142 Q124,136 94,134.5 Q61,133 40,137.5 Q29.5,137.5 31,130 Z"
+              fill="none" stroke="var(--mut)" stroke-width="1.5"/>
+            <ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.7"/>
+            <path id="wrTrace" d="" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>
+            <g id="wrDots"></g>
+            <g id="wrOrbs"></g>
+          </svg>
+          <span class="wr-ticker" id="wrTicker" hidden></span>
+        </div>
+        <div class="wr-counts" id="wrCounts"></div>
+        <div class="wr-records" id="wrRecords"></div>
+        <div class="wr-final" id="wrFinal" hidden>
+          <img class="wr-card" id="wrCard" alt="your journey card" hidden>
+          <p class="wr-truth">built from where you actually went</p>
+          <div class="wr-chips">
+            <button type="button" class="ri-replan" id="wrShareCard">↗ SHARE THE CARD</button>
+            <button type="button" class="ck-reset" id="wrAgain">↻ replay</button>
+            <button type="button" class="ck-reset" id="wrClose">done</button>
+          </div>
+        </div>
+      </div>
+      <div class="wr-progress"><div class="wr-progress-fill" id="wrFill"></div></div>
+    </section>
+
     <nav class="tab-bar" id="tabBar">
       <span class="runway" id="runway"></span>
       <button type="button" class="tab-slot" data-tab="today"><svg class="tab-ic"><use href="#tab-today"/></svg><span>TODAY</span></button>
