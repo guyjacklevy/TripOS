@@ -2876,7 +2876,28 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     return share;
   }
 
-  async function renderRouteCard() {
+  /* M2 ruling (Rachel 2026-08-10): the card's dots come from the ONE
+     sanitizer path — the shared-trip payload — never a second client-side
+     filter. create=false only peeks at an existing share: the replay's
+     final frame must never mint a public link uninvited. */
+  async function eligibleStamps(create) {
+    try {
+      let share = null;
+      if (create) share = await routeShareRow();
+      else {
+        const { data: rows } = await sb.from('trip_shares').select('token')
+          .eq('trip_id', trip.id).eq('kind', 'route').is('revoked_at', null).limit(1);
+        share = rows && rows[0];
+      }
+      if (!share) return null;
+      const r = await fetch(cfg.url + '/functions/v1/shared-trip?t=' + encodeURIComponent(share.token));
+      if (!r.ok) return null;
+      const d = await r.json();
+      return Array.isArray(d.stamps) ? d.stamps : [];
+    } catch (_) { return null; }
+  }
+
+  async function renderRouteCard(eligible) {
     const legs = TRIP_LEGS;
     const pts = legs.map((l) => AREA_XY[l.area] || [160, 150]);
     const c = document.createElement('canvas');
@@ -2900,15 +2921,14 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       x.font = '600 8px ' + mono;
       x.fillText(l.area.toUpperCase(), pts[i][0] + 9, pts[i][1] + 3);
     });
-    /* M2 (LIVING_MAP_SPEC): the card ages — the traveler's stamps join the
-       island once they exist. Same bucketing + deterministic offsets as the
-       instrument map; the day-1 plan card becomes the journey card. */
+    /* M2 (LIVING_MAP_SPEC, ruling 2026-08-10): the card ages — but ONLY with
+       publicly eligible stamps, straight from the sanitizer payload. Day-1
+       (or no share yet, or nothing eligible) renders the plan card exactly
+       as brand day froze it. Same bucketing + offsets as every surface. */
     const stampedPlaces = new Set();
-    (CHECKINS || []).forEach((c) => {
-      const k = String(c.place_id);
-      if (stampedPlaces.has(k)) return;
-      const reg = latLngRegion(c.lat, c.lng);
-      if (!reg || !AREA_XY[reg]) return;
+    (eligible || []).forEach((s) => {
+      const k = String(s.key);
+      if (stampedPlaces.has(k) || !AREA_XY[s.region]) return;
       stampedPlaces.add(k);
       let h = 0;
       for (let i = 0; i < k.length; i++) h = ((h * 31) + k.charCodeAt(i)) >>> 0;
@@ -2916,7 +2936,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const rad = 7 + ((h >> 4) % 8);
       x.fillStyle = 'rgba(232,232,240,0.85)';
       x.beginPath();
-      x.arc(AREA_XY[reg][0] + Math.cos(ang) * rad, AREA_XY[reg][1] + Math.sin(ang) * rad, 1.5, 0, Math.PI * 2);
+      x.arc(AREA_XY[s.region][0] + Math.cos(ang) * rad, AREA_XY[s.region][1] + Math.sin(ang) * rad, 1.5, 0, Math.PI * 2);
       x.fill();
     });
     x.restore();
@@ -2953,7 +2973,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     try {
       const share = await routeShareRow();
       const link = share ? location.origin + '/route/?t=' + share.token : null;
-      const blob = await renderRouteCard();
+      const blob = await renderRouteCard(await eligibleStamps(true));
       const file = blob ? new File([blob], 'prevoya-route.png', { type: 'image/png' }) : null;
       const text = 'My Bali route' + (link ? ' — plan yours: ' + link : '');
       if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -2978,8 +2998,15 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
      buffer. Tap anywhere = skip to the final frame, always. */
   let WR_TIMERS = [];
   let WR_SKIP = null;
+  let WR_LAST_SCOPE = null;
   const wrClear = () => { WR_TIMERS.forEach(clearTimeout); WR_TIMERS = []; };
   const wrAt = (ms, fn) => { WR_TIMERS.push(setTimeout(fn, ms)); };
+  /* spec §3: no MediaRecorder → the FILM chip never renders. No broken promises. */
+  const FILM_MIME = typeof MediaRecorder === 'undefined' ? null
+    : ['video/mp4', 'video/webm;codecs=vp9', 'video/webm'].find((m) => {
+        try { return MediaRecorder.isTypeSupported(m); } catch (_) { return false; }
+      }) || null;
+  const FILM_OK = !!FILM_MIME && !!HTMLCanvasElement.prototype.captureStream;
 
   /* absolute trip-day window of each leg: leg i covers days (acc, acc+nights] */
   function legWindows() {
@@ -3091,11 +3118,15 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       gEls.counts.textContent = countsLine;
       gEls.records.innerHTML = recs.map((r) => '<p>' + esc(r) + '</p>').join('');
       if (scope.kind === 'trip' || st.tripDone) {
-        const blob = await renderRouteCard().catch(() => null);
+        const elig = await eligibleStamps(false).catch(() => null);
+        const blob = await renderRouteCard(elig).catch(() => null);
         if (blob) { gEls.card.src = URL.createObjectURL(blob); gEls.card.hidden = false; }
       }
+      const filmBtn = $('wrShareFilm');
+      if (filmBtn) filmBtn.hidden = !FILM_OK;
       gEls.final.hidden = false;
       WR_SKIP = null;
+      WR_LAST_SCOPE = scope;
     };
     WR_SKIP = finalFrame;
 
@@ -3160,11 +3191,203 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     wrAt(t, finalFrame);
   }
 
+  /* ── slice 3 · THE FILM (spec §3) — the same replay drawn to canvas and
+     captured with the browser's own MediaRecorder. 1080×1920, ≤30s, zero
+     libraries. Content: completed legs only + Tier-1/promoted stamps ONLY
+     (a private named stamp never ships in an export). The film is a frozen,
+     owner-initiated document — the share sheet says so in one line. ── */
+  async function renderWrapFilm(scope, btn) {
+    const st = wrapState();
+    if (!st || !st.doneIdx.length || !FILM_OK) return;
+    const legIdxs = scope && scope.kind === 'leg' ? [scope.idx] : st.doneIdx;
+    const wins = legIdxs.map((i) => st.wins[i]);
+    const firstDay = wins[0].from, lastDay = wins[wins.length - 1].to;
+    let origin;
+    if (trip.arrive) { const p = String(trip.arrive).split('-'); origin = new Date(+p[0], +p[1] - 1, +p[2]); }
+    else { const c0 = new Date(trip.created_at); origin = new Date(c0.getFullYear(), c0.getMonth(), c0.getDate()); }
+    const dayOfCk = (c) => {
+      const b = baliDateOf(c.created_at);
+      return Math.round((new Date(b.y, b.m, b.d) - origin) / 86400000) + 1;
+    };
+    const dateLabel = (d) => {
+      const dd = new Date(origin.getFullYear(), origin.getMonth(), origin.getDate() + (d - 1));
+      return MONTH_ABBR[dd.getMonth()] + ' ' + dd.getDate();
+    };
+    /* Tier-1 only, completed window only, one dot per place, day-ordered */
+    const seen = new Set();
+    const stamps = [];
+    (CHECKINS || []).slice().sort((a, b) => (a.created_at < b.created_at ? -1 : 1)).forEach((c) => {
+      if (!c.place_id) return; /* Tier-2 NEVER renders in a film (ruling) */
+      const d = dayOfCk(c);
+      if (d < firstDay || d > lastDay) return;
+      const k = String(c.place_id);
+      const reg = latLngRegion(c.lat, c.lng);
+      if (!reg || !AREA_XY[reg]) return;
+      if (seen.has(k)) return;
+      seen.add(k);
+      let h = 0;
+      for (let i = 0; i < k.length; i++) h = ((h * 31) + k.charCodeAt(i)) >>> 0;
+      const ang = (h % 360) * Math.PI / 180, rad = 7 + ((h >> 4) % 8);
+      stamps.push({ day: d, x: AREA_XY[reg][0] + Math.cos(ang) * rad, y: AREA_XY[reg][1] + Math.sin(ang) * rad });
+    });
+    const pts = wins.map((w) => AREA_XY[w.leg.area] || [160, 150]);
+    const nights = wins.reduce((s, w) => s + w.leg.nights, 0);
+
+    /* timeline (seconds) — same beat grammar, time-parameterized */
+    const T1 = 2.4;
+    const T2 = T1 + wins.length * 0.7;
+    const daysSpan = Math.max(1, lastDay - firstDay + 1);
+    const dayDur = Math.min(12, Math.max(6, daysSpan * 0.3)) / daysSpan;
+    const T3 = T2 + daysSpan * dayDur;
+    const T4 = T3 + 2.0;
+    const T5 = T4 + 1.2;
+    const TOTAL = Math.min(30, T5 + 1.6);
+    const dayAt = (tt) => Math.min(lastDay, firstDay + Math.floor((tt - T2) / dayDur));
+
+    const countsLine = scope && scope.kind === 'leg'
+      ? nights + ' NIGHTS · ' + stamps.length + ' STAMPS'
+      : lastDay + ' DAYS · ' + wins.length + ' BASES · ' + stamps.length + ' STAMPED';
+    const title = scope && scope.kind === 'leg'
+      ? wins[0].leg.area.toUpperCase() + ' · WRAPPED'
+      : 'YOUR BALI';
+    const dates = dateLabel(firstDay) + ' – ' + dateLabel(lastDay);
+
+    const c = document.createElement('canvas');
+    c.width = 1080; c.height = 1920;
+    const x = c.getContext('2d');
+    if (!x) return;
+    const mono = 'ui-monospace, Menlo, monospace';
+    const islandP = new Path2D(ISLAND_PATH);
+    const alpha = (from, dur, tt) => Math.max(0, Math.min(1, (tt - from) / dur));
+
+    function frame(tt) {
+      x.setTransform(1, 0, 0, 1, 0, 0);
+      x.fillStyle = '#0a0a14'; x.fillRect(0, 0, 1080, 1920);
+      /* beat 1 · titles */
+      x.textAlign = 'center';
+      x.globalAlpha = alpha(0.2, 0.6, tt);
+      x.fillStyle = '#e8e8f0'; x.font = '700 66px -apple-system, system-ui, sans-serif';
+      x.fillText(title, 540, 330);
+      x.globalAlpha = alpha(0.7, 0.6, tt);
+      x.fillStyle = '#3dffd0'; x.font = '40px ' + mono;
+      x.fillText(dates, 540, 400);
+      x.globalAlpha = 1; x.textAlign = 'left';
+      /* the island */
+      x.save();
+      x.translate(60, 520); x.scale(3, 3);
+      x.globalAlpha = alpha(1.2, 0.8, tt);
+      x.strokeStyle = 'rgba(123,123,154,0.55)'; x.lineWidth = 0.6;
+      x.stroke(islandP);
+      x.beginPath(); x.ellipse(229, 175, 12, 8.25, -14 * Math.PI / 180, 0, Math.PI * 2); x.stroke();
+      /* beat 2 · the trace, leg by leg */
+      x.strokeStyle = '#3dffd0'; x.lineWidth = 1.2; x.lineCap = 'round'; x.lineJoin = 'round';
+      const segs = Math.max(0, Math.min(pts.length - 1, (tt - T1) / 0.7));
+      if (segs > 0) {
+        x.beginPath(); x.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i <= Math.floor(segs); i++) x.lineTo(pts[i][0], pts[i][1]);
+        const f = segs - Math.floor(segs);
+        if (f > 0 && Math.floor(segs) < pts.length - 1) {
+          const a = pts[Math.floor(segs)], b = pts[Math.floor(segs) + 1];
+          x.lineTo(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f);
+        }
+        x.stroke();
+      }
+      wins.forEach((w, i) => {
+        if (tt < T1 + i * 0.7) return;
+        const pop = Math.min(1, (tt - (T1 + i * 0.7)) / 0.3);
+        x.fillStyle = AREA_HEX[w.leg.area] || '#3dffd0';
+        x.beginPath(); x.arc(pts[i][0], pts[i][1], 5.5 * (0.4 + 0.6 * pop), 0, Math.PI * 2); x.fill();
+        x.globalAlpha = pop; x.font = '600 8px ' + mono;
+        x.fillText(w.leg.area.toUpperCase() + ' · ' + w.leg.nights + 'N', pts[i][0] + 9, pts[i][1] + 3);
+        x.globalAlpha = 1;
+      });
+      /* beat 3 · stamps in day order */
+      if (tt >= T2) {
+        const dNow = dayAt(tt);
+        x.fillStyle = 'rgba(232,232,240,0.85)';
+        stamps.forEach((s) => {
+          if (s.day > dNow) return;
+          x.beginPath(); x.arc(s.x, s.y, 1.7, 0, Math.PI * 2); x.fill();
+        });
+      }
+      x.restore();
+      /* the day ticker */
+      if (tt >= T2 && tt < T3) {
+        x.fillStyle = '#7b7b9a'; x.font = '36px ' + mono; x.textAlign = 'right';
+        x.fillText('DAY ' + Math.max(firstDay, dayAt(tt)), 1010, 560);
+        x.textAlign = 'left';
+      }
+      /* beat 4 · counts */
+      if (tt >= T3) {
+        x.globalAlpha = alpha(T3, 0.5, tt);
+        x.fillStyle = '#e8e8f0'; x.font = '44px ' + mono; x.textAlign = 'center';
+        x.fillText(countsLine, 540, 1430);
+        x.globalAlpha = 1; x.textAlign = 'left';
+      }
+      /* watermark, whole run */
+      x.fillStyle = '#3dffd0'; x.font = '34px ' + mono; x.textAlign = 'right';
+      x.fillText('@prevoya', 1020, 1856);
+      x.textAlign = 'left';
+      /* final second · prevoya.app */
+      if (tt >= TOTAL - 1.4) {
+        x.globalAlpha = alpha(TOTAL - 1.4, 0.5, tt);
+        x.fillStyle = '#3dffd0'; x.font = '700 64px ' + mono; x.textAlign = 'center';
+        x.fillText('prevoya.app', 540, 1560);
+        x.globalAlpha = 1; x.textAlign = 'left';
+      }
+    }
+
+    const label = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = '● rendering…'; }
+    track('wrap_film', { kind: scope ? scope.kind : 'trip' });
+    try {
+      const stream = c.captureStream(30);
+      const rec = new MediaRecorder(stream, { mimeType: FILM_MIME, videoBitsPerSecond: 6000000 });
+      const chunks = [];
+      rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+      const done = new Promise((res) => { rec.onstop = res; });
+      rec.start(500);
+      const t0 = performance.now();
+      await new Promise((res) => {
+        const step = () => {
+          const tt = (performance.now() - t0) / 1000;
+          frame(tt);
+          if (btn) btn.textContent = '● rendering ' + Math.min(99, Math.round(tt / TOTAL * 100)) + '%';
+          if (tt >= TOTAL) { res(); return; }
+          requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
+      rec.stop();
+      await done;
+      const ext = FILM_MIME.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
+      const blob = new Blob(chunks, { type: FILM_MIME.split(';')[0] });
+      const file = new File([blob], 'prevoya-wrapped.' + ext, { type: blob.type });
+      const note = $('wrFilmNote');
+      if (note) note.hidden = false;
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] }).catch(() => {});
+      } else {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = file.name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      }
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+    } catch (e) {
+      console.warn('[Prevoya] film export failed:', e && e.message);
+      if (btn) { btn.disabled = false; btn.textContent = '⚠ retry film'; }
+    }
+  }
+
   function closeWrap() {
     wrClear();
     WR_SKIP = null;
     const el = $('wrapReplay');
     if (el) el.hidden = true;
+    const note = $('wrFilmNote');
+    if (note) note.hidden = true;
     const img = $('wrCard');
     if (img && img.src) { try { URL.revokeObjectURL(img.src); } catch (_) {} img.removeAttribute('src'); }
   }
@@ -3181,6 +3404,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (st) runWrapReplay(st.tripDone ? { kind: 'trip' } : { kind: 'leg', idx: st.doneIdx[st.doneIdx.length - 1] });
   };
   if ($('wrShareCard')) $('wrShareCard').onclick = (e) => shareRoute(e.currentTarget);
+  if ($('wrShareFilm')) $('wrShareFilm').onclick = (e) => renderWrapFilm(WR_LAST_SCOPE || { kind: 'trip' }, e.currentTarget);
 
   /* triggers: first Today open after a boundary — never while the repack
      nudge is live (spec §1: it renders after the nudge resolves) */
@@ -3212,7 +3436,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     runWrapReplay(fire);
   }
 
-  Object.assign(window.__appDebug, { runWrapReplay, wrapState, maybeWrap, closeWrap });
+  Object.assign(window.__appDebug, { runWrapReplay, wrapState, maybeWrap, closeWrap, renderWrapFilm, eligibleStamps });
 
   /* the corridor spine — returns true when the ceremony fired */
   async function runCorridor() {
