@@ -594,6 +594,8 @@ function renderRoute(trip, legs, now, opts) {
    terrain tints. Real only; NO spend amounts anywhere in here.
    Banned by spec: completion %, streaks, gamification. */
 let CHECKINS = [];        /* the user's check-in rows, chronological */
+let SAVES = new Map();    /* saved places: curated_place_id → save-time ms (R2 recency) */
+let SAVE_ROWS = new Map(); /* curated_place_id → places-table row id, for unsave */
 let TRIP_DAY_PLANS = [];  /* [{leg_seq, day_in_leg, slots}] for planned-vs-actual */
 let PP_VIEW = 'place';
 let PP_CAT = 'all';
@@ -630,6 +632,9 @@ function stampEl(ck, p, opts) {
   /* F9: the traveler's own worth-it tap echoes on the stamp — a button whose
      effect is never seen teaches users buttons here don't do anything */
   const worth = (o.worth || ck.worth_it) ? '<span class="st-meta st-worth">✓ worth it</span>' : '';
+  /* R5: the intent-to-action pair — same grammar as "▸ planned · ✓ stamped" */
+  const savedPair = (ck.place_id && SAVES.has(String(ck.place_id)))
+    ? '<span class="st-meta">⚑ saved · ✓ stamped</span>' : '';
   const tap = !!p; /* rejected/vanished places render untappable, from the log alone */
   /* 2.1 (Guy): the stamp says WHAT the place is — category in words, not color alone */
   const catWord = p && p.category ? ' · ' + esc(p.category) : '';
@@ -647,7 +652,7 @@ function stampEl(ck, p, opts) {
       '<span class="st-dot" style="background:' + cc + '"></span>' +
       '<span class="st-name">' + esc(p ? p.name : (ck.place_name || '—')) + '</span>' +
       '<span class="st-date">' + dateLbl(dd) + catWord + ' ' + badge + '</span>' +
-      worth + meta + resolveChip +
+      worth + meta + savedPair + resolveChip +
     '</' + (tap ? 'button' : 'div') + '>';
 }
 function visaEl(area, firstIso) {
@@ -1442,6 +1447,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       milestone = inArea === 1 || (CHECKINS.length > 0 && CHECKINS.length % 10 === 0);
     }
     if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places, { ceremony: p.id, milestone });
+    /* R5: a stamp at a saved place — the flag on the card becomes the ✓,
+       quietly (no toast, no confetti; the story format is the reward) */
+    const cardEl = btn.closest('.place-card');
+    if (cardEl && p.id && SAVES.has(String(p.id))) {
+      const sf = cardEl.querySelector('.save-flag.on');
+      if (sf) { sf.classList.add('done'); sf.innerHTML = '<span class="sf-check">✓</span>'; }
+    }
     /* T7: the v19 loop — checked in? offer the typical spend, one tap to log */
     const card = btn.closest('.place-card');
     if (card && !card.querySelector('.spend-suggest')) {
@@ -1513,6 +1525,29 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       places,
       plan: planFromTrip(trip),
       onCheckin: checkinAt,
+      /* SAVED PLACES v1 (R1/R2): the bank + the mark, wired to the original
+         user-places table. Saves are private by default, always. */
+      saves: SAVES,
+      stampedIds: new Set((CHECKINS || []).map((c) => String(c.place_id)).filter((k) => k !== 'null')),
+      onSave: async (p, nowSaved) => {
+        if (!user) return false;
+        if (nowSaved) {
+          const { data: row, error } = await sb.from('places').insert({
+            user_id: user.id, curated_place_id: p.id,
+            name: p.name, area: p.area, category: p.category, curated: true
+          }).select('id').single();
+          if (error) { console.warn('[Prevoya] save failed:', error.message); return false; }
+          SAVE_ROWS.set(String(p.id), row.id);
+          track('place_saved');
+          return true;
+        }
+        const rowId = SAVE_ROWS.get(String(p.id));
+        if (!rowId) return false;
+        const { error } = await sb.from('places').delete().eq('id', rowId);
+        if (error) { console.warn('[Prevoya] unsave failed:', error.message); return false; }
+        SAVE_ROWS.delete(String(p.id));
+        return true;
+      },
       onGoogleSearch: googleSearch,
       onGoogleAdd: googleAdd,
       onBrief: () => openCheckin(), /* §G no-brief banner runs the questionnaire in-app */
@@ -3605,6 +3640,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       : (await sb.from('curated_places').select('*').eq('destination', 'bali')).data;
     corridorPool = null;
     placesCount = (places || []).length || placesCount;
+    /* the shortlist loads with the shelf (R2) */
+    const { data: savedRows } = await sb.from('places')
+      .select('id, curated_place_id, created_at')
+      .eq('user_id', user.id).not('curated_place_id', 'is', null);
+    SAVES = new Map((savedRows || []).map((r) => [String(r.curated_place_id), new Date(r.created_at).getTime()]));
+    SAVE_ROWS = new Map((savedRows || []).map((r) => [String(r.curated_place_id), r.id]));
     mountPlacesTab(places || []);
     renderToday(trip, greetName(), places || []);
     todayCtx = { trip, name: greetName(), places: places || [] };

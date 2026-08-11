@@ -42,7 +42,7 @@ export const catPhoto = (cat) => CAT[cat]
   : '';
 
 export function mountPlaces(cfg) {
-  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd } = cfg;
+  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave } = cfg;
   const allPlaces = places.slice();
   const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const state = { area: 'all', cat: 'all', q: '', view: 'rows' };
@@ -109,6 +109,7 @@ export function mountPlaces(cfg) {
       '<article class="place-card" data-cat="' + esc(p.category) + '" data-region="' + esc(region(p.area)) +
         '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
         catPhoto(p.category) +
+        flagBtn(p) +
         (matched ? '<span class="match-badge">✦ ' + bd.pct + '% match</span>' : disc) +
         '<div class="place-top">' +
           '<span class="orb ' + cat.orb + '"></span>' +
@@ -131,6 +132,21 @@ export function mountPlaces(cfg) {
         '</div>' +
       '</article>'
     );
+  }
+
+  /* ── SAVED PLACES R1 (SAVED_PLACES_RULINGS): the save mark — an SVG flag,
+     card top-right, 44px target, always visible. Saved+stamped = ✓ (R5).
+     Renders only when the surface can persist (app mount passes onSave). ── */
+  function flagBtn(p) {
+    if (!onSave || !saves) return '';
+    const id = String(p.id);
+    const on = saves.has(id);
+    const done = on && stampedIds && stampedIds.has(id);
+    return '<button type="button" class="save-flag' + (on ? ' on' : '') + (done ? ' done' : '') +
+      '" data-save="' + esc(id) + '" aria-label="' + (on ? 'saved — tap to remove' : 'save for later') + '">' +
+      (done ? '<span class="sf-check">✓</span>'
+        : '<svg width="16" height="16" aria-hidden="true"><use href="#icon-' + (on ? 'saved' : 'save') + '"/></svg>') +
+      '</button>';
   }
 
   function dropIn(cards) {
@@ -163,6 +179,7 @@ export function mountPlaces(cfg) {
       '<article class="place-card poi-mini" data-cat="' + esc(p.category) + '" data-region="' + esc(region(p.area)) +
         '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
         catPhoto(p.category) +
+        flagBtn(p) +
         (matched ? '<span class="match-badge">✦ ' + bd.pct + '%</span>' : disc) +
         '<div class="place-top">' +
           '<span class="orb ' + cat.orb + '"></span>' +
@@ -210,7 +227,38 @@ export function mountPlaces(cfg) {
     /* Guy 2026-08-11: the search bar is ALWAYS visible — day 1 included.
        (§F amendment; Rachel pinged. Typing unlocks the full shelf below.) */
     if (els.search) els.search.hidden = false;
-    els.grid.innerHTML = '<div class="cat-rows">' + groups.map((g) => {
+    /* ── SAVED PLACES R2: the bank is the FIRST row of Places — a rail, not
+       a chip. Renders only when non-empty (absence is the empty state).
+       Ordered area → recency. Counter real or absent. First-save caption
+       rides the §F layer-cap pattern: dies on first interaction, forever. */
+    let savedRow = '';
+    if (onSave && saves && saves.size) {
+      const savedPlaces = allPlaces
+        .filter((p) => saves.has(String(p.id)))
+        .sort((a, b) => {
+          const ra = AREA_ORDER.indexOf(region(a.area)), rb = AREA_ORDER.indexOf(region(b.area));
+          if (ra !== rb) return (ra === -1 ? 99 : ra) - (rb === -1 ? 99 : rb);
+          const ta = (saves.get && saves.get(String(a.id))) || 0;
+          const tb = (saves.get && saves.get(String(b.id))) || 0;
+          return tb - ta;
+        });
+      if (savedPlaces.length) {
+        const stampedN = stampedIds ? savedPlaces.filter((p) => stampedIds.has(String(p.id))).length : 0;
+        let capSeen = true;
+        try { capSeen = !!localStorage.getItem('tripos_cap_save1'); } catch (_) {}
+        savedRow = (capSeen ? '' : '<p class="layer-cap" data-cap="save1">your shortlist · saves schedule themselves</p>') +
+          '<div class="plb-row plb-saved" style="--cc:var(--teal)">' +
+            '<header class="row-head">' +
+              '<span class="row-dot"></span>' +
+              '<span class="row-name"><svg width="12" height="12" aria-hidden="true"><use href="#icon-saved"/></svg> saved</span>' +
+              '<span class="row-count">' + savedPlaces.length + '</span>' +
+              (stampedN ? '<span class="row-matched">' + savedPlaces.length + ' saved · ' + stampedN + ' stamped</span>' : '') +
+            '</header>' +
+            '<div class="carousel">' + savedPlaces.map((p) => miniCard(p, matchedMap.get(p) || null)).join('') + '</div>' +
+          '</div>';
+      }
+    }
+    els.grid.innerHTML = '<div class="cat-rows">' + savedRow + groups.map((g) => {
       const meta = CAT[g.cat] || { cc: 'var(--teal)', label: g.cat };
       return '<div class="plb-row" data-cat="' + esc(g.cat) + '" style="--cc:' + meta.cc + '">' +
         '<header class="row-head">' +
@@ -413,6 +461,29 @@ export function mountPlaces(cfg) {
      carousel card opens its category detail, scrolled to that place */
   els.grid.onclick = (e) => {
     if (e.target.closest('a')) return;
+    /* R1: the flag toggles — optimistic, reverted on a failed write. A tap
+       on the mark never opens the card (it's a mark, not the card). */
+    const sf = e.target.closest('.save-flag');
+    if (sf) {
+      e.stopPropagation();
+      if (!onSave || !saves) return;
+      const id = sf.getAttribute('data-save');
+      const p = allPlaces.find((x) => String(x.id) === id);
+      if (!p) return;
+      const wasOn = saves.has(id);
+      if (wasOn) { saves.delete(id); } else { saves.set ? saves.set(id, Date.now()) : saves.add(id); }
+      sf.classList.toggle('on', !wasOn);
+      const use = sf.querySelector('use');
+      if (use) use.setAttribute('href', '#icon-' + (wasOn ? 'save' : 'saved'));
+      if (!wasOn && !REDUCED) { sf.classList.remove('sf-ping'); void sf.offsetWidth; sf.classList.add('sf-ping'); }
+      if (state.view === 'rows') renderRows(); /* the rail reflects the bank live */
+      Promise.resolve(onSave(p, !wasOn)).then((ok) => {
+        if (ok !== false) return;
+        if (wasOn) { saves.set ? saves.set(id, Date.now()) : saves.add(id); } else { saves.delete(id); }
+        if (state.view === 'rows') renderRows();
+      });
+      return;
+    }
     const btn = e.target.closest('.place-here');
     if (btn) {
       const p = allPlaces.find((x) => String(x.id) === btn.getAttribute('data-place-id'));

@@ -1940,7 +1940,7 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 /* content rides above the photo; absolutely-positioned badges keep their
    own positioning — z-index alone is enough since they're already positioned */
 .place-card > *:not(.card-photo) { z-index: 1; }
-.place-card > *:not(.card-photo):not(.match-badge):not(.disc-badge) { position: relative; }
+.place-card > *:not(.card-photo):not(.match-badge):not(.disc-badge):not(.save-flag) { position: relative; }
 
 /* Hero photo: REMOVED by Guy's call (Jul 23) — full-bleed Bali at the hero's
    mobile crop read as mud, not place. Real Bali lives on the cards (22%
@@ -2802,6 +2802,28 @@ html.js .reveal.in { opacity: 1; transform: none; }
   .hook .hook-arrow, .boarding-call .blink, .board-head .live, .board-row .b-status.boarding { animation: none; }
   html { scroll-behavior: auto; }
 }
+
+/* ═══ SAVED PLACES (SAVED_PLACES_RULINGS R1/R2/R5) ═══
+   The mark: SVG flag, card top-right, 44px target, always visible. The card
+   never tints — saved is a mark ON the card, not a state OF it. */
+.save-flag {
+  position: absolute; top: 2px; right: 2px; z-index: 3;
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--mut);
+  -webkit-tap-highlight-color: transparent;
+}
+.save-flag.on { color: var(--teal); }
+.save-flag .sf-check { color: var(--teal); font-size: 15px; font-weight: 700; }
+.save-flag.sf-ping svg { animation: sfPing 0.45s ease-out; }
+@keyframes sfPing { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+/* badges yield the corner to the mark (flag precedes badge in the DOM) */
+.save-flag ~ .match-badge, .save-flag ~ .disc-badge { right: 46px; }
+/* the bank rail: first row of Places */
+.plb-saved .row-name svg { vertical-align: -1px; margin-right: 2px; color: var(--teal); }
+.plb-saved .row-matched { color: var(--mut); }
+@media (prefers-reduced-motion: reduce) { .save-flag.sf-ping svg { animation: none; } }
 
 /* ═══ M4 · THE WRAPPED MOMENT — the map replays (WRAPPED_MOMENT_SPEC) ═══
    Full-screen film UNDER the tab bar (z 80 < 90: the user is home, not in a
