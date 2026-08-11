@@ -462,15 +462,22 @@
           </div>
           <div class="pp-filter" id="ppFilter"></div>
           <div id="ppBody"></div>
-          <!-- A2 · retroactive logging: "I was at X yesterday" -->
+          <!-- A2 v2 · the stamping SESSION (Guy+Alex fusion, 2026-08-11):
+               sticky day + stepper + type-ahead that stamps instantly.
+               Opened by "+" on any BY DAY row, or by the button below. -->
           <button type="button" class="ck-reset" id="ppRetro">+ stamp a past day</button>
-          <form class="log-form add-form pp-retro-form" id="ppRetroForm" hidden>
-            <input class="auth-input" id="ppRetroPlace" type="text" list="ppPlaces" placeholder="which place?" autocomplete="off">
-            <datalist id="ppPlaces"></datalist>
-            <input class="auth-input" id="ppRetroDate" type="date">
-            <button class="btn btn-primary log-btn" type="submit">stamp</button>
-          </form>
-          <p class="pulse-note" id="ppRetroNote" hidden></p>
+        </div>
+
+        <div class="stamp-sheet" id="stampSheet" hidden>
+          <div class="ss-day">
+            <button type="button" class="ss-step" id="ssPrev" aria-label="previous day">◂</button>
+            <span class="ss-date" id="ssDate">—</span>
+            <button type="button" class="ss-step" id="ssNext" aria-label="next day">▸</button>
+            <button type="button" class="ss-close" id="ssClose" aria-label="close">✕</button>
+          </div>
+          <input class="auth-input ss-find" id="ssFind" type="text" placeholder="type a place — tap to stamp" autocomplete="off">
+          <div class="ss-suggest" id="ssSuggest"></div>
+          <div class="ss-chips" id="ssChips"></div>
         </div>
 
         <!-- install — the retention lever: on the home screen or forgotten -->

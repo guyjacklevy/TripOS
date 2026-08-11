@@ -2181,8 +2181,51 @@ div.stamp { cursor: default; }
 .pp-resolve { display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
   padding: 12px; margin: 4px 0 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--glass); }
 .pp-resolve .ppr-pick { text-align: left; }
-.pp-retro-form { margin-top: 10px; }
-.pp-retro-form .auth-input { font-size: 13px; }
+/* ── the stamping SESSION (Guy+Alex fusion): sticky day, stepper, type-ahead.
+   Fixed above the tab bar so it survives passport re-renders behind it. */
+.stamp-sheet {
+  position: fixed; left: 12px; right: 12px;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  z-index: 85;
+  background: color-mix(in srgb, var(--bg, #0a0a14) 92%, transparent);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line); border-radius: 18px;
+  padding: 12px 14px calc(12px + 2px);
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
+}
+.stamp-sheet[hidden] { display: none; }
+.ss-day { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.ss-step {
+  background: none; border: 1px solid var(--line); border-radius: 10px;
+  color: var(--teal); font-size: 16px; width: 40px; height: 34px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ss-step:disabled { color: var(--dim); opacity: 0.5; }
+.ss-date { flex: 1; text-align: center; font-family: var(--mono); font-size: 13px; letter-spacing: 0.12em; color: var(--tx); }
+.ss-close { background: none; border: none; color: var(--mut); font-size: 15px; cursor: pointer; padding: 4px 6px; }
+.ss-find { width: 100%; text-align: left; padding: 11px 13px; }
+.ss-suggest { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.ss-suggest button {
+  text-align: left; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line);
+  border-radius: 10px; color: var(--tx); font-size: 14px; padding: 10px 12px; cursor: pointer;
+}
+.ss-suggest .ssg-area { font-family: var(--mono); font-size: 10px; color: var(--mut); margin-left: 8px; letter-spacing: 0.1em; }
+.ss-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.ss-chips:empty { margin-top: 0; }
+.ss-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--teal);
+  border: 1px solid color-mix(in srgb, var(--teal) 35%, transparent); border-radius: 999px;
+  padding: 5px 10px; background: none; cursor: pointer;
+}
+.ss-chip .ssc-x { color: var(--mut); }
+/* the per-row door: "+" on every BY DAY row */
+.pp-day-add {
+  background: none; border: 1px solid var(--line); border-radius: 8px;
+  color: var(--teal); font-size: 13px; line-height: 1; width: 26px; height: 22px;
+  margin-left: 8px; cursor: pointer; vertical-align: 1px;
+  -webkit-tap-highlight-color: transparent;
+}
 
 /* AI-3: the live concierge — input on Today + reply line above the timeline */
 .cx-form { margin-bottom: 4px; }

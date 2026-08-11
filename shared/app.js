@@ -788,8 +788,11 @@ function renderPassport(trip, places, opts) {
     [...preMap.values()]
       .sort((a, b) => (a.dd.y - b.dd.y) || (a.dd.m - b.dd.m) || (a.dd.d - b.dd.d))
       .forEach((g) => {
+        const iso = g.dd.y + '-' + String(g.dd.m + 1).padStart(2, '0') + '-' + String(g.dd.d).padStart(2, '0');
         rows.push('<div class="pp-day"><span class="pp-day-label">' +
-          dateLbl(g.dd) + ' · PRE-TRIP</span><div class="stamp-grid">' +
+          dateLbl(g.dd) + ' · PRE-TRIP' +
+          '<button type="button" class="pp-day-add" data-date="' + iso + '" aria-label="stamp this day">+</button></span>' +
+          '<div class="stamp-grid">' +
           g.cks.map((c) => stampEl(c, resolve(c.place_id), {})).join('') +
           '</div></div>');
       });
@@ -803,8 +806,10 @@ function renderPassport(trip, places, opts) {
       const planned = planFor(d);
       const stampedIds = new Set(dayCks.map((c) => String(c.place_id)));
       const label = MONTH_ABBR[dd.getMonth()] + ' ' + dd.getDate() + ' · DAY ' + d;
+      const dayIso = dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0') + '-' + String(dd.getDate()).padStart(2, '0');
+      const addBtn = '<button type="button" class="pp-day-add" data-date="' + dayIso + '" aria-label="stamp this day">+</button>';
       if (!dayCks.length && !planned.length) {
-        rows.push('<div class="pp-day dim"><span class="pp-day-label">' + label + ' · no stamps</span></div>');
+        rows.push('<div class="pp-day dim"><span class="pp-day-label">' + label + ' · no stamps' + addBtn + '</span></div>');
         continue;
       }
       const stamps = dayCks.map((c) => {
@@ -820,7 +825,7 @@ function renderPassport(trip, places, opts) {
           const p = resolve(s.place_id);
           return p ? '<div class="pp-ghost">▸ ' + esc(p.name) + ' · planned · passed</div>' : '';
         }).join('');
-      rows.push('<div class="pp-day"><span class="pp-day-label">' + label + '</span>' +
+      rows.push('<div class="pp-day"><span class="pp-day-label">' + label + addBtn + '</span>' +
         (stamps ? '<div class="stamp-grid">' + stamps + '</div>' : '') + ghosts + '</div>');
     }
     host.innerHTML = '<div class="pp-days">' + rows.join('') + '</div>';
@@ -1751,42 +1756,116 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
   };
 
-  /* A2 · retroactive logging: "I was at X yesterday" — the log stays whole */
-  const retroBtn = $('ppRetro'), retroForm = $('ppRetroForm');
-  if (retroBtn) retroBtn.onclick = () => {
-    retroForm.hidden = !retroForm.hidden;
-    if (!retroForm.hidden) {
-      $('ppPlaces').innerHTML = ((todayCtx && todayCtx.places) || [])
-        .map((p) => '<option value="' + esc(p.name) + '">').join('');
-      try { $('ppRetroDate').max = new Date().toISOString().slice(0, 10); } catch (_) {}
-    }
-  };
-  if (retroForm) retroForm.onsubmit = async (e) => {
-    e.preventDefault();
-    const note = $('ppRetroNote');
-    const name = $('ppRetroPlace').value.trim();
-    const dateV = $('ppRetroDate').value;
-    const p = ((todayCtx && todayCtx.places) || []).find((x) => x.name === name);
-    if (!p || !dateV) {
-      note.hidden = false;
-      note.textContent = !p ? 'pick a place from the list' : 'pick the day';
-      return;
-    }
+  /* ═══ A2 v2 · THE STAMPING SESSION (Guy+Alex fusion, 2026-08-11) ═══
+     The unit of work is a session, not a stamp: sticky day + ◂▸ stepper +
+     a type-ahead that stamps on tap and never drops focus. "+" on any
+     BY DAY row opens it anchored there; the button opens it at yesterday.
+     Replaces the old one-stamp retro form. */
+  let ssDate = null; /* 'YYYY-MM-DD' (Bali calendar day) */
+  const ssEl = { sheet: $('stampSheet'), date: $('ssDate'), prev: $('ssPrev'), next: $('ssNext'),
+    close: $('ssClose'), find: $('ssFind'), suggest: $('ssSuggest'), chips: $('ssChips') };
+  const ssIso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const ssParse = (iso) => { const p = String(iso).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
+  const ssTodayIso = () => { const n = baliNow(); return ssIso(new Date(n.getFullYear(), n.getMonth(), n.getDate())); };
+  function ssLabel() {
+    const d = ssParse(ssDate);
+    let origin = null;
+    if (trip && trip.arrive) origin = ssParse(trip.arrive);
+    else if (trip && trip.created_at) { const c = new Date(trip.created_at); origin = new Date(c.getFullYear(), c.getMonth(), c.getDate()); }
+    const dayN = origin ? Math.round((d - origin) / 86400000) + 1 : null;
+    return MONTH_ABBR[d.getMonth()] + ' ' + d.getDate() +
+      (dayN == null ? '' : (dayN >= 1 ? ' · DAY ' + dayN : ' · PRE-TRIP'));
+  }
+  function ssRenderChips() {
+    const cks = CHECKINS.filter((c) => {
+      const b = baliDateOf(c.created_at);
+      return ssIso(new Date(b.y, b.m, b.d)) === ssDate;
+    });
+    ssEl.chips.innerHTML = cks.map((c) =>
+      '<button type="button" class="ss-chip" data-ck="' + esc(c.id) + '">' +
+      esc(c.place_name || 'a place') + ' <span class="ssc-x">✕</span></button>').join('');
+  }
+  function ssPaint() {
+    ssEl.date.textContent = ssLabel();
+    ssEl.next.disabled = ssDate >= ssTodayIso();
+    ssRenderChips();
+  }
+  function openStampSheet(dateIso) {
+    if (!ssEl.sheet) return;
+    ssDate = dateIso || ssDate || ssTodayIso();
+    if (ssDate > ssTodayIso()) ssDate = ssTodayIso();
+    ssEl.sheet.hidden = false;
+    ssEl.find.value = '';
+    ssEl.suggest.innerHTML = '';
+    ssPaint();
+    ssEl.find.focus();
+  }
+  async function ssStamp(p) {
     const { data: ckRow, error } = await sb.from('checkins').insert({
       user_id: user.id, place_id: p.id, place_name: p.name, lat: p.lat, lng: p.lng,
-      created_at: dateV + 'T12:00:00+08:00' /* noon Bali on the chosen day */
+      created_at: ssDate + 'T12:00:00+08:00' /* noon Bali on the session day */
     }).select().single();
     if (error) {
-      note.hidden = false;
-      note.textContent = 'didn’t save — tap stamp to retry';
+      ssEl.suggest.innerHTML = '<p class="pulse-note">didn’t save — tap the place again</p>';
       return;
     }
     CHECKINS.push(ckRow);
     CHECKINS.sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
-    note.hidden = true;
-    retroForm.hidden = true;
-    $('ppRetroPlace').value = ''; $('ppRetroDate').value = '';
-    if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places, { ceremony: p.id });
+    track('retro_stamp');
+    if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places); /* sheet lives outside ppBody — it survives */
+    ssEl.find.value = '';
+    ssEl.suggest.innerHTML = '';
+    ssPaint();
+    ssEl.find.focus(); /* the whole point: type-tap, type-tap, never re-aim */
+  }
+  if (ssEl.sheet) {
+    ssEl.find.oninput = () => {
+      const q = ssEl.find.value.trim().toLowerCase();
+      if (q.length < 2) { ssEl.suggest.innerHTML = ''; return; }
+      const pool = ((todayCtx && todayCtx.places) || []);
+      const hits = pool
+        .map((p) => {
+          const name = String(p.name).toLowerCase();
+          const hay = name + ' ' + String(p.area || '').toLowerCase();
+          const rank = name.startsWith(q) ? 0 : name.indexOf(q) !== -1 ? 1 : hay.indexOf(q) !== -1 ? 2 : -1;
+          return { p, rank };
+        })
+        .filter((x) => x.rank >= 0)
+        .sort((a, b) => a.rank - b.rank || (b.p.verified === true) - (a.p.verified === true))
+        .slice(0, 6);
+      ssEl.suggest.innerHTML = hits.map((x) =>
+        '<button type="button" data-pick="' + esc(x.p.id) + '">' + esc(x.p.name) +
+        '<span class="ssg-area">' + esc(String(x.p.area || '').split('/')[0]) + '</span></button>').join('') ||
+        '<p class="pulse-note">nothing by that name yet — tell Alex, it joins the dataset</p>';
+    };
+    ssEl.suggest.onclick = (e) => {
+      const b = e.target.closest('[data-pick]');
+      if (!b) return;
+      const p = ((todayCtx && todayCtx.places) || []).find((x) => String(x.id) === b.getAttribute('data-pick'));
+      if (p) ssStamp(p);
+    };
+    ssEl.chips.onclick = async (e) => {
+      const chip = e.target.closest('.ss-chip');
+      if (!chip) return;
+      const id = chip.getAttribute('data-ck');
+      const { error } = await sb.from('checkins').delete().eq('id', id);
+      if (error) { console.error('[Prevoya] unstamp failed:', error.message); return; }
+      CHECKINS = CHECKINS.filter((c) => String(c.id) !== String(id));
+      if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+      ssPaint();
+      ssEl.find.focus();
+    };
+    ssEl.prev.onclick = () => { ssDate = ssIso(new Date(ssParse(ssDate).getTime() - 86400000)); ssPaint(); ssEl.find.focus(); };
+    ssEl.next.onclick = () => {
+      const n = ssIso(new Date(ssParse(ssDate).getTime() + 86400000));
+      if (n <= ssTodayIso()) { ssDate = n; ssPaint(); ssEl.find.focus(); }
+    };
+    ssEl.close.onclick = () => { ssEl.sheet.hidden = true; };
+  }
+  const retroBtn = $('ppRetro');
+  if (retroBtn) retroBtn.onclick = () => {
+    const y = new Date(ssParse(ssTodayIso()).getTime() - 86400000);
+    openStampSheet(ssIso(y));
   };
 
   /* ─── A3 · sharing: explicit, per-trip, revocable. The link is the ONLY
@@ -1845,6 +1924,14 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   };
   const ppBodyEl = $('ppBody');
   if (ppBodyEl) ppBodyEl.addEventListener('click', async (e) => {
+    /* the fusion door: "+" on a day row opens the session anchored there */
+    const add = e.target.closest('.pp-day-add');
+    if (add) {
+      e.preventDefault();
+      e.stopPropagation();
+      openStampSheet(add.getAttribute('data-date'));
+      return;
+    }
     /* M3 §1 · promotion: a private raw stamp becomes a Tier-1 stamp at OUR
        database place — the device fix is REPLACED, never migrated. */
     const rv = e.target.closest('.st-resolve');
