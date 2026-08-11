@@ -207,7 +207,9 @@ export function mountPlaces(cfg) {
       const matchedOnly = groups.filter((g) => g.matched);
       if (matchedOnly.length) groups = matchedOnly; /* zero matches → full rows (never blank) */
     }
-    if (els.search) els.search.hidden = !shelfUnlocked;
+    /* Guy 2026-08-11: the search bar is ALWAYS visible — day 1 included.
+       (§F amendment; Rachel pinged. Typing unlocks the full shelf below.) */
+    if (els.search) els.search.hidden = false;
     els.grid.innerHTML = '<div class="cat-rows">' + groups.map((g) => {
       const meta = CAT[g.cat] || { cc: 'var(--teal)', label: g.cat };
       return '<div class="plb-row" data-cat="' + esc(g.cat) + '" style="--cc:' + meta.cc + '">' +
@@ -456,6 +458,12 @@ export function mountPlaces(cfg) {
     let t = null;
     els.search.oninput = () => {
       clearTimeout(t);
+      /* typing IS asking — the first keystroke unlocks the full shelf, or a
+         day-1 search would silently miss every unrendered place (§F carve-out) */
+      if (!shelfUnlocked && els.search.value.trim()) {
+        shelfUnlocked = true;
+        if (state.view === 'rows') renderRows();
+      }
       t = setTimeout(() => { state.q = els.search.value; applyFilters(true); }, 180);
     };
   }
