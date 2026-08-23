@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Prevoya — everything you need to know about Bali</title>
   <meta name="description" content="Everything you need to know about Bali — before you go and while you're there. Prevoya is the destination intelligence OS for slowmads. Free. No password, ever.">
   <meta property="og:title" content="Prevoya — Bali, decoded">
@@ -17,446 +17,82 @@
   <link rel="apple-touch-icon" href="/shared/brand/icon-192.png">
   <link rel="icon" href="/shared/brand/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/shared/brand/icon-192.png" type="image/png">
-<link rel="stylesheet" href="../shared/tripos.css">
+  <link rel="stylesheet" href="../shared/tripos.css">
 </head>
-<body class="has-flightbar">
+<body class="cx-page">
   <div class="cosmos"></div>
 
-  <!-- ─── flight progress — plane flies YOU → DPS as you scroll ─── -->
-  <div class="flightbar" aria-hidden="true">
-    <span class="fb-code">YOU</span>
-    <div class="fb-track">
-      <div class="fb-fill" id="fbFill"></div>
-      <span class="fb-plane" id="fbPlane">✈</span>
-    </div>
-    <span class="fb-code fb-dest">DPS</span>
-    <span class="fb-stage" id="fbStage">BOARDING</span>
-  </div>
-
-  <div class="wrap">
-    <nav class="nav">
+  <!-- ═══ CHAT-FIRST FRONT DOOR (CHAT_FIRST_SURFACE_RULINGS R1) ═══
+       The concierge speaks first, instantly, scripted — turn 0 never costs a
+       model call. Gone by ruling: stages, wizard chrome, the flight bar, the
+       ambient hero. The island's clock survives, small, in the header. -->
+  <div class="wrap cx-wrap">
+    <nav class="nav cx-nav">
       <a class="brand" href="../"><img src="/shared/brand/logo-mark.svg" width="28" height="28" alt="Prevoya" class="nav-mark">Prevoya</a>
-      <a class="nav-cta" href="../app/">Open app</a>
+      <span class="cx-clock" id="cxClock" aria-hidden="true"></span>
     </nav>
 
-    <!-- ─── stage 01 · boarding call ─── -->
-    <header class="hero" data-stage="BOARDING">
-      <div class="stage-tag"><span class="stage-num">01</span> Boarding call</div>
-      <!-- L3: title completes "now you can…" — says what you CAN, not what we are -->
-      <h1>Stay <span class="glow">longer</span> for less.</h1>
-      <p class="sub">Your Bali planner + concierge — before you go and while you're there. Prevoya plans the trip, guides your days, and tells you exactly how long the island can keep you.</p>
-      <p class="boarding-call">Planning desk: open · your brief takes 30 seconds · <span class="blink">concierge online</span></p>
-      <a class="btn btn-primary" href="../app/">Start my Bali plan — free</a>
-      <p class="note">No password. No install. Works on any phone.</p>
-      <!-- L4 v2: the concierge ledger — value in sentences, not stat tiles -->
-      <div class="value-ledger">
-        <div class="vl-head">// WHAT YOUR CONCIERGE HANDLES</div>
-        <div class="vl-row"><span class="vl-k">30s<em>not 3 weeks</em></span>
-          <div class="vl-v"><strong>Your whole trip, planned.</strong><span>Three questions become a full brief — where to base, what to pack, what a month really costs.</span></div></div>
-        <div class="vl-row"><span class="vl-k">35k<em>not 350k</em></span>
-          <div class="vl-v"><strong>Local prices on everything.</strong><span>Every place carries what it really costs — pay warung prices, not tourist prices.</span></div></div>
-        <div class="vl-row"><span class="vl-k">LIVE<em>every day</em></span>
-          <div class="vl-v"><strong>“How long can I stay?”</strong><span>Your budget against the island, updated daily — the answer that keeps you here.</span></div></div>
-      </div>
-    </header>
+    <section class="cx-thread" id="cxThread" aria-live="polite"></section>
 
-    <div class="hook reveal">
-      First, a quick stop at the concierge desk. Three questions and Bali starts adapting to you —
-      <span class="hook-arrow">↓</span>
-    </div>
+    <div class="cx-chips" id="cxChips"></div>
 
-    <!-- ─── stage 02 · check-in — the concierge builds your plan ─── -->
-    <section data-stage="CHECK-IN">
-      <div class="sec-head reveal">
-        <div class="stage-tag"><span class="stage-num">02</span> Check-in</div>
-        <h2>The concierge is asking.</h2>
-        <p>A few quick questions — it branches to who you are. Prevoya builds a Bali plan that's yours, not a listicle.</p>
-      </div>
-      <div class="mission-tag reveal"><span class="pulse-dot"></span>Mission briefing</div>
-      <div class="card checkin mission-card reveal" id="checkin">
-        <div id="ckMount"></div>
+    <form class="cx-composer" id="cxForm" autocomplete="off">
+      <input class="auth-input cx-input" id="cxInput" type="text" maxlength="280"
+        placeholder="tell me anything…" autocomplete="off">
+      <button type="button" class="cx-mic" id="cxMic" hidden aria-label="speak instead of typing">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="6" y="1.5" width="4" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <button type="submit" class="btn btn-primary cx-send" aria-label="send">→</button>
+    </form>
 
-        <div class="ck-build" id="ckBuild" hidden>
-          <div class="ck-term" id="ckTerm"></div>
-          <div class="ck-bar"><div class="ck-bar-fill" id="ckBarFill"></div></div>
-        </div>
-
-        <div class="ck-plan" id="ckPlan" hidden>
-          <div class="intel-bar"><span class="pulse-dot"></span>Mission intel · your Bali brief</div>
-          <h3 id="planTitle"></h3>
-          <p class="plan-base" id="planBase"></p>
-          <ul class="plan-list" id="planTeaser"></ul>
-          <div class="plan-lock-wrap">
-            <div class="scan-line"></div>
-            <ul class="plan-list locked" id="planList"></ul>
-            <div class="plan-lock">
-              <span class="plan-lock-ico">🔒</span>
-              <p><strong>Your full brief is ready.</strong></p>
-              <ul class="lock-list">
-                <li>✦ curated picks, matched &amp; scored to you</li>
-                <li>✦ daily budget with a live fuel gauge</li>
-                <li>✦ visa timeline for your trip length</li>
-                <li>✦ packing list for your vibe</li>
-              </ul>
-              <button type="button" class="btn btn-primary w-google" id="lockGoogle">
-                <svg class="g-mark" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92a8.78 8.78 0 0 0 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
-                Continue with Google
-              </button>
-              <a class="ck-reset" data-auth-gate href="../app/">or continue with email →</a>
-              <p class="note">free · 5 seconds · your brief travels with you</p>
-            </div>
-          </div>
-          <a class="ck-reset" id="ckReset">↺ change my answers</a>
-        </div>
-
-        <div class="ck-dots" id="ckDots"><span class="on"></span><span></span><span></span></div>
-      </div>
-    </section>
-
-    <div class="hook reveal">
-      Brief in. Before your concierge takes over — one last look at how you used to plan trips —
-      <span class="hook-arrow">↓</span>
-    </div>
-
-    <!-- ─── stage 03 · takeoff ─── -->
-    <section data-stage="TAKEOFF">
-      <div class="sec-head reveal">
-        <div class="stage-tag"><span class="stage-num">03</span> Takeoff</div>
-        <h2>You're leaving all of this on the ground.</h2>
-        <p>47 Instagram saves. 3 Facebook group screenshots. A half-finished spreadsheet. Sound familiar?</p>
-      </div>
-      <!-- L6 · THE CHAOS BOARD — the ONLY place in the product where off-brand
-           styling is permitted (light backgrounds, system-ui, hard shadows,
-           emoji): it IS the clutter of the world before. All styles are scoped
-           under .chaos-* / .artifact in tripos.css — never let them leak. -->
-      <div class="chaos-wrap reveal">
-        <div class="chaos-board" aria-hidden="true">
-          <div class="artifact art-tabs">
-            <div class="tab-strip">
-              <span class="tab">Best Bali cafés 2026</span>
-              <span class="tab">Uluwatu villa price</span>
-              <span class="tab">B211A visa how-to</span>
-              <span class="tab active">bingin warung??</span>
-              <span class="tab-plus">+43</span>
-            </div>
-          </div>
-          <div class="artifact art-sheet">
-            <div class="sheet-cell sheet-h">A</div><div class="sheet-cell sheet-h">B</div><div class="sheet-cell sheet-h">C</div>
-            <div class="sheet-cell">villa</div><div class="sheet-cell">8.5M?</div><div class="sheet-cell err">#REF!</div>
-            <div class="sheet-cell">scooter</div><div class="sheet-cell">1.2M?</div><div class="sheet-cell">=B2*30</div>
-            <div class="sheet-cell">total</div><div class="sheet-cell err">#DIV/0!</div><div class="sheet-cell"></div>
-          </div>
-          <div class="artifact art-ig">
-            <div class="ig-top">📌 Bali 2026 · Saved</div>
-            <div class="ig-grid"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-            <div class="ig-count">214 saved</div>
-          </div>
-          <div class="artifact art-tiktok">
-            <div class="tt-cap">10 SECRET Bali spots 🤫</div>
-            <div class="tt-meta">🔖 1.2M · ▶ 8.4M</div>
-          </div>
-          <div class="artifact art-wa">
-            <div class="wa-bubble">wait which beach was it?? 😭</div>
-            <div class="wa-bubble wa-me">the one with the swing i think</div>
-            <div class="wa-time">2:14 AM · read</div>
-          </div>
-        </div>
-
-        <div class="chaos-caption"><span class="cc-before">47 tabs</span><em class="cc-arrow">→</em><span class="cc-after">one brief</span></div>
-
-        <div class="card brief-card">
-          <div class="intel-bar"><span class="pulse-dot"></span>Your Bali brief</div>
-          <h3>One place. Everything decided.</h3>
-          <p>Where to stay, what a month really costs, the spots worth your time — matched to you, on one calm screen. No tabs. No screenshots. No “which beach was it.”</p>
-        </div>
-      </div>
-    </section>
-
-    <div class="hook reveal">
-      All of that, handled. Here's what a trip feels like when a concierge planned it —
-      <span class="hook-arrow">↓</span>
-    </div>
-
-    <!-- ─── stage 04 · cruising ─── -->
-    <section data-stage="CRUISING">
-      <div class="sec-head reveal">
-        <div class="stage-tag"><span class="stage-num">04</span> Cruising altitude</div>
-        <h2>One brain for the whole trip.</h2>
-        <p>Prevoya guides you from “I'm going to Bali” to “I live here now” — in three phases.</p>
-      </div>
-      <div class="features">
-        <div class="card feat reveal">
-          <span class="orb planet-teal"></span>
-          <span class="step">Phase 1 — Before</span>
-          <h3>Land like you've been here</h3>
-          <p>Where to stay for your vibe — Canggu, Uluwatu, Ubud. What to pack, what to sort before you fly, what a month here really costs.</p>
-        </div>
-        <div class="card feat reveal">
-          <span class="orb planet-blue"></span>
-          <span class="step">Phase 2 — During</span>
-          <h3>A concierge in your pocket</h3>
-          <p>Curated places by area and category — cafés to work from, warungs, beach clubs, gyms. One tap: open Maps, log the visit, done.</p>
-        </div>
-        <div class="card feat reveal">
-          <span class="orb planet-purple"></span>
-          <span class="step">Phase 3 — Money</span>
-          <h3>Know what you can still do</h3>
-          <p>Not a spreadsheet — a pulse. “You can afford three more beach club days this month.” Five-second logging keeps it honest.</p>
-        </div>
-      </div>
-    </section>
-
-    <div class="hook reveal">
-      Getting close now. Below — the places your concierge already scouted —
-      <span class="hook-arrow">↓</span>
-    </div>
-
-    <!-- ─── stage 05 · final approach ─── -->
-    <section data-stage="APPROACH">
-      <div class="card reveal" style="padding:30px 26px">
-        <div class="sec-head" style="margin-bottom:20px">
-          <div class="stage-tag"><span class="stage-num">05</span> Final approach</div>
-          <h2>Curated for Bali, down to the warung.</h2>
-          <p>Not a generic travel app with a destination dropdown.</p>
-        </div>
-        <ul class="dest-list">
-          <li><span class="tick">✓</span><span><strong>Bali areas decoded</strong> — <em>Uluwatu, Canggu, Ubud, Seminyak and the islands, each with its own personality</em></span></li>
-          <li><span class="tick">✓</span><span><strong>Live place search</strong> — <em>find and save any spot on the island in seconds, with cost estimates</em></span></li>
-          <li><span class="tick">✓</span><span><strong>IDR-native</strong> — <em>amounts in thousands, the way you actually think about them here</em></span></li>
-          <li><span class="tick">✓</span><span><strong>Local presets</strong> — <em>warung, bike rental, laundry — the daily rhythms of island life, one tap each</em></span></li>
-        </ul>
-        <div class="chips">
-          <span class="chip">🍽 Food</span>
-          <span class="chip">☕ Work</span>
-          <span class="chip">💆 Wellness</span>
-          <span class="chip">🏋️ Gym</span>
-          <span class="chip">🎉 Nights</span>
-          <span class="chip">🏖 Beach</span>
-          <span class="chip">🗺 Explore</span>
-        </div>
-        <div style="text-align:center;margin-top:22px">
-          <a class="btn btn-primary" href="/bali/places">Browse Bali's curated places →</a>
-        </div>
-      </div>
-
-      <!-- L7 · inbound transmission — the system speaking, not a founder.
-           Mono, teal, terse, second person. No quote marks, no attribution. -->
-      <section class="transmission reveal" style="padding-bottom:0">
-        <div class="tx-eyebrow">// INBOUND · DPS</div>
-        <p class="tx-line">Your plan lands before you do.</p>
-      </section>
-    </section>
-
-    <div class="hook reveal">
-      Your pass is ready —
-      <span class="hook-arrow">↓</span>
-    </div>
-
-    <!-- ─── stage 06 · landed — boarding pass cta ─── -->
-    <section data-stage="LANDED ✓">
-      <div class="bpass reveal">
-        <div class="bp-main">
-          <div class="bp-air">Prevoya Concierge · your Bali pass</div>
-          <div class="bp-route">
-            <span class="bp-city">YOU</span>
-            <span class="bp-dash"></span>
-            <span class="bp-city bp-to">DPS</span>
-          </div>
-          <p class="bp-sub" id="bpSub">Denpasar, Bali · one-way · stay as long as it holds you</p>
-          <div class="bp-grid">
-            <div><span>Plan</span><strong>BALI-01</strong></div>
-            <div><span>Concierge</span><strong>Always on</strong></div>
-            <div><span>Seat</span><strong>Window</strong></div>
-            <div><span>Class</span><strong id="bpClass">Slowmad</strong></div>
-            <div><span>Price</span><strong>Free</strong></div>
-            <div><span>Signup</span><strong>None</strong></div>
-          </div>
-          <a class="btn btn-primary" href="../app/">Open Prevoya — start planning</a>
-        </div>
-        <div class="bp-stub">
-          <div class="bp-barcode"></div>
-          <span class="bp-code">DPS · BALI</span>
-        </div>
-      </div>
-    </section>
-
-    <footer>
-      Prevoya · made for slowmads, by a slowmad · <a href="../">more destinations</a>
-    </footer>
+    <p class="cx-proof" id="cxProof"></p>
+    <p class="cx-alt">
+      <a href="/bali/places">browse Bali's curated places →</a>
+      <span class="cx-alt-dot">·</span>
+      <a href="../app/">sign in</a>
+    </p>
   </div>
+
+  <!-- ═══ THE REVEAL (R3) — full-screen; its receipt collapses into the thread ═══ -->
+  <section class="cx-reveal" id="cxReveal" hidden>
+    <div class="cx-reveal-inner">
+      <p class="cx-reveal-kicker">// YOUR BALI ROUTE</p>
+      <h2 class="cx-reveal-head" id="cxRevealHead"></h2>
+      <div class="cer-map cx-reveal-map">
+        <svg viewBox="0 0 320 260" width="100%" aria-hidden="true">
+          <path d="M31,130 Q43,109 67,103 Q100,91 136,85 Q178,79 217,85 Q253,89.5 277,106 Q289,115 283,125.5 Q271,136 247,139 Q223,142 202,139 Q184,137.5 172,140.5 Q167.5,148 166,157 Q178,163 181,175 Q178,190 163,196 Q145,199 136,187 Q130,175 139,164.5 Q145,158.5 154,157 Q152.5,148 148,142 Q124,136 94,134.5 Q61,133 40,137.5 Q29.5,137.5 31,130 Z"
+            fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.55"/>
+          <ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.55"/>
+          <path id="cxRevealTrace" d="" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>
+          <g id="cxRevealOrbs"></g>
+        </svg>
+      </div>
+      <div id="cxRevealLegs"></div>
+      <p class="cx-reveal-summary" id="cxRevealSummary"></p>
+      <button type="button" class="btn btn-primary cx-reveal-go" id="cxRevealGo">CONTINUE →</button>
+    </div>
+  </section>
 
   <script src="../shared/supabase-config.js"></script>
   <script src="../shared/track.js"></script>
-  <script type="module" src="../shared/auth.js"></script>
   <script type="module">
-    import { initMatch } from '../shared/match.js';
-    import { mountCheckin } from '../shared/checkin.js';
-    initMatch();
-    window.tripCheckin = { mountCheckin };
-    document.dispatchEvent(new CustomEvent('tripos:checkin-ready'));
-  </script>
-  <script src="../shared/tripos.js"></script>
-  <script>
-  /* ─── check-in concierge — builds a personal Bali plan ─── */
-  (function () {
-    var APP = '../app/';
-    var VIBES = {
-      nomad:    { label: 'Digital nomad', area: 'Canggu', why: 'rice-field cafés, fast wifi, the nomad mothership',
-                  picks: ['☕ Shelter Café — flat whites and deep work', '💻 BWork — the co-working anchor', '🌅 Old Man’s — sunset beers with the crew'],
-                  pack: 'Laptop stand, universal adapter, noise-cancelling buds' },
-      surf:     { label: 'Surf', area: 'Uluwatu', why: 'cliff warungs, world-class reef breaks, golden hour every day',
-                  picks: ['🏄 Bingin Beach — barrels and beach warungs', '🌊 Padang Padang — the classic', '🍹 Single Fin — Sunday session HQ'],
-                  pack: 'Reef booties, zinc, a board sock for the scooter rack' },
-      wellness: { label: 'Wellness', area: 'Ubud', why: 'jungle silence, yoga shalas, the healing capital of the island',
-                  picks: ['🧘 The Yoga Barn — the institution', '🌿 Tjampuhan Ridge — sunrise walk', '🥗 Alchemy — raw-food legend'],
-                  pack: 'Yoga mat towel, mosquito spray, layers for cool jungle nights' },
-      party:    { label: 'Party', area: 'Seminyak & Canggu', why: 'beach clubs, cocktail bars, nights that end at sunrise',
-                  picks: ['🎉 La Favela — jungle-bar madness', '🏖 Finns — beach club royalty', '🌮 Motel Mexicola — technicolor nights'],
-                  pack: 'One good shirt, electrolytes, sunglasses you can afford to lose' },
-      mix:      { label: 'Mix', area: 'Canggu', why: 'central base, every world within a scooter ride — surf mornings, cowork middays, sunset nights',
-                  picks: ['🌅 Old Man’s — sunset institution', '🧘 The Yoga Barn — the institution', '🍹 Single Fin — Sunday session HQ'],
-                  pack: 'A bit of everything, nothing heavy — you can buy the rest here' }
-    };
-    var TIERS = {
-      back: { label: 'Backpacker', idr: 350 },
-      comf: { label: 'Comfortable', idr: 700 },
-      prem: { label: 'Premium', idr: 1500 }
-    };
-
-    var box = document.getElementById('checkin');
-    if (!box) return;
-    var mountEl = document.getElementById('ckMount');
-    var dotsEl = document.getElementById('ckDots');
-    var build = document.getElementById('ckBuild');
-    var term = document.getElementById('ckTerm');
-    var barFill = document.getElementById('ckBarFill');
-    var plan = document.getElementById('ckPlan');
-    var sel = {};
-
-    function fmtIDR(k) { return k >= 1000 ? (k / 1000) + 'M' : k + 'k'; }
-    function durLabel(d) { return d === 0 ? 'open-ended' : d === 14 ? '2 weeks' : d === 30 ? '1 month' : '3+ months'; }
-
-    /* branched questionnaire lives in shared/checkin.js (deferred module) */
-    function startCheckin() {
-      var go = function () {
-        mountEl.hidden = false;
-        dotsEl.style.display = '';
-        window.tripCheckin.mountCheckin(mountEl, dotsEl, function (answers) {
-          sel = answers;
-          mountEl.hidden = true;
-          runBuild();
-        });
-      };
-      if (window.tripCheckin) go();
-      else document.addEventListener('tripos:checkin-ready', go, { once: true });
-    }
-
-    function runBuild() {
-      dotsEl.style.display = 'none';
-      build.hidden = false;
-      var v = VIBES[sel.vibe], t = TIERS[sel.tier];
-      var spotCount = (window.tripMatch && window.tripMatch.count) ? window.tripMatch.count : 52;
-      var lines = [
-        '▸ reading your vibe: ' + v.label.toLowerCase() +
-          (sel.vibe_detail_label ? ' · ' + sel.vibe_detail_label : ''),
-        '▸ scanning curated intel: ' + spotCount + ' spots · ' + (spotCount * 15) + '+ field notes…',
-        '▸ cross-referencing tides, seasons, crowds…',
-        '▸ matching ' + v.area + ' to your budget…',
-        (sel.priorities && sel.priorities.length
-          ? '▸ weighing ' + sel.priorities.length + ' priorit' + (sel.priorities.length === 1 ? 'y' : 'ies') + '…'
-          : '▸ pricing ' + durLabel(+sel.dur) + ' in IDR…'),
-        '▸ plan ready <span class="ok">✓</span>'
-      ];
-      term.innerHTML = '';
-      var i = 0;
-      var tick = function () {
-        var ln = document.createElement('span');
-        ln.className = 'ln';
-        ln.innerHTML = lines[i];
-        term.appendChild(ln);
-        i++;
-        if (i < lines.length) setTimeout(tick, 520);
-        else setTimeout(showPlan, 700);
-      };
-      setTimeout(function () { barFill.style.width = '100%'; }, 60);
-      tick();
-    }
-
-    function showPlan() {
-      var v = VIBES[sel.vibe], t = TIERS[sel.tier], d = +sel.dur;
-      build.hidden = true;
-      plan.hidden = false;
-      document.getElementById('planTitle').textContent = 'Your ' + v.label.toLowerCase() + ' ' + (d === 0 ? 'life' : durLabel(d)) + ' in Bali';
-      document.getElementById('planBase').innerHTML = 'Base yourself in <strong>' + v.area + '</strong> — ' + v.why + '. Daily budget: <strong>' + fmtIDR(t.idr) + ' IDR</strong> (' + t.label.toLowerCase() + ').';
-      var tailRows = [
-        ['Budget', (d === 0 ? '~' + fmtIDR(t.idr * 30) + ' IDR / month' : '~' + fmtIDR(t.idr * d) + ' IDR total') + ' · pace tracked daily'],
-        ['Pack', v.pack],
-        ['Timing', 'Best months, events and rainy-season calls']
-      ];
-      var row = function (r) {
-        return '<li><span class="pl-k">' + r[0] + '</span><span>' + r[1] + '</span></li>';
-      };
-      /* Stage 4: pick 1 is the TEASER — fully visible, credibility proof.
-         The rest stays behind the encrypted blur. */
-      var renderList = function (pickRows) {
-        document.getElementById('planTeaser').innerHTML = row(pickRows[0]);
-        document.getElementById('planList').innerHTML =
-          pickRows.slice(1).concat(tailRows).map(row).join('');
-      };
-      /* instant render with the static picks, then upgrade to real
-         curated_places matches from the database when the engine is ready */
-      renderList([['Pick 1', v.picks[0]], ['Pick 2', v.picks[1]], ['Pick 3', v.picks[2]]]);
-      var upgradePicks = function () {
-        window.tripMatch.picks(sel, 3).then(function (picks) {
-          if (!picks || picks.length < 3) return;
-          var icons = { beach: '🏖', food: '🍽', nightlife: '🎉', work: '☕', wellness: '💆', explore: '🗺', gym: '🏋️' };
-          renderList(picks.map(function (p, i) {
-            var money = '';
-            for (var m = 0; m < (p.price_level || 1); m++) money += '$';
-            return ['Pick ' + (i + 1), (icons[p.category] || '📍') + ' ' + p.name +
-              (p.verified ? ' ✓' : '') + ' — ' + p.area + ' · ' + money];
-          }));
-        });
-      };
-      /* the match engine is a deferred module — it may load after this script */
-      if (window.tripMatch) upgradePicks();
-      else document.addEventListener('tripos:match-ready', upgradePicks, { once: true });
-      /* personalise the boarding pass at the bottom of the page */
-      document.getElementById('bpClass').textContent = v.label;
-      document.getElementById('bpSub').textContent = 'Denpasar, Bali · ' + durLabel(d) + ' · ' + v.area + ' base · ' + fmtIDR(t.idr) + ' IDR/day';
-      /* ts: the wizard→app hand-off is FRESH; the corridor ignores stale residue */
-      try { localStorage.setItem('tripos_plan', JSON.stringify(Object.assign({}, sel, { ts: Date.now() }))); } catch (err) {}
-      /* if already signed in, persist the (possibly changed) answers right away */
-      if (window.tripAuth && window.tripAuth.savePlan) window.tripAuth.savePlan();
-    }
-
-    document.getElementById('ckReset').addEventListener('click', function () {
-      sel = {};
-      plan.hidden = true;
-      build.hidden = true;
-      barFill.style.width = '0';
-      try { localStorage.removeItem('tripos_plan'); } catch (err) {}
-      startCheckin();
+    import { mountConcierge } from '../shared/concierge.js';
+    mountConcierge({
+      thread: document.getElementById('cxThread'),
+      chips: document.getElementById('cxChips'),
+      form: document.getElementById('cxForm'),
+      input: document.getElementById('cxInput'),
+      mic: document.getElementById('cxMic'),
+      proof: document.getElementById('cxProof'),
+      clock: document.getElementById('cxClock'),
+      reveal: document.getElementById('cxReveal'),
+      revealHead: document.getElementById('cxRevealHead'),
+      revealTrace: document.getElementById('cxRevealTrace'),
+      revealOrbs: document.getElementById('cxRevealOrbs'),
+      revealLegs: document.getElementById('cxRevealLegs'),
+      revealSummary: document.getElementById('cxRevealSummary'),
+      revealGo: document.getElementById('cxRevealGo')
     });
-
-    /* returning visitor — rebuild their plan instantly */
-    function applyPlan(saved) {
-      if (!saved || !VIBES[saved.vibe] || !TIERS[saved.tier]) return false;
-      sel = saved;
-      mountEl.hidden = true;
-      dotsEl.style.display = 'none';
-      showPlan();
-      return true;
-    }
-    var restored = false;
-    try {
-      restored = applyPlan(JSON.parse(localStorage.getItem('tripos_plan') || 'null'));
-    } catch (err) {}
-    if (!restored) startCheckin();
-
-    /* let auth.js re-render with the ACCOUNT's brief once it syncs */
-    window.tripWizard = { apply: applyPlan };
-  })();
   </script>
   <script defer src="/_vercel/insights/script.js"></script>
 </body>

@@ -2249,6 +2249,44 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     $('installFallback').hidden = standalone || isIOS || !!deferredInstall;
     if (standalone) $('installWhy').textContent = 'Prevoya lives on your home screen. See you out there.';
   }
+  /* R5 (CHAT_FIRST_SURFACE_RULINGS): install surfaces post-auth on Today —
+     below the readiness nudge, dismissible, shown at most twice ever
+     (first open + once more on the 3rd if never dismissed-by-action).
+     Never a modal, never pre-auth. Aviv never learned it installs. */
+  function installNudgeMaybe() {
+    const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      window.navigator.standalone === true;
+    if (standalone) return;
+    try {
+      if (localStorage.getItem('tripos_install_done')) return;
+      const opens = (+localStorage.getItem('tripos_install_opens') || 0) + 1;
+      localStorage.setItem('tripos_install_opens', String(opens));
+      const shown = +localStorage.getItem('tripos_install_shown') || 0;
+      if (shown >= 2) return;
+      if (!(opens === 1 || (opens >= 3 && shown === 1))) return;
+      localStorage.setItem('tripos_install_shown', String(shown + 1));
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const card = document.createElement('div');
+      card.className = 'install-nudge';
+      card.innerHTML =
+        '<button type="button" class="in-x" aria-label="dismiss">✕</button>' +
+        '<p class="in-line">put Prevoya on your home screen — it works offline on the island.</p>' +
+        (isIOS
+          ? '<p class="in-steps">Safari: tap <strong>share</strong> ↑ then <strong>Add to Home Screen</strong></p>'
+          : (deferredInstall ? '<button type="button" class="ri-replan in-go">install →</button>' : ''));
+      const anchor = $('readyNudge');
+      if (anchor && anchor.parentElement) anchor.insertAdjacentElement('afterend', card);
+      else { const panel = $('panel-today'); panel.insertBefore(card, panel.firstChild); }
+      card.querySelector('.in-x').onclick = () => { card.remove(); localStorage.setItem('tripos_install_done', '1'); };
+      const go = card.querySelector('.in-go');
+      if (go) go.onclick = () => {
+        if (deferredInstall) deferredInstall.prompt();
+        card.remove();
+        localStorage.setItem('tripos_install_done', '1');
+      };
+    } catch (_) {}
+  }
+
   $('installBtn').addEventListener('click', async () => {
     if (!deferredInstall) return;
     deferredInstall.prompt();
@@ -3650,6 +3688,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
     show('shell');
     track('open', { first: !!firstOpen });
+    installNudgeMaybe(); /* R5: the app confesses it's an app — quietly, post-auth */
     dailyK = (trip && trip.budget_daily_k) || TIER_IDR[trip && trip.budget_tier] || 700;
     renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
     if (TRIP_LEGS.length < 2 && !trip.route_generated_at) {
@@ -3842,7 +3881,31 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   }
 
   async function route() {
-    if (!user) { show('welcome'); return; }
+    if (!user) {
+      /* R4 (chat-first): a held route draft stays visible through the ask —
+         the welcome door doubles as "keep your plan" when a draft rode in */
+      try {
+        const draft = JSON.parse(localStorage.getItem('tripos_draft_route') || 'null');
+        const plan = JSON.parse(localStorage.getItem('tripos_plan') || 'null');
+        const fresh = draft && plan && plan.ts && Date.now() - plan.ts < 86400e3 && (draft.legs || []).length >= 2;
+        const wd = $('wDraft');
+        if (fresh && wd) {
+          const days = draft.legs.reduce((s, l) => s + (l.nights || 0), 0);
+          const pts = draft.legs.map((l) => AREA_XY[l.area] || [160, 150]);
+          wd.innerHTML =
+            '<svg viewBox="0 0 320 260" width="170" aria-hidden="true">' +
+              '<path d="' + ISLAND_PATH + '" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.5"/>' +
+              '<path d="' + pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ',' + p[1]).join(' ') + '" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>' +
+              pts.map((p) => '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="6" fill="var(--teal)"/>').join('') +
+            '</svg>' +
+            '<p class="w-draft-facts">' + days + ' DAYS · ' + draft.legs.length + ' BASES</p>' +
+            '<p class="w-draft-line">keep your plan — it syncs to your phone, and keeps planning while you’re on the island.</p>';
+          wd.hidden = false;
+        }
+      } catch (_) {}
+      show('welcome');
+      return;
+    }
     const { data } = await sb.from('profiles')
       .select('title, full_name, presets, via_token, record_skipped_at, first_open_done_at, morning_note_optin, morning_note_asked_at, morning_note_closed_at')
       .eq('id', user.id).limit(1);
