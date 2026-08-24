@@ -28,14 +28,17 @@ const AREA_HEX = {
   Islands: '#4cc9f0', Sanur: '#4cc9f0', Denpasar: '#ff6b6b'
 };
 
+/* sid is per browser SESSION on purpose — a sticky device id burned one
+   shared daily budget across visits (Guy's "stuck chat", 2026-08-24). The
+   per-IP daily cap still guards abuse. */
+const newSid = () => {
+  const a = new Uint8Array(12); crypto.getRandomValues(a);
+  return Array.from(a, (b) => (b % 36).toString(36)).join('');
+};
 const sid = (() => {
   try {
-    let s = localStorage.getItem('tripos_cx_sid');
-    if (!s) {
-      const a = new Uint8Array(12); crypto.getRandomValues(a);
-      s = Array.from(a, (b) => (b % 36).toString(36)).join('');
-      localStorage.setItem('tripos_cx_sid', s);
-    }
+    let s = sessionStorage.getItem('tripos_cx_sid');
+    if (!s) { s = newSid(); sessionStorage.setItem('tripos_cx_sid', s); }
     return s;
   } catch (_) { return 'anon-' + Math.random().toString(36).slice(2, 14); }
 })();
@@ -55,6 +58,7 @@ function chipsFor(ask, brief) {
   if (ask === 'tier') return fromOpts(QUESTIONS.tier.opts);
   if (ask === 'arrive') return [{ show: '🌴 I’m already here', say: 'I’m already here' }, { show: '🗓 Flexible dates', say: 'flexible dates' }];
   if (ask === 'priorities') return PRIORITIES.slice(0, 4).map(([, label]) => ({ show: label, say: strip(label) }));
+  if (ask === 'musts') return [{ show: '✨ nothing set — surprise me', say: 'nothing set — surprise me' }];
   return [];
 }
 
@@ -188,6 +192,7 @@ export function mountConcierge(els) {
         tier: brief.tier || 'comf',
         priorities: brief.priorities || [],
         arrive: brief.arrive || null,
+        musts: brief.musts || null,
         ts: Date.now()
       }));
       localStorage.setItem('tripos_draft_route', JSON.stringify({ legs: route.legs, summary: route.summary, at: Date.now() }));
@@ -206,7 +211,8 @@ export function mountConcierge(els) {
 
   async function build() {
     const building = bubble('assistant', '<span class="cx-building">building your month<span class="cx-dots">…</span></span>');
-    const r = await callFn({ action: 'build' });
+    let r = null;
+    try { r = await callFn({ action: 'build' }); } catch (_) {}
     building.remove();
     if (!r || !r.route || !r.route.legs) {
       say('the route engine is catching its breath — try me again in a minute.');
@@ -217,6 +223,16 @@ export function mountConcierge(els) {
     showReveal();
   }
 
+  /* the cap is never a dead end (ATLAS): the door forward is always on screen */
+  function cappedState(reply) {
+    say(reply || 'sign in and I’m yours without limits.');
+    els.chips.innerHTML =
+      '<a class="ck-opt cx-chip" href="../app/">↗ sign in — no limits</a>' +
+      '<button type="button" class="ck-reset cx-explore" id="cxRestart2">start over</button>';
+    const rb = document.getElementById('cxRestart2');
+    if (rb) rb.onclick = restart;
+  }
+
   async function send(text) {
     if (busy || !text) return;
     busy = true;
@@ -224,17 +240,24 @@ export function mountConcierge(els) {
     setChips([]);
     els.input.value = '';
     const thinking = bubble('assistant', '<span class="cx-dots">…</span>');
-    const r = await callFn({ messages: msgs.slice(-12) });
-    thinking.remove();
-    busy = false;
+    let r = null;
+    try { r = await callFn({ messages: msgs.slice(-12) }); }
+    catch (_) { r = null; }
+    finally { thinking.remove(); busy = false; } /* the chat NEVER locks (Guy #5) */
     if (!r) { say('I lost the signal for a second — say that again?'); return; }
-    if (r.capped) { say(r.reply || 'sign in and I’m yours without limits.'); setChips([]); return; }
+    if (r.capped) { cappedState(r.reply); return; }
     if (r.error) { say('I lost the thread for a second — say that again?'); return; }
     Object.assign(brief, r.patch || {});
     track('chat_turn', { ask: r.ask || 'none' });
     say(r.reply);
     if (r.done) { setChips([]); await build(); }
     else setChips(chipsFor(r.ask, brief));
+  }
+
+  /* Guy #4: start over — fresh thread, fresh brief, fresh session budget */
+  function restart() {
+    try { sessionStorage.removeItem('tripos_cx_sid'); } catch (_) {}
+    location.reload();
   }
 
   els.chips.addEventListener('click', (e) => {
@@ -281,6 +304,8 @@ export function mountConcierge(els) {
   }
   paintClock();
   setInterval(paintClock, 30000);
+
+  if (els.restart) els.restart.onclick = (e) => { e.preventDefault(); restart(); };
 
   track('chat_open', { via: !!viaName });
 }

@@ -2314,11 +2314,39 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       duration_days: a.dur != null ? parseInt(a.dur, 10) : null,
       budget_tier: a.tier || null,
       priorities: a.priorities && a.priorities.length ? a.priorities : null,
-      arrive: a.arrive || null
+      arrive: a.arrive || null,
+      musts: a.musts || null /* their locked-in plans ride from the chat (2026-08-24) */
     }, { onConflict: 'user_id,destination' }).select();
     if (error) console.error('[Prevoya] brief save failed:', error.message);
     try { localStorage.setItem('tripos_plan', JSON.stringify(a)); } catch (_) {}
     return (up && up[0]) || null;
+  }
+
+  /* chat-first: claim the concierge's draft route verbatim (≤24h old).
+     Returns true only when ≥2 real legs landed; any failure falls back to
+     genRoute so the ceremony never breaks. */
+  async function claimDraftRoute() {
+    try {
+      const d = JSON.parse(localStorage.getItem('tripos_draft_route') || 'null');
+      if (!d || !d.at || Date.now() - d.at > 86400e3) return false;
+      const legs = (d.legs || []).filter((l) => l && l.area && (l.nights || 0) >= 1);
+      if (legs.length < 2) return false;
+      await sb.from('trip_legs').delete().eq('trip_id', trip.id);
+      await sb.from('day_plans').delete().eq('trip_id', trip.id);
+      const rows = legs.map((l, i) => ({
+        trip_id: trip.id, seq: i + 1, area: l.area, nights: Math.round(l.nights),
+        why: l.why || null, status: i === 0 ? 'current' : 'planned', engine_version: 'route-v1-draft'
+      }));
+      const { data: saved, error } = await sb.from('trip_legs').insert(rows).select();
+      if (error || !saved || saved.length < 2) return false;
+      const ts = new Date().toISOString();
+      await sb.from('trips').update({ route_summary: d.summary || null, route_generated_at: ts }).eq('id', trip.id);
+      trip.route_summary = d.summary || null;
+      trip.route_generated_at = ts;
+      TRIP_LEGS = saved;
+      localStorage.removeItem('tripos_draft_route');
+      return true;
+    } catch (_) { return false; }
   }
 
   /* ─── AI-1a: call the plan-engine, refresh legs. Returns true only when a
@@ -2791,7 +2819,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       cerLine('▸ ' + matched + ' places match ' + esc(briefWords));
     }
     cerLine('▸ routing your month…');
-    const ok = await genRoute();
+    /* chat-first R4: KEEP THIS PLAN means THIS plan — a fresh draft route
+       from the concierge is claimed verbatim, never regenerated (the reveal
+       already promised these exact legs; their locked-in plans are baked in) */
+    const ok = (await claimDraftRoute()) || await genRoute();
     if (ok) {
       cerLine('▸ planning ' + TRIP_LEGS.length + ' bases <span class="ok">✓</span>');
       await wait(600);
