@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Prevoya — everything you need to know about Bali</title>
   <meta name="description" content="Everything you need to know about Bali — before you go and while you're there. Prevoya is the destination intelligence OS for slowmads. Free. No password, ever.">
   <meta property="og:title" content="Prevoya — Bali, decoded">
@@ -17,60 +17,246 @@
   <link rel="apple-touch-icon" href="/shared/brand/icon-192.png">
   <link rel="icon" href="/shared/brand/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/shared/brand/icon-192.png" type="image/png">
-  <link rel="stylesheet" href="/shared/tripos.css">
+<link rel="stylesheet" href="../shared/tripos.css">
 </head>
-<body>
+<body class="has-flightbar">
   <div class="cosmos"></div>
 
-  <!-- ═══ THE BALI PAGE (Guy's IA ruling, 2026-08-24): home → destination →
-       plan. This page says what Prevoya KNOWS about Bali; the chat at
-       /bali/plan is where a plan gets built. Planner voice, real numbers. -->
-  <div class="wrap dest-wrap">
+  <!-- ─── flight progress — plane flies YOU → DPS as you scroll ─── -->
+  <div class="flightbar" aria-hidden="true">
+    <span class="fb-code">YOU</span>
+    <div class="fb-track">
+      <div class="fb-fill" id="fbFill"></div>
+      <span class="fb-plane" id="fbPlane">✈</span>
+    </div>
+    <span class="fb-code fb-dest">DPS</span>
+    <span class="fb-stage" id="fbStage">BOARDING</span>
+  </div>
+
+  <div class="wrap">
     <nav class="nav">
-      <a class="brand" href="/"><img src="/shared/brand/logo-mark.svg" width="28" height="28" alt="Prevoya" class="nav-mark">Prevoya</a>
-      <a class="nav-cta" href="/app/">Open app</a>
+      <a class="brand" href="../"><img src="/shared/brand/logo-mark.svg" width="28" height="28" alt="Prevoya" class="nav-mark">Prevoya</a>
+      <a class="nav-cta" href="../app/">Open app</a>
     </nav>
 
-    <header class="dest-hero">
-      <p class="dest-kicker">// DESTINATION 01 · BALI</p>
-      <h1 class="dest-title">Bali, decoded.</h1>
-      <p class="dest-sub">Everything you need to know — before you go and while you're there.
-        Your route, your days, your budget, from places that actually exist.</p>
-      <div class="dest-cta-row">
-        <a class="btn btn-primary dest-cta" href="/bali/plan/">Get my Bali plan →</a>
-        <a class="ck-reset dest-cta-alt" href="/bali/places">browse the curated places</a>
+    <!-- ─── stage 01 · boarding call ─── -->
+    <header class="hero" data-stage="BOARDING">
+      <div class="stage-tag"><span class="stage-num">01</span> Boarding call</div>
+      <!-- L3: title completes "now you can…" — says what you CAN, not what we are -->
+      <h1>Stay <span class="glow">longer</span> for less.</h1>
+      <p class="sub">Your Bali planner + concierge — before you go and while you're there. Prevoya plans the trip, guides your days, and tells you exactly how long the island can keep you.</p>
+      <p class="boarding-call">Planning desk: open · your brief takes 30 seconds · <span class="blink">concierge online</span></p>
+      <a class="btn btn-primary" href="/bali/plan/">Start my Bali plan — free</a>
+      <p class="note">No password. No install. Works on any phone.</p>
+      <!-- L4 v2: the concierge ledger — value in sentences, not stat tiles -->
+      <div class="value-ledger">
+        <div class="vl-head">// WHAT YOUR CONCIERGE HANDLES</div>
+        <div class="vl-row"><span class="vl-k">30s<em>not 3 weeks</em></span>
+          <div class="vl-v"><strong>Your whole trip, planned.</strong><span>Three questions become a full brief — where to base, what to pack, what a month really costs.</span></div></div>
+        <div class="vl-row"><span class="vl-k">35k<em>not 350k</em></span>
+          <div class="vl-v"><strong>Local prices on everything.</strong><span>Every place carries what it really costs — pay warung prices, not tourist prices.</span></div></div>
+        <div class="vl-row"><span class="vl-k">LIVE<em>every day</em></span>
+          <div class="vl-v"><strong>“How long can I stay?”</strong><span>Your budget against the island, updated daily — the answer that keeps you here.</span></div></div>
       </div>
-      <p class="dest-proof" id="destProof"></p>
     </header>
 
-    <section class="dest-facts">
-      <div class="dest-fact"><strong>Bali areas decoded</strong> — Uluwatu, Canggu, Ubud, Seminyak and the islands, each with its own personality.</div>
-      <div class="dest-fact"><strong>Day-by-day plans</strong> — four rails a day, morning to night, matched to your brief and rebuilt when plans change.</div>
-      <div class="dest-fact"><strong>Live place search</strong> — find and save any spot on the island in seconds, with cost estimates.</div>
-      <div class="dest-fact"><strong>IDR-native</strong> — amounts in thousands, the way you actually think about them here.</div>
+    <div class="hook reveal">
+      First, a quick stop at the concierge desk. Three questions and Bali starts adapting to you —
+      <span class="hook-arrow">↓</span>
+    </div>
+
+    <!-- ─── stage 02 · check-in — the concierge builds your plan ─── -->
+    <section data-stage="CHECK-IN">
+      <div class="sec-head reveal">
+        <div class="stage-tag"><span class="stage-num">02</span> Check-in</div>
+        <h2>The concierge is asking.</h2>
+        <p>A few quick questions — it branches to who you are. Prevoya builds a Bali plan that's yours, not a listicle.</p>
+      </div>
+      <div class="mission-tag reveal"><span class="pulse-dot"></span>Mission briefing</div>
+      <div class="card checkin mission-card reveal" id="checkin">
+        <p class="ck-q">Your concierge is in. Tell it what kind of trip you’re on — it asks, you answer, and your month gets built in front of you: bases, day-by-day plans, real places.</p>
+        <a class="btn btn-primary ck-wide" href="/bali/plan/">Talk to my concierge →</a>
+        <p class="note">free · no password · a route you can argue with in under two minutes</p>
+      </div>
     </section>
 
-    <footer class="dest-foot">
-      Prevoya · made for slowmads, by a slowmad · <a href="/">more destinations</a>
+    <div class="hook reveal">
+      Brief in. Before your concierge takes over — one last look at how you used to plan trips —
+      <span class="hook-arrow">↓</span>
+    </div>
+
+    <!-- ─── stage 03 · takeoff ─── -->
+    <section data-stage="TAKEOFF">
+      <div class="sec-head reveal">
+        <div class="stage-tag"><span class="stage-num">03</span> Takeoff</div>
+        <h2>You're leaving all of this on the ground.</h2>
+        <p>47 Instagram saves. 3 Facebook group screenshots. A half-finished spreadsheet. Sound familiar?</p>
+      </div>
+      <!-- L6 · THE CHAOS BOARD — the ONLY place in the product where off-brand
+           styling is permitted (light backgrounds, system-ui, hard shadows,
+           emoji): it IS the clutter of the world before. All styles are scoped
+           under .chaos-* / .artifact in tripos.css — never let them leak. -->
+      <div class="chaos-wrap reveal">
+        <div class="chaos-board" aria-hidden="true">
+          <div class="artifact art-tabs">
+            <div class="tab-strip">
+              <span class="tab">Best Bali cafés 2026</span>
+              <span class="tab">Uluwatu villa price</span>
+              <span class="tab">B211A visa how-to</span>
+              <span class="tab active">bingin warung??</span>
+              <span class="tab-plus">+43</span>
+            </div>
+          </div>
+          <div class="artifact art-sheet">
+            <div class="sheet-cell sheet-h">A</div><div class="sheet-cell sheet-h">B</div><div class="sheet-cell sheet-h">C</div>
+            <div class="sheet-cell">villa</div><div class="sheet-cell">8.5M?</div><div class="sheet-cell err">#REF!</div>
+            <div class="sheet-cell">scooter</div><div class="sheet-cell">1.2M?</div><div class="sheet-cell">=B2*30</div>
+            <div class="sheet-cell">total</div><div class="sheet-cell err">#DIV/0!</div><div class="sheet-cell"></div>
+          </div>
+          <div class="artifact art-ig">
+            <div class="ig-top">📌 Bali 2026 · Saved</div>
+            <div class="ig-grid"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="ig-count">214 saved</div>
+          </div>
+          <div class="artifact art-tiktok">
+            <div class="tt-cap">10 SECRET Bali spots 🤫</div>
+            <div class="tt-meta">🔖 1.2M · ▶ 8.4M</div>
+          </div>
+          <div class="artifact art-wa">
+            <div class="wa-bubble">wait which beach was it?? 😭</div>
+            <div class="wa-bubble wa-me">the one with the swing i think</div>
+            <div class="wa-time">2:14 AM · read</div>
+          </div>
+        </div>
+
+        <div class="chaos-caption"><span class="cc-before">47 tabs</span><em class="cc-arrow">→</em><span class="cc-after">one brief</span></div>
+
+        <div class="card brief-card">
+          <div class="intel-bar"><span class="pulse-dot"></span>Your Bali brief</div>
+          <h3>One place. Everything decided.</h3>
+          <p>Where to stay, what a month really costs, the spots worth your time — matched to you, on one calm screen. No tabs. No screenshots. No “which beach was it.”</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="hook reveal">
+      All of that, handled. Here's what a trip feels like when a concierge planned it —
+      <span class="hook-arrow">↓</span>
+    </div>
+
+    <!-- ─── stage 04 · cruising ─── -->
+    <section data-stage="CRUISING">
+      <div class="sec-head reveal">
+        <div class="stage-tag"><span class="stage-num">04</span> Cruising altitude</div>
+        <h2>One brain for the whole trip.</h2>
+        <p>Prevoya guides you from “I'm going to Bali” to “I live here now” — in three phases.</p>
+      </div>
+      <div class="features">
+        <div class="card feat reveal">
+          <span class="orb planet-teal"></span>
+          <span class="step">Phase 1 — Before</span>
+          <h3>Land like you've been here</h3>
+          <p>Where to stay for your vibe — Canggu, Uluwatu, Ubud. What to pack, what to sort before you fly, what a month here really costs.</p>
+        </div>
+        <div class="card feat reveal">
+          <span class="orb planet-blue"></span>
+          <span class="step">Phase 2 — During</span>
+          <h3>A concierge in your pocket</h3>
+          <p>Curated places by area and category — cafés to work from, warungs, beach clubs, gyms. One tap: open Maps, log the visit, done.</p>
+        </div>
+        <div class="card feat reveal">
+          <span class="orb planet-purple"></span>
+          <span class="step">Phase 3 — Money</span>
+          <h3>Know what you can still do</h3>
+          <p>Not a spreadsheet — a pulse. “You can afford three more beach club days this month.” Five-second logging keeps it honest.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="hook reveal">
+      Getting close now. Below — the places your concierge already scouted —
+      <span class="hook-arrow">↓</span>
+    </div>
+
+    <!-- ─── stage 05 · final approach ─── -->
+    <section data-stage="APPROACH">
+      <div class="card reveal" style="padding:30px 26px">
+        <div class="sec-head" style="margin-bottom:20px">
+          <div class="stage-tag"><span class="stage-num">05</span> Final approach</div>
+          <h2>Curated for Bali, down to the warung.</h2>
+          <p>Not a generic travel app with a destination dropdown.</p>
+        </div>
+        <ul class="dest-list">
+          <li><span class="tick">✓</span><span><strong>Bali areas decoded</strong> — <em>Uluwatu, Canggu, Ubud, Seminyak and the islands, each with its own personality</em></span></li>
+          <li><span class="tick">✓</span><span><strong>Live place search</strong> — <em>find and save any spot on the island in seconds, with cost estimates</em></span></li>
+          <li><span class="tick">✓</span><span><strong>IDR-native</strong> — <em>amounts in thousands, the way you actually think about them here</em></span></li>
+          <li><span class="tick">✓</span><span><strong>Local presets</strong> — <em>warung, bike rental, laundry — the daily rhythms of island life, one tap each</em></span></li>
+        </ul>
+        <div class="chips">
+          <span class="chip">🍽 Food</span>
+          <span class="chip">☕ Work</span>
+          <span class="chip">💆 Wellness</span>
+          <span class="chip">🏋️ Gym</span>
+          <span class="chip">🎉 Nights</span>
+          <span class="chip">🏖 Beach</span>
+          <span class="chip">🗺 Explore</span>
+        </div>
+        <div style="text-align:center;margin-top:22px">
+          <a class="btn btn-primary" href="/bali/places">Browse Bali's curated places →</a>
+        </div>
+      </div>
+
+      <!-- L7 · inbound transmission — the system speaking, not a founder.
+           Mono, teal, terse, second person. No quote marks, no attribution. -->
+      <section class="transmission reveal" style="padding-bottom:0">
+        <div class="tx-eyebrow">// INBOUND · DPS</div>
+        <p class="tx-line">Your plan lands before you do.</p>
+      </section>
+    </section>
+
+    <div class="hook reveal">
+      Your pass is ready —
+      <span class="hook-arrow">↓</span>
+    </div>
+
+    <!-- ─── stage 06 · landed — boarding pass cta ─── -->
+    <section data-stage="LANDED ✓">
+      <div class="bpass reveal">
+        <div class="bp-main">
+          <div class="bp-air">Prevoya Concierge · your Bali pass</div>
+          <div class="bp-route">
+            <span class="bp-city">YOU</span>
+            <span class="bp-dash"></span>
+            <span class="bp-city bp-to">DPS</span>
+          </div>
+          <p class="bp-sub" id="bpSub">Denpasar, Bali · one-way · stay as long as it holds you</p>
+          <div class="bp-grid">
+            <div><span>Plan</span><strong>BALI-01</strong></div>
+            <div><span>Concierge</span><strong>Always on</strong></div>
+            <div><span>Seat</span><strong>Window</strong></div>
+            <div><span>Class</span><strong id="bpClass">Slowmad</strong></div>
+            <div><span>Price</span><strong>Free</strong></div>
+            <div><span>Signup</span><strong>None</strong></div>
+          </div>
+          <a class="btn btn-primary" href="../app/">Open Prevoya — start planning</a>
+        </div>
+        <div class="bp-stub">
+          <div class="bp-barcode"></div>
+          <span class="bp-code">DPS · BALI</span>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Prevoya · made for slowmads, by a slowmad · <a href="../">more destinations</a>
     </footer>
   </div>
 
-  <script src="/shared/supabase-config.js"></script>
-  <script src="/shared/track.js"></script>
-  <script>
-    /* the proof line — count real or absent */
-    (async () => {
-      try {
-        const cfg = window.TRIPOS_SUPABASE || {};
-        const r = await fetch(cfg.url + '/rest/v1/curated_places?select=id&destination=eq.bali&verified=is.true', {
-          method: 'HEAD', headers: { apikey: cfg.anonKey, Authorization: 'Bearer ' + cfg.anonKey, Prefer: 'count=exact', Range: '0-0' }
-        });
-        const n = parseInt(String(r.headers.get('content-range') || '').split('/')[1], 10);
-        if (Number.isFinite(n) && n > 0)
-          document.getElementById('destProof').textContent = n + ' verified places · updated ' + new Date().getFullYear();
-      } catch (_) {}
-    })();
-  </script>
+  <script src="../shared/supabase-config.js"></script>
+  <script src="../shared/track.js"></script>
+  
+  <script src="../shared/tripos.js"></script>
+  
   <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
