@@ -67,6 +67,7 @@ export function mountConcierge(els) {
   const msgs = [];      /* the thread, client-held: [{role, content}] */
   let route = null;
   let busy = false;
+  let mustsAsked = false; /* the locked-in question fires exactly once (server-enforced) */
 
   /* ── thread ops ── */
   function bubble(role, html) {
@@ -81,6 +82,10 @@ export function mountConcierge(els) {
   const heard = (text) => { msgs.push({ role: 'user', content: text }); return bubble('user', esc(text)); };
 
   function setChips(list) {
+    /* Guy 2026-08-24 #1: programmatic input.value='' never fires oninput, so
+       the typing-yield class survived the send and hid EVERY later chip —
+       including KEEP THIS PLAN. Chips always re-show when re-set. */
+    els.chips.classList.remove('cx-chips-hidden');
     els.chips.innerHTML = (list || []).map((c, i) =>
       '<button type="button" class="ck-opt cx-chip" data-i="' + i + '">' + esc(c.show) + '</button>').join('');
     els.chips._list = list || [];
@@ -171,6 +176,7 @@ export function mountConcierge(els) {
     mini.querySelector('.cx-mini').onclick = () => { els.reveal.hidden = false; document.body.classList.add('cx-revealing'); };
     say('this is yours if you want it.');
     setChips([]);
+    els.chips.classList.remove('cx-chips-hidden');
     els.chips.innerHTML =
       '<button type="button" class="ck-opt cx-chip cx-keep" id="cxKeep">KEEP THIS PLAN</button>' +
       '<button type="button" class="ck-reset cx-explore" id="cxExplore">keep exploring</button>';
@@ -204,7 +210,7 @@ export function mountConcierge(els) {
   async function callFn(payload) {
     const r = await fetch(cfg.url + '/functions/v1/concierge', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.assign({ sid, brief, via_name: viaName || undefined }, payload))
+      body: JSON.stringify(Object.assign({ sid, brief, musts_asked: mustsAsked, via_name: viaName || undefined }, payload))
     });
     return r.json().catch(() => null);
   }
@@ -226,6 +232,7 @@ export function mountConcierge(els) {
   /* the cap is never a dead end (ATLAS): the door forward is always on screen */
   function cappedState(reply) {
     say(reply || 'sign in and I’m yours without limits.');
+    els.chips.classList.remove('cx-chips-hidden');
     els.chips.innerHTML =
       '<a class="ck-opt cx-chip" href="../app/">↗ sign in — no limits</a>' +
       '<button type="button" class="ck-reset cx-explore" id="cxRestart2">start over</button>';
@@ -248,6 +255,7 @@ export function mountConcierge(els) {
     if (r.capped) { cappedState(r.reply); return; }
     if (r.error) { say('I lost the thread for a second — say that again?'); return; }
     Object.assign(brief, r.patch || {});
+    if (r.ask === 'musts') mustsAsked = true;
     track('chat_turn', { ask: r.ask || 'none' });
     say(r.reply);
     if (r.done) { setChips([]); await build(); }
