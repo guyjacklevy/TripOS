@@ -2981,3 +2981,35 @@ input, select, textarea { font-size: 16px !important; }
 .install-nudge .in-x { position: absolute; top: 8px; right: 10px; background: none; border: none;
   color: var(--mut); font-size: 13px; cursor: pointer; padding: 4px; }
 .install-nudge .in-go { margin-top: 9px; }
+
+/* Guy #1 (2026-08-24): the keep moment sells the days, not just the map —
+   a structural day-rails skeleton behind glass (blur the SHAPE, never fake
+   a name) + the keep button at full primary weight */
+.cx-daypeek { background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.cx-dp-head { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--teal); margin-bottom: 8px; }
+.cx-dp-rails { position: relative; display: flex; flex-direction: column; gap: 7px; }
+.cx-dp-rail { display: flex; align-items: center; gap: 8px; }
+.cx-dp-name { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; color: var(--mut); width: 84px; flex: 0 0 auto; }
+.cx-dp-bar { height: 9px; border-radius: 5px; background: color-mix(in srgb, var(--teal) 24%, transparent); filter: blur(2.5px); flex: 0 0 auto; width: 34%; }
+.cx-dp-b2 { width: 18%; opacity: 0.6; }
+.cx-dp-rail:nth-child(2) .cx-dp-bar { width: 42%; }
+.cx-dp-rail:nth-child(3) .cx-dp-bar { width: 28%; }
+.cx-dp-rail:nth-child(4) .cx-dp-b2 { width: 26%; }
+.cx-dp-lock { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); color: var(--teal); opacity: 0.9; }
+.cx-dp-line { font-size: 12.5px; color: var(--mut); line-height: 1.55; margin: 10px 0 0; }
+.cx-keep-big { width: 100%; letter-spacing: 0.06em; }
+.cx-chips .cx-explore { align-self: center; margin: 4px auto 0; }
+
+/* the destination page (Guy's IA: home → /bali → /bali/plan) */
+.dest-wrap { max-width: 640px; padding: 0 18px; }
+.dest-hero { padding: 34px 0 8px; }
+.dest-kicker { font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em; color: var(--teal); margin: 0 0 10px; }
+.dest-title { font-size: 40px; font-weight: 800; margin: 0 0 10px; }
+.dest-sub { font-size: 16px; color: var(--mut); line-height: 1.6; margin: 0 0 20px; max-width: 460px; }
+.dest-cta-row { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.dest-cta { min-width: 240px; text-align: center; }
+.dest-proof { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; color: var(--mut); }
+.dest-facts { display: flex; flex-direction: column; gap: 14px; padding: 22px 0 30px; }
+.dest-fact { background: var(--glass); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; font-size: 14px; color: var(--mut); line-height: 1.55; }
+.dest-fact strong { color: var(--tx); }
+.dest-foot { font-size: 12px; color: var(--dim); padding: 8px 0 40px; }

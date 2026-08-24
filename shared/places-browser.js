@@ -519,7 +519,7 @@ export function mountPlaces(cfg) {
     chip.className = 'ck-reset';
     chip.textContent = 'answer 3 questions →';
     if (cfg.onBrief) { chip.type = 'button'; chip.onclick = () => cfg.onBrief(); }
-    else chip.href = '/bali/#checkin';
+    else chip.href = '/bali/plan/';
     b.appendChild(chip);
     els.bannerHost.insertAdjacentElement('beforebegin', b);
   }

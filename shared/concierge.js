@@ -174,11 +174,30 @@ export function mountConcierge(els) {
       '<div class="cx-mini-facts">' + days + 'D · ' + legs.length + ' BASES</div></div>');
     mini.classList.add('cx-has-mini');
     mini.querySelector('.cx-mini').onclick = () => { els.reveal.hidden = false; document.body.classList.add('cx-revealing'); };
+    /* Guy 2026-08-24 #1: the route is the map, not the product — say (and
+       show) that DAY-BY-DAY plans exist behind the door. The teaser is a
+       structural skeleton behind glass: real numbers, zero invented content
+       (never-fake — we blur shape, never fake names). */
+    const firstLeg = legs[0];
+    bubble('assistant',
+      '<div class="cx-daypeek">' +
+        '<div class="cx-dp-head">' + esc(firstLeg.area.toUpperCase()) + ' · DAY 1 OF ' + firstLeg.nights + '</div>' +
+        '<div class="cx-dp-rails">' +
+          ['MORNING', 'MIDDAY', 'GOLDEN HOUR', 'NIGHT'].map((r) =>
+            '<div class="cx-dp-rail"><span class="cx-dp-name">' + r + '</span>' +
+            '<span class="cx-dp-bar"></span><span class="cx-dp-bar cx-dp-b2"></span></div>').join('') +
+          '<svg class="cx-dp-lock" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true">' +
+            '<rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
+            '<path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>' +
+        '</div>' +
+        '<p class="cx-dp-line">every base comes with day-by-day plans — ' + days +
+          ' days × 4 rails, matched to your brief from real places. keeping the plan unlocks them.</p>' +
+      '</div>').classList.add('cx-has-mini');
     say('this is yours if you want it.');
     setChips([]);
     els.chips.classList.remove('cx-chips-hidden');
     els.chips.innerHTML =
-      '<button type="button" class="ck-opt cx-chip cx-keep" id="cxKeep">KEEP THIS PLAN</button>' +
+      '<button type="button" class="btn btn-primary cx-keep-big" id="cxKeep">KEEP THIS PLAN — unlock your days</button>' +
       '<button type="button" class="ck-reset cx-explore" id="cxExplore">keep exploring</button>';
     document.getElementById('cxKeep').onclick = keepPlan;
     document.getElementById('cxExplore').onclick = () => {
@@ -203,7 +222,7 @@ export function mountConcierge(els) {
       }));
       localStorage.setItem('tripos_draft_route', JSON.stringify({ legs: route.legs, summary: route.summary, at: Date.now() }));
     } catch (_) {}
-    location.href = '../app/';
+    location.href = '/app/';
   }
 
   /* ── the send loop ── */
@@ -234,7 +253,7 @@ export function mountConcierge(els) {
     say(reply || 'sign in and I’m yours without limits.');
     els.chips.classList.remove('cx-chips-hidden');
     els.chips.innerHTML =
-      '<a class="ck-opt cx-chip" href="../app/">↗ sign in — no limits</a>' +
+      '<a class="ck-opt cx-chip" href="/app/">↗ sign in — no limits</a>' +
       '<button type="button" class="ck-reset cx-explore" id="cxRestart2">start over</button>';
     const rb = document.getElementById('cxRestart2');
     if (rb) rb.onclick = restart;

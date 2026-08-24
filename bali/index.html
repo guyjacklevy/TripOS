@@ -17,85 +17,59 @@
   <link rel="apple-touch-icon" href="/shared/brand/icon-192.png">
   <link rel="icon" href="/shared/brand/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/shared/brand/icon-192.png" type="image/png">
-  <link rel="stylesheet" href="../shared/tripos.css">
+  <link rel="stylesheet" href="/shared/tripos.css">
 </head>
-<body class="cx-page">
+<body>
   <div class="cosmos"></div>
 
-  <!-- ═══ CHAT-FIRST FRONT DOOR (CHAT_FIRST_SURFACE_RULINGS R1) ═══
-       The concierge speaks first, instantly, scripted — turn 0 never costs a
-       model call. Gone by ruling: stages, wizard chrome, the flight bar, the
-       ambient hero. The island's clock survives, small, in the header. -->
-  <div class="wrap cx-wrap">
-    <nav class="nav cx-nav">
-      <a class="brand" href="../"><img src="/shared/brand/logo-mark.svg" width="28" height="28" alt="Prevoya" class="nav-mark">Prevoya</a>
-      <span class="cx-clock" id="cxClock" aria-hidden="true"></span>
+  <!-- ═══ THE BALI PAGE (Guy's IA ruling, 2026-08-24): home → destination →
+       plan. This page says what Prevoya KNOWS about Bali; the chat at
+       /bali/plan is where a plan gets built. Planner voice, real numbers. -->
+  <div class="wrap dest-wrap">
+    <nav class="nav">
+      <a class="brand" href="/"><img src="/shared/brand/logo-mark.svg" width="28" height="28" alt="Prevoya" class="nav-mark">Prevoya</a>
+      <a class="nav-cta" href="/app/">Open app</a>
     </nav>
 
-    <section class="cx-thread" id="cxThread" aria-live="polite"></section>
+    <header class="dest-hero">
+      <p class="dest-kicker">// DESTINATION 01 · BALI</p>
+      <h1 class="dest-title">Bali, decoded.</h1>
+      <p class="dest-sub">Everything you need to know — before you go and while you're there.
+        Your route, your days, your budget, from places that actually exist.</p>
+      <div class="dest-cta-row">
+        <a class="btn btn-primary dest-cta" href="/bali/plan/">Get my Bali plan →</a>
+        <a class="ck-reset dest-cta-alt" href="/bali/places">browse the curated places</a>
+      </div>
+      <p class="dest-proof" id="destProof"></p>
+    </header>
 
-    <div class="cx-chips" id="cxChips"></div>
+    <section class="dest-facts">
+      <div class="dest-fact"><strong>Bali areas decoded</strong> — Uluwatu, Canggu, Ubud, Seminyak and the islands, each with its own personality.</div>
+      <div class="dest-fact"><strong>Day-by-day plans</strong> — four rails a day, morning to night, matched to your brief and rebuilt when plans change.</div>
+      <div class="dest-fact"><strong>Live place search</strong> — find and save any spot on the island in seconds, with cost estimates.</div>
+      <div class="dest-fact"><strong>IDR-native</strong> — amounts in thousands, the way you actually think about them here.</div>
+    </section>
 
-    <form class="cx-composer" id="cxForm" autocomplete="off">
-      <input class="auth-input cx-input" id="cxInput" type="text" maxlength="280"
-        placeholder="tell me anything…" autocomplete="off">
-      <button type="button" class="cx-mic" id="cxMic" hidden aria-label="speak instead of typing">
-        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="6" y="1.5" width="4" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      </button>
-      <button type="submit" class="btn btn-primary cx-send" aria-label="send">→</button>
-    </form>
-
-    <p class="cx-proof" id="cxProof"></p>
-    <p class="cx-alt">
-      <a href="/bali/places">browse Bali's curated places →</a>
-      <span class="cx-alt-dot">·</span>
-      <a href="../app/">sign in</a>
-      <span class="cx-alt-dot">·</span>
-      <a href="#" id="cxRestart">start over</a>
-    </p>
+    <footer class="dest-foot">
+      Prevoya · made for slowmads, by a slowmad · <a href="/">more destinations</a>
+    </footer>
   </div>
 
-  <!-- ═══ THE REVEAL (R3) — full-screen; its receipt collapses into the thread ═══ -->
-  <section class="cx-reveal" id="cxReveal" hidden>
-    <div class="cx-reveal-inner">
-      <p class="cx-reveal-kicker">// YOUR BALI ROUTE</p>
-      <h2 class="cx-reveal-head" id="cxRevealHead"></h2>
-      <div class="cer-map cx-reveal-map">
-        <svg viewBox="0 0 320 260" width="100%" aria-hidden="true">
-          <path d="M31,130 Q43,109 67,103 Q100,91 136,85 Q178,79 217,85 Q253,89.5 277,106 Q289,115 283,125.5 Q271,136 247,139 Q223,142 202,139 Q184,137.5 172,140.5 Q167.5,148 166,157 Q178,163 181,175 Q178,190 163,196 Q145,199 136,187 Q130,175 139,164.5 Q145,158.5 154,157 Q152.5,148 148,142 Q124,136 94,134.5 Q61,133 40,137.5 Q29.5,137.5 31,130 Z"
-            fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.55"/>
-          <ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.55"/>
-          <path id="cxRevealTrace" d="" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>
-          <g id="cxRevealOrbs"></g>
-        </svg>
-      </div>
-      <div id="cxRevealLegs"></div>
-      <p class="cx-reveal-summary" id="cxRevealSummary"></p>
-      <button type="button" class="btn btn-primary cx-reveal-go" id="cxRevealGo">CONTINUE →</button>
-    </div>
-  </section>
-
-  <script src="../shared/supabase-config.js"></script>
-  <script src="../shared/track.js"></script>
-  <script type="module">
-    import { mountConcierge } from '../shared/concierge.js';
-    mountConcierge({
-      thread: document.getElementById('cxThread'),
-      chips: document.getElementById('cxChips'),
-      form: document.getElementById('cxForm'),
-      input: document.getElementById('cxInput'),
-      mic: document.getElementById('cxMic'),
-      proof: document.getElementById('cxProof'),
-      clock: document.getElementById('cxClock'),
-      restart: document.getElementById('cxRestart'),
-      reveal: document.getElementById('cxReveal'),
-      revealHead: document.getElementById('cxRevealHead'),
-      revealTrace: document.getElementById('cxRevealTrace'),
-      revealOrbs: document.getElementById('cxRevealOrbs'),
-      revealLegs: document.getElementById('cxRevealLegs'),
-      revealSummary: document.getElementById('cxRevealSummary'),
-      revealGo: document.getElementById('cxRevealGo')
-    });
+  <script src="/shared/supabase-config.js"></script>
+  <script src="/shared/track.js"></script>
+  <script>
+    /* the proof line — count real or absent */
+    (async () => {
+      try {
+        const cfg = window.TRIPOS_SUPABASE || {};
+        const r = await fetch(cfg.url + '/rest/v1/curated_places?select=id&destination=eq.bali&verified=is.true', {
+          method: 'HEAD', headers: { apikey: cfg.anonKey, Authorization: 'Bearer ' + cfg.anonKey, Prefer: 'count=exact', Range: '0-0' }
+        });
+        const n = parseInt(String(r.headers.get('content-range') || '').split('/')[1], 10);
+        if (Number.isFinite(n) && n > 0)
+          document.getElementById('destProof').textContent = n + ' verified places · updated ' + new Date().getFullYear();
+      } catch (_) {}
+    })();
   </script>
   <script defer src="/_vercel/insights/script.js"></script>
 </body>
