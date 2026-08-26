@@ -3633,10 +3633,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   async function runCorridor() {
     let matched = null;
     if (!trip || !trip.vibe) {
-      await corridorScreenA();
-      const answers = await corridorQuestions();
-      trip = await saveBrief(answers);
-      if (!trip) return false;
+      /* CHAT-FIRST (Rachel R1 supersession of §A; ATLAS's Spike-1 flag; the
+         Guy repro 2026-08-24): a first-open user with no brief never sees
+         the questionnaire — the CONVERSATION owns brief-gathering. They talk,
+         KEEP THIS PLAN writes the draft, and they land back here with a trip
+         — then this same corridor delivers the ceremony + doors. */
+      location.replace('/bali/plan/');
+      return false;
     }
     if (!corridorPool) {
       const { data: pool } = await sb.from('curated_places').select('*').eq('destination', 'bali');
@@ -3690,8 +3693,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       if (local && (freshLocal || !firstOpen)) {
         trip = await saveBrief(local);
       } else if (!firstOpen) {
-        /* signed in, no brief anywhere — stage B: check in right here */
-        openCheckin();
+        /* signed in, no brief anywhere — chat-first: the conversation owns
+           brief-gathering (the in-app questionnaire survives only for
+           "change my brief" on existing trips) */
+        location.replace('/bali/plan/');
         return;
       }
       /* first open with no (fresh) brief → the corridor owns it (§A → 3 questions) */
@@ -3713,7 +3718,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (firstOpen) {
       corridorRan = true;
       ceremonyFired = await runCorridor();
-      if (!trip) { openCheckin(); return; }
+      if (!trip) return; /* runCorridor already redirected to the conversation */
     } else if (TRIP_LEGS.length < 2 && !trip.route_generated_at && !trip.route_revealed_at) {
       await routeInterstitial();
     }
