@@ -3013,3 +3013,23 @@ input, select, textarea { font-size: 16px !important; }
 .dest-fact { background: var(--glass); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; font-size: 14px; color: var(--mut); line-height: 1.55; }
 .dest-fact strong { color: var(--tx); }
 .dest-foot { font-size: 12px; color: var(--dim); padding: 8px 0 40px; }
+
+/* ═══ REALITY FIRST S1 (REALITY_FIRST_SURFACE_SPEC) ═══
+   Reality unmarked; the plan demoted to a quiet context line; the rails
+   reframed as an offer. Amber off-route grammar retired. */
+.today-ctx {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+  color: var(--mut); margin-top: 2px;
+}
+.today-ctx[hidden] { display: none; }
+.ctx-replan {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font: inherit; letter-spacing: inherit; color: var(--mut);
+  text-decoration: underline dotted; text-underline-offset: 2px;
+  -webkit-tap-highlight-color: transparent;
+}
+.offer-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--teal); margin: 2px 0 10px;
+}
+.ri-else { font-size: 11px; }

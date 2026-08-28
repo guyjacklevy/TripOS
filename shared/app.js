@@ -416,10 +416,10 @@ function updateStrip(trip, firstName, now) {
   const rs = routeState(trip, TRIP_LEGS, now);
   const ov = offRoute(trip, rs);
   if (ov) {
-    /* deviation: the strip follows the traveler; OFF-ROUTE is the tappable
-       way back (jumps to the route instrument, where the return control lives) */
-    $('todayStrip2').innerHTML = esc(ov.toUpperCase()) +
-      ' · <button type="button" class="leg-chip off">OFF-ROUTE</button> · ' + PHASE_WORD[s.phase];
+    /* REALITY FIRST S1.1: where you are is fact, unmarked — reality is not a
+       deviation from anything. The plan demotes to the context line below.
+       (OFF-ROUTE token retired per REALITY_FIRST_SURFACE_SPEC.) */
+    $('todayStrip2').textContent = ov.toUpperCase() + ' · ' + PHASE_WORD[s.phase];
   } else if (rs && rs.cur) {
     const legChip = '<button type="button" class="leg-chip" data-goto="you">LEG ' +
       (rs.cur.idx + 1) + '/' + rs.count + '</button>';
@@ -429,6 +429,24 @@ function updateStrip(trip, firstName, now) {
       : esc(rs.cur.area.toUpperCase()) + ' · ' + legChip + ' · ' + PHASE_WORD[s.phase];
   } else {
     $('todayStrip2').textContent = base + ' BASE · ' + PHASE_WORD[s.phase];
+  }
+  /* S1.1 · the context line — the plan, demoted to quiet fact. Renders ONLY
+     when reality ≠ route; rejoining is silent (the line simply vanishes). */
+  const ctx = $('todayStrip3');
+  if (ctx) {
+    if (ov && rs && rs.cur) {
+      ctx.innerHTML = 'route says ' + esc(rs.cur.area.toLowerCase()) +
+        ' · it can wait — <button type="button" class="ctx-replan" id="ctxReplan">or replan →</button>';
+      ctx.hidden = false;
+      const rb = $('ctxReplan');
+      /* interim target: the route instrument (Pass 3 rewires this to the
+         re-flow proposal per S1.3) */
+      if (rb) rb.onclick = () => {
+        setTab('you');
+        const el = $('youRoute');
+        if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: REDUCED_MOTION() ? 'auto' : 'smooth', block: 'start' }));
+      };
+    } else ctx.hidden = true;
   }
   /* greeting uses the RAIL word; the strip uses the PHASE word — 19:00 shows
      "Night" (rail) beside "DUSK" (phase). Intentional: two layers of one clock
@@ -505,17 +523,18 @@ function renderRoute(trip, legs, now, opts) {
     '</div>';
   });
 
-  /* AI-2.5: deviation is visible, never silent — the route waits */
+  /* REALITY FIRST S1.1: the amber off-route line + BACK ON ROUTE retire —
+     reality renders unmarked on Today and rejoining is silent (auto-anchor).
+     The manual picker survives HERE only, demoted: the no-GPS fallback.
+     Picking the current leg's own area clears the override (rejoin by hand). */
   const ov = offRoute(trip, rs);
-  const overrideBlock = ov
-    ? '<p class="ri-offroute">off-route · you’re in <strong>' + esc(ov) + '</strong> — Today follows you, the route waits</p>' +
-      '<button type="button" class="ri-replan" id="riBack">↩ BACK ON ROUTE</button>'
-    : '<button type="button" class="ri-replan ri-else" id="riElse">I’M SOMEWHERE ELSE</button>' +
-      '<div class="ri-areas" id="riAreas" hidden>' +
-        Object.keys(AREA_TINT).map((a) =>
-          '<button type="button" class="ri-area-chip" data-area="' + esc(a) + '" style="--at:' + AREA_TINT[a] + '">' + esc(a) + '</button>'
-        ).join('') +
-      '</div>';
+  const overrideBlock =
+    '<button type="button" class="ck-reset ri-else" id="riElse">set my area manually</button>' +
+    '<div class="ri-areas" id="riAreas" hidden>' +
+      Object.keys(AREA_TINT).map((a) =>
+        '<button type="button" class="ri-area-chip" data-area="' + esc(a) + '" style="--at:' + AREA_TINT[a] + '">' + esc(a) + '</button>'
+      ).join('') +
+    '</div>';
 
   host.hidden = false;
   /* M1 · the living map comes home: static (trace motion stays ceremony-class),
@@ -579,12 +598,15 @@ function renderRoute(trip, legs, now, opts) {
     if (go) go.onclick = o.onReplan;
   }
   if (o.onOverride) {
-    const elseBtn = $('riElse'), areas = $('riAreas'), back = $('riBack');
+    const elseBtn = $('riElse'), areas = $('riAreas');
     if (elseBtn) elseBtn.onclick = () => { areas.hidden = !areas.hidden; };
     if (areas) areas.querySelectorAll('.ri-area-chip').forEach((b) => {
-      b.onclick = () => o.onOverride(b.getAttribute('data-area'));
+      b.onclick = () => {
+        const a = b.getAttribute('data-area');
+        /* choosing the leg's own area = rejoining the plan, by hand */
+        o.onOverride(rs && rs.cur && a === rs.cur.area ? null : a);
+      };
     });
-    if (back) back.onclick = () => o.onOverride(null);
   }
 }
 
@@ -1066,16 +1088,26 @@ function renderToday(trip, firstName, places, dateOpt) {
   if (CX_NOTE) html = '<p class="cx-reply">◦ ' + esc(CX_NOTE) + '</p>' + html;
   /* F1: the state change announces itself ON the surface it changes — one
      amber instrument line, back-affordance in the line (Rachel's copy) */
-  if (ov) {
-    /* contract copy exactly; the F7 scan row carries the generating state */
-    html = '<div class="offroute-line"><span>off-route · in ' + esc(ov.toUpperCase()) + ' — showing ' +
-      esc(ov.toLowerCase()) + ' options</span>' +
-      '<button type="button" class="or-return">↩ ROUTE</button></div>' + html;
-  } else if (CONCIERGE_DOWN && !DAY_PLAN) {
+  if (CONCIERGE_DOWN && !DAY_PLAN) {
     /* §G engine-down: verified picks keep working; the silence is explained */
     html = '<div class="offroute-line"><span>concierge offline · showing verified picks</span></div>' + html;
   }
   /* §F: the unlock caption — one mono line, dismissed forever on first tap */
+  /* S1.2 · choice as the frame: one mono micro-label reframes the rails as
+     PROPOSAL — "today's offer" when a plan applies, the humbler "if you want
+     ideas" on self-directed days. Same components either way: the
+     instruments never care whether the concierge was consulted. */
+  const anchorArea = ov || ((routeState(trip, TRIP_LEGS, now) || {}).cur || {}).area || null;
+  const hasPlanToday = Object.keys(plannedByRail).length > 0;
+  if (anchorArea) {
+    html = '<p class="offer-label">' + (hasPlanToday ? 'today’s offer' : 'if you want ideas') +
+      ' · ' + esc(String(anchorArea).toLowerCase()) + '</p>' + html;
+  }
+  /* the freedom line lives in the composer placeholder, ambient (S1.2) */
+  const cxInp = $('cxInput');
+  if (cxInp) cxInp.placeholder = hasPlanToday
+    ? 'rain? tired? plans changed? — tell me'
+    : 'your day, your call — I’m here.';
   if (LAYERS.today) html = layerCap('today2', 'your full day — four rails, morning to night') + html;
   tl.innerHTML = html;
   dropIn(tl);
@@ -1579,12 +1611,6 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       return;
     }
     /* F1: ↩ ROUTE lives in the amber line — the way back is where the state is felt */
-    const orb = e.target.closest('.or-return');
-    if (orb && e.target.closest('#timeline')) {
-      e.preventDefault();
-      setOverride(null);
-      return;
-    }
     /* build #5: rail footer → Places, pre-filtered to the day's area */
     const rm = e.target.closest('.rail-more');
     if (rm && e.target.closest('#timeline')) {
