@@ -1434,7 +1434,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
     setTimeout(() => { btn.textContent = '📍 I’m here'; btn.disabled = false; }, 2600);
     /* A1: the stamp ceremony — the check-in lands in the passport live */
-    CHECKINS.push(ckRow || { user_id: user.id, place_id: p.id, place_name: p.name, created_at: new Date().toISOString() });
+    CHECKINS.push(ckRow || { user_id: user.id, place_id: p.id, place_name: p.name, lat: p.lat, lng: p.lng, created_at: new Date().toISOString() });
+    autoAnchor(); /* REALITY FIRST: a live check-in is the strongest signal — Today follows it now */
     /* F5: pride moments are deterministic — first stamp in an area, every
        10th trip-wide. Never random, never nagging. */
     let milestone = false;
@@ -1706,6 +1707,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           }).select().single();
           if (error) { b.disabled = false; b.textContent = '⚠ retry'; return; }
           CHECKINS.push(ckRow);
+          autoAnchor(); /* REALITY FIRST: a named place is presence too */
           try { window.pvTrack && window.pvTrack('place_named', {}); } catch (_) {}
           if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
           sheet.innerHTML = '<p class="pulse-note">✓ stamped · private to you — public only once it’s verified</p>';
@@ -2300,7 +2302,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     injectReadiness: (t, items, rpk) => { trip = t; checkItems = items; repack = rpk || null; renderChecklists(); },
     injectToday: (t, places) => { todayCtx = { trip: t, name: '', places: places || [] }; },
     buildAutoItems, paintNudge, mountPlacesTab,
-    injectCuration: (places) => { isAdmin = true; loadCurationDesk(places); }
+    injectCuration: (places) => { isAdmin = true; loadCurationDesk(places); },
+    realityRegion, autoAnchor /* REALITY FIRST slice 0 — decision logic testable */
   });
 
   /* upsert a brief (from the questionnaire or a pre-login landing run) */
@@ -2536,7 +2539,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   }
 
   /* AI-2.5: persist the deviation; every surface repaints from one place */
-  async function setOverride(area) {
+  async function setOverride(area, opts) {
     const val = area || null;
     const { error } = await sb.from('trips').update({ area_override: val }).eq('id', trip.id);
     if (error) { console.error('[Prevoya] override save failed:', error.message); return; }
@@ -2548,7 +2551,50 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     /* F1: the plan follows the override — leg plan back on-route, generated
        off-route plan otherwise (lazy; the amber line narrates the wait) */
     loadDayPlan().then(() => { if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places); });
-    setTab('today'); /* the goal was "fix Today" — don't strand them on You (Rachel §4) */
+    if (!(opts && opts.quiet)) setTab('today'); /* the goal was "fix Today" — don't strand them on You (Rachel §4) */
+  }
+
+  /* ═══ REALITY FIRST · slice 0 (Guy, 2026-08-28) ═══════════════════════
+     The plan is a hypothesis; evidence outranks it. The freshest LIVE
+     check-in region (today/yesterday, Bali clock) anchors Today through the
+     existing off-route machinery — no tap required. A check-in back in the
+     leg's own region clears a stale override: reality rejoined the plan.
+     (Guy's repro: 7 days of Ubud check-ins while Today preached Uluwatu.)
+     Refinements — freshness window, retro handling, re-flow proposals —
+     are ATLAS/Rachel's per from_cto_reality_first_*.md. */
+  function realityRegion() {
+    const now = baliNow();
+    const key = (y, m, d) => y + '-' + m + '-' + d;
+    const todayK = key(now.getFullYear(), now.getMonth(), now.getDate());
+    const yd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    const ydK = key(yd.getFullYear(), yd.getMonth(), yd.getDate());
+    for (let i = CHECKINS.length - 1; i >= 0; i--) { /* chronological list, newest last */
+      const c = CHECKINS[i];
+      const b = baliDateOf(c.created_at);
+      const k = key(b.y, b.m, b.d);
+      if (k !== todayK && k !== ydK) break;
+      const reg = latLngRegion(c.lat, c.lng);
+      if (reg) return reg;
+    }
+    return null;
+  }
+  async function autoAnchor() {
+    try {
+      if (!trip || TRIP_LEGS.length < 1) return false;
+      const reg = realityRegion();
+      if (!reg) return false;
+      const rs = routeState(trip, TRIP_LEGS, baliNow());
+      const legArea = rs && rs.cur ? rs.cur.area : null;
+      const effective = trip.area_override || legArea;
+      if (reg === effective) return false;                /* screen already tells the truth */
+      if (reg === legArea && trip.area_override) {        /* reality rejoined the plan */
+        await setOverride(null, { quiet: true });
+        return true;
+      }
+      await setOverride(reg, { quiet: true });            /* evidence wins */
+      track('auto_anchor', { to: reg });
+      return true;
+    } catch (_) { return false; }
   }
 
   /* ONE nudge painter — last-day repack beats the readiness item (spec §2);
@@ -3751,6 +3797,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     /* A1: check-ins load BEFORE the tab mounts — §F's Places layer needs them */
     const { data: ckAll } = await sb.from('checkins').select('*').order('created_at');
     CHECKINS = ckAll || [];
+    await autoAnchor(); /* REALITY FIRST: Today anchors on evidence before first paint */
 
     /* §F · layer state, derived from data only. Corridor day = layer 1;
        day-2 open (Bali clock) unlocks Today + Places; check-ins unlock
