@@ -1743,6 +1743,17 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
             '<button type="button" class="ck-reset it-plan-now" data-leg="' + w.seq + '">plan it now →</button></div>';
           continue;
         }
+      } else if (!hasPlan) {
+        /* Guy's repro (2026-08-28): the CURRENT leg with no generated plan
+           rendered as a wall of empty dashes with no door — the honest
+           ungenerated treatment applies here too, days-remaining counted */
+        const left = w.toDay - dayN;
+        if (left > 0) {
+          html += '<div class="it-ungen"><span>' + esc(w.area.toUpperCase()) + ' · ' + left +
+            ' DAY' + (left === 1 ? '' : 'S') + ' LEFT · not planned yet</span>' +
+            '<button type="button" class="ck-reset it-plan-now" data-leg="' + w.seq + '">plan these days →</button></div>';
+        }
+        continue;
       }
       if (rows >= ITIN_DEPTH) { clipped += w.toDay - Math.max(w.fromDay, dayN + 1) + 1; continue; }
       for (let d = Math.max(w.fromDay, dayN + 1); d <= w.toDay; d++) {
