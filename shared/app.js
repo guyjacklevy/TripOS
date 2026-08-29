@@ -1790,7 +1790,24 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (clipped > 0) {
       html += '<button type="button" class="ck-reset it-more">+ ' + clipped + ' more day' + (clipped === 1 ? '' : 's') + ' →</button>';
     }
-    host.innerHTML = html ? '<p class="itin-head">the days ahead</p>' + html : '';
+    /* the SCRUBBER (Guy's calendar instinct, hybridized): a pinned strip of
+       day chips that SCROLLS the river — an index, not a container. Tap a
+       day → it renders, expands, and the river jumps there. The plan keeps
+       its body; reach stops costing seven taps. (Flagged to Rachel.) */
+    let strip = '';
+    if (html) {
+      strip = '<div class="it-strip"><button type="button" class="it-dchip it-dchip-now" data-scrollnow>NOW</button>' +
+        wins.map((w) => {
+          if (w.toDay <= dayN) return '';
+          let out = '';
+          for (let d = Math.max(w.fromDay, dayN + 1); d <= w.toDay; d++) {
+            out += '<button type="button" class="it-dchip" data-jump="' + d + '" style="--lc:' +
+              (AREA_TINT[w.area] || 'var(--teal)') + '">' + d + '</button>';
+          }
+          return out;
+        }).join('') + '</div>';
+    }
+    host.innerHTML = html ? '<p class="itin-head">the days ahead</p>' + strip + html : '';
   };
 
   /* one delegated wire for the whole itinerary — survives every re-render */
@@ -1824,6 +1841,27 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
     const more = e.target.closest('.it-more');
     if (more) { ITIN_DEPTH += 7; renderItinerary(); return; }
+    if (e.target.closest('[data-scrollnow]')) {
+      window.scrollTo({ top: 0, behavior: REDUCED_MOTION() ? 'auto' : 'smooth' });
+      return;
+    }
+    const jump = e.target.closest('.it-dchip[data-jump]');
+    if (jump) {
+      const d = +jump.getAttribute('data-jump');
+      const t = (todayCtx && todayCtx.trip) || trip;
+      const dayN = tripDayNumber(t, baliNow()) || 0;
+      if (d - dayN > ITIN_DEPTH) ITIN_DEPTH = d - dayN; /* the river reaches the chip */
+      const w = itinWindows().find((x) => d >= x.fromDay && d <= x.toDay);
+      if (w && TRIP_DAY_PLANS.some((r) => r.leg_seq === w.seq)) {
+        ITIN_EXPANDED.add(w.seq + ':' + (d - w.fromDay + 1)); /* tapping a day is intent */
+      }
+      renderItinerary();
+      const el = w && itinHost.querySelector('.it-day[data-key="' + w.seq + ':' + (d - w.fromDay + 1) + '"]');
+      const target = el || itinHost.querySelector('.it-ungen');
+      if (target) requestAnimationFrame(() =>
+        target.scrollIntoView({ behavior: REDUCED_MOTION() ? 'auto' : 'smooth', block: 'start' }));
+      return;
+    }
     const tog = e.target.closest('[data-toggle]');
     if (tog) {
       const key = tog.getAttribute('data-toggle');
