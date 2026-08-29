@@ -410,7 +410,12 @@ function updateStrip(trip, firstName, now) {
   const mm = String(s.m).padStart(2, '0');
   const base = trip && trip.vibe ? (HOME_AREA[trip.vibe] || 'Bali').split(' ')[0].toUpperCase() : 'BALI';
   const dayc = tripDayLabel(trip, now);
-  $('todayStrip').textContent = DAY_ABBR[s.day] + ' · ' + hh + ':' + mm + (dayc ? ' · ' + dayc : '');
+  /* S2.1: the day counter is the anchor jump — tap returns to the live day */
+  $('todayStrip').innerHTML = DAY_ABBR[s.day] + ' · ' + hh + ':' + mm +
+    (dayc ? ' · <button type="button" class="leg-chip" id="dayChip">' + esc(dayc) + '</button>' : '');
+  const dChip = $('dayChip');
+  if (dChip) dChip.onclick = () =>
+    window.scrollTo({ top: 0, behavior: REDUCED_MOTION() ? 'auto' : 'smooth' });
   /* AI-1b: the leg is the base — the word BASE dies when a route exists.
      Leg-day counter stays OFF the strip (it lives on the route instrument). */
   const rs = routeState(trip, TRIP_LEGS, now);
@@ -1133,7 +1138,12 @@ function renderToday(trip, firstName, places, dateOpt) {
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     cur.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
   }
+  renderItinerary(); /* S2: the days ahead render beneath the live day */
 }
+
+/* S2 hook — implemented inside the signed-in closure (needs sb/user);
+   a no-op until boot assigns it, so fixtures and early paints stay safe */
+let renderItinerary = () => {};
 
 function renderPulse(dailyK, spentK, tripDay) {
   const leftK = Math.max(0, dailyK - spentK);
@@ -1651,6 +1661,206 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   /* 4 · swap one planned place: rotate through the rail's honest alternatives,
      persist when on-route (RLS own-row update on day_plans) */
+  /* ═══ REALITY FIRST S2 · THE ITINERARY — the days ahead ═══════════════
+     Today's lower half, no toggle: scrolling down IS scrolling forward in
+     time. Future days = compact rows (browsing); expanding one = intent →
+     full cards + swap. ⚑ save on every future pick (browsing tomorrow IS
+     shortlisting). Leg boundaries as visa-style headers; ungenerated legs
+     honest with a door. Past days live in the passport, never here. */
+  const ITIN_EXPANDED = new Set();  /* 'seq:dayInLeg' expanded in place */
+  let ITIN_DEPTH = 7;               /* soft cap of day rows (spec 2.2) */
+
+  function itinWindows() {
+    let acc = 0;
+    return TRIP_LEGS.map((l) => {
+      const w = { seq: l.seq, area: l.area, nights: l.nights, fromDay: acc + 1, toDay: acc + l.nights };
+      acc += l.nights;
+      return w;
+    });
+  }
+  const itinPlanFor = (seq, dayInLeg) => {
+    const row = TRIP_DAY_PLANS.find((r) => r.leg_seq === seq && r.day_in_leg === dayInLeg);
+    return (row && row.slots) || [];
+  };
+  /* ONE save write-path for every surface (extracted from the Places mount) */
+  async function toggleSave(p) {
+    if (!user || !p) return false;
+    const id = String(p.id);
+    if (SAVES.has(id)) {
+      const rowId = SAVE_ROWS.get(id);
+      if (!rowId) return false;
+      const { error } = await sb.from('places').delete().eq('id', rowId);
+      if (error) return false;
+      SAVES.delete(id);
+      SAVE_ROWS.delete(id);
+      return true;
+    }
+    const { data: row, error } = await sb.from('places').insert({
+      user_id: user.id, curated_place_id: p.id,
+      name: p.name, area: p.area, category: p.category, curated: true
+    }).select('id').single();
+    if (error) return false;
+    SAVES.set(id, Date.now());
+    SAVE_ROWS.set(id, row.id);
+    track('place_saved');
+    return true;
+  }
+  const itinFlag = (p) => {
+    const on = SAVES.has(String(p.id));
+    return '<button type="button" class="it-flag' + (on ? ' on' : '') + '" data-flag="' + esc(p.id) +
+      '" aria-label="' + (on ? 'saved — tap to remove' : 'save for later') + '">' +
+      '<svg width="14" height="14" aria-hidden="true"><use href="#icon-' + (on ? 'saved' : 'save') + '"/></svg></button>';
+  };
+
+  renderItinerary = function () {
+    const host = $('itinerary');
+    if (!host) return;
+    const t = (todayCtx && todayCtx.trip) || trip; /* fixture-friendly: todayCtx carries the trip */
+    if (!LAYERS.today || !t || TRIP_LEGS.length < 1 || !todayCtx) { host.innerHTML = ''; return; }
+    const now = baliNow();
+    const dayN = tripDayNumber(t, now);
+    if (dayN == null || dayN < 1) { host.innerHTML = ''; return; }
+    let origin;
+    if (t.arrive) { const p = String(t.arrive).split('-'); origin = new Date(+p[0], +p[1] - 1, +p[2]); }
+    else { const c = new Date(t.created_at); origin = new Date(c.getFullYear(), c.getMonth(), c.getDate()); }
+    const resolve = (id) => (todayCtx.places || []).find((x) => String(x.id) === String(id)) || null;
+
+    let html = '';
+    let rows = 0;
+    let clipped = 0;
+    const wins = itinWindows();
+    for (const w of wins) {
+      if (w.toDay <= dayN) continue; /* fully lived legs are memory — passport */
+      const future = w.fromDay > dayN;
+      const hasPlan = TRIP_DAY_PLANS.some((r) => r.leg_seq === w.seq);
+      if (future) {
+        html += '<div class="it-leg"><span class="it-leg-orb" style="background:' +
+          (AREA_TINT[w.area] || 'var(--teal)') + '"></span>→ ' + esc(w.area.toUpperCase()) +
+          ' · ' + w.nights + ' NIGHTS · from day ' + w.fromDay + '</div>';
+        if (!hasPlan) {
+          html += '<div class="it-ungen"><span>' + esc(w.area.toUpperCase()) + ' · ' + w.nights +
+            ' DAYS · planned when the leg starts</span>' +
+            '<button type="button" class="ck-reset it-plan-now" data-leg="' + w.seq + '">plan it now →</button></div>';
+          continue;
+        }
+      }
+      if (rows >= ITIN_DEPTH) { clipped += w.toDay - Math.max(w.fromDay, dayN + 1) + 1; continue; }
+      for (let d = Math.max(w.fromDay, dayN + 1); d <= w.toDay; d++) {
+        if (rows >= ITIN_DEPTH) { clipped++; continue; }
+        rows++;
+        const dayInLeg = d - w.fromDay + 1;
+        const key = w.seq + ':' + dayInLeg;
+        const dd = new Date(origin.getFullYear(), origin.getMonth(), origin.getDate() + (d - 1));
+        const slots = itinPlanFor(w.seq, dayInLeg);
+        const bySlot = {};
+        slots.forEach((sl) => { if (!bySlot[sl.rail]) bySlot[sl.rail] = sl; });
+        const expanded = ITIN_EXPANDED.has(key);
+        html += '<div class="it-day' + (expanded ? ' open' : '') + '" data-key="' + key + '">' +
+          '<button type="button" class="it-day-head" data-toggle="' + key + '">' +
+            MONTH_ABBR[dd.getMonth()] + ' ' + dd.getDate() + ' · DAY ' + d +
+            '<span class="it-day-caret">' + (expanded ? '▾' : '▸') + '</span></button>';
+        RAILS.forEach((r) => {
+          const sl = bySlot[r.key];
+          const p = sl ? resolve(sl.place_id) : null;
+          if (!expanded) {
+            html += '<div class="it-rail" data-toggle="' + key + '">' +
+              '<span class="it-hours">' + r.hours + '</span>' +
+              '<span class="pdot" style="--pd:' + (p && CAT_META[p.category] ? CAT_META[p.category].cc : 'var(--line)') + '"></span>' +
+              '<span class="it-name' + (p ? '' : ' dim') + '">' + (p ? esc(p.name) : '—') + '</span>' +
+              (p ? itinFlag(p) : '') +
+            '</div>';
+          } else if (p) {
+            html += '<div class="it-card" style="--cc:' + ((CAT_META[p.category] || {}).cc || 'var(--teal)') + '">' +
+              itinFlag(p) +
+              '<div class="it-card-top"><span class="it-hours">' + r.hours + '</span>' +
+                '<strong>' + esc(p.name) + '</strong>' +
+                (p.verified ? '<span class="place-verified">✓</span>' : '') + '</div>' +
+              ((sl.why || p.why) ? '<p class="it-why">' + esc(sl.why || p.why) + '</p>' : '') +
+              '<button type="button" class="swap-chip it-swap" data-leg="' + w.seq + '" data-day="' + dayInLeg +
+                '" data-rail="' + r.key + '">↻ SWAP</button>' +
+            '</div>';
+          } else {
+            html += '<div class="it-rail"><span class="it-hours">' + r.hours + '</span>' +
+              '<span class="pdot" style="--pd:var(--line)"></span><span class="it-name dim">—</span></div>';
+          }
+        });
+        html += '</div>';
+      }
+    }
+    if (clipped > 0) {
+      html += '<button type="button" class="ck-reset it-more">+ ' + clipped + ' more day' + (clipped === 1 ? '' : 's') + ' →</button>';
+    }
+    host.innerHTML = html ? '<p class="itin-head">the days ahead</p>' + html : '';
+  };
+
+  /* one delegated wire for the whole itinerary — survives every re-render */
+  const itinHost = $('itinerary');
+  if (itinHost) itinHost.addEventListener('click', async (e) => {
+    const flag = e.target.closest('.it-flag');
+    if (flag) {
+      e.stopPropagation();
+      const p = (todayCtx && todayCtx.places || []).find((x) => String(x.id) === flag.getAttribute('data-flag'));
+      if (p && await toggleSave(p)) renderItinerary();
+      return;
+    }
+    const sw = e.target.closest('.it-swap');
+    if (sw) {
+      e.stopPropagation();
+      swapFuture(+sw.getAttribute('data-leg'), +sw.getAttribute('data-day'), sw.getAttribute('data-rail'));
+      return;
+    }
+    const pn = e.target.closest('.it-plan-now');
+    if (pn) {
+      const seq = +pn.getAttribute('data-leg');
+      pn.disabled = true;
+      pn.textContent = '▸ planning…';
+      const { data, error } = await sb.functions.invoke('plan-engine', { body: { action: 'days', leg_seq: seq } });
+      if (error || !data || data.error) { pn.disabled = false; pn.textContent = 'plan it now →'; return; }
+      const { data: dpAll } = await sb.from('day_plans').select('leg_seq, day_in_leg, slots').eq('trip_id', trip.id);
+      TRIP_DAY_PLANS = dpAll || [];
+      track('itin_plan_leg', { leg: seq });
+      renderItinerary();
+      return;
+    }
+    const more = e.target.closest('.it-more');
+    if (more) { ITIN_DEPTH += 7; renderItinerary(); return; }
+    const tog = e.target.closest('[data-toggle]');
+    if (tog) {
+      const key = tog.getAttribute('data-toggle');
+      /* expanding a day is declaring intent (spec 2.2) */
+      if (ITIN_EXPANDED.has(key)) ITIN_EXPANDED.delete(key);
+      else ITIN_EXPANDED.add(key);
+      renderItinerary();
+    }
+  });
+
+  /* S2 swap on a FUTURE day — same rotate-through-alternatives grammar as
+     today's swap, persisted to that day's plan row */
+  function swapFuture(legSeq, dayInLeg, railKey) {
+    const row = TRIP_DAY_PLANS.find((r) => r.leg_seq === legSeq && r.day_in_leg === dayInLeg);
+    if (!row || !todayCtx) return;
+    const slot = (row.slots || []).find((s) => s.rail === railKey);
+    if (!slot) return;
+    const leg = TRIP_LEGS.find((l) => l.seq === legSeq);
+    let pool = todayCtx.places;
+    if (leg) {
+      const local = pool.filter((p) => inAreaRegion(p, leg.area));
+      if (local.length >= 4) pool = local;
+    }
+    const plan = planFromTrip(todayCtx.trip);
+    const { picks } = railPicks(pool, plan, railKey, 6);
+    if (!picks.length) return;
+    const i = picks.findIndex((p) => String(p.id) === String(slot.place_id));
+    const alt = picks[(i + 1) % picks.length];
+    if (!alt || String(alt.id) === String(slot.place_id)) return;
+    slot.place_id = alt.id;
+    slot.why = 'your swap — ↻ again for another';
+    renderItinerary();
+    sb.from('day_plans').update({ slots: row.slots })
+      .eq('trip_id', todayCtx.trip.id).eq('leg_seq', legSeq).eq('day_in_leg', dayInLeg)
+      .then(({ error }) => { if (error) console.warn('[Prevoya] future swap persist failed:', error.message); });
+  }
+
   function swapPlanned(railKey) {
     if (!DAY_PLAN || !todayCtx || !railKey) return;
     const slot = DAY_PLAN.find((s) => s.rail === railKey);
