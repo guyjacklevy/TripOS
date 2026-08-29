@@ -1790,29 +1790,32 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (clipped > 0) {
       html += '<button type="button" class="ck-reset it-more">+ ' + clipped + ' more day' + (clipped === 1 ? '' : 's') + ' →</button>';
     }
-    /* the SCRUBBER (Guy's calendar instinct, hybridized): a pinned strip of
-       day chips that SCROLLS the river — an index, not a container. Tap a
-       day → it renders, expands, and the river jumps there. The plan keeps
-       its body; reach stops costing seven taps. (Flagged to Rachel.) */
-    let strip = '';
-    if (html) {
-      strip = '<div class="it-strip"><button type="button" class="it-dchip it-dchip-now" data-scrollnow>NOW</button>' +
-        wins.map((w) => {
-          if (w.toDay <= dayN) return '';
-          let out = '';
-          for (let d = Math.max(w.fromDay, dayN + 1); d <= w.toDay; d++) {
-            out += '<button type="button" class="it-dchip" data-jump="' + d + '" style="--lc:' +
-              (AREA_TINT[w.area] || 'var(--teal)') + '">' + d + '</button>';
-          }
-          return out;
-        }).join('') + '</div>';
+    /* the SCRUBBER (Guy's calendar instinct, hybridized): a strip of day
+       chips ABOVE the plan — an index, not a container, visible before the
+       thing it indexes (Guy's placement ruling). Tap a day → it renders,
+       expands, and the river jumps there. */
+    const strip = $('itStrip');
+    if (strip) {
+      if (html) {
+        strip.innerHTML = '<button type="button" class="it-dchip it-dchip-now" data-scrollnow>NOW</button>' +
+          wins.map((w) => {
+            if (w.toDay <= dayN) return '';
+            let out = '';
+            for (let d = Math.max(w.fromDay, dayN + 1); d <= w.toDay; d++) {
+              out += '<button type="button" class="it-dchip" data-jump="' + d + '" style="--lc:' +
+                (AREA_TINT[w.area] || 'var(--teal)') + '">' + d + '</button>';
+            }
+            return out;
+          }).join('');
+        strip.hidden = false;
+      } else { strip.innerHTML = ''; strip.hidden = true; }
     }
-    host.innerHTML = html ? '<p class="itin-head">the days ahead</p>' + strip + html : '';
+    host.innerHTML = html ? '<p class="itin-head">the days ahead</p>' + html : '';
   };
 
   /* one delegated wire for the whole itinerary — survives every re-render */
   const itinHost = $('itinerary');
-  if (itinHost) itinHost.addEventListener('click', async (e) => {
+  const itinClick = async (e) => {
     const flag = e.target.closest('.it-flag');
     if (flag) {
       e.stopPropagation();
@@ -1870,7 +1873,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       else ITIN_EXPANDED.add(key);
       renderItinerary();
     }
-  });
+  };
+  if (itinHost) itinHost.addEventListener('click', itinClick);
+  const itinStripHost = $('itStrip');
+  if (itinStripHost) itinStripHost.addEventListener('click', itinClick);
 
   /* S2 swap on a FUTURE day — same rotate-through-alternatives grammar as
      today's swap, persisted to that day's plan row */
