@@ -3091,3 +3091,25 @@ input, select, textarea { font-size: 16px !important; }
   cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .it-dchip-now { color: var(--teal); border-color: color-mix(in srgb, var(--teal) 40%, transparent); }
+
+/* ═══ REALITY FIRST S1.3 · the re-flow — proposal bubble + trace ceremony ═══ */
+.reflow-bubble {
+  background: var(--glass); border: 1px solid color-mix(in srgb, var(--teal) 30%, transparent);
+  border-radius: 16px; border-bottom-left-radius: 5px;
+  padding: 13px 15px; margin: 10px 0 4px;
+}
+.reflow-bubble[hidden] { display: none; }
+.rf-line { font-size: 14px; color: var(--tx); line-height: 1.5; margin: 0; }
+.rf-line.rf-quiet { color: var(--mut); font-size: 13px; }
+.rf-chips { display: flex; gap: 12px; align-items: center; margin-top: 11px; }
+.rf-ceremony {
+  position: fixed; inset: 0; z-index: 400;
+  background: var(--bg, #0a0a14);
+  display: flex; align-items: center; justify-content: center;
+}
+.rf-inner { max-width: 480px; width: 100%; padding: 0 26px; }
+.rf-term { font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em;
+  color: var(--teal); margin: 0 0 14px; }
+.rf-map { margin: 6px 0; }
+.rf-counts { font-family: var(--mono); font-size: 13px; letter-spacing: 0.16em;
+  color: var(--tx); margin: 14px 0 0; text-align: center; }

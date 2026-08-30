@@ -444,12 +444,13 @@ function updateStrip(trip, firstName, now) {
         ' · it can wait — <button type="button" class="ctx-replan" id="ctxReplan">or replan →</button>';
       ctx.hidden = false;
       const rb = $('ctxReplan');
-      /* interim target: the route instrument (Pass 3 rewires this to the
-         re-flow proposal per S1.3) */
+      /* S1.3: self-service replan — opens the proposal regardless of the
+         decline cooldown (asking never depends on being asked) */
       if (rb) rb.onclick = () => {
-        setTab('you');
-        const el = $('youRoute');
-        if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: REDUCED_MOTION() ? 'auto' : 'smooth', block: 'start' }));
+        maybeReflow({ force: true });
+        const bub = $('reflowBubble');
+        if (bub && !bub.hidden) requestAnimationFrame(() =>
+          bub.scrollIntoView({ behavior: REDUCED_MOTION() ? 'auto' : 'smooth', block: 'center' }));
       };
     } else ctx.hidden = true;
   }
@@ -1139,11 +1140,42 @@ function renderToday(trip, firstName, places, dateOpt) {
     cur.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
   }
   renderItinerary(); /* S2: the days ahead render beneath the live day */
+  maybeReflow();     /* S1.3: the concierge may propose — never commands */
 }
 
 /* S2 hook — implemented inside the signed-in closure (needs sb/user);
    a no-op until boot assigns it, so fixtures and early paints stay safe */
 let renderItinerary = () => {};
+
+/* ═══ S1.3 · divergence detection (module-pure) ═══
+   ≥2 consecutive Bali days of live check-ins in one region ≠ the current
+   leg's area (ATLAS A2). Today without a check-in yet doesn't break a
+   streak that ended yesterday. */
+function divergence(t) {
+  const rs = routeState(t, TRIP_LEGS, baliNow());
+  if (!rs || !rs.cur) return null;
+  const legArea = rs.cur.area;
+  const dayReg = {};
+  CHECKINS.forEach((c) => {
+    const r = latLngRegion(c.lat, c.lng);
+    if (!r) return;
+    const b = baliDateOf(c.created_at);
+    dayReg[b.y + '-' + b.m + '-' + b.d] = r; /* the day's last located check-in wins */
+  });
+  const now = baliNow();
+  let region = null, streak = 0;
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const k = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+    const r = dayReg[k];
+    if (!r) { if (i === 0) continue; break; }
+    if (r === legArea) break;
+    if (region && r !== region) break;
+    region = r; streak++;
+  }
+  return region && streak >= 2 ? { region, streak } : null;
+}
+let maybeReflow = () => {}; /* closure-implemented, like renderItinerary */
 
 function renderPulse(dailyK, spentK, tripDay) {
   const leftK = Math.max(0, dailyK - spentK);
@@ -1661,6 +1693,125 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   /* 4 · swap one planned place: rotate through the rail's honest alternatives,
      persist when on-route (RLS own-row update on day_plans) */
+  /* ═══ REALITY FIRST S1.3 · THE RE-FLOW — the plan follows you ═════════
+     Divergence ≥2 days → the concierge PROPOSES (a bubble with chips,
+     never a silent rewrite). Accept earns the trace: 3 beats, ~6s, then
+     the updated route lands. Decline = quiet, no re-ask until the region
+     changes; the header's `replan →` keeps self-service alive (force). */
+  maybeReflow = function (opts) {
+    const host = $('reflowBubble');
+    if (!host) return;
+    if (host.dataset.state === 'done') return;
+    if (!trip || !todayCtx || TRIP_LEGS.length < 1) { host.hidden = true; return; }
+    const force = !!(opts && opts.force);
+    let div = divergence(todayCtx.trip);
+    if (!div && force) {
+      /* self-service path: propose from wherever reality says, streak or not */
+      const rs = routeState(todayCtx.trip, TRIP_LEGS, baliNow());
+      const legArea = rs && rs.cur ? rs.cur.area : null;
+      const reg = realityRegion() || trip.area_override;
+      if (reg && legArea && reg !== legArea) div = { region: reg, streak: 1 };
+    }
+    if (!div) { host.hidden = true; return; }
+    if (!force && trip.reflow_declined_area === div.region) { host.hidden = true; return; }
+    const total = TRIP_LEGS.reduce((s, l) => s + (l.nights || 0), 0);
+    const day = tripDayNumber(trip, baliNow()) || 1;
+    const left = Math.max(1, total - (day - 1));
+    host.innerHTML =
+      '<p class="rf-line">' + (div.streak >= 2
+        ? 'You’ve been in ' + esc(div.region) + ' ' + div.streak + ' days — want me to re-plan the rest around it?'
+        : 'You’re in ' + esc(div.region) + ' — want me to re-plan the rest around it?') + '</p>' +
+      '<div class="rf-chips">' +
+        '<button type="button" class="ri-replan" id="rfYes">replan from here</button>' +
+        '<button type="button" class="ck-reset" id="rfNo">keep my route</button>' +
+      '</div>';
+    host.hidden = false;
+    $('rfYes').onclick = () => acceptReflow(div.region, left);
+    $('rfNo').onclick = async () => {
+      trip.reflow_declined_area = div.region;
+      host.innerHTML = '<p class="rf-line rf-quiet">your route holds</p>';
+      setTimeout(() => { host.hidden = true; }, 2200);
+      const { error } = await sb.from('trips').update({ reflow_declined_area: div.region }).eq('id', trip.id);
+      if (error) console.warn('[Prevoya] reflow decline persist failed:', error.message);
+      track('reflow_decline', { region: div.region });
+    };
+  };
+
+  async function acceptReflow(region, leftDays) {
+    const host = $('reflowBubble');
+    /* beat 1 · the terminal line takes the screen (skippable by tap) */
+    const ov = document.createElement('div');
+    ov.className = 'rf-ceremony';
+    ov.innerHTML = '<div class="rf-inner">' +
+      '<p class="rf-term">▸ re-routing your remaining ' + leftDays + ' days…</p>' +
+      '<div class="cer-map rf-map" hidden><svg viewBox="0 0 320 260" width="100%" aria-hidden="true">' +
+        '<path d="' + ISLAND_PATH + '" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.5"/>' +
+        '<ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.5"/>' +
+        '<path id="rfTrace" d="" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>' +
+        '<g id="rfOrbs"></g></svg></div>' +
+      '<p class="rf-counts" id="rfCounts" hidden></p></div>';
+    document.body.appendChild(ov);
+    let skipped = false;
+    ov.onclick = () => { skipped = true; ov.remove(); };
+    const { data, error } = await sb.functions.invoke('plan-engine', { body: { action: 'reroute', anchor_area: region } });
+    if (error || !data || data.error || !data.legs) {
+      if (!skipped) ov.remove();
+      if (host) {
+        host.innerHTML = '<p class="rf-line rf-quiet">couldn’t re-plan just now — your route holds</p>';
+        setTimeout(() => { host.hidden = true; }, 2600);
+      }
+      return;
+    }
+    track('reflow_accept', { to: region });
+    TRIP_LEGS = data.legs || [];
+    trip.route_summary = data.summary || trip.route_summary;
+    trip.reflow_declined_area = null;
+    const { data: dpAll } = await sb.from('day_plans').select('leg_seq, day_in_leg, slots').eq('trip_id', trip.id);
+    TRIP_DAY_PLANS = dpAll || [];
+    if (host) host.dataset.state = 'done';
+    /* reality == plan now — the override clears itself, silently */
+    if (trip.area_override) await setOverride(null, { quiet: true });
+    /* beats 2–3 · the tail re-traces from where you stand, counts land */
+    if (!skipped && !REDUCED_MOTION()) {
+      const mapEl = ov.querySelector('.rf-map');
+      const newLegs = TRIP_LEGS.filter((l) => l.status !== 'done');
+      const pts = newLegs.map((l) => AREA_XY[l.area] || [160, 150]);
+      mapEl.hidden = false;
+      const tr = ov.querySelector('#rfTrace');
+      tr.setAttribute('d', pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ',' + p[1]).join(' '));
+      ov.querySelector('#rfOrbs').innerHTML = newLegs.map((l, i) =>
+        '<circle cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="6" fill="' + (AREA_HEX[l.area] || '#3dffd0') + '"/>' +
+        '<text x="' + (pts[i][0] + 10) + '" y="' + (pts[i][1] + 3) + '" fill="' + (AREA_HEX[l.area] || '#3dffd0') +
+        '" font-size="9" style="font-family:ui-monospace,Menlo,monospace;letter-spacing:0.08em">' +
+        esc(l.area.toUpperCase()) + '</text>').join('');
+      try {
+        const len = tr.getTotalLength();
+        tr.style.strokeDasharray = String(len);
+        tr.style.strokeDashoffset = String(len);
+        requestAnimationFrame(() => { tr.style.transition = 'stroke-dashoffset 1.6s ease-out'; tr.style.strokeDashoffset = '0'; });
+      } catch (_) {}
+      await new Promise((r) => setTimeout(r, 2000));
+      if (!skipped) {
+        const c = ov.querySelector('#rfCounts');
+        const nl = TRIP_LEGS.filter((l) => l.status !== 'done');
+        c.textContent = leftDays + ' DAYS · ' + nl.length + ' BASE' + (nl.length === 1 ? '' : 'S') + ' · re-planned from ' + region.toUpperCase();
+        c.hidden = false;
+        await new Promise((r) => setTimeout(r, 1700));
+      }
+    }
+    if (!skipped) ov.remove();
+    /* the receipt lands on the surfaces */
+    renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
+    updateStrip(trip, greetName(), baliNow());
+    if (todayCtx) { todayCtx.trip = trip; renderToday(trip, todayCtx.name, todayCtx.places); }
+    if (host) {
+      host.innerHTML = '<p class="rf-line">done — your plan starts where you are. scroll down to see the days.</p>';
+      host.hidden = false;
+      setTimeout(() => { host.hidden = true; }, 4200);
+    }
+    loadDayPlan().then(() => { if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places); });
+  }
+
   /* ═══ REALITY FIRST S2 · THE ITINERARY — the days ahead ═══════════════
      Today's lower half, no toggle: scrolling down IS scrolling forward in
      time. Future days = compact rows (browsing); expanding one = intent →
