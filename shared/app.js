@@ -953,6 +953,7 @@ let ROUTE_GENERATING = false; /* §G: route generation in flight → You field s
 let CONCIERGE_DOWN = false;  /* §G: engine unreachable → honest amber line on Today */
 let TL_KEEP_SCROLL = false;  /* one-shot: next renderToday keeps scroll position */
 let CX_NOTE = null;
+let CX_PH_BASE = 'tell me anything'; /* master-control rotation base (S1) */
 
 /* ─── §F · progressive disclosure — layers gate BROWSING CHROME, never
    options (the explorability carve-out: deep-links always open the full
@@ -1109,11 +1110,11 @@ function renderToday(trip, firstName, places, dateOpt) {
     html = '<p class="offer-label">' + (hasPlanToday ? 'today’s offer' : 'if you want ideas') +
       ' · ' + esc(String(anchorArea).toLowerCase()) + '</p>' + html;
   }
-  /* the freedom line lives in the composer placeholder, ambient (S1.2) */
+  /* the freedom line lives in the composer placeholder, ambient (S1.2);
+     master control rotates through it (S1) — base item per day state */
+  CX_PH_BASE = hasPlanToday ? 'tell me anything' : 'your day, your call — I’m here.';
   const cxInp = $('cxInput');
-  if (cxInp) cxInp.placeholder = hasPlanToday
-    ? 'rain? tired? plans changed? — tell me'
-    : 'your day, your call — I’m here.';
+  if (cxInp && document.activeElement !== cxInp) cxInp.placeholder = CX_PH_BASE;
   if (LAYERS.today) html = layerCap('today2', 'your full day — four rails, morning to night') + html;
   tl.innerHTML = html;
   dropIn(tl);
@@ -2470,12 +2471,173 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   }
 
   /* AI-3 · the live concierge: one message → today re-plans around it */
+  /* ═══ MASTER CONTROL · pass 1 (ATLAS A1-A3 + Rachel S1-S3) ═══════════
+     Tier 1: keyword table + normalization, zero cost, instant. The model
+     handles fuzzy (pass 2). Registry-only — the router can never invent an
+     action; destructive intents route through their existing confirms
+     (the router requests, the surface confirms). Unmatched input falls
+     through to adjust — today's behavior, unchanged. */
+  const MC_REGISTRY = [
+    { key: 'share_trip',   aliases: ['share my trip', 'share trip', 'share my passport', 'share passport'], label: 'share' },
+    { key: 'share_route',  aliases: ['share my route', 'share route', 'send my route'], label: 'share the route' },
+    { key: 'start_repack', aliases: ['repack', 'start repack', 'repack mode', 'im moving', 'i am moving'], label: 'repack' },
+    { key: 'open_passport', aliases: ['passport', 'my passport', 'my stamps', 'open passport', 'show my stamps'], label: 'your passport' },
+    { key: 'open_pulse',   aliases: ['pulse', 'my budget', 'my spend', 'open pulse', 'how much did i spend'], label: 'pulse' },
+    { key: 'replan',       aliases: ['replan', 're-plan', 'replan from here', 'change my plan', 'change my route', 'adjust my route'], label: 'replan' },
+    { key: 'plan_leg',     aliases: ['plan my next leg', 'plan the next leg', 'plan next leg'], label: 'plan a leg' },
+    { key: 'check_in',     aliases: ['check in', 'checking in', 'im here', 'i am here', 'stamp this'], label: 'check in' },
+    { key: 'save_place',   aliases: ['save '], arg: true, label: 'save a place' },
+    { key: 'find_place',   aliases: ['find ', 'where is ', 'look up ', 'show me '], arg: true, label: 'find a place' },
+    /* trailed with honest stubs (ATLAS A3) */
+    { key: 'stub_film',    aliases: ['export the film', 'export film', 'share the film'], stub: 'film export is ready on your route — tap ↗ SHARE THE FILM there. voice command coming.' },
+    { key: 'stub_expense', aliases: ['log '], argNum: true, stub: 'expense logging by chat is coming — for now, the spend log on Today has you.' }
+  ];
+  const mcNorm = (s) => String(s || '').toLowerCase().replace(/[’'".,!?]/g, '').replace(/\s+/g, ' ').trim();
+  function mcMatch(msg) {
+    const n = mcNorm(msg);
+    for (const r of MC_REGISTRY) {
+      for (const a of r.aliases) {
+        if (r.arg || r.argNum) {
+          if (n.startsWith(a)) {
+            const arg = n.slice(a.length).trim();
+            if (arg) return { r, arg };
+          }
+        } else if (n === a || (a.length > 6 && n.startsWith(a))) {
+          return { r, arg: null };
+        }
+      }
+    }
+    return null;
+  }
+  /* S2 · the concierge line: one slot, four lead marks */
+  function mcSay(kind, text) {
+    const note = $('cxNote');
+    if (!note) return;
+    const lead = kind === 'execute' ? '✓ ' : kind === 'navigate' ? '→ ' : kind === 'answer' ? '▸ ' : '';
+    note.textContent = lead + text;
+    note.classList.toggle('cx-line-muted', kind === 'muted');
+    note.hidden = false;
+  }
+  /* S3 · the concierge carries you: reply beat → tab (runway light) → sweep */
+  function mcGo(tab, targetEl, line) {
+    mcSay('navigate', line);
+    setTimeout(() => {
+      setTab(tab);
+      const el = typeof targetEl === 'function' ? targetEl() : targetEl;
+      if (el) requestAnimationFrame(() => {
+        el.scrollIntoView({ behavior: REDUCED_MOTION() ? 'auto' : 'smooth', block: 'start' });
+        el.classList.remove('mc-sweep'); void el.offsetWidth; el.classList.add('mc-sweep');
+      });
+    }, 250);
+  }
+  function mcFindPlace(name) {
+    const pool = (todayCtx && todayCtx.places) || [];
+    const n = mcNorm(name);
+    return pool.find((p) => mcNorm(p.name) === n) ||
+      pool.find((p) => mcNorm(p.name).indexOf(n) !== -1) || null;
+  }
+  async function mcRun(cmd) {
+    const { r, arg } = cmd;
+    track('mc_command', { action: r.key });
+    if (r.stub) { mcSay('muted', r.stub); return; }
+    switch (r.key) {
+      case 'share_trip':
+        mcGo('you', () => $('ppShare'), 'the share desk');
+        setTimeout(() => { const b = $('ppShare'); if (b) b.click(); }, 600);
+        break;
+      case 'share_route':
+        mcSay('execute', 'preparing your route card…');
+        shareRoute(null);
+        break;
+      case 'start_repack':
+        mcGo('you', () => $('repackBtn'), 'repack mode');
+        setTimeout(() => { const b = $('repackBtn'); if (b && !repack) b.click(); }, 600);
+        break;
+      case 'open_passport': mcGo('you', () => $('ppBody'), 'your passport'); break;
+      case 'open_pulse': mcGo('pulse', null, 'pulse'); break;
+      case 'replan': {
+        maybeReflow({ force: true });
+        const bub = $('reflowBubble');
+        if (bub && !bub.hidden) mcGo('today', () => bub, 'the replan proposal');
+        else mcSay('muted', 'you’re on your route — nothing to replan right now');
+        break;
+      }
+      case 'plan_leg': {
+        /* the router requests; the honest door confirms (ATLAS gate note) */
+        const el = $('itinerary') && $('itinerary').querySelector('.it-plan-now');
+        if (el) mcGo('today', () => el.closest('.it-ungen') || el, 'the days ahead — tap plan it now');
+        else mcSay('muted', 'every leg is already planned');
+        break;
+      }
+      case 'check_in': {
+        const b = $('gpsBtn');
+        if (b) { mcSay('execute', 'finding you…'); b.click(); }
+        break;
+      }
+      case 'save_place': {
+        const p = mcFindPlace(arg);
+        if (!p) { mcSay('muted', 'couldn’t find “' + arg + '” on the shelf — try Places search'); break; }
+        if (SAVES.has(String(p.id))) { mcSay('execute', p.name + ' is already in your shortlist'); break; }
+        const ok = await toggleSave(p);
+        mcSay(ok ? 'execute' : 'muted', ok ? 'saved — ' + p.name + ' is in your shortlist' : 'couldn’t save just now — try again');
+        if (ok) renderItinerary();
+        break;
+      }
+      case 'find_place': {
+        const p = mcFindPlace(arg);
+        if (p && placesApi) {
+          mcGo('places', null, p.name);
+          setTimeout(() => placesApi.focusPlace(p.id), 600);
+        } else {
+          mcGo('places', () => $('appPlaceSearch'), 'the shelf — searching “' + arg + '”');
+          setTimeout(() => {
+            const s = $('appPlaceSearch');
+            if (s) { s.value = arg; s.dispatchEvent(new Event('input', { bubbles: true })); }
+          }, 600);
+        }
+        break;
+      }
+    }
+  }
+  /* S1 · the rotation IS the manual — live registry commands, 8s cycle,
+     pauses on focus, static under reduced motion */
+  const MC_PH = ['tell me anything', '“share my trip”', '“start my repack”', '“replan from here”', '“find crate cafe”', '“check in”'];
+  let mcPhIdx = 0, mcPhFocus = false;
+  const cxInpEl = $('cxInput');
+  if (cxInpEl && !REDUCED_MOTION()) {
+    cxInpEl.addEventListener('focus', () => { mcPhFocus = true; });
+    cxInpEl.addEventListener('blur', () => { mcPhFocus = false; });
+    setInterval(() => {
+      if (mcPhFocus || document.hidden) return;
+      mcPhIdx = (mcPhIdx + 1) % MC_PH.length;
+      cxInpEl.placeholder = CX_PH_BASE && mcPhIdx === 0 ? CX_PH_BASE : MC_PH[mcPhIdx];
+    }, 8000);
+  }
+  /* one-time caption (§F grammar): the field announces itself, once ever */
+  cxCaptionOnce();
+  function cxCaptionOnce() {
+    try {
+      if (capSeen('mc1')) return false;
+      const f = $('cxForm');
+      if (!f) return false;
+      const c = document.createElement('p');
+      c.className = 'layer-cap';
+      c.setAttribute('data-cap', 'mc1');
+      c.textContent = 'your concierge runs the whole app now — try “share my trip”';
+      f.insertAdjacentElement('beforebegin', c);
+      return true;
+    } catch (_) { return false; }
+  }
+
   const cxFormEl = $('cxForm');
   if (cxFormEl) cxFormEl.onsubmit = async (e) => {
     e.preventDefault();
     const inp = $('cxInput');
     const msg = inp.value.trim();
     if (!msg) return;
+    /* tier 1 first — free, instant; no match falls through to adjust */
+    const cmd = mcMatch(msg);
+    if (cmd) { inp.value = ''; mcRun(cmd); return; }
     const btn = cxFormEl.querySelector('button');
     const note = $('cxNote');
     btn.disabled = true;

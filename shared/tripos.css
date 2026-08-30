@@ -3113,3 +3113,48 @@ input, select, textarea { font-size: 16px !important; }
 .rf-map { margin: 6px 0; }
 .rf-counts { font-family: var(--mono); font-size: 13px; letter-spacing: 0.16em;
   color: var(--tx); margin: 14px 0 0; text-align: center; }
+
+/* ═══ MASTER CONTROL · S4 header hierarchy + S2/S3 concierge grammar ═══
+   Guy's ruling: the field was tiny, the button a billboard. Inverted:
+   the field earns the size (52px, 16px text — kills iOS focus-zoom),
+   the button shrinks to a send affordance inside it. Sunlight test:
+   nothing under 11px, nothing under 60% ink. */
+#todayStrip, #todayStrip2 { font-size: 12px; color: var(--mut); }
+.today-ctx { font-size: 11px; }
+.cx-master { position: relative; margin-bottom: 6px; }
+.cx-master .cx-field {
+  width: 100%; min-height: 52px; font-size: 16px; text-align: left;
+  padding: 14px 56px 14px 16px;
+}
+.cx-send {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 36px; min-width: 36px; min-height: 36px;
+  max-width: 36px; max-height: 36px; border-radius: 50%; border: none;
+  font-size: 0; line-height: 0;
+  background: var(--teal); color: #06110f; cursor: pointer;
+  display: grid; place-items: center; padding: 0;
+  transition: opacity 0.15s;
+}
+.cx-send:disabled { opacity: 0.45; cursor: default; }
+/* S2 · the concierge line: one slot, lead marks carry the kind */
+.cx-line {
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+  text-align: left; color: var(--teal); margin: 6px 2px 4px;
+}
+.cx-line-muted { color: var(--mut); }
+/* S3 · one scan-line sweep on the destination — this is what you asked for */
+.mc-sweep { position: relative; }
+.mc-sweep::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 40%,
+    color-mix(in srgb, var(--teal) 20%, transparent) 50%, transparent 60%);
+  background-size: 250% 100%; background-repeat: no-repeat;
+  animation: mcSweep 0.9s ease-out 1 both;
+}
+@keyframes mcSweep {
+  from { background-position: 120% 0; }
+  to { background-position: -60% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-sweep::after { animation: none; background: none; }
+}

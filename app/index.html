@@ -280,13 +280,17 @@
           </div>
         </div>
 
-        <!-- AI-3 · the live concierge: say what's true, today adjusts around it -->
-        <form class="log-form add-form cx-form" id="cxForm" hidden>
-          <input class="auth-input" id="cxInput" type="text" maxlength="200" autocomplete="off"
-            placeholder="rain? tired? plans changed? — tell me">
-          <button class="btn btn-primary log-btn" type="submit">adjust</button>
+        <!-- MASTER CONTROL (MASTER_CONTROL_SURFACE_SPEC S1/S4): the field is
+             the steering wheel — tell me anything; I'll do it or take you
+             there. The billboard button dies; a send affordance lives inside. -->
+        <form class="cx-form cx-master" id="cxForm" hidden>
+          <input class="auth-input cx-field" id="cxInput" type="text" maxlength="200" autocomplete="off"
+            placeholder="tell me anything">
+          <button class="cx-send" type="submit" aria-label="send">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 3.5 13.5 8 9 12.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
         </form>
-        <p class="pulse-note" id="cxNote" hidden></p>
+        <p class="pulse-note cx-line" id="cxNote" hidden></p>
 
         <!-- A2 · zero-friction check-in: one tap, nearest places suggested -->
         <div class="gps-row">
