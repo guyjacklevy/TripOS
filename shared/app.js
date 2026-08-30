@@ -1707,10 +1707,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const force = !!(opts && opts.force);
     let div = divergence(todayCtx.trip);
     if (!div && force) {
-      /* self-service path: propose from wherever reality says, streak or not */
+      /* self-service path: propose from wherever reality says, streak or not;
+         master control may name the region outright ("i'm in ubud now") */
       const rs = routeState(todayCtx.trip, TRIP_LEGS, baliNow());
       const legArea = rs && rs.cur ? rs.cur.area : null;
-      const reg = realityRegion() || trip.area_override;
+      const reg = (opts && opts.region) || realityRegion() || trip.area_override;
       if (reg && legArea && reg !== legArea) div = { region: reg, streak: 1 };
     }
     if (!div) { host.hidden = true; return; }
@@ -2536,11 +2537,57 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     return pool.find((p) => mcNorm(p.name) === n) ||
       pool.find((p) => mcNorm(p.name).indexOf(n) !== -1) || null;
   }
-  async function mcRun(cmd) {
-    const { r, arg } = cmd;
-    track('mc_command', { action: r.key });
+  /* S5 · the fallthrough names what the concierge CAN do — registry-drawn */
+  function mcCanDo() {
+    const names = ['share_trip', 'replan', 'start_repack', 'save_place', 'find_place']
+      .map((k) => { const r = MC_REGISTRY.find((x) => x.key === k); return r ? r.label : null; })
+      .filter(Boolean);
+    return 'can’t do that one yet — I can ' + names.slice(0, -1).join(', ') + ', or ' + names[names.length - 1] + '.';
+  }
+  /* S5 · half-understood: one question + two chips, never a menu */
+  function mcChipsHide() { const h = $('cxChips'); if (h) { h.hidden = true; h.innerHTML = ''; } }
+  function mcChips(opts, arg) {
+    const host = $('cxChips');
+    if (!host) return;
+    host.innerHTML = opts.map((o, i) =>
+      '<button type="button" class="ck-reset mc-chip" data-i="' + i + '">' + esc(o.label) + '</button>').join('');
+    host.hidden = false;
+    host.querySelectorAll('.mc-chip').forEach((b) => {
+      b.onclick = () => { const o = opts[+b.dataset.i]; mcChipsHide(); mcRun(o.action, arg); };
+    });
+  }
+  /* set_area IS reroute (ATLAS A3): route through the re-flow proposal */
+  function mcSetArea(area) {
+    if (!area) { mcSay('muted', mcCanDo()); return; }
+    maybeReflow({ force: true, region: area });
+    const bub = $('reflowBubble');
+    if (bub && !bub.hidden) mcGo('today', () => bub, 'the replan proposal — ' + area.toLowerCase());
+    else mcSay('muted', 'your route already has you in ' + area.toLowerCase());
+  }
+  /* S5 · destructive intents confirm inline — browser confirm() is banned.
+     Fixed bar, not a dialog: works pre-render (boot-time claims) too. */
+  function chipConfirm(line, yesLabel, noLabel) {
+    return new Promise((resolve) => {
+      const old = document.getElementById('mccBar');
+      if (old) old.remove();
+      const bar = document.createElement('div');
+      bar.className = 'mcc-bar';
+      bar.id = 'mccBar';
+      bar.innerHTML = '<p class="rf-line">' + esc(line) + '</p><div class="rf-chips">' +
+        '<button type="button" class="ri-replan mcc-yes">' + esc(yesLabel) + '</button>' +
+        '<button type="button" class="ck-reset mcc-no">' + esc(noLabel) + '</button></div>';
+      document.body.appendChild(bar);
+      const done = (v) => { bar.remove(); resolve(v); };
+      bar.querySelector('.mcc-yes').onclick = () => done(true);
+      bar.querySelector('.mcc-no').onclick = () => done(false);
+    });
+  }
+  async function mcRun(key, arg) {
+    const r = MC_REGISTRY.find((x) => x.key === key);
+    if (!r) { mcSay('muted', mcCanDo()); return; }
+    track('mc_command', { action: key });
     if (r.stub) { mcSay('muted', r.stub); return; }
-    switch (r.key) {
+    switch (key) {
       case 'share_trip':
         mcGo('you', () => $('ppShare'), 'the share desk');
         setTimeout(() => { const b = $('ppShare'); if (b) b.click(); }, 600);
@@ -2635,13 +2682,47 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const inp = $('cxInput');
     const msg = inp.value.trim();
     if (!msg) return;
-    /* tier 1 first — free, instant; no match falls through to adjust */
+    /* tier 1 first — free, instant */
+    mcChipsHide();
     const cmd = mcMatch(msg);
-    if (cmd) { inp.value = ''; mcRun(cmd); return; }
+    if (cmd) { inp.value = ''; mcRun(cmd.r.key, cmd.arg); return; }
+    /* tier 2 — haiku routes loose phrasing to a registry action (A2);
+       'adjust' verdicts and router failures both land on the old path */
     const btn = cxFormEl.querySelector('button');
     const note = $('cxNote');
     btn.disabled = true;
     note.hidden = false;
+    note.classList.remove('cx-line-muted');
+    note.textContent = '▸ one sec…';
+    let routed = null;
+    try {
+      const { data, error } = await sb.functions.invoke('concierge', { body: { action: 'command', message: msg } });
+      if (!error && data && data.action) routed = data;
+    } catch (_) { /* router unreachable → adjust handles it, as always */ }
+    btn.disabled = false;
+    if (routed && routed.capped) { inp.value = ''; mcSay('muted', routed.reply); return; }
+    if (routed && routed.action !== 'adjust') {
+      const a = routed.action;
+      if (a === 'clarify' && Array.isArray(routed.options) && routed.options.length === 2) {
+        inp.value = '';
+        mcSay('answer', routed.reply || 'which one?');
+        mcChips(routed.options, routed.place || null);
+        return;
+      }
+      if (a === 'set_area') { inp.value = ''; mcSetArea(routed.area); return; }
+      if (a === 'none') { inp.value = ''; mcSay('muted', mcCanDo()); return; }
+      const key = a === 'export_film' ? 'stub_film' : a === 'log_expense' ? 'stub_expense' : a;
+      if ((key === 'save_place' || key === 'find_place') && !routed.place) {
+        inp.value = '';
+        mcSay('muted', mcCanDo());
+        return;
+      }
+      inp.value = '';
+      mcRun(key, routed.place || null);
+      return;
+    }
+    /* adjust — unchanged behavior */
+    btn.disabled = true;
     note.textContent = '▸ your concierge is adjusting today…';
     try {
       const { data, error } = await sb.functions.invoke('plan-engine', { body: { action: 'adjust', message: msg } });
@@ -2917,7 +2998,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
        destroyed silently (his 65-day surf trip was flattened by a 14-day
        test). Stamps and passport survive either way; the plan does not. */
     if (trip && trip.vibe && trip.route_generated_at) {
-      const ok = window.confirm('Replace your current trip with this new brief? Your route and day plans will be rebuilt. Your stamps and passport stay either way.');
+      /* inline chip-confirm — browser confirm() is banned (Rachel S5) */
+      const ok = await chipConfirm(
+        'a new brief replaces your current route — day plans rebuild, your stamps and passport stay. sure?',
+        'replace it', 'keep my trip');
       if (!ok) {
         try { localStorage.removeItem('tripos_draft_route'); } catch (_) {}
         return trip;
