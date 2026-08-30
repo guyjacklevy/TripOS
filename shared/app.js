@@ -2750,6 +2750,17 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
   /* upsert a brief (from the questionnaire or a pre-login landing run) */
   async function saveBrief(a) {
+    /* THE GUARD (Guy, 2026-08-30): one trip per account means a new brief
+       REPLACES the old one — a trip with a lived route must never be
+       destroyed silently (his 65-day surf trip was flattened by a 14-day
+       test). Stamps and passport survive either way; the plan does not. */
+    if (trip && trip.vibe && trip.route_generated_at) {
+      const ok = window.confirm('Replace your current trip with this new brief? Your route and day plans will be rebuilt. Your stamps and passport stay either way.');
+      if (!ok) {
+        try { localStorage.removeItem('tripos_draft_route'); } catch (_) {}
+        return trip;
+      }
+    }
     const { data: up, error } = await sb.from('trips').upsert({
       user_id: user.id, destination: 'bali',
       vibe: a.vibe || null,
