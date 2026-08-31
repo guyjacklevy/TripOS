@@ -4555,11 +4555,17 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     SAVES = new Map((savedRows || []).map((r) => [String(r.curated_place_id), new Date(r.created_at).getTime()]));
     SAVE_ROWS = new Map((savedRows || []).map((r) => [String(r.curated_place_id), r.id]));
     mountPlacesTab(places || []);
-    renderToday(trip, greetName(), places || []);
+    /* todayCtx BEFORE the first render: the itinerary requires it, and the
+       loadDayPlan().then re-render is guarded on it — when day plans already
+       exist that promise can resolve during the awaits above, so setting
+       todayCtx after rendering left the days-ahead permanently empty
+       (Guy's phone, 2026-08-31: timeline fine, no scrubber, no itinerary) */
     todayCtx = { trip, name: greetName(), places: places || [] };
+    renderToday(trip, greetName(), places || []);
 
     const { data: dpAll } = await sb.from('day_plans').select('leg_seq, day_in_leg, slots').eq('trip_id', trip.id);
     TRIP_DAY_PLANS = dpAll || [];
+    renderItinerary(); /* day plans arrived after the render — fill the rows in place */
     renderPassport(trip, places || []);
     startClock();
     ensurePush();          /* opted-in + granted devices re-subscribe silently */
