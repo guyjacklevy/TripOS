@@ -2570,6 +2570,44 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (bub && !bub.hidden) mcGo('today', () => bub, 'the replan proposal — ' + area.toLowerCase());
     else mcSay('muted', 'your route already has you in ' + area.toLowerCase());
   }
+  /* set_end_date (Guy's gap, 2026-08-31): "I leave on the 4th" works.
+     The router extracts the date; the surface confirms with inline chips;
+     the server reshapes deterministically — lived legs stay. */
+  async function mcSetEnd(dateStr) {
+    if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      mcSay('muted', 'tell me the date — e.g. “my trip ends september 4”');
+      return;
+    }
+    const t = (todayCtx && todayCtx.trip) || trip;
+    if (!t) { mcSay('muted', 'no trip to reshape yet'); return; }
+    const dp = dateStr.split('-');
+    const endMid = new Date(+dp[0], +dp[1] - 1, +dp[2]);
+    const nice = MONTH_ABBR[endMid.getMonth()].toLowerCase() + ' ' + endMid.getDate();
+    const ok = await chipConfirm('set your last day to ' + nice + '? the route reshapes to fit — lived legs stay.', 'set it', 'keep');
+    if (!ok) { mcSay('muted', 'kept as is'); return; }
+    mcSay('execute', 'reshaping your trip…');
+    try {
+      const { data, error } = await sb.functions.invoke('concierge', { body: { action: 'set_end', end_date: dateStr } });
+      if (error || !data || data.error) {
+        mcSay('muted', data && data.error === 'past-date'
+          ? 'that date is behind you — pick today or later'
+          : 'couldn’t reshape just now — try again');
+        return;
+      }
+      TRIP_LEGS = data.legs || TRIP_LEGS;
+      if (trip) trip.duration_days = data.duration;
+      if (todayCtx && todayCtx.trip) todayCtx.trip.duration_days = data.duration;
+      const { data: dpAll } = await sb.from('day_plans').select('leg_seq, day_in_leg, slots').eq('trip_id', t.id);
+      TRIP_DAY_PLANS = dpAll || [];
+      updateStrip(todayCtx.trip, todayCtx.name, baliNow());
+      renderRoute(todayCtx.trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
+      renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
+      mcSay('execute', 'done — your trip now ends ' + nice + ' · day ' + data.duration);
+      track('mc_set_end', { duration: data.duration });
+    } catch (_) {
+      mcSay('muted', 'couldn’t reshape just now — try again');
+    }
+  }
   /* S5 · destructive intents confirm inline — browser confirm() is banned.
      Fixed bar, not a dialog: works pre-render (boot-time claims) too. */
   function chipConfirm(line, yesLabel, noLabel) {
@@ -2728,6 +2766,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         return;
       }
       if (a === 'set_area') { inp.value = ''; mcSetArea(routed.area); return; }
+      if (a === 'set_end_date') { inp.value = ''; mcSetEnd(routed.end_date); return; }
       if (a === 'none') { inp.value = ''; mcSay('muted', mcCanDo()); return; }
       const key = a === 'export_film' ? 'stub_film' : a === 'log_expense' ? 'stub_expense' : a;
       if ((key === 'save_place' || key === 'find_place') && !routed.place) {
