@@ -2517,8 +2517,14 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const lead = kind === 'execute' ? '✓ ' : kind === 'navigate' ? '→ ' : kind === 'answer' ? '▸ ' : '';
     note.textContent = lead + text;
     note.classList.toggle('cx-line-muted', kind === 'muted');
+    note.classList.remove('open');
+    note.classList.toggle('cx-ans', kind === 'answer'); /* S2: 2-line clamp, tap = more */
     note.hidden = false;
   }
+  (function () {
+    const n = $('cxNote');
+    if (n) n.onclick = () => { if (n.classList.contains('cx-ans')) n.classList.toggle('open'); };
+  })();
   /* S3 · the concierge carries you: reply beat → tab (runway light) → sweep */
   function mcGo(tab, targetEl, line) {
     mcSay('navigate', line);
@@ -2553,7 +2559,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       '<button type="button" class="ck-reset mc-chip" data-i="' + i + '">' + esc(o.label) + '</button>').join('');
     host.hidden = false;
     host.querySelectorAll('.mc-chip').forEach((b) => {
-      b.onclick = () => { const o = opts[+b.dataset.i]; mcChipsHide(); mcRun(o.action, arg); };
+      b.onclick = () => { const o = opts[+b.dataset.i]; mcChipsHide(); mcRun(o.action, o.arg !== undefined ? o.arg : arg); };
     });
   }
   /* set_area IS reroute (ATLAS A3): route through the re-flow proposal */
@@ -2707,6 +2713,18 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         inp.value = '';
         mcSay('answer', routed.reply || 'which one?');
         mcChips(routed.options, routed.place || null);
+        return;
+      }
+      if (a === 'answer') {
+        /* tier 3 (A4): pool-grounded, 2-line clamp, place minis as chips */
+        inp.value = '';
+        mcSay('answer', routed.reply || 'I couldn’t pull that up just now — try again in a moment.');
+        if (Array.isArray(routed.places) && routed.places.length) {
+          mcChips(routed.places.map((n) => ({
+            label: '→ ' + String(n).toLowerCase().slice(0, 20),
+            action: 'find_place', arg: String(n),
+          })), null);
+        }
         return;
       }
       if (a === 'set_area') { inp.value = ''; mcSetArea(routed.area); return; }

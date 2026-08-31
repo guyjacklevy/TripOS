@@ -3172,3 +3172,10 @@ input, select, textarea { font-size: 16px !important; }
   box-shadow: 0 14px 44px rgba(0, 0, 0, 0.55);
 }
 .mcc-bar .rf-chips { margin-top: 10px; }
+
+/* ═══ MASTER CONTROL pass 3 · the answer line clamps to 2, tap = more ═══ */
+.cx-ans {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; cursor: pointer;
+}
+.cx-ans.open { -webkit-line-clamp: unset; display: block; }
