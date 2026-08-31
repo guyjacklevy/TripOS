@@ -3126,7 +3126,10 @@ input, select, textarea { font-size: 16px !important; }
   width: 100%; min-height: 52px; font-size: 16px; text-align: left;
   padding: 14px 56px 14px 16px;
 }
-.cx-send {
+/* scoped to the app's master field ONLY — /bali/plan's composer shares the
+   .cx-send class and must keep its own inline send (bit Guy 2026-08-31:
+   the unscoped rule teleported that button out of the composer) */
+.cx-master .cx-send {
   position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
   width: 36px; height: 36px; min-width: 36px; min-height: 36px;
   max-width: 36px; max-height: 36px; border-radius: 50%; border: none;
@@ -3135,7 +3138,7 @@ input, select, textarea { font-size: 16px !important; }
   display: grid; place-items: center; padding: 0;
   transition: opacity 0.15s;
 }
-.cx-send:disabled { opacity: 0.45; cursor: default; }
+.cx-master .cx-send:disabled { opacity: 0.45; cursor: default; }
 /* S2 · the concierge line: one slot, lead marks carry the kind */
 .cx-line {
   font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
