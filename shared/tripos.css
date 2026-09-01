@@ -3182,3 +3182,12 @@ input, select, textarea { font-size: 16px !important; }
   overflow: hidden; cursor: pointer;
 }
 .cx-ans.open { -webkit-line-clamp: unset; display: block; }
+
+/* ═══ PRE-TRIP TODAY (Guy 2026-08-31): countdown + plan preview ═══ */
+.pre-brief { text-align: center; padding: 6px 0 14px; }
+.pre-count {
+  font-family: var(--mono); font-size: 13px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--mut); margin-bottom: 6px;
+}
+.pre-count strong { color: var(--teal); font-weight: 700; }
+.pre-brief .offer-label { margin: 0; }

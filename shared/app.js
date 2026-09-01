@@ -274,6 +274,19 @@ function tripDayLabel(trip, now) {
   if (n <= 0) return 'T−' + (1 - n); /* pre-arrival: launch-style countdown */
   return trip.duration_days ? 'DAY ' + n + '/' + trip.duration_days : 'DAY ' + n;
 }
+/* Guy's ruling (2026-08-31): "T−4" reads as jargon — the strip and the
+   pre-trip Today speak a live d/h/m countdown to landing-day midnight */
+function preCountdown(trip, now) {
+  if (!trip || !trip.arrive) return null;
+  const p = String(trip.arrive).split('-');
+  const am = new Date(+p[0], +p[1] - 1, +p[2]);
+  const diff = am.getTime() - now.getTime();
+  if (diff <= 0) return null;
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  return (d > 0 ? d + 'D ' : '') + String(h).padStart(2, '0') + 'H ' + String(m).padStart(2, '0') + 'M';
+}
 
 /* ─── AI-1 · ONE route state, computed next to dayState() (Rachel's rule):
    the Today strip, the route instrument, and the repack nudge all read this
@@ -409,7 +422,11 @@ function updateStrip(trip, firstName, now) {
   const hh = String(s.h).padStart(2, '0');
   const mm = String(s.m).padStart(2, '0');
   const base = trip && trip.vibe ? (HOME_AREA[trip.vibe] || 'Bali').split(' ')[0].toUpperCase() : 'BALI';
-  const dayc = tripDayLabel(trip, now);
+  let dayc = tripDayLabel(trip, now);
+  if (dayc && dayc.indexOf('T−') === 0) {
+    const cd = preCountdown(trip, now); /* startClock's minute tick keeps it live */
+    if (cd) dayc = 'LANDING IN ' + cd;
+  }
   /* S2.1: the day counter is the anchor jump — tap returns to the live day */
   $('todayStrip').innerHTML = DAY_ABBR[s.day] + ' · ' + hh + ':' + mm +
     (dayc ? ' · <button type="button" class="leg-chip" id="dayChip">' + esc(dayc) + '</button>' : '');
@@ -1008,6 +1025,21 @@ function renderToday(trip, firstName, places, dateOpt) {
   const cxForm = $('cxForm');
   if (cxForm) cxForm.hidden = !(routeState(trip, TRIP_LEGS, now) || {}).cur;
 
+  /* PRE-TRIP TODAY (Guy 2026-08-31): you're not there yet — live rails with
+     times-and-places read as nonsense from home. The surface is the
+     countdown + the plan preview (strip + itinerary carry it). */
+  const tdPre = tripDayNumber(trip, now);
+  if (tdPre != null && tdPre < 1) {
+    const tlPre = $('timeline');
+    const cd = preCountdown(trip, now);
+    tlPre.innerHTML = '<div class="pre-brief">' +
+      (cd ? '<p class="pre-count" id="preCount">landing in <strong>' + cd + '</strong></p>' : '') +
+      '<p class="offer-label">your days below — plan them before you fly</p>' +
+      '</div>';
+    renderItinerary();
+    return;
+  }
+
   let html = '';
   RAILS.forEach((r, i) => {
     const state = r.key === s.rail ? 'current'
@@ -1375,6 +1407,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const now = baliNow();
       updateStrip(todayCtx.trip, todayCtx.name, now);
       paintNudge(); /* last-day repack nudge flips at midnight with the leg */
+      /* pre-trip: the big countdown ticks with the clock */
+      const pc = $('preCount');
+      if (pc) {
+        const cd = preCountdown(todayCtx.trip, now);
+        if (cd) pc.innerHTML = 'landing in <strong>' + cd + '</strong>';
+      }
       /* midnight: a new trip day = possibly a new leg day-plan */
       const dn = tripDayNumber(todayCtx.trip, now);
       if (dn !== lastDayNum) {
@@ -1872,7 +1910,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (!LAYERS.today || !t || TRIP_LEGS.length < 1 || !todayCtx) { host.innerHTML = ''; return; }
     const now = baliNow();
     const dayN = tripDayNumber(t, now);
-    if (dayN == null || dayN < 1) { host.innerHTML = ''; return; }
+    if (dayN == null) { host.innerHTML = ''; return; }
+    /* pre-trip: every day is ahead — the itinerary IS the preview (Guy
+       2026-08-31); effDay 0 makes day 1 the first upcoming day */
+    const effDay = Math.max(dayN, 0);
     let origin;
     if (t.arrive) { const p = String(t.arrive).split('-'); origin = new Date(+p[0], +p[1] - 1, +p[2]); }
     else { const c = new Date(t.created_at); origin = new Date(c.getFullYear(), c.getMonth(), c.getDate()); }
@@ -1883,8 +1924,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     let clipped = 0;
     const wins = itinWindows();
     for (const w of wins) {
-      if (w.toDay <= dayN) continue; /* fully lived legs are memory — passport */
-      const future = w.fromDay > dayN;
+      if (w.toDay <= effDay) continue; /* fully lived legs are memory — passport */
+      const future = w.fromDay > effDay;
       const hasPlan = TRIP_DAY_PLANS.some((r) => r.leg_seq === w.seq);
       if (future) {
         html += '<div class="it-leg"><span class="it-leg-orb" style="background:' +
@@ -1900,7 +1941,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         /* Guy's repro (2026-08-28): the CURRENT leg with no generated plan
            rendered as a wall of empty dashes with no door — the honest
            ungenerated treatment applies here too, days-remaining counted */
-        const left = w.toDay - dayN;
+        const left = w.toDay - effDay;
         if (left > 0) {
           html += '<div class="it-ungen"><span>' + esc(w.area.toUpperCase()) + ' · ' + left +
             ' DAY' + (left === 1 ? '' : 'S') + ' LEFT · not planned yet</span>' +
@@ -1908,8 +1949,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         }
         continue;
       }
-      if (rows >= ITIN_DEPTH) { clipped += w.toDay - Math.max(w.fromDay, dayN + 1) + 1; continue; }
-      for (let d = Math.max(w.fromDay, dayN + 1); d <= w.toDay; d++) {
+      if (rows >= ITIN_DEPTH) { clipped += w.toDay - Math.max(w.fromDay, effDay + 1) + 1; continue; }
+      for (let d = Math.max(w.fromDay, effDay + 1); d <= w.toDay; d++) {
         if (rows >= ITIN_DEPTH) { clipped++; continue; }
         rows++;
         const dayInLeg = d - w.fromDay + 1;
@@ -1961,11 +2002,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const strip = $('itStrip');
     if (strip) {
       if (html) {
-        strip.innerHTML = '<button type="button" class="it-dchip it-dchip-now" data-scrollnow>NOW</button>' +
+        strip.innerHTML = (dayN >= 1 ? '<button type="button" class="it-dchip it-dchip-now" data-scrollnow>NOW</button>' : '') +
           wins.map((w) => {
-            if (w.toDay <= dayN) return '';
+            if (w.toDay <= effDay) return '';
             let out = '';
-            for (let d = Math.max(w.fromDay, dayN + 1); d <= w.toDay; d++) {
+            for (let d = Math.max(w.fromDay, effDay + 1); d <= w.toDay; d++) {
               out += '<button type="button" class="it-dchip" data-jump="' + d + '" style="--lc:' +
                 (AREA_TINT[w.area] || 'var(--teal)') + '">' + d + '</button>';
             }
@@ -2846,10 +2887,18 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     party:    ['One good shirt', 'Electrolytes', 'Sunglasses you can afford to lose'],
     mix:      ['Power bank', 'Electrolytes', 'Daypack']
   };
+  /* thresholds, not exact keys (Guy's repro: 28 days matched nothing and
+     fell back to the extension line — a 28-day trip fits plain 30-day VOA) */
+  function visaFor(d) {
+    if (!d) return VISA_BY_DUR[0];        /* open-ended */
+    if (d <= 30) return VISA_BY_DUR[14];  /* plain VOA covers it */
+    if (d <= 60) return VISA_BY_DUR[30];  /* VOA + one extension */
+    return VISA_BY_DUR[90];               /* B211A territory */
+  }
   function buildAutoItems(t) {
     const out = [];
     const d = t && t.duration_days != null ? t.duration_days : 30;
-    out.push({ kind: 'pretrip', label: VISA_BY_DUR[d] || VISA_BY_DUR[30], auto: true });
+    out.push({ kind: 'pretrip', label: visaFor(d), auto: true });
     PRETRIP_BASE.forEach((l) => out.push({ kind: 'pretrip', label: l, auto: true }));
     PACK_BASE.forEach((l) => out.push({ kind: 'packing', label: l, auto: true }));
     (PACK_VIBE[t && t.vibe] || PACK_VIBE.mix).forEach((l) => out.push({ kind: 'packing', label: l, auto: true }));
@@ -4560,13 +4609,17 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
        Places early; Pulse unlocks at the 3rd expense (set in loadPulse);
        You's packing waits for T−7, readiness for day-2. */
     const day2 = isDay2Plus(profile && profile.first_open_done_at, baliNow());
-    LAYERS.today = day2;
-    LAYERS.places = day2 || CHECKINS.length > 0;
     const tdNow = tripDayNumber(trip, baliNow());
+    /* pre-trip (Guy 2026-08-31, fresh-account test): a T−n user's whole job
+       is readiness + previewing the plan — day-2 gating starved them of
+       both (visa nudge pointed at a hidden checklist) */
+    const preTrip = tdNow != null && tdNow < 1;
+    LAYERS.today = day2 || preTrip;
+    LAYERS.places = day2 || preTrip || CHECKINS.length > 0;
     const packOn = tdNow != null && tdNow >= -6; /* T−7 and closer */
-    $('readyCard').hidden = !day2;
+    $('readyCard').hidden = !(day2 || preTrip);
     $('packCard').hidden = !packOn;
-    document.querySelectorAll('#youIndex [data-goto="readyCard"]').forEach((b) => { b.hidden = !day2; });
+    document.querySelectorAll('#youIndex [data-goto="readyCard"]').forEach((b) => { b.hidden = !(day2 || preTrip); });
     document.querySelectorAll('#youIndex [data-goto="packCard"]').forEach((b) => { b.hidden = !packOn; });
     if (packOn && !capSeen('pack7')) {
       $('packCard').insertAdjacentHTML('afterbegin',
