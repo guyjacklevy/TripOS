@@ -3191,3 +3191,7 @@ input, select, textarea { font-size: 16px !important; }
 }
 .pre-count strong { color: var(--teal); font-weight: 700; }
 .pre-brief .offer-label { margin: 0; }
+
+/* ═══ stamp sheet · the map door (retro flow, 2026-09-01) ═══ */
+.ss-suggest .ssg-map { color: var(--teal); }
+.ss-suggest .ssg-map:disabled, .ss-suggest .ssg-cand:disabled { opacity: 0.6; }

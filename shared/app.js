@@ -2249,6 +2249,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
      BY DAY row opens it anchored there; the button opens it at yesterday.
      Replaces the old one-stamp retro form. */
   let ssDate = null; /* 'YYYY-MM-DD' (Bali calendar day) */
+  let ssCands = []; /* live map-search candidates (retro flow, 2026-09-01) */
   const ssEl = { sheet: $('stampSheet'), date: $('ssDate'), prev: $('ssPrev'), next: $('ssNext'),
     close: $('ssClose'), find: $('ssFind'), suggest: $('ssSuggest'), chips: $('ssChips') };
   const ssIso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -2320,12 +2321,62 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         .filter((x) => x.rank >= 0)
         .sort((a, b) => a.rank - b.rank || (b.p.verified === true) - (a.p.verified === true))
         .slice(0, 6);
+      /* the miss is a door now, not a dead end (Guy's photo-roll retro
+         session, 2026-09-01): the map search lives IN the sheet —
+         found → added ◔ → stamped, one motion, no tab round-trip */
+      const mapRow = q.length >= 3
+        ? '<button type="button" class="ssg-map" data-q="' + esc(ssEl.find.value.trim()) +
+          '">⌕ search the map for “' + esc(ssEl.find.value.trim()) + '” →</button>'
+        : '';
       ssEl.suggest.innerHTML = hits.map((x) =>
         '<button type="button" data-pick="' + esc(x.p.id) + '">' + esc(x.p.name) +
-        '<span class="ssg-area">' + esc(String(x.p.area || '').split('/')[0]) + '</span></button>').join('') ||
-        '<p class="pulse-note">nothing by that name yet — tell Alex, it joins the dataset</p>';
+        '<span class="ssg-area">' + esc(String(x.p.area || '').split('/')[0]) + '</span></button>').join('') + mapRow;
     };
-    ssEl.suggest.onclick = (e) => {
+    ssEl.suggest.onclick = async (e) => {
+      const mp = e.target.closest('.ssg-map');
+      if (mp) {
+        mp.disabled = true;
+        mp.textContent = '⌕ searching the map…';
+        const cands = await googleSearch(mp.getAttribute('data-q'));
+        if (!cands || !cands.length) {
+          ssEl.suggest.innerHTML = '<p class="pulse-note">' + (cands === null
+            ? 'map search couldn’t reach Google just now — try again'
+            : 'nothing on the map by that name — try its official name') + '</p>';
+          ssEl.find.focus();
+          return;
+        }
+        ssCands = cands.slice(0, 5);
+        ssEl.suggest.innerHTML = ssCands.map((c, i) =>
+          '<button type="button" class="ssg-cand" data-ci="' + i + '">' + esc(c.name) +
+          '<span class="ssg-area">' + esc(c.area || 'Bali') + ' · ' + esc(c.category || 'place') +
+          (c.already ? ' · already in Prevoya' : '') + '</span></button>').join('');
+        return;
+      }
+      const cb = e.target.closest('.ssg-cand');
+      if (cb) {
+        const c = ssCands[+cb.getAttribute('data-ci')];
+        if (!c) return;
+        cb.disabled = true;
+        cb.textContent = '▸ stamping…';
+        let place = null;
+        if (c.already) {
+          /* search dedupe says we have it — stamp the pool row, no re-add */
+          const n = String(c.name).toLowerCase();
+          place = ((todayCtx && todayCtx.places) || []).find((x) => String(x.name).toLowerCase() === n) || null;
+        }
+        if (!place) place = await googleAdd(c);
+        if (!place) {
+          ssEl.suggest.innerHTML = '<p class="pulse-note">couldn’t add that one — tap to try again</p>';
+          ssEl.find.focus();
+          return;
+        }
+        /* fresh place joins the live pool — no refresh, and the desk gets ◔ */
+        if (todayCtx && todayCtx.places && !todayCtx.places.some((x) => String(x.id) === String(place.id))) {
+          todayCtx.places.push(place);
+        }
+        ssStamp(place);
+        return;
+      }
       const b = e.target.closest('[data-pick]');
       if (!b) return;
       const p = ((todayCtx && todayCtx.places) || []).find((x) => String(x.id) === b.getAttribute('data-pick'));
