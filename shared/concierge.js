@@ -122,7 +122,7 @@ export function mountConcierge(els) {
     const pts = legs.map((l) => AREA_XY[l.area] || [160, 150]);
     return '<svg viewBox="0 0 320 260" width="' + (w || '100%') + '" aria-hidden="true">' +
       '<path d="' + ISLAND + '" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.5"/>' +
-      '<ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.5"/>' +
+      '<ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.5"/><g fill="none" stroke="var(--mut)" stroke-width="1.1" opacity="0.45"><circle cx="295" cy="146" r="2"/><circle cx="300" cy="143.5" r="2"/><circle cx="305" cy="146.5" r="2"/><ellipse cx="308" cy="190" rx="11" ry="17" transform="rotate(-8 308 190)"/></g>' +
       '<path d="' + pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ',' + p[1]).join(' ') + '" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>' +
       pts.map((p, i) => '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="6" fill="' + (AREA_HEX[legs[i].area] || '#3dffd0') + '"/>').join('') +
       '</svg>';

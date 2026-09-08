@@ -69,7 +69,7 @@ export const catPhoto = (cat) => CAT[cat]
   : '';
 
 export function mountPlaces(cfg) {
-  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave } = cfg;
+  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec } = cfg;
   const allPlaces = places.slice();
   const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const state = { area: 'all', cat: 'all', q: '', view: 'rows' };
@@ -158,7 +158,7 @@ export function mountPlaces(cfg) {
         tip +
         '<div class="place-foot">' +
           '<span class="place-price">' + esc(p.price_note || '') + '</span>' +
-          '<span class="pf-actions">' + here + maps + '</span>' +
+          '<span class="pf-actions">' + here + maps + recBtn(p) + '</span>' +
         '</div>' +
       '</article>'
     );
@@ -167,6 +167,14 @@ export function mountPlaces(cfg) {
   /* ── SAVED PLACES R1 (SAVED_PLACES_RULINGS): the save mark — an SVG flag,
      card top-right, 44px target, always visible. Saved+stamped = ✓ (R5).
      Renders only when the surface can persist (app mount passes onSave). ── */
+  /* Guy #5 (2026-09-09): recommend directly — no check-in required. A rec is
+     an opinion, never a presence claim (it does not touch the passport). */
+  function recBtn(p) {
+    if (!onRec || !recs) return '';
+    const on = recs.has(String(p.id));
+    return '<button type="button" class="rec-btn' + (on ? ' on' : '') + '" data-rec="' + esc(p.id) +
+      '" aria-label="' + (on ? 'recommended — tap to remove' : 'mark worth it') + '">👍 worth it</button>';
+  }
   function flagBtn(p) {
     if (!onSave || !saves) return '';
     const id = String(p.id);
@@ -222,7 +230,7 @@ export function mountPlaces(cfg) {
         '</div>' +
         facetBand(p) +
         (p.why ? '<p class="place-why mini-why">' + esc(p.why) + '</p>' : '') +
-        '<div class="mini-foot">' + here + maps + '<span class="mini-more">more ›</span></div>' +
+        '<div class="mini-foot">' + here + maps + recBtn(p) + '<span class="mini-more">more ›</span></div>' +
       '</article>'
     );
   }
@@ -527,6 +535,21 @@ export function mountPlaces(cfg) {
     if (e.target.closest('a')) return;
     /* R1: the flag toggles — optimistic, reverted on a failed write. A tap
        on the mark never opens the card (it's a mark, not the card). */
+    const rb = e.target.closest('.rec-btn');
+    if (rb && onRec && recs) {
+      e.stopPropagation();
+      const id = rb.getAttribute('data-rec');
+      const pRec = allPlaces.find((x) => String(x.id) === id);
+      if (!pRec) return;
+      const wasOn = recs.has(id);
+      rb.classList.toggle('on', !wasOn); /* optimistic — mirrors the save flag */
+      Promise.resolve(onRec(pRec, !wasOn)).then((ok) => {
+        if (!ok) rb.classList.toggle('on', wasOn);
+        else document.querySelectorAll('.rec-btn[data-rec="' + CSS.escape(id) + '"]')
+          .forEach((b) => b.classList.toggle('on', !wasOn));
+      });
+      return;
+    }
     const sf = e.target.closest('.save-flag');
     if (sf) {
       e.stopPropagation();

@@ -394,7 +394,7 @@ function routeMapSVG(legs, checkins, curIdx) {
   });
   return '<svg viewBox="0 0 320 260" width="100%" aria-hidden="true">' +
     '<path d="' + ISLAND_PATH + '" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.5"/>' +
-    '<ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.5"/>' +
+    '<ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.5"/><g fill="none" stroke="var(--mut)" stroke-width="1.1" opacity="0.45"><circle cx="295" cy="146" r="2"/><circle cx="300" cy="143.5" r="2"/><circle cx="305" cy="146.5" r="2"/><ellipse cx="308" cy="190" rx="11" ry="17" transform="rotate(-8 308 190)"/></g>' +
     (rest ? '<path d="' + rest.trim() + '" fill="none" stroke="var(--teal)" stroke-width="1.6" stroke-linecap="round" opacity="' + restOpacity + '"/>' : '') +
     (done ? '<path d="' + done.trim() + '" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>' : '') +
     orbs + dots + '</svg>';
@@ -671,6 +671,7 @@ function renderRoute(trip, legs, now, opts) {
 let CHECKINS = [];        /* the user's check-in rows, chronological */
 let SAVES = new Map();    /* saved places: curated_place_id → save-time ms (R2 recency) */
 let SAVE_ROWS = new Map(); /* curated_place_id → places-table row id, for unsave */
+let RECS = new Set();      /* worth-it recs: curated_place_id — an opinion, not presence */
 let TRIP_DAY_PLANS = [];  /* [{leg_seq, day_in_leg, slots}] for planned-vs-actual */
 let PP_VIEW = 'place';
 let PP_CAT = 'all';
@@ -1807,6 +1808,26 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         SAVE_ROWS.delete(String(p.id));
         return true;
       },
+      /* WORTH-IT RECS (Guy #5, 2026-09-09): an opinion, not a presence claim —
+         no check-in required, never touches the passport */
+      recs: RECS,
+      onRec: async (p, nowOn) => {
+        if (!user) return false;
+        if (nowOn) {
+          const { error } = await sb.from('place_recs').upsert({
+            user_id: user.id, place_id: p.id, worth_it: true
+          }, { onConflict: 'user_id,place_id' });
+          if (error) { console.warn('[Prevoya] rec failed:', error.message); return false; }
+          RECS.add(String(p.id));
+          track('place_rec');
+          return true;
+        }
+        const { error } = await sb.from('place_recs').delete()
+          .eq('user_id', user.id).eq('place_id', p.id);
+        if (error) { console.warn('[Prevoya] unrec failed:', error.message); return false; }
+        RECS.delete(String(p.id));
+        return true;
+      },
       onGoogleSearch: googleSearch,
       onGoogleAdd: googleAdd,
       onBrief: () => openCheckin(), /* §G no-brief banner runs the questionnaire in-app */
@@ -1926,7 +1947,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       '<p class="rf-term">▸ re-routing your remaining ' + leftDays + ' days…</p>' +
       '<div class="cer-map rf-map" hidden><svg viewBox="0 0 320 260" width="100%" aria-hidden="true">' +
         '<path d="' + ISLAND_PATH + '" fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.5"/>' +
-        '<ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.5"/>' +
+        '<ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.5"/><g fill="none" stroke="var(--mut)" stroke-width="1.1" opacity="0.45"><circle cx="295" cy="146" r="2"/><circle cx="300" cy="143.5" r="2"/><circle cx="305" cy="146.5" r="2"/><ellipse cx="308" cy="190" rx="11" ry="17" transform="rotate(-8 308 190)"/></g>' +
         '<path id="rfTrace" d="" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>' +
         '<g id="rfOrbs"></g></svg></div>' +
       '<p class="rf-counts" id="rfCounts" hidden></p></div>';
@@ -4184,6 +4205,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     x.strokeStyle = 'rgba(123,123,154,0.55)'; x.lineWidth = 0.6;
     x.stroke(new Path2D(ISLAND_PATH));
     x.beginPath(); x.ellipse(229, 175, 12, 8.25, -14 * Math.PI / 180, 0, Math.PI * 2); x.stroke();
+      /* satellites: the Gilis + Lombok — abstract, honest direction */
+      x.beginPath(); x.arc(295, 146, 2, 0, Math.PI * 2); x.stroke();
+      x.beginPath(); x.arc(300, 143.5, 2, 0, Math.PI * 2); x.stroke();
+      x.beginPath(); x.arc(305, 146.5, 2, 0, Math.PI * 2); x.stroke();
+      x.beginPath(); x.ellipse(308, 190, 11, 17, -8 * Math.PI / 180, 0, Math.PI * 2); x.stroke();
     x.strokeStyle = '#3dffd0'; x.lineWidth = 1.1; x.lineCap = 'round'; x.lineJoin = 'round';
     x.beginPath();
     pts.forEach((p, i) => { if (i) x.lineTo(p[0], p[1]); else x.moveTo(p[0], p[1]); });
@@ -4470,6 +4496,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
      (a private named stamp never ships in an export). The film is a frozen,
      owner-initiated document — the share sheet says so in one line. ── */
   async function renderWrapFilm(scope, btn) {
+    WR_FILM = null;
     const st = wrapState();
     if (!st || !st.doneIdx.length || !FILM_OK) return;
     const legIdxs = scope && scope.kind === 'leg' ? [scope.idx] : st.doneIdx;
@@ -4552,6 +4579,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       x.strokeStyle = 'rgba(123,123,154,0.55)'; x.lineWidth = 0.6;
       x.stroke(islandP);
       x.beginPath(); x.ellipse(229, 175, 12, 8.25, -14 * Math.PI / 180, 0, Math.PI * 2); x.stroke();
+      /* satellites: the Gilis + Lombok — abstract, honest direction */
+      x.beginPath(); x.arc(295, 146, 2, 0, Math.PI * 2); x.stroke();
+      x.beginPath(); x.arc(300, 143.5, 2, 0, Math.PI * 2); x.stroke();
+      x.beginPath(); x.arc(305, 146.5, 2, 0, Math.PI * 2); x.stroke();
+      x.beginPath(); x.ellipse(308, 190, 11, 17, -8 * Math.PI / 180, 0, Math.PI * 2); x.stroke();
       /* beat 2 · the trace, leg by leg */
       x.strokeStyle = '#3dffd0'; x.lineWidth = 1.2; x.lineCap = 'round'; x.lineJoin = 'round';
       const segs = Math.max(0, Math.min(pts.length - 1, (tt - T1) / 0.7));
@@ -4638,16 +4670,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const file = new File([blob], 'prevoya-wrapped.' + ext, { type: blob.type });
       const note = $('wrFilmNote');
       if (note) note.hidden = false;
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file] }).catch(() => {});
-      } else {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = file.name;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-      }
-      if (btn) { btn.disabled = false; btn.textContent = label; }
+      /* Guy's report (2026-09-09): iOS refuses navigator.share() outside a
+         user gesture — after a 25s render the gesture is long dead, share
+         silently rejected, button reset, nothing happened. The render now
+         HOLDS the file; the next tap is a fresh gesture that shares it. */
+      WR_FILM = file;
+      if (btn) { btn.disabled = false; btn.textContent = '↗ share the film — ready'; }
     } catch (e) {
       console.warn('[Prevoya] film export failed:', e && e.message);
       if (btn) { btn.disabled = false; btn.textContent = '⚠ retry film'; }
@@ -4657,6 +4685,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   function closeWrap() {
     wrClear();
     WR_SKIP = null;
+    WR_FILM = null;
     const el = $('wrapReplay');
     if (el) el.hidden = true;
     const note = $('wrFilmNote');
@@ -4677,7 +4706,24 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (st) runWrapReplay(st.tripDone ? { kind: 'trip' } : { kind: 'leg', idx: st.doneIdx[st.doneIdx.length - 1] });
   };
   if ($('wrShareCard')) $('wrShareCard').onclick = (e) => shareRoute(e.currentTarget);
-  if ($('wrShareFilm')) $('wrShareFilm').onclick = (e) => renderWrapFilm(WR_LAST_SCOPE || { kind: 'trip' }, e.currentTarget);
+  let WR_FILM = null; /* the rendered film, held for a fresh-gesture share */
+  if ($('wrShareFilm')) $('wrShareFilm').onclick = async (e) => {
+    const btn = e.currentTarget;
+    if (WR_FILM) {
+      const f = WR_FILM;
+      if (navigator.canShare && navigator.canShare({ files: [f] })) {
+        try { await navigator.share({ files: [f] }); } catch (_) { /* user closed the sheet */ }
+      } else {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(f);
+        a.download = f.name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      }
+      return;
+    }
+    renderWrapFilm(WR_LAST_SCOPE || { kind: 'trip' }, btn);
+  };
 
   /* triggers: first Today open after a boundary — never while the repack
      nudge is live (spec §1: it renders after the nudge resolves) */
@@ -4895,6 +4941,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       .eq('user_id', user.id).not('curated_place_id', 'is', null);
     SAVES = new Map((savedRows || []).map((r) => [String(r.curated_place_id), new Date(r.created_at).getTime()]));
     SAVE_ROWS = new Map((savedRows || []).map((r) => [String(r.curated_place_id), r.id]));
+    const { data: recRows } = await sb.from('place_recs').select('place_id').eq('user_id', user.id);
+    RECS = new Set((recRows || []).map((r) => String(r.place_id)));
     mountPlacesTab(places || []);
     /* todayCtx BEFORE the first render: the itinerary requires it, and the
        loadDayPlan().then re-render is guarded on it — when day plans already
