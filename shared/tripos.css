@@ -3235,3 +3235,39 @@ input, select, textarea { font-size: 16px !important; }
   color: var(--mut); margin: 4px 0 0; text-transform: lowercase;
 }
 .row-sub { font-size: 10px; color: var(--mut); letter-spacing: 0.06em; text-transform: none; }
+
+/* ═══ FLEX WINDOWS · Today as a route of lit segments (Rachel §1) ═══ */
+.win-line { border-left: 2px solid var(--line); padding-left: 14px; margin: 4px 0; }
+.win { position: relative; margin: 0 0 14px; }
+.win-head {
+  font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.12em;
+  color: var(--mut); text-transform: uppercase;
+}
+.win-head.lit { color: var(--teal); }
+.win-label { color: var(--dim); text-transform: lowercase; letter-spacing: 0.08em; }
+.win-current { border-left: 2px solid var(--wc, var(--teal)); margin-left: -16px; padding-left: 14px; }
+.win-now {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em;
+  color: var(--teal); margin: 4px 0;
+}
+.win-card {
+  background: var(--glass); border: 1px solid var(--line); border-left: 3px solid var(--cc, var(--teal));
+  border-radius: 12px; padding: 12px 14px; margin: 8px 0;
+}
+.win-pick { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--cc, var(--teal)); display: block; margin-bottom: 4px; }
+.win-name { font-size: 15px; }
+.win-why { font-size: 12.5px; color: var(--mut); margin: 6px 0 0; }
+.win-hours { font-family: var(--mono); font-size: 10.5px; color: var(--am); margin: 6px 0 0; letter-spacing: 0.06em; }
+.win-past .win-toggle {
+  width: 100%; text-align: left; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.1em; color: var(--dim); padding: 4px 0; cursor: pointer;
+}
+.win-future .win-toggle { width: 100%; text-align: left; padding: 4px 0; cursor: pointer; }
+.win-fname { color: var(--fg, #e8e8f0); text-transform: none; letter-spacing: 0; font-size: 13px; }
+.win-gap { margin: 0 0 14px; }
+.win-gap-line {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em;
+  color: var(--mut); text-transform: uppercase; margin: 0 0 6px;
+}
+.win-alts { display: flex; gap: 8px; overflow-x: auto; }
+.win-alts .slot-card { flex: 0 0 200px; }

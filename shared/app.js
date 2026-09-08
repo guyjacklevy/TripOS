@@ -1042,6 +1042,88 @@ function layerCap(key, text) {
   return '<p class="layer-cap" data-cap="' + esc(key) + '">' + esc(text) + '</p>';
 }
 
+/* ═══ FLEX WINDOWS (ATLAS A2 + Rachel §1) · the day is a route with lit
+   segments: ◉ HH:MM–HH:MM · loose label; gaps are honest breathing room;
+   past windows collapse to ✓ stamped / passed; the v2 four-label grid
+   remains the engine-down parachute (the else-branch below). ═══ */
+function winT2m(t) { const m = /^(\d{1,2}):(\d{2})$/.exec(String(t || '')); return m ? +m[1] * 60 + +m[2] : null; }
+function winPeriodOf(min) { return min < 660 ? 'morning' : min < 960 ? 'midday' : min < 1140 ? 'golden' : 'night'; }
+function winLabel(w) {
+  const st = winT2m(w.start), en = winT2m(w.end);
+  if (st == null || en == null) return w.period || '';
+  const ps = winPeriodOf(st), pe = winPeriodOf(Math.max(st, en - 1));
+  return ps === pe ? ps : ps + '→' + pe;
+}
+function stampedTodayIds() {
+  const now = baliNow();
+  const k = now.getFullYear() + '-' + now.getMonth() + '-' + now.getDate();
+  const out = new Set();
+  CHECKINS.forEach((c) => {
+    const b = baliDateOf(c.created_at);
+    if ((b.y + '-' + b.m + '-' + b.d) === k && c.place_id) out.add(String(c.place_id));
+  });
+  return out;
+}
+function windowCardHtml(w, p, lead) {
+  const cc = (CAT_META[w.facet_category] || (p && CAT_META[p.category]) || { cc: 'var(--teal)' }).cc;
+  return '<div class="win-card" style="--cc:' + cc + '">' +
+    (lead ? '<span class="win-pick">▸ PICK</span>' : '') +
+    '<strong class="win-name">' + esc(p ? p.name : 'a place') + '</strong>' +
+    (p && p.verified ? '<span class="place-verified">✓</span>' : '') +
+    (w.why ? '<p class="win-why">' + esc(w.why) + '</p>' : '') +
+    (w.hours_note ? '<p class="win-hours">◷ ' + esc(w.hours_note) + '</p>' : '') +
+    (p ? '<a class="place-maps" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' +
+      encodeURIComponent(p.maps_query || (p.name + ', Bali')) + '">Maps ↗</a>' : '') +
+  '</div>';
+}
+function windowsTimelineHtml(windows, places, plan, pool, now) {
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const hh = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  const resolve = (id) => places.find((x) => String(x.id) === String(id)) || null;
+  const stamped = stampedTodayIds();
+  const altCards = (periodRail, exceptId, n) => {
+    const { picks } = railPicks(pool, plan, periodRail, n + 2);
+    return picks.filter((p) => String(p.id) !== String(exceptId)).slice(0, n)
+      .map((p) => slotCard(p)).join('');
+  };
+  let html = '';
+  windows.forEach((w, i) => {
+    const st = winT2m(w.start), en = winT2m(w.end);
+    const p = resolve(w.place_id);
+    const label = winLabel(w);
+    const state = (en != null && nowMin >= en) ? 'past' : (st != null && nowMin >= st ? 'current' : 'future');
+    if (state === 'past') {
+      html += '<div class="win win-past">' +
+        '<button type="button" class="ck-reset win-toggle">◉ ' + esc(w.start) + '–' + esc(w.end) + ' · ' +
+        esc((p ? p.name : 'a place')).toLowerCase() + ' · ' +
+        (p && stamped.has(String(p.id)) ? '✓ stamped' : 'passed') + '</button>' +
+        '<div class="win-body" hidden>' + windowCardHtml(w, p, false) + '</div></div>';
+    } else if (state === 'current') {
+      html += '<div class="win win-current" style="--wc:' + ((CAT_META[w.facet_category] || {}).cc || 'var(--teal)') + '">' +
+        '<div class="win-head lit">◉ ' + esc(w.start) + '–' + esc(w.end) + ' · <span class="win-label">' + esc(label) + '</span></div>' +
+        '<p class="win-now">●━━ ' + hh + '</p>' +
+        windowCardHtml(w, p, true) +
+        '<div class="win-alts">' + altCards(w.period, w.place_id, 2) + '</div>' +
+      '</div>';
+    } else {
+      html += '<div class="win win-future">' +
+        '<button type="button" class="ck-reset win-toggle win-head">◉ ' + esc(w.start) + '–' + esc(w.end) +
+        ' · <span class="win-label">' + esc(label) + '</span> · <span class="win-fname">' + esc(p ? p.name : 'a place') + '</span></button>' +
+        '<div class="win-body" hidden>' + windowCardHtml(w, p, false) + '</div></div>';
+    }
+    /* the gap after this window — marked only while the clock is inside it */
+    const next = windows[i + 1];
+    if (next) {
+      const ns = winT2m(next.start);
+      if (ns != null && en != null && ns > en && nowMin >= en && nowMin < ns) {
+        html += '<div class="win-gap"><p class="win-gap-line">until ' + esc(next.start) + ' · open · ●━━ ' + hh + '</p>' +
+          '<div class="win-alts">' + altCards(winPeriodOf(nowMin), null, 2) + '</div></div>';
+      }
+    }
+  });
+  return '<div class="win-line">' + html + '</div>';
+}
+
 function renderToday(trip, firstName, places, dateOpt) {
   const now = dateOpt || baliNow();
   updateStrip(trip, firstName, now);
@@ -1066,7 +1148,7 @@ function renderToday(trip, firstName, places, dateOpt) {
      plans (AI-3) and off-route plans (F1) render off-route — both were
      made for where you actually are. */
   const plannedByRail = {};
-  if (!ov || DAY_PLAN_ADJUSTED || DAY_PLAN_OFFROUTE) (DAY_PLAN || []).forEach((sl) => {
+  if (!ov || DAY_PLAN_ADJUSTED || DAY_PLAN_OFFROUTE) (Array.isArray(DAY_PLAN) ? DAY_PLAN : []).forEach((sl) => {
     const p = places.find((x) => String(x.id) === String(sl.place_id));
     if (p && !plannedByRail[sl.rail]) plannedByRail[sl.rail] = { p, why: (sl.why || '').trim() };
   });
@@ -1091,7 +1173,11 @@ function renderToday(trip, firstName, places, dateOpt) {
   }
 
   let html = '';
-  RAILS.forEach((r, i) => {
+  const dayWins = (!Array.isArray(DAY_PLAN) && DAY_PLAN && DAY_PLAN.v === 2 &&
+    Array.isArray(DAY_PLAN.windows) && DAY_PLAN.windows.length) ? DAY_PLAN.windows : null;
+  const windowsApply = dayWins && (!ov || DAY_PLAN_ADJUSTED || DAY_PLAN_OFFROUTE);
+  if (windowsApply) html = windowsTimelineHtml(dayWins, places, plan, pool, now);
+  else RAILS.forEach((r, i) => {
     const state = r.key === s.rail ? 'current'
       : postMidnight ? 'future'
       : (i < currentIdx ? 'past' : 'future');
@@ -1200,6 +1286,10 @@ function renderToday(trip, firstName, places, dateOpt) {
   if (LAYERS.today) html = layerCap('today2', 'your full day — four rails, morning to night') + html;
   tl.innerHTML = html;
   dropIn(tl);
+  /* windows: past/future blocks expand on tap */
+  tl.querySelectorAll('.win-toggle').forEach((b) => {
+    b.onclick = () => { const body = b.nextElementSibling; if (body) body.hidden = !body.hidden; };
+  });
   /* past rails expand on tap (dimmed, no lift) */
   tl.querySelectorAll('.rail-head-past').forEach((btn) => {
     btn.onclick = () => {
@@ -1216,7 +1306,7 @@ function renderToday(trip, firstName, places, dateOpt) {
   });
   /* auto-scroll the current rail into the top third (once per render) —
      suppressed for in-place re-renders like swap (Guy: the screen jumped) */
-  const cur = tl.querySelector('.rail.current');
+  const cur = tl.querySelector('.rail.current, .win-current');
   if (TL_KEEP_SCROLL) { TL_KEEP_SCROLL = false; }
   else if (cur && dateOpt === undefined) {
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2007,14 +2097,43 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         const key = w.seq + ':' + dayInLeg;
         const dd = new Date(origin.getFullYear(), origin.getMonth(), origin.getDate() + (d - 1));
         const slots = itinPlanFor(w.seq, dayInLeg);
+        /* v:2 windows rows (Rachel §2): one compact row per window, cap 4 */
+        const winsRow = (!Array.isArray(slots) && slots && slots.v === 2) ? (slots.windows || []) : null;
         const bySlot = {};
-        slots.forEach((sl) => { if (!bySlot[sl.rail]) bySlot[sl.rail] = sl; });
+        (Array.isArray(slots) ? slots : []).forEach((sl) => { if (!bySlot[sl.rail]) bySlot[sl.rail] = sl; });
         const expanded = ITIN_EXPANDED.has(key);
         html += '<div class="it-day' + (expanded ? ' open' : '') + '" data-key="' + key + '">' +
           '<button type="button" class="it-day-head" data-toggle="' + key + '">' +
             MONTH_ABBR[dd.getMonth()] + ' ' + dd.getDate() + ' · DAY ' + d +
             '<span class="it-day-caret">' + (expanded ? '▾' : '▸') + '</span></button>';
-        RAILS.forEach((r) => {
+        if (winsRow) {
+          if (!expanded) {
+            winsRow.slice(0, 4).forEach((wv) => {
+              const p = resolve(wv.place_id);
+              html += '<div class="it-rail" data-toggle="' + key + '">' +
+                '<span class="it-hours">' + esc(String(wv.start || '').slice(0, 5)) + '–' + esc(String(wv.end || '').slice(0, 5)) + '</span>' +
+                '<span class="pdot" style="--pd:' + ((CAT_META[wv.facet_category] || {}).cc || 'var(--line)') + '"></span>' +
+                '<span class="it-name' + (p ? '' : ' dim') + '">' + (p ? esc(p.name) : '—') + '</span>' +
+                (p ? itinFlag(p) : '') + '</div>';
+            });
+            if (winsRow.length > 4) {
+              html += '<div class="it-rail" data-toggle="' + key + '"><span class="it-hours"></span>' +
+                '<span class="it-name dim">+ ' + (winsRow.length - 4) + ' more</span></div>';
+            }
+          } else {
+            winsRow.forEach((wv) => {
+              const p = resolve(wv.place_id);
+              if (!p) return;
+              html += '<div class="it-card" style="--cc:' + ((CAT_META[wv.facet_category] || {}).cc || 'var(--teal)') + '">' +
+                itinFlag(p) +
+                '<div class="it-card-top"><span class="it-hours">' + esc(wv.start) + '–' + esc(wv.end) + '</span>' +
+                '<strong>' + esc(p.name) + '</strong>' +
+                (p.verified ? '<span class="place-verified">✓</span>' : '') + '</div>' +
+                ((wv.why || p.why) ? '<p class="it-why">' + esc(wv.why || p.why) + '</p>' : '') +
+              '</div>';
+            });
+          }
+        } else RAILS.forEach((r) => {
           const sl = bySlot[r.key];
           const p = sl ? resolve(sl.place_id) : null;
           if (!expanded) {
@@ -2161,6 +2280,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   }
 
   function swapPlanned(railKey) {
+    if (!Array.isArray(DAY_PLAN)) return; /* windows swap arrives with its own grammar */
     if (!DAY_PLAN || !todayCtx || !railKey) return;
     const slot = DAY_PLAN.find((s) => s.rail === railKey);
     if (!slot) return;
@@ -2930,7 +3050,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         btn.disabled = false;
         return;
       }
-      DAY_PLAN = (data.slots && data.slots.length) ? data.slots : DAY_PLAN;
+      const gotAdj = data.slots && (Array.isArray(data.slots) ? data.slots.length : (data.slots.windows || []).length);
+      DAY_PLAN = gotAdj ? data.slots : DAY_PLAN;
       DAY_PLAN_ADJUSTED = true;
       CX_NOTE = data.reply;
       inp.value = '';
@@ -3343,7 +3464,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     try {
       const { data: gen, error } = await sb.functions.invoke('plan-engine', { body: { action: 'offday', area: ov } });
       OFFDAY_GENERATING = false;
-      if (error || !gen || gen.error || !(gen.slots || []).length) {
+      const gotOff = gen && gen.slots && (Array.isArray(gen.slots) ? gen.slots.length : (gen.slots.windows || []).length);
+      if (error || !gen || gen.error || !gotOff) {
         console.warn('[Prevoya] offday:', (gen && gen.error) || (error && error.message) || 'empty');
         if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
         return;
@@ -3351,7 +3473,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       DAY_PLAN = gen.slots;
       DAY_PLAN_OFFROUTE = true;
       /* discovery may have grown the dataset mid-call (same as leg plans) */
-      if (todayCtx && DAY_PLAN.some((sl) =>
+      if (todayCtx && (Array.isArray(DAY_PLAN) ? DAY_PLAN : (DAY_PLAN.windows || [])).some((sl) =>
             !todayCtx.places.find((x) => String(x.id) === String(sl.place_id)))) {
         const { data: allP } = await sb.from('curated_places').select('*').eq('destination', 'bali');
         if (allP && allP.length) { todayCtx.places = allP; mountPlacesTab(allP); }
@@ -3397,7 +3519,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         /* AI-2b: discovery may have grown the dataset mid-call — if the plan
            references places we haven't loaded, refresh the pool so planned
            slots resolve (and the Places tab shows the new ◔ discovered rows) */
-        if (todayCtx && (DAY_PLAN || []).some((sl) =>
+        if (todayCtx && (Array.isArray(DAY_PLAN) ? DAY_PLAN : ((DAY_PLAN && DAY_PLAN.windows) || [])).some((sl) =>
               !todayCtx.places.find((x) => String(x.id) === String(sl.place_id)))) {
           const { data: allP } = await sb.from('curated_places').select('*').eq('destination', 'bali');
           if (allP && allP.length) { todayCtx.places = allP; mountPlacesTab(allP); }
