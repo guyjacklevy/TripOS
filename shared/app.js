@@ -4559,7 +4559,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
     /* ── the beats ── */
     let t = 200;
-    const totalMs = 1600 + nodes.length * 350 + Math.min(7000, Math.max(4500, byDay.size * 220)) + 1400 + (recs.length ? 2200 : 0) + 600;
+    const totalMs = 1600 + nodes.length * 350 + Math.min(3500, Math.max(2200, byDay.size * 110)) + 1400 + (recs.length ? 2200 : 0) + 600;
     const prog = () => { gEls.fill.style.width = Math.min(100, (t / totalMs) * 100).toFixed(1) + '%'; };
 
     /* beat 1 · the dates */
@@ -4588,12 +4588,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     });
 
     /* beat 3 · stamps pop in day order; the ticker is the narrative engine */
-    const dayGap = Math.max(80, Math.min(250, 6500 / Math.max(1, lastDay - firstDay + 1)));
+    const dayGap = Math.max(45, Math.min(150, 3200 / Math.max(1, lastDay - firstDay + 1)));
     for (let d = firstDay; d <= lastDay; d++) {
       const cks = byDay.get(d) || [];
       wrAt(t, () => { gEls.ticker.hidden = false; gEls.ticker.textContent = 'DAY ' + d; prog(); });
-      cks.forEach((c, j) => { wrAt(t + j * 50, () => { gEls.dots.innerHTML += stampDot(c); }); });
-      t += cks.length ? Math.max(dayGap, cks.length * 50 + 80) : Math.round(dayGap * 0.45);
+      cks.forEach((c, j) => { wrAt(t + j * 30, () => { gEls.dots.innerHTML += stampDot(c); }); });
+      t += cks.length ? Math.max(dayGap, cks.length * 30 + 50) : Math.round(dayGap * 0.45);
     }
 
     /* beat 4 · counts land */
@@ -4662,7 +4662,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const T1 = 1.2;
     const T2 = T1 + nodes.length * 0.3;
     const daysSpan = Math.max(1, lastDay - firstDay + 1);
-    const dayDur = Math.min(6, Math.max(3.5, daysSpan * 0.12)) / daysSpan;
+    /* Guy round 3: the day count still dragged — sweep caps at 3s flat */
+    const dayDur = Math.min(3, Math.max(1.8, daysSpan * 0.06)) / daysSpan;
     const T3 = T2 + daysSpan * dayDur;
     const T4 = T3 + 1.2;
     const T5 = T4 + 0.8;
