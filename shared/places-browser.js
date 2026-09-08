@@ -20,10 +20,27 @@ export const CAT = {
   'day-club': { orb: 'planet-amber', cc: 'var(--cat-dayclub)',   icon: '⛱', label: 'Day Club' },
   surf:       { orb: 'planet-blue',  cc: 'var(--cat-surf)',      icon: '🌊', label: 'Surf' },
   practical:  { orb: 'planet-teal',  cc: 'var(--cat-practical)', icon: '✚', label: 'Practical' },
-  stay:       { orb: 'planet-teal',  cc: 'var(--cat-stay)',      icon: '🛏', label: 'Stays' }
+  stay:       { orb: 'planet-teal',  cc: 'var(--cat-stay)',      icon: '🛏', label: 'Stays' },
+  /* taxonomy v3 (TAXONOMY_V3_WINDOWS_SURFACE_SPEC §4-5 + ATLAS A1) */
+  cafe:       { orb: 'planet-blue',  cc: 'var(--cat-work)',      icon: '☕', label: 'Cafe' },
+  health:     { orb: 'planet-teal',  cc: 'var(--cat-health)',    icon: '✚', label: 'Health' },
+  services:   { orb: 'planet-teal',  cc: 'var(--cat-services)',  icon: '◈', label: 'Services' },
+  rental:     { orb: 'planet-teal',  cc: 'var(--cat-rental)',    icon: '🛵', label: 'Rental' }
 };
-/* R2: quiet categories — collapsed shelf row, never advertised */
-const QUIET_CATS = new Set(['practical', 'stay']);
+/* R2 + v3: quiet categories — collapsed shelf row, never advertised */
+const QUIET_CATS = new Set(['practical', 'stay', 'health', 'services']);
+/* v3 facets (ATLAS A1): categories[] is the truth; category = categories[0] */
+const catsOf = (p) => (Array.isArray(p.categories) && p.categories.length) ? p.categories : [p.category];
+const hasCat = (p, c) => catsOf(p).indexOf(c) !== -1;
+/* the facet band (§3): the disclosure that a place has two lives */
+function facetBand(p) {
+  const cs = catsOf(p);
+  if (cs.length < 2) return '';
+  const parts = Array.isArray(p.facets) && p.facets.length
+    ? p.facets.map((f) => esc(f.category) + (f.hours_hint ? ' · ' + esc(f.hours_hint) : ''))
+    : cs.map((c) => esc(c));
+  return '<p class="facet-band">' + parts.join(' ✦ ') + '</p>';
+}
 
 export const AREA_META = {
   'All':      { key: '',         ac: 'var(--teal)',          tags: 'overview · curated · live',     alt: 8000 },
@@ -94,9 +111,11 @@ export function mountPlaces(cfg) {
   }
 
   /* ── POI card (bd = scoreBreakdown when this place matches the brief) ── */
-  function card(p, bd) {
+  function card(p, bd, rowCat) {
     const matched = !!bd;
-    const cat = CAT[p.category] || { orb: 'planet-teal', cc: 'var(--teal)', icon: '📍', label: p.category };
+    /* v3 §3: in the shelf, the ROW's facet decides the mood */
+    const moodCat = rowCat && hasCat(p, rowCat) ? rowCat : p.category;
+    const cat = CAT[moodCat] || { orb: 'planet-teal', cc: 'var(--teal)', icon: '📍', label: moodCat };
     const personas = (p.personas || []).map((x) => {
       const d = PERSONA_DOT[x] || { c: 'var(--mut)', ring: false };
       return '<span class="persona-chip"><span class="pdot' + (d.ring ? ' ring' : '') +
@@ -116,9 +135,9 @@ export function mountPlaces(cfg) {
     const disc = p.source === 'google'
       ? '<span class="disc-badge" title="Discovered via Google Maps — unverified">◔ discovered</span>' : '';
     return (
-      '<article class="place-card" data-cat="' + esc(p.category) + '" data-region="' + esc(region(p.area)) +
+      '<article class="place-card" data-cat="' + esc(moodCat) + '" data-region="' + esc(region(p.area)) +
         '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
-        catPhoto(p.category) +
+        catPhoto(moodCat) +
         flagBtn(p) +
         (matched ? '<span class="match-badge">✦ ' + bd.pct + '% match</span>' : disc) +
         '<div class="place-top">' +
@@ -129,6 +148,7 @@ export function mountPlaces(cfg) {
             '<div class="poi-type">' + cat.icon + ' ' + esc(p.area) + '</div>' +
           '</div>' +
         '</div>' +
+        facetBand(p) +
         (matched && bd.reasons.length
           ? '<p class="match-why">matched on: ' + bd.reasons.slice(0, 4).map(esc).join(' · ') + '</p>'
           : '') +
@@ -172,9 +192,10 @@ export function mountPlaces(cfg) {
   /* ── compact carousel card (2a): name · area · 2-line why · match badge.
      Same data-* attrs + searchHay as the full card, so applyFilters treats
      mini and full cards identically. Cost/tip/timing/personas are cut. ── */
-  function miniCard(p, bd) {
+  function miniCard(p, bd, rowCat) {
     const matched = !!bd;
-    const cat = CAT[p.category] || { orb: 'planet-teal', cc: 'var(--teal)', icon: '📍', label: p.category };
+    const moodCat = rowCat && hasCat(p, rowCat) ? rowCat : p.category;
+    const cat = CAT[moodCat] || { orb: 'planet-teal', cc: 'var(--teal)', icon: '📍', label: moodCat };
     const here = onCheckin
       ? '<button type="button" class="place-maps place-here" data-place-id="' + esc(p.id) + '">📍 I’m here</button>'
       : '';
@@ -186,9 +207,9 @@ export function mountPlaces(cfg) {
     const disc = p.source === 'google'
       ? '<span class="disc-badge" title="Discovered via Google Maps — unverified">◔ discovered</span>' : '';
     return (
-      '<article class="place-card poi-mini" data-cat="' + esc(p.category) + '" data-region="' + esc(region(p.area)) +
+      '<article class="place-card poi-mini" data-cat="' + esc(moodCat) + '" data-region="' + esc(region(p.area)) +
         '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
-        catPhoto(p.category) +
+        catPhoto(moodCat) +
         flagBtn(p) +
         (matched ? '<span class="match-badge">✦ ' + bd.pct + '%</span>' : disc) +
         '<div class="place-top">' +
@@ -199,6 +220,7 @@ export function mountPlaces(cfg) {
             '<div class="poi-type">' + cat.icon + ' ' + esc(p.area) + '</div>' +
           '</div>' +
         '</div>' +
+        facetBand(p) +
         (p.why ? '<p class="place-why mini-why">' + esc(p.why) + '</p>' : '') +
         '<div class="mini-foot">' + here + maps + '<span class="mini-more">more ›</span></div>' +
       '</article>'
@@ -209,7 +231,12 @@ export function mountPlaces(cfg) {
      (by best in-category score), the rest by descending count */
   function catGroups() {
     const byCat = new Map();
-    list.forEach((p) => { if (!byCat.has(p.category)) byCat.set(p.category, []); byCat.get(p.category).push(p); });
+    /* v3: a place joins EVERY row it holds a facet for (§4), wearing that
+       row's mood at render */
+    list.forEach((p) => catsOf(p).forEach((c) => {
+      if (!byCat.has(c)) byCat.set(c, []);
+      byCat.get(c).push(p);
+    }));
     const groups = [];
     byCat.forEach((cards, catKey) => {
       let matched = false, best = -1;
@@ -277,19 +304,20 @@ export function mountPlaces(cfg) {
       return '<div class="plb-row" data-cat="' + esc(g.cat) + '" style="--cc:' + meta.cc + '">' +
         '<header class="row-head">' +
           '<span class="row-dot"></span>' +
-          '<span class="row-name">' + esc(meta.label) + '</span>' +
+          '<span class="row-name">' + esc(meta.label) +
+            (g.cat === 'work' ? '<span class="row-sub"> · that fit work</span>' : '') + '</span>' +
           '<span class="row-count">' + g.count + '</span>' +
           (g.matched ? '<span class="row-matched">✦ matched</span>' : '') +
           '<button type="button" class="row-all" data-cat="' + esc(g.cat) + '">see all →</button>' +
         '</header>' +
-        '<div class="carousel">' + g.cards.map((p) => miniCard(p, matchedMap.get(p) || null)).join('') + '</div>' +
+        '<div class="carousel">' + g.cards.map((p) => miniCard(p, matchedMap.get(p) || null, g.cat)).join('') + '</div>' +
       '</div>';
     }).join('') +
     /* the quiet row: PRACTICAL & STAYS · N — collapsed, expands on tap */
     (quietGroups.length ? (() => {
       const qn = quietGroups.reduce((s, g) => s + g.count, 0);
       return '<div class="plb-quiet">' +
-        '<button type="button" class="plb-quiet-head">PRACTICAL &amp; STAYS · ' + qn +
+        '<button type="button" class="plb-quiet-head">HEALTH · SERVICES · STAYS · ' + qn +
           '<span class="plb-quiet-caret">▸</span></button>' +
         '<div class="plb-quiet-body" hidden>' + quietGroups.map((g) => {
           const meta = CAT[g.cat] || { cc: 'var(--mut)', label: g.cat };
@@ -317,11 +345,11 @@ export function mountPlaces(cfg) {
      focusId (optional): scroll to + highlight that place's full card. */
   function renderCatGrid(catKey, focusId) {
     const meta = CAT[catKey] || { cc: 'var(--teal)', label: catKey };
-    const cards = list.filter((p) => p.category === catKey);
+    const cards = list.filter((p) => hasCat(p, catKey));
     els.grid.innerHTML = '<div class="cat-detail">' +
       '<button type="button" class="row-back">← all categories</button>' +
       '<h3 class="cat-detail-h" style="--cc:' + meta.cc + '"><span class="row-dot"></span>' + esc(meta.label) + '</h3>' +
-      '<div class="poi-grid">' + cards.map((p) => card(p, matchedMap.get(p) || null)).join('') + '</div>' +
+      '<div class="poi-grid">' + cards.map((p) => card(p, matchedMap.get(p) || null, catKey)).join('') + '</div>' +
     '</div>';
     dropIn(Array.from(els.grid.querySelectorAll('.place-card')));
     els.grid.querySelector('.row-back').onclick = () => { state.view = 'rows'; renderRows(); applyFilters(false); };

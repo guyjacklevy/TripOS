@@ -62,7 +62,8 @@ export const durLabel = (d) =>
 
 export const CAT_ICON = {
   beach: '🏖', food: '🍽', nightlife: '🎉', work: '☕', wellness: '💆', explore: '🗺', gym: '🏋️',
-  'day-club': '⛱', surf: '🌊', practical: '✚', stay: '🛏'
+  'day-club': '⛱', surf: '🌊', practical: '✚', stay: '🛏',
+  cafe: '☕', health: '✚', services: '◈', rental: '🛵'
 };
 
 /* the saved check-in answers, if any */
@@ -123,7 +124,7 @@ export function scoreBreakdown(p, plan) {
     for (const pr of plan.priorities) {
       const m = PRIORITY_MATCH[pr];
       if (!m) continue;
-      if ((m.cats && m.cats.indexOf(p.category) !== -1) ||
+      if ((m.cats && ((Array.isArray(p.categories) && p.categories.length ? p.categories : [p.category]).some((c) => m.cats.indexOf(c) !== -1))) ||
           (m.tags && tags.some((t) => m.tags.indexOf(t) !== -1))) {
         hits++;
         if (hits <= 2) reasons.push(pr + ' priority');

@@ -40,11 +40,21 @@ const CAT_META = {
   'day-club': { orb: 'planet-amber', cc: 'var(--cat-dayclub)' },
   surf:       { orb: 'planet-blue',  cc: 'var(--cat-surf)' },
   practical:  { orb: 'planet-teal',  cc: 'var(--cat-practical)' },
-  stay:       { orb: 'planet-teal',  cc: 'var(--cat-stay)' }
+  stay:       { orb: 'planet-teal',  cc: 'var(--cat-stay)' },
+  /* taxonomy v3 (ATLAS A1 + Rachel §5) */
+  cafe:       { orb: 'planet-blue',  cc: 'var(--cat-work)' },
+  health:     { orb: 'planet-teal',  cc: 'var(--cat-health)' },
+  services:   { orb: 'planet-teal',  cc: 'var(--cat-services)' },
+  rental:     { orb: 'planet-teal',  cc: 'var(--cat-rental)' }
 };
-/* R2: quiet categories — never in rails, never offered; shelf shows them
-   collapsed; search + passport + saves keep full access */
-const QUIET_CATS = new Set(['practical', 'stay']);
+/* R2 + v3: quiet categories — never in rails, never offered; shelf shows
+   them collapsed; search + passport + saves keep full access */
+const QUIET_CATS = new Set(['practical', 'stay', 'health', 'services']);
+/* v3 facets (ATLAS A1): categories[] is the truth; category = categories[0].
+   A place is quiet only when EVERY membership is quiet — a hotel with a
+   great restaurant still earns its food row. */
+const catsOf = (p) => (Array.isArray(p.categories) && p.categories.length) ? p.categories : [p.category];
+const isQuietPlace = (p) => catsOf(p).every((c) => QUIET_CATS.has(c));
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmtK = (k) => (k >= 1000 ? (Math.round(k / 100) / 10) + 'M' : Math.round(k) + 'k');
@@ -940,11 +950,11 @@ const BLOCK_ORDER = { morning: 0, afternoon: 1, sunset: 2, evening: 3, night: 4 
    defaults apply ONLY where best_time is absent. Quiet categories never rail. */
 const CAT_RAIL_DEFAULT = {
   'day-club': 'midday', surf: 'morning',
-  work: 'morning', gym: 'morning', wellness: 'morning',
+  work: 'morning', cafe: 'morning', gym: 'morning', wellness: 'morning',
   beach: 'midday', explore: 'midday', food: 'midday', nightlife: 'night'
 };
 function primaryRail(p) {
-  if (QUIET_CATS.has(p.category)) return null;
+  if (isQuietPlace(p)) return null;
   const bt = (p.best_time || []).slice().sort((a, b) => (BLOCK_ORDER[a] ?? 9) - (BLOCK_ORDER[b] ?? 9));
   if (bt.length) return BLOCK_RAIL[bt[0]];
   return CAT_RAIL_DEFAULT[p.category] || null;
@@ -952,7 +962,7 @@ function primaryRail(p) {
 /* the time-defined categories live on two rails (R1): day-club midday+golden,
    surf morning+golden — railPicks consults this beyond the primary */
 function railsOf(p) {
-  if (QUIET_CATS.has(p.category)) return [];
+  if (isQuietPlace(p)) return [];
   const bt = (p.best_time || []);
   if (bt.length) return [...new Set(bt.map((b) => BLOCK_RAIL[b]).filter(Boolean))];
   if (p.category === 'day-club') return ['midday', 'golden'];
