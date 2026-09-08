@@ -3295,3 +3295,15 @@ input, select, textarea { font-size: 16px !important; }
   cursor: pointer; transition: color 0.15s, border-color 0.15s;
 }
 .rec-btn.on { color: var(--teal); border-color: var(--teal); }
+
+/* ─── /s/ share page: the fold + the lived map (Guy 2026-09-08) ─── */
+.st-more {
+  grid-column: 1 / -1; min-height: 42px;
+  font: inherit; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+  color: var(--dim); text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--line); border-radius: 10px;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.st-more:active { color: var(--tx); }
+#shMapSec .cer-map { margin: 0 auto; max-width: 560px; }
