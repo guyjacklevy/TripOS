@@ -88,10 +88,13 @@ function stampHTML(s, count, viaName, hide) {
   const tint = AREA_TINT[s.area] || 'var(--teal)';
   const cc = CAT_CC[s.category] || 'var(--teal)';
   const badge = s.verified ? '<span class="st-v">✓</span>' : (s.discovered ? '<span class="st-v st-disc">◔</span>' : '');
+  /* the owner's like travels with the share — read-only heart (v7 payload) */
+  const worth = s.worth ? '<span class="st-like st-like-ro on">♥</span>' : '';
   return '<button type="button"' + (hide ? ' hidden' : '') + ' class="stamp ' + shape + '" data-name="' + esc(s.name) + '" data-area="' + esc(s.area) + '" data-cat="' + esc(s.category || '') + '"' +
     ' style="--st:' + tint + ';--rot:' + rot + 'deg">' +
     (count > 1 ? '<span class="st-count">×' + count + '</span>' : '') +
     '<span class="st-dot" style="background:' + cc + '"></span>' +
+    worth +
     '<span class="st-name">' + esc(s.name) + '</span>' +
     '<span class="st-date">' + dateLbl(s.date) + (s.category ? ' · ' + esc(s.category) : '') + ' ' + badge + '</span>' +
   '</button>';

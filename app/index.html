@@ -430,11 +430,33 @@
         <h2 class="panel-h">Your pass</h2>
         <!-- A1: You is the trip's identity page — the index row kills the long scroll -->
         <div class="you-index" id="youIndex">
-          <button type="button" data-goto="youPass" class="on">pass</button>
+          <button type="button" data-goto="youPassport" class="on">passport</button>
+          <button type="button" data-goto="youPass">pass</button>
           <button type="button" data-goto="youRoute">route</button>
-          <button type="button" data-goto="youPassport">passport</button>
           <button type="button" data-goto="readyCard">ready</button>
           <button type="button" data-goto="packCard">pack</button>
+        </div>
+        <!-- A1 · THE PASSPORT — the asset, and the tab's headline (Guy
+             2026-09-08: "the most important thing here" — it leads). -->
+        <div class="card passport-card" id="youPassport">
+          <div class="pp-head" id="ppHead">YOUR BALI</div>
+          <!-- A3 · sharing: explicit, revocable, boundary stated plainly -->
+          <div class="pp-share-row">
+            <button type="button" class="ri-replan" id="ppShare">↗ SHARE TRIP</button>
+            <button type="button" class="ri-replan" id="ppReplay" hidden>▶ replay</button>
+            <button type="button" class="ck-reset" id="ppEditBtn">edit stamps</button>
+          </div>
+          <div class="pp-share-sheet" id="ppShareSheet" hidden></div>
+          <div class="pp-toggle" id="ppToggle">
+            <button type="button" data-v="place" class="on">BY PLACE</button>
+            <button type="button" data-v="day">BY DAY</button>
+          </div>
+          <div class="pp-filter" id="ppFilter"></div>
+          <div id="ppBody"></div>
+          <!-- A2 v2 · the stamping SESSION (Guy+Alex fusion, 2026-08-11):
+               sticky day + stepper + type-ahead that stamps instantly.
+               Opened by "+" on any BY DAY row, or by the button below. -->
+          <button type="button" class="ck-reset" id="ppRetro">+ stamp a past day</button>
         </div>
         <div class="bpass" id="youPass">
           <div class="bp-main">
@@ -470,29 +492,6 @@
         <!-- AI-1a · the route instrument: the pass says who you are, the route
              says the shape of your trip. Suppressed entirely below 2 legs. -->
         <div id="youRoute" hidden></div>
-
-        <!-- A1 · THE PASSPORT — the asset. Stamps are check-ins; pages are
-             areas; visas are legs. Real only, no spend amounts, ever. -->
-        <div class="card passport-card" id="youPassport">
-          <div class="pp-head" id="ppHead">YOUR BALI</div>
-          <!-- A3 · sharing: explicit, revocable, boundary stated plainly -->
-          <div class="pp-share-row">
-            <button type="button" class="ri-replan" id="ppShare">↗ SHARE TRIP</button>
-            <button type="button" class="ri-replan" id="ppReplay" hidden>▶ replay</button>
-            <button type="button" class="ck-reset" id="ppEditBtn">edit stamps</button>
-          </div>
-          <div class="pp-share-sheet" id="ppShareSheet" hidden></div>
-          <div class="pp-toggle" id="ppToggle">
-            <button type="button" data-v="place" class="on">BY PLACE</button>
-            <button type="button" data-v="day">BY DAY</button>
-          </div>
-          <div class="pp-filter" id="ppFilter"></div>
-          <div id="ppBody"></div>
-          <!-- A2 v2 · the stamping SESSION (Guy+Alex fusion, 2026-08-11):
-               sticky day + stepper + type-ahead that stamps instantly.
-               Opened by "+" on any BY DAY row, or by the button below. -->
-          <button type="button" class="ck-reset" id="ppRetro">+ stamp a past day</button>
-        </div>
 
         <div class="stamp-sheet" id="stampSheet" hidden>
           <div class="ss-day">

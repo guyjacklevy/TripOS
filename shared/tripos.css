@@ -2055,15 +2055,26 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
    Object semantics, never skeuomorphism: stamps/pages/visas rendered in
    glass + instrument ink + terrain tints. Deterministic rotation per
    place; ceremony = drop-in + settle composed, nothing new. */
+/* sticky + thumb-sized (Guy 2026-09-08: the small top buttons weren't
+   comfortable) — rides the top of the scroll, one row, side-scrolls */
 .you-index {
-  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 8;
+  display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto;
+  margin: 0 -4px 16px; padding: 6px 4px;
+  background: rgba(10, 10, 20, 0.86);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border-radius: 14px;
+  scrollbar-width: none;
 }
+.you-index::-webkit-scrollbar { display: none; }
 .you-index button {
-  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.12em;
   color: var(--mut); background: none; cursor: pointer;
-  border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px;
+  border: 1px solid var(--line); border-radius: 99px;
+  padding: 10px 16px; min-height: 40px; white-space: nowrap; flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
 }
-.you-index button.on { color: var(--teal); border-color: rgba(61, 255, 208, 0.35); }
+.you-index button.on { color: var(--teal); border-color: rgba(61, 255, 208, 0.35); background: rgba(61, 255, 208, 0.06); }
 
 .passport-card { margin-top: 16px; }
 .pp-head { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; color: var(--dim); margin-bottom: 12px; }
@@ -2129,6 +2140,19 @@ div.stamp { cursor: default; }
 .st-count { grid-column: 3; grid-row: 1; justify-self: end;
   font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--st, var(--teal)); }
 .st-meta { grid-column: 2 / -1; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.08em; color: var(--teal); }
+/* the LIKE — the heart everyone already reads (Guy 2026-09-08). 34px
+   target, bottom-right of the row; read-only on share surfaces. */
+.st-like {
+  position: absolute; right: 4px; bottom: 2px;
+  width: 36px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; line-height: 1; color: var(--mut);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.st-like.on { color: #ff6b6b; }
+.st-like:active { transform: scale(1.2); }
+.st-like-ro { pointer-events: none; }
+.stamp { padding-right: 42px; }
 .pp-pulse { display: inline-block; margin-top: 10px; }
 
 /* BY DAY — memory-zoom on the route line */

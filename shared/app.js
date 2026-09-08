@@ -720,11 +720,16 @@ function stampEl(ck, p, opts) {
      door ("was this one of them?"). No chip, no path to a public surface. */
   const resolveChip = (!p && ck.id && ck.place_name)
     ? '<span class="st-meta st-resolve" data-ck="' + esc(ck.id) + '" role="button">◌ private · was this one of them? →</span>' : '';
+  /* the LIKE (Guy 2026-09-08): worth-it as the social gesture everyone
+     already knows — a heart on the stamp, no check-in semantics touched */
+  const liked = p && ck.place_id && RECS.has(String(ck.place_id));
+  const like = (p && ck.place_id)
+    ? '<span class="st-like' + (liked ? ' on' : '') + '" data-like="' + esc(ck.place_id) + '" role="button" aria-label="worth it">' + (liked ? '♥' : '♡') + '</span>' : '';
   return '<' + (tap ? 'button type="button"' : 'div') +
     ' class="stamp ' + shape + (o.ceremony ? ' st-new' : '') + '"' +
     (tap ? ' data-place="' + esc(ck.place_id) + '"' : '') +
     ' style="--st:' + tint + ';--rot:' + rot + 'deg">' +
-      delX + count +
+      delX + count + like +
       '<span class="st-dot" style="background:' + cc + '"></span>' +
       '<span class="st-name">' + esc(p ? p.name : (ck.place_name || '—')) + '</span>' +
       '<span class="st-date">' + dateLbl(dd) + catWord + ' ' + badge + '</span>' +
@@ -2661,6 +2666,35 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       e.preventDefault();
       e.stopPropagation();
       openStampSheet(add.getAttribute('data-date'));
+      return;
+    }
+    /* the LIKE toggle — optimistic, same place_recs row the Places tab uses */
+    const lk = e.target.closest('.st-like');
+    if (lk) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!user) return;
+      const pid = lk.getAttribute('data-like');
+      const on = !RECS.has(String(pid));
+      const paint = (v) => {
+        document.querySelectorAll('.st-like[data-like="' + pid + '"]').forEach((el) => {
+          el.classList.toggle('on', v); el.textContent = v ? '♥' : '♡';
+        });
+      };
+      paint(on);
+      if (on) {
+        RECS.add(String(pid));
+        const { error } = await sb.from('place_recs').upsert({
+          user_id: user.id, place_id: pid, worth_it: true
+        }, { onConflict: 'user_id,place_id' });
+        if (error) { RECS.delete(String(pid)); paint(false); }
+        else track('place_rec');
+      } else {
+        RECS.delete(String(pid));
+        const { error } = await sb.from('place_recs').delete()
+          .eq('user_id', user.id).eq('place_id', pid);
+        if (error) { RECS.add(String(pid)); paint(true); }
+      }
       return;
     }
     /* M3 §1 · promotion: a private raw stamp becomes a Tier-1 stamp at OUR
