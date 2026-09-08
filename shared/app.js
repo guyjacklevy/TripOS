@@ -3668,7 +3668,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       isAdmin = !!(data && data.length);
     }
     if (!isAdmin) { card.hidden = true; return; }
-    const queue = (places || []).filter((p) => p.source === 'google' && !p.verified)
+    const queue = (places || []).filter((p) => (p.source === 'google' || p.source === 'scout') && !p.verified)
       /* R3/R4 desk order: traveler-named first, relabel-suggested behind them */
       .sort((a, b) => {
         const rank = (p) => Array.isArray(p.tags) && p.tags.indexOf('traveler-named') !== -1 ? 0
