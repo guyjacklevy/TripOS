@@ -4321,6 +4321,68 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     return { day, wins, doneIdx, tripDone: day > wins[wins.length - 1].to };
   }
 
+  /* REALITY FIRST (Guy 2026-09-08): the wrap trace follows where days
+     actually happened — Tier-1 stamps collapsed into chronological stops —
+     not the planned legs. His Penida→Gili→Lombok run never entered the legs
+     table, so the film drew a Bali triangle under island stamps. An
+     unstamped leg still stands (quiet weeks are real too); planned legs
+     remain the whole trace only when the window holds no stamps at all. */
+  function realityStops(wins, firstDay, lastDay, dayOfCk) {
+    const seq = [];
+    (CHECKINS || []).slice().sort((a, b) => (a.created_at < b.created_at ? -1 : 1)).forEach((c) => {
+      if (!c.place_id) return; /* Tier-2 never steers an exportable trace */
+      const d = dayOfCk(c);
+      if (d < firstDay || d > lastDay) return;
+      const reg = latLngRegion(c.lat, c.lng);
+      if (!reg || !AREA_XY[reg]) return;
+      const last = seq[seq.length - 1];
+      if (last && last.area === reg) { last.set.add(d); return; }
+      seq.push({ area: reg, set: new Set([d]), from: d, base: false, nights: 0 });
+    });
+    if (!seq.length) return null;
+    const hit = new Set();
+    let li = 0;
+    seq.forEach((s) => {
+      let j = li;
+      while (j < wins.length && wins[j].leg.area !== s.area) j++;
+      if (j < wins.length) { s.base = true; s.nights = wins[j].leg.nights; hit.add(j); li = j + 1; }
+    });
+    wins.forEach((w, j) => {
+      if (!hit.has(j)) seq.push({ area: w.leg.area, set: null, from: w.from, base: true, nights: w.leg.nights });
+    });
+    seq.sort((a, b) => a.from - b.from);
+    const out = [];
+    seq.forEach((s) => {
+      const n = { area: s.area, days: s.set ? s.set.size : 0, base: s.base, nights: s.nights };
+      const prev = out[out.length - 1];
+      if (prev && prev.area === n.area) {
+        prev.base = prev.base || n.base; prev.nights = prev.nights || n.nights; prev.days += n.days;
+        return;
+      }
+      out.push(n);
+    });
+    return out;
+  }
+  /* base stops keep their leg's nights; side-trips carry stamp-day counts */
+  const stopLabel = (n) => n.area.toUpperCase() +
+    (n.base && n.nights ? ' · ' + n.nights + 'N' : (n.days > 1 ? ' · ' + n.days + 'D' : ''));
+  /* a revisited area labels ONCE (first pass, nights/days summed) — twin
+     labels on one point overprint into garble; the return line still draws */
+  function stopLabels(list) {
+    const nightsBy = {}, daysBy = {};
+    list.forEach((n) => {
+      nightsBy[n.area] = (nightsBy[n.area] || 0) + (n.base ? n.nights || 0 : 0);
+      daysBy[n.area] = (daysBy[n.area] || 0) + (n.days || 0);
+    });
+    const seen = new Set();
+    return list.map((n) => {
+      if (seen.has(n.area)) return '';
+      seen.add(n.area);
+      const nts = nightsBy[n.area];
+      return n.area.toUpperCase() + (nts ? ' · ' + nts + 'N' : (daysBy[n.area] > 1 ? ' · ' + daysBy[n.area] + 'D' : ''));
+    });
+  }
+
   /* the film itself. scope: {kind:'trip'} | {kind:'leg', idx} — leg wrap is
      beats 2–4 scoped to one leg. Only completed legs ever render. */
   async function runWrapReplay(scope) {
@@ -4363,7 +4425,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     gEls.card.hidden = true; gEls.fill.style.width = '0%';
     el.hidden = false;
 
-    const pts = wins.map((w) => AREA_XY[w.leg.area] || [160, 150]);
+    const nodes = realityStops(wins, firstDay, lastDay, dayOfCk)
+      || wins.map((w) => ({ area: w.leg.area, days: 0, base: true, nights: w.leg.nights }));
+    const pts = nodes.map((n) => AREA_XY[n.area] || [160, 150]);
     const dateLabel = (d) => {
       const dd = new Date(origin.getFullYear(), origin.getMonth(), origin.getDate() + (d - 1));
       return MONTH_ABBR[dd.getMonth()] + ' ' + dd.getDate();
@@ -4381,6 +4445,16 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       return '<circle class="wr-pop" cx="' + (AREA_XY[reg][0] + Math.cos(ang) * rad).toFixed(1) +
         '" cy="' + (AREA_XY[reg][1] + Math.sin(ang) * rad).toFixed(1) + '" r="1.9" fill="#e8e8f0" opacity="0.85"/>';
     };
+    /* one orb grammar for beat 2 + final frame: bases big, side-trips small;
+       right-edge nodes (the satellites) label leftward so text never clips */
+    const labs = stopLabels(nodes);
+    const orbSvg = (n, i, cls) => {
+      const hex = AREA_HEX[n.area] || '#3dffd0';
+      const flip = pts[i][0] >= 250;
+      return '<circle' + cls + ' cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="' + (n.base ? 5.5 : 3.5) + '" fill="' + hex + '"/>' +
+        (labs[i] ? '<text class="wr-orb-label' + (cls ? ' wr-pop' : '') + '" x="' + (pts[i][0] + (flip ? -9 : 9)) + '" y="' + (pts[i][1] + 3) + '"' +
+        (flip ? ' text-anchor="end"' : '') + ' fill="' + hex + '">' + esc(labs[i]) + '</text>' : '');
+    };
     const stamps = [...byDay.values()].flat();
     const uniq = new Set(stamps.map((c) => c.place_id ? String(c.place_id) : 'nm:' + (c.place_name || c.id)));
     const areasHit = new Set(stamps.map((c) => latLngRegion(c.lat, c.lng)).filter(Boolean));
@@ -4396,7 +4470,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     });
     const top = [...perPlace.values()].sort((a, b) => b.n - a.n)[0];
     if (top && top.n >= 2 && top.name) recs.push('most visited · ' + String(top.name).toLowerCase() + ' ×' + top.n);
-    if (areasHit.size) recs.push(areasHit.size + ' of 7 areas');
+    if (areasHit.size) recs.push(areasHit.size + ' of ' + Object.keys(AREA_XY).length + ' areas');
     const stampDays = [...byDay.keys()];
     if (stampDays.length >= 2) {
       recs.push(dateLabel(Math.min(...stampDays)).toLowerCase() + ' → ' + dateLabel(Math.max(...stampDays)).toLowerCase() + ' · stamped');
@@ -4407,10 +4481,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       gEls.fill.style.width = '100%';
       /* everything lands in its end state */
       gEls.trace.setAttribute('d', pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ',' + p[1]).join(' '));
-      gEls.orbs.innerHTML = wins.map((w, i) =>
-        '<circle cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="5.5" fill="' + (AREA_HEX[w.leg.area] || '#3dffd0') + '"/>' +
-        '<text class="wr-orb-label" x="' + (pts[i][0] + 9) + '" y="' + (pts[i][1] + 3) + '" fill="' + (AREA_HEX[w.leg.area] || '#3dffd0') + '">' +
-        esc(w.leg.area.toUpperCase()) + '</text>').join('');
+      gEls.orbs.innerHTML = nodes.map((n, i) => orbSvg(n, i, '')).join('');
       seenPlace.clear();
       gEls.dots.innerHTML = stamps.map(stampDot).join('');
       gEls.ticker.hidden = true;
@@ -4437,7 +4508,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
     /* ── the beats ── */
     let t = 200;
-    const totalMs = 2500 + wins.length * 700 + Math.min(14000, Math.max(8000, byDay.size * 400)) + 2000 + (recs.length ? 3000 : 0) + 800;
+    const totalMs = 2500 + nodes.length * 700 + Math.min(14000, Math.max(8000, byDay.size * 400)) + 2000 + (recs.length ? 3000 : 0) + 800;
     const prog = () => { gEls.fill.style.width = Math.min(100, (t / totalMs) * 100).toFixed(1) + '%'; };
 
     /* beat 1 · the dates */
@@ -4455,13 +4526,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     });
     t += scope.kind === 'trip' ? 2500 : 1600;
 
-    /* beat 2 · the route traces leg by leg */
-    wins.forEach((w, i) => {
+    /* beat 2 · the route traces stop by stop — the lived route, not the plan */
+    nodes.forEach((n, i) => {
       wrAt(t, () => {
         gEls.trace.setAttribute('d', pts.slice(0, i + 1).map((p, j) => (j ? 'L' : 'M') + p[0] + ',' + p[1]).join(' '));
-        gEls.orbs.innerHTML += '<circle class="wr-pop" cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="5.5" fill="' + (AREA_HEX[w.leg.area] || '#3dffd0') + '"/>' +
-          '<text class="wr-orb-label wr-pop" x="' + (pts[i][0] + 9) + '" y="' + (pts[i][1] + 3) + '" fill="' + (AREA_HEX[w.leg.area] || '#3dffd0') + '">' +
-          esc(w.leg.area.toUpperCase() + ' · ' + w.leg.nights + 'N') + '</text>';
+        gEls.orbs.innerHTML += orbSvg(n, i, ' class="wr-pop"');
         prog();
       });
       t += 700;
@@ -4530,12 +4599,15 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const ang = (h % 360) * Math.PI / 180, rad = 7 + ((h >> 4) % 8);
       stamps.push({ day: d, x: AREA_XY[reg][0] + Math.cos(ang) * rad, y: AREA_XY[reg][1] + Math.sin(ang) * rad });
     });
-    const pts = wins.map((w) => AREA_XY[w.leg.area] || [160, 150]);
+    const nodes = realityStops(wins, firstDay, lastDay, dayOfCk)
+      || wins.map((w) => ({ area: w.leg.area, days: 0, base: true, nights: w.leg.nights }));
+    const pts = nodes.map((n) => AREA_XY[n.area] || [160, 150]);
+    const labs = stopLabels(nodes);
     const nights = wins.reduce((s, w) => s + w.leg.nights, 0);
 
     /* timeline (seconds) — same beat grammar, time-parameterized */
     const T1 = 2.4;
-    const T2 = T1 + wins.length * 0.7;
+    const T2 = T1 + nodes.length * 0.7;
     const daysSpan = Math.max(1, lastDay - firstDay + 1);
     const dayDur = Math.min(12, Math.max(6, daysSpan * 0.3)) / daysSpan;
     const T3 = T2 + daysSpan * dayDur;
@@ -4597,13 +4669,17 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         }
         x.stroke();
       }
-      wins.forEach((w, i) => {
+      nodes.forEach((n, i) => {
         if (tt < T1 + i * 0.7) return;
         const pop = Math.min(1, (tt - (T1 + i * 0.7)) / 0.3);
-        x.fillStyle = AREA_HEX[w.leg.area] || '#3dffd0';
-        x.beginPath(); x.arc(pts[i][0], pts[i][1], 5.5 * (0.4 + 0.6 * pop), 0, Math.PI * 2); x.fill();
+        x.fillStyle = AREA_HEX[n.area] || '#3dffd0';
+        x.beginPath(); x.arc(pts[i][0], pts[i][1], (n.base ? 5.5 : 3.5) * (0.4 + 0.6 * pop), 0, Math.PI * 2); x.fill();
         x.globalAlpha = pop; x.font = '600 8px ' + mono;
-        x.fillText(w.leg.area.toUpperCase() + ' · ' + w.leg.nights + 'N', pts[i][0] + 9, pts[i][1] + 3);
+        /* satellites hug the right edge — label leftward there, never clipped */
+        if (labs[i]) {
+          if (pts[i][0] >= 250) { x.textAlign = 'right'; x.fillText(labs[i], pts[i][0] - 9, pts[i][1] + 3); x.textAlign = 'left'; }
+          else x.fillText(labs[i], pts[i][0] + 9, pts[i][1] + 3);
+        }
         x.globalAlpha = 1;
       });
       /* beat 3 · stamps in day order */
@@ -4755,7 +4831,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     runWrapReplay(fire);
   }
 
-  Object.assign(window.__appDebug, { runWrapReplay, wrapState, maybeWrap, closeWrap, renderWrapFilm, eligibleStamps });
+  Object.assign(window.__appDebug, { runWrapReplay, wrapState, maybeWrap, closeWrap, renderWrapFilm, eligibleStamps, realityStops, stopLabel,
+    /* preview: stage a finished trip so the wrap plays without a session */
+    injectWrap: (t, legs, cks) => { trip = t; TRIP_LEGS = legs || []; CHECKINS = cks || []; } });
 
   /* the corridor spine — returns true when the ceremony fired */
   async function runCorridor() {
