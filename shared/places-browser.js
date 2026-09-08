@@ -15,8 +15,15 @@ export const CAT = {
   work:      { orb: 'planet-blue',   cc: 'var(--cat-work)',     icon: '☕', label: 'Cafe + Work' },
   wellness:  { orb: 'planet-teal',   cc: 'var(--cat-wellness)', icon: '💆', label: 'Wellness' },
   explore:   { orb: 'planet-blue',   cc: 'var(--cat-explore)',  icon: '🗺', label: 'Explore' },
-  gym:       { orb: 'planet-teal',   cc: 'var(--cat-gym)',      icon: '🏋️', label: 'Gym' }
+  gym:       { orb: 'planet-teal',   cc: 'var(--cat-gym)',      icon: '🏋️', label: 'Gym' },
+  /* taxonomy v2 (LABEL_SYSTEM_RULING R1) */
+  'day-club': { orb: 'planet-amber', cc: 'var(--cat-dayclub)',   icon: '⛱', label: 'Day Club' },
+  surf:       { orb: 'planet-blue',  cc: 'var(--cat-surf)',      icon: '🌊', label: 'Surf' },
+  practical:  { orb: 'planet-teal',  cc: 'var(--cat-practical)', icon: '✚', label: 'Practical' },
+  stay:       { orb: 'planet-teal',  cc: 'var(--cat-stay)',      icon: '🛏', label: 'Stays' }
 };
+/* R2: quiet categories — collapsed shelf row, never advertised */
+const QUIET_CATS = new Set(['practical', 'stay']);
 
 export const AREA_META = {
   'All':      { key: '',         ac: 'var(--teal)',          tags: 'overview · curated · live',     alt: 8000 },
@@ -223,6 +230,10 @@ export function mountPlaces(cfg) {
   /* rows view — the category carousels ARE the categories (legend retired) */
   function renderRows() {
     let groups = catGroups();
+    /* R2 · quiet class: practical + stay leave the main rows — one collapsed
+       row at the bottom, browsable on tap, never advertised */
+    const quietGroups = groups.filter((g) => QUIET_CATS.has(g.cat));
+    groups = groups.filter((g) => !QUIET_CATS.has(g.cat));
     if (!shelfUnlocked) {
       const matchedOnly = groups.filter((g) => g.matched);
       if (matchedOnly.length) groups = matchedOnly; /* zero matches → full rows (never blank) */
@@ -273,11 +284,33 @@ export function mountPlaces(cfg) {
         '</header>' +
         '<div class="carousel">' + g.cards.map((p) => miniCard(p, matchedMap.get(p) || null)).join('') + '</div>' +
       '</div>';
-    }).join('') + '</div>';
+    }).join('') +
+    /* the quiet row: PRACTICAL & STAYS · N — collapsed, expands on tap */
+    (quietGroups.length ? (() => {
+      const qn = quietGroups.reduce((s, g) => s + g.count, 0);
+      return '<div class="plb-quiet">' +
+        '<button type="button" class="plb-quiet-head">PRACTICAL &amp; STAYS · ' + qn +
+          '<span class="plb-quiet-caret">▸</span></button>' +
+        '<div class="plb-quiet-body" hidden>' + quietGroups.map((g) => {
+          const meta = CAT[g.cat] || { cc: 'var(--mut)', label: g.cat };
+          return '<div class="plb-row plb-row-quiet" data-cat="' + esc(g.cat) + '" style="--cc:var(--mut)">' +
+            '<header class="row-head"><span class="row-dot"></span>' +
+            '<span class="row-name">' + esc(meta.label) + '</span>' +
+            '<span class="row-count">' + g.count + '</span></header>' +
+            '<div class="carousel">' + g.cards.map((p) => miniCard(p, null)).join('') + '</div>' +
+          '</div>';
+        }).join('') + '</div></div>';
+    })() : '') + '</div>';
     dropIn(Array.from(els.grid.querySelectorAll('.place-card')));
     els.grid.querySelectorAll('.row-all').forEach((b) => {
       b.onclick = () => { state.view = b.getAttribute('data-cat'); renderCatGrid(state.view); applyFilters(false); };
     });
+    const qh = els.grid.querySelector('.plb-quiet-head');
+    if (qh) qh.onclick = () => {
+      const body = els.grid.querySelector('.plb-quiet-body');
+      body.hidden = !body.hidden;
+      qh.querySelector('.plb-quiet-caret').textContent = body.hidden ? '▸' : '▾';
+    };
   }
 
   /* see-all view — full cards for a single category, with a back control.

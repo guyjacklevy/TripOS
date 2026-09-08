@@ -37,6 +37,15 @@
   --cat-night:    #a78bfa;
   --cat-wellness: #3dffd0;
   --cat-explore:  #4cc9f0;
+  /* taxonomy v2 (LABEL_SYSTEM_RULING R1): the time-defined categories wear
+     their light. day-club = the golden token; surf = a dawn-sky spare —
+     FLAGGED for Rachel: the dial's literal dawn glow is amber, which would
+     collide with both day-club and attention-amber, so surf takes the
+     terrain spare per her own fallback rule. quiet = deliberately colorless. */
+  --cat-dayclub:   #ffb454;
+  --cat-surf:      #7fb2f0;
+  --cat-practical: var(--mut);
+  --cat-stay:      var(--mut);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -3199,3 +3208,19 @@ input, select, textarea { font-size: 16px !important; }
 /* ═══ stamp sheet · the map door (retro flow, 2026-09-01) ═══ */
 .ss-suggest .ssg-map { color: var(--teal); }
 .ss-suggest .ssg-map:disabled, .ss-suggest .ssg-cand:disabled { opacity: 0.6; }
+
+/* ═══ TAXONOMY v2 (LABEL_SYSTEM_RULING R2/R3) · quiet row + desk chips ═══ */
+.plb-quiet { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 4px; }
+.plb-quiet-head {
+  width: 100%; background: none; border: none; cursor: pointer;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em;
+  color: var(--mut); padding: 12px 2px; text-align: left;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.plb-quiet-caret { color: var(--dim); }
+.plb-row-quiet .row-name { color: var(--mut); }
+.cur-relabeled {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em;
+  color: var(--mut); border: 1px solid var(--line); border-radius: 4px;
+  padding: 1px 5px; margin-left: 6px; text-transform: uppercase;
+}

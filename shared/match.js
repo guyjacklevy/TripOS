@@ -61,7 +61,8 @@ export const durLabel = (d) =>
   d === 0 ? 'open-ended' : d === 14 ? '2 weeks' : d === 30 ? '1 month' : '3+ months';
 
 export const CAT_ICON = {
-  beach: '🏖', food: '🍽', nightlife: '🎉', work: '☕', wellness: '💆', explore: '🗺', gym: '🏋️'
+  beach: '🏖', food: '🍽', nightlife: '🎉', work: '☕', wellness: '💆', explore: '🗺', gym: '🏋️',
+  'day-club': '⛱', surf: '🌊', practical: '✚', stay: '🛏'
 };
 
 /* the saved check-in answers, if any */

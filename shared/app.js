@@ -35,8 +35,16 @@ const CAT_META = {
   work:      { orb: 'planet-blue',   cc: 'var(--cat-work)' },
   wellness:  { orb: 'planet-teal',   cc: 'var(--cat-wellness)' },
   explore:   { orb: 'planet-blue',   cc: 'var(--cat-explore)' },
-  gym:       { orb: 'planet-teal',   cc: 'var(--cat-gym)' }
+  gym:       { orb: 'planet-teal',   cc: 'var(--cat-gym)' },
+  /* taxonomy v2 (LABEL_SYSTEM_RULING R1) */
+  'day-club': { orb: 'planet-amber', cc: 'var(--cat-dayclub)' },
+  surf:       { orb: 'planet-blue',  cc: 'var(--cat-surf)' },
+  practical:  { orb: 'planet-teal',  cc: 'var(--cat-practical)' },
+  stay:       { orb: 'planet-teal',  cc: 'var(--cat-stay)' }
 };
+/* R2: quiet categories — never in rails, never offered; shelf shows them
+   collapsed; search + passport + saves keep full access */
+const QUIET_CATS = new Set(['practical', 'stay']);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmtK = (k) => (k >= 1000 ? (Math.round(k / 100) / 10) + 'M' : Math.round(k) + 'k');
@@ -928,14 +936,34 @@ const RAILS = [
 ];
 const BLOCK_RAIL = { morning: 'morning', afternoon: 'midday', sunset: 'golden', evening: 'night', night: 'night' };
 const BLOCK_ORDER = { morning: 0, afternoon: 1, sunset: 2, evening: 3, night: 4 };
+/* LABEL_SYSTEM ruling, ratified: best_time outranks category — category→rail
+   defaults apply ONLY where best_time is absent. Quiet categories never rail. */
+const CAT_RAIL_DEFAULT = {
+  'day-club': 'midday', surf: 'morning',
+  work: 'morning', gym: 'morning', wellness: 'morning',
+  beach: 'midday', explore: 'midday', food: 'midday', nightlife: 'night'
+};
 function primaryRail(p) {
+  if (QUIET_CATS.has(p.category)) return null;
   const bt = (p.best_time || []).slice().sort((a, b) => (BLOCK_ORDER[a] ?? 9) - (BLOCK_ORDER[b] ?? 9));
-  return bt.length ? BLOCK_RAIL[bt[0]] : null;
+  if (bt.length) return BLOCK_RAIL[bt[0]];
+  return CAT_RAIL_DEFAULT[p.category] || null;
+}
+/* the time-defined categories live on two rails (R1): day-club midday+golden,
+   surf morning+golden — railPicks consults this beyond the primary */
+function railsOf(p) {
+  if (QUIET_CATS.has(p.category)) return [];
+  const bt = (p.best_time || []);
+  if (bt.length) return [...new Set(bt.map((b) => BLOCK_RAIL[b]).filter(Boolean))];
+  if (p.category === 'day-club') return ['midday', 'golden'];
+  if (p.category === 'surf') return ['morning', 'golden'];
+  const d = CAT_RAIL_DEFAULT[p.category];
+  return d ? [d] : [];
 }
 /* brief-relevant picks for a rail, topped up with verified spots so a rail is
    rarely empty; category-diverse; returns [] only if the rail truly has nothing */
 function railPicks(places, plan, railKey, n) {
-  const inRail = places.filter((p) => primaryRail(p) === railKey);
+  const inRail = places.filter((p) => railsOf(p).indexOf(railKey) !== -1);
   const scored = inRail
     .map((p) => ({ p, s: plan ? scorePlace(p, plan) : (p.verified ? 3 : 0) }))
     .sort((a, b) => b.s - a.s);
@@ -3508,7 +3536,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       isAdmin = !!(data && data.length);
     }
     if (!isAdmin) { card.hidden = true; return; }
-    const queue = (places || []).filter((p) => p.source === 'google' && !p.verified);
+    const queue = (places || []).filter((p) => p.source === 'google' && !p.verified)
+      /* R3/R4 desk order: traveler-named first, relabel-suggested behind them */
+      .sort((a, b) => {
+        const rank = (p) => Array.isArray(p.tags) && p.tags.indexOf('traveler-named') !== -1 ? 0
+          : Array.isArray(p.tags) && p.tags.indexOf('relabel-suggested') !== -1 ? 1 : 2;
+        return rank(a) - rank(b);
+      });
     $('curateCount').textContent = queue.length + ' AWAITING';
     $('curateCount').className = 'pace-delta cur-count'; /* pending work = attention amber */
     card.hidden = false;
@@ -3517,6 +3551,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         '<button type="button" class="cur-head">' +
           '<span class="cur-badge">◔</span>' +
           '<span class="cur-name">' + esc(p.name) + '</span>' +
+          (Array.isArray(p.tags) && p.tags.indexOf('relabeled') !== -1 ? '<span class="cur-relabeled">relabeled</span>' : '') +
+          (Array.isArray(p.tags) && p.tags.indexOf('relabel-suggested') !== -1 ? '<span class="cur-relabeled">relabel?</span>' : '') +
           '<span class="cur-meta">' + esc((p.area || '').split('/')[0].trim()) + ' · ' + esc(p.category) + '</span>' +
           '<span class="ri-caret">▾</span>' +
         '</button>' +
