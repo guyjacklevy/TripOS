@@ -4340,12 +4340,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       seq.push({ area: reg, set: new Set([d]), from: d, base: false, nights: 0 });
     });
     if (!seq.length) return null;
+    /* a stop is that leg's base only when its first stamp-day falls inside
+       the leg's window — area-name matching alone let a day-5 Canggu lunch
+       swallow the final Canggu leg's nights */
     const hit = new Set();
-    let li = 0;
     seq.forEach((s) => {
-      let j = li;
-      while (j < wins.length && wins[j].leg.area !== s.area) j++;
-      if (j < wins.length) { s.base = true; s.nights = wins[j].leg.nights; hit.add(j); li = j + 1; }
+      const j = wins.findIndex((w, k) => !hit.has(k) && w.leg.area === s.area && s.from >= w.from && s.from <= w.to);
+      if (j !== -1) { s.base = true; s.nights = wins[j].leg.nights; hit.add(j); }
     });
     wins.forEach((w, j) => {
       if (!hit.has(j)) seq.push({ area: w.leg.area, set: null, from: w.from, base: true, nights: w.leg.nights });
@@ -4356,31 +4357,79 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const n = { area: s.area, days: s.set ? s.set.size : 0, base: s.base, nights: s.nights };
       const prev = out[out.length - 1];
       if (prev && prev.area === n.area) {
-        prev.base = prev.base || n.base; prev.nights = prev.nights || n.nights; prev.days += n.days;
+        prev.base = prev.base || n.base; prev.nights = (prev.nights || 0) + (n.nights || 0); prev.days += n.days;
         return;
       }
       out.push(n);
     });
+    /* drop day-trip bounces (Guy 2026-09-08 #2): a 1-day side hop straight
+       back to the same area is a stamp cluster, not a route change — kept,
+       every Seminyak lunch drew two trace lines and the map spiderwebbed */
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let i = 1; i < out.length - 1; i++) {
+        if (!out[i].base && out[i].days <= 1 && out[i - 1].area === out[i + 1].area) {
+          out[i - 1].days += out[i + 1].days;
+          out[i - 1].base = out[i - 1].base || out[i + 1].base;
+          out[i - 1].nights = (out[i - 1].nights || 0) + (out[i + 1].nights || 0);
+          out.splice(i, 2);
+          changed = true;
+          break;
+        }
+      }
+    }
     return out;
   }
   /* base stops keep their leg's nights; side-trips carry stamp-day counts */
   const stopLabel = (n) => n.area.toUpperCase() +
     (n.base && n.nights ? ' · ' + n.nights + 'N' : (n.days > 1 ? ' · ' + n.days + 'D' : ''));
-  /* a revisited area labels ONCE (first pass, nights/days summed) — twin
-     labels on one point overprint into garble; the return line still draws */
-  function stopLabels(list) {
+  /* label layout (Guy 2026-09-08 #2 — "make it organized"): one label per
+     area (nights/days summed, first pass only — twins overprint into
+     garble); bases + multi-day side trips only, single-day chain stops stay
+     orb-only; right-edge labels flip leftward; colliding rows push apart */
+  function stopLayout(nodes, pts) {
     const nightsBy = {}, daysBy = {};
-    list.forEach((n) => {
+    nodes.forEach((n) => {
       nightsBy[n.area] = (nightsBy[n.area] || 0) + (n.base ? n.nights || 0 : 0);
       daysBy[n.area] = (daysBy[n.area] || 0) + (n.days || 0);
     });
     const seen = new Set();
-    return list.map((n) => {
-      if (seen.has(n.area)) return '';
+    const W = (s) => s.length * 5; /* ~8px mono ≈ 5 frame-units per char */
+    /* hand-set anchors where the map is dense — the south band + satellites;
+       a side-label there always crosses an orb or a trace line */
+    const ANCH = {
+      Canggu: { dx: -9, dy: 3, anchor: 'end' },
+      Uluwatu: { dx: 0, dy: 16, anchor: 'middle' },
+      'Nusa Penida': { dx: 0, dy: 15, anchor: 'middle' },
+      'Gili Trawangan': { dx: 12, dy: -10, anchor: 'end' },
+      Lombok: { dx: 6, dy: 14, anchor: 'end' }
+    };
+    const out = nodes.map((n, i) => {
+      const px = pts[i][0], py = pts[i][1];
+      const o = { lab: '', x: px + 9, y: py + 3, anchor: 'start' };
+      if (seen.has(n.area)) return o;
       seen.add(n.area);
-      const nts = nightsBy[n.area];
-      return n.area.toUpperCase() + (nts ? ' · ' + nts + 'N' : (daysBy[n.area] > 1 ? ' · ' + daysBy[n.area] + 'D' : ''));
+      const nts = nightsBy[n.area], dys = daysBy[n.area];
+      if (nts) o.lab = n.area.toUpperCase() + ' · ' + nts + 'N';
+      else if (dys >= 2) o.lab = n.area.toUpperCase() + ' · ' + dys + 'D';
+      if (!o.lab) return o;
+      const a = ANCH[n.area];
+      if (a) { o.x = px + a.dx; o.y = py + a.dy; o.anchor = a.anchor; }
+      else if (px >= 250 || px + 9 + W(o.lab) > 316) { o.anchor = 'end'; o.x = px - 9; }
+      return o;
     });
+    /* de-collide by real spans: same row + horizontal overlap → drop a row */
+    const spanL = (o) => o.anchor === 'end' ? o.x - W(o.lab) : (o.anchor === 'middle' ? o.x - W(o.lab) / 2 : o.x);
+    const spanR = (o) => spanL(o) + W(o.lab);
+    const labeled = out.filter((o) => o.lab).sort((a, b) => a.y - b.y);
+    for (let i = 1; i < labeled.length; i++) {
+      for (let k = 0; k < i; k++) {
+        const a = labeled[k], b = labeled[i];
+        if (Math.abs(b.y - a.y) < 9 && spanL(a) < spanR(b) && spanL(b) < spanR(a)) { b.y = a.y + 9; k = -1; }
+      }
+    }
+    return out;
   }
 
   /* the film itself. scope: {kind:'trip'} | {kind:'leg', idx} — leg wrap is
@@ -4447,13 +4496,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     };
     /* one orb grammar for beat 2 + final frame: bases big, side-trips small;
        right-edge nodes (the satellites) label leftward so text never clips */
-    const labs = stopLabels(nodes);
+    const lay = stopLayout(nodes, pts);
     const orbSvg = (n, i, cls) => {
       const hex = AREA_HEX[n.area] || '#3dffd0';
-      const flip = pts[i][0] >= 250;
+      const L = lay[i];
       return '<circle' + cls + ' cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="' + (n.base ? 5.5 : 3.5) + '" fill="' + hex + '"/>' +
-        (labs[i] ? '<text class="wr-orb-label' + (cls ? ' wr-pop' : '') + '" x="' + (pts[i][0] + (flip ? -9 : 9)) + '" y="' + (pts[i][1] + 3) + '"' +
-        (flip ? ' text-anchor="end"' : '') + ' fill="' + hex + '">' + esc(labs[i]) + '</text>' : '');
+        (L.lab ? '<text class="wr-orb-label' + (cls ? ' wr-pop' : '') + '" x="' + L.x + '" y="' + L.y + '"' +
+        (L.anchor !== 'start' ? ' text-anchor="' + L.anchor + '"' : '') + ' fill="' + hex + '">' + esc(L.lab) + '</text>' : '');
     };
     const stamps = [...byDay.values()].flat();
     const uniq = new Set(stamps.map((c) => c.place_id ? String(c.place_id) : 'nm:' + (c.place_name || c.id)));
@@ -4508,7 +4557,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
     /* ── the beats ── */
     let t = 200;
-    const totalMs = 2500 + nodes.length * 700 + Math.min(14000, Math.max(8000, byDay.size * 400)) + 2000 + (recs.length ? 3000 : 0) + 800;
+    const totalMs = 1600 + nodes.length * 350 + Math.min(7000, Math.max(4500, byDay.size * 220)) + 1400 + (recs.length ? 2200 : 0) + 600;
     const prog = () => { gEls.fill.style.width = Math.min(100, (t / totalMs) * 100).toFixed(1) + '%'; };
 
     /* beat 1 · the dates */
@@ -4524,7 +4573,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       gEls.head.classList.add('wr-in');
       prog();
     });
-    t += scope.kind === 'trip' ? 2500 : 1600;
+    t += scope.kind === 'trip' ? 1600 : 1100;
 
     /* beat 2 · the route traces stop by stop — the lived route, not the plan */
     nodes.forEach((n, i) => {
@@ -4533,26 +4582,26 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         gEls.orbs.innerHTML += orbSvg(n, i, ' class="wr-pop"');
         prog();
       });
-      t += 700;
+      t += 350;
     });
 
     /* beat 3 · stamps pop in day order; the ticker is the narrative engine */
-    const dayGap = Math.max(120, Math.min(400, 12000 / Math.max(1, lastDay - firstDay + 1)));
+    const dayGap = Math.max(80, Math.min(250, 6500 / Math.max(1, lastDay - firstDay + 1)));
     for (let d = firstDay; d <= lastDay; d++) {
       const cks = byDay.get(d) || [];
       wrAt(t, () => { gEls.ticker.hidden = false; gEls.ticker.textContent = 'DAY ' + d; prog(); });
-      cks.forEach((c, j) => { wrAt(t + j * 80, () => { gEls.dots.innerHTML += stampDot(c); }); });
-      t += cks.length ? Math.max(dayGap, cks.length * 80 + 120) : Math.round(dayGap * 0.45);
+      cks.forEach((c, j) => { wrAt(t + j * 50, () => { gEls.dots.innerHTML += stampDot(c); }); });
+      t += cks.length ? Math.max(dayGap, cks.length * 50 + 80) : Math.round(dayGap * 0.45);
     }
 
     /* beat 4 · counts land */
     wrAt(t, () => { gEls.ticker.hidden = true; gEls.counts.textContent = countsLine; gEls.counts.classList.add('wr-in'); prog(); });
-    t += 2000;
+    t += 1400;
 
     /* beat 5 · the record lines */
     if (recs.length) {
       wrAt(t, () => { gEls.records.innerHTML = recs.map((r) => '<p class="wr-in">' + esc(r) + '</p>').join(''); prog(); });
-      t += 3000;
+      t += 2200;
     }
 
     /* beat 6 · final frame */
@@ -4602,18 +4651,20 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const nodes = realityStops(wins, firstDay, lastDay, dayOfCk)
       || wins.map((w) => ({ area: w.leg.area, days: 0, base: true, nights: w.leg.nights }));
     const pts = nodes.map((n) => AREA_XY[n.area] || [160, 150]);
-    const labs = stopLabels(nodes);
+    const lay = stopLayout(nodes, pts);
     const nights = wins.reduce((s, w) => s + w.leg.nights, 0);
 
-    /* timeline (seconds) — same beat grammar, time-parameterized */
-    const T1 = 2.4;
-    const T2 = T1 + nodes.length * 0.7;
+    /* timeline (seconds) — same beat grammar, HALVED (Guy 2026-09-08 #1:
+       "way too long" — and captureStream renders realtime, so every beat
+       second is also a second of the user staring at 'rendering…') */
+    const T1 = 1.2;
+    const T2 = T1 + nodes.length * 0.3;
     const daysSpan = Math.max(1, lastDay - firstDay + 1);
-    const dayDur = Math.min(12, Math.max(6, daysSpan * 0.3)) / daysSpan;
+    const dayDur = Math.min(6, Math.max(3.5, daysSpan * 0.12)) / daysSpan;
     const T3 = T2 + daysSpan * dayDur;
-    const T4 = T3 + 2.0;
-    const T5 = T4 + 1.2;
-    const TOTAL = Math.min(30, T5 + 1.6);
+    const T4 = T3 + 1.2;
+    const T5 = T4 + 0.8;
+    const TOTAL = Math.min(16, T5 + 1.2);
     const dayAt = (tt) => Math.min(lastDay, firstDay + Math.floor((tt - T2) / dayDur));
 
     const countsLine = scope && scope.kind === 'leg'
@@ -4640,14 +4691,14 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       x.globalAlpha = alpha(0.2, 0.6, tt);
       x.fillStyle = '#e8e8f0'; x.font = '700 66px -apple-system, system-ui, sans-serif';
       x.fillText(title, 540, 330);
-      x.globalAlpha = alpha(0.7, 0.6, tt);
+      x.globalAlpha = alpha(0.5, 0.4, tt);
       x.fillStyle = '#3dffd0'; x.font = '40px ' + mono;
       x.fillText(dates, 540, 400);
       x.globalAlpha = 1; x.textAlign = 'left';
       /* the island */
       x.save();
       x.translate(60, 520); x.scale(3, 3);
-      x.globalAlpha = alpha(1.2, 0.8, tt);
+      x.globalAlpha = alpha(0.6, 0.5, tt);
       x.strokeStyle = 'rgba(123,123,154,0.55)'; x.lineWidth = 0.6;
       x.stroke(islandP);
       x.beginPath(); x.ellipse(229, 175, 12, 8.25, -14 * Math.PI / 180, 0, Math.PI * 2); x.stroke();
@@ -4656,9 +4707,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       x.beginPath(); x.arc(300, 143.5, 2, 0, Math.PI * 2); x.stroke();
       x.beginPath(); x.arc(305, 146.5, 2, 0, Math.PI * 2); x.stroke();
       x.beginPath(); x.ellipse(308, 190, 11, 17, -8 * Math.PI / 180, 0, Math.PI * 2); x.stroke();
-      /* beat 2 · the trace, leg by leg */
+      /* beat 2 · the trace, stop by stop */
       x.strokeStyle = '#3dffd0'; x.lineWidth = 1.2; x.lineCap = 'round'; x.lineJoin = 'round';
-      const segs = Math.max(0, Math.min(pts.length - 1, (tt - T1) / 0.7));
+      const segs = Math.max(0, Math.min(pts.length - 1, (tt - T1) / 0.3));
       if (segs > 0) {
         x.beginPath(); x.moveTo(pts[0][0], pts[0][1]);
         for (let i = 1; i <= Math.floor(segs); i++) x.lineTo(pts[i][0], pts[i][1]);
@@ -4670,15 +4721,15 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         x.stroke();
       }
       nodes.forEach((n, i) => {
-        if (tt < T1 + i * 0.7) return;
-        const pop = Math.min(1, (tt - (T1 + i * 0.7)) / 0.3);
+        if (tt < T1 + i * 0.3) return;
+        const pop = Math.min(1, (tt - (T1 + i * 0.3)) / 0.2);
         x.fillStyle = AREA_HEX[n.area] || '#3dffd0';
         x.beginPath(); x.arc(pts[i][0], pts[i][1], (n.base ? 5.5 : 3.5) * (0.4 + 0.6 * pop), 0, Math.PI * 2); x.fill();
         x.globalAlpha = pop; x.font = '600 8px ' + mono;
-        /* satellites hug the right edge — label leftward there, never clipped */
-        if (labs[i]) {
-          if (pts[i][0] >= 250) { x.textAlign = 'right'; x.fillText(labs[i], pts[i][0] - 9, pts[i][1] + 3); x.textAlign = 'left'; }
-          else x.fillText(labs[i], pts[i][0] + 9, pts[i][1] + 3);
+        if (lay[i].lab) {
+          x.textAlign = { start: 'left', middle: 'center', end: 'right' }[lay[i].anchor];
+          x.fillText(lay[i].lab, lay[i].x, lay[i].y);
+          x.textAlign = 'left';
         }
         x.globalAlpha = 1;
       });
@@ -4831,7 +4882,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     runWrapReplay(fire);
   }
 
-  Object.assign(window.__appDebug, { runWrapReplay, wrapState, maybeWrap, closeWrap, renderWrapFilm, eligibleStamps, realityStops, stopLabel,
+  Object.assign(window.__appDebug, { runWrapReplay, wrapState, maybeWrap, closeWrap, renderWrapFilm, eligibleStamps, realityStops, stopLabel, stopLayout,
     /* preview: stage a finished trip so the wrap plays without a session */
     injectWrap: (t, legs, cks) => { trip = t; TRIP_LEGS = legs || []; CHECKINS = cks || []; } });
 
