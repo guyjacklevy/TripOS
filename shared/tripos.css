@@ -2094,38 +2094,41 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .visa-name { font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: var(--st, var(--teal)); }
 .visa-date { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; color: var(--dim); }
 
-/* auto-fill so wide viewports (the /s/ share page) get more columns instead
-   of 254px circle-stamps — a phone column still lands on 2-up (Guy 2026-09-08) */
-.stamp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+/* auto-fill so wide viewports get more columns; a phone lands 1-up rows */
+.stamp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
 /* grid items must never inherit a child's min-content width — a long chip
-   line once inflated a circle stamp to full-screen (Guy's phone, 2026-08-10) */
+   line once inflated a stamp to full-screen (Guy's phone, 2026-08-10) */
 .stamp-grid > * { min-width: 0; }
+/* STAMP v2 (Guy 2026-09-08: "looks bad, not understandable") — the random
+   circle/diamond shapes read as decoration, not information. A stamp is now
+   a boarding-card row: area-tinted spine, name first, facts underneath.
+   Same markup on every surface (app passport, ceremony, /s/ share). */
 .stamp {
   position: relative;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  min-height: 92px; padding: 12px 10px;
-  font: inherit; color: var(--tx); text-align: center;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1.5px solid var(--st, var(--teal));
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  column-gap: 8px; row-gap: 3px;
+  padding: 10px 12px 9px;
+  font: inherit; color: var(--tx); text-align: left;
+  background: color-mix(in srgb, var(--st, var(--teal)) 6%, rgba(255, 255, 255, 0.02));
+  border: 1px solid color-mix(in srgb, var(--st, var(--teal)) 35%, transparent);
+  border-left: 3px solid var(--st, var(--teal));
+  border-radius: 10px;
   cursor: pointer;
-  transform: rotate(var(--rot, 0deg));
   -webkit-tap-highlight-color: transparent;
 }
 div.stamp { cursor: default; }
-.stamp.st-circle { border-radius: 50%; aspect-ratio: 1; }
-.stamp.st-diamond { border-radius: 22px 8px 22px 8px; }
-.stamp:active { transform: rotate(var(--rot, 0deg)) scale(0.97); }
-.st-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.st-name { font-size: 12px; font-weight: 700; line-height: 1.25;
+.stamp:active { transform: scale(0.98); }
+.st-dot { grid-column: 1; grid-row: 1; width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; }
+.st-name { grid-column: 2; grid-row: 1; font-size: 13px; font-weight: 700; line-height: 1.3;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.st-date { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; color: var(--dim); }
+.st-date { grid-column: 2 / -1; font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; color: var(--dim); }
 .st-v { color: var(--teal); }
 .st-v.st-disc { color: var(--dim); }
-.st-count {
-  position: absolute; top: 6px; right: 10px;
-  font-family: var(--mono); font-size: 9.5px; color: var(--st, var(--teal));
-}
-.st-meta { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.08em; color: var(--teal); }
+.st-count { grid-column: 3; grid-row: 1; justify-self: end;
+  font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--st, var(--teal)); }
+.st-meta { grid-column: 2 / -1; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.08em; color: var(--teal); }
 .pp-pulse { display: inline-block; margin-top: 10px; }
 
 /* BY DAY — memory-zoom on the route line */
@@ -2140,9 +2143,9 @@ div.stamp { cursor: default; }
 
 /* the ceremony: drop-in + press settle, composed — one shot */
 @keyframes stampIn {
-  0%   { opacity: 0; transform: translateY(-10px) rotate(var(--rot, 0deg)) scale(1.06); }
-  70%  { opacity: 1; transform: translateY(0)     rotate(var(--rot, 0deg)) scale(1.03); }
-  100% { opacity: 1; transform: translateY(0)     rotate(var(--rot, 0deg)) scale(1); }
+  0%   { opacity: 0; transform: translateY(-10px) scale(1.06); }
+  70%  { opacity: 1; transform: translateY(0)     scale(1.03); }
+  100% { opacity: 1; transform: translateY(0)     scale(1); }
 }
 .stamp.st-new { animation: stampIn 0.4s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .stamp.st-new { animation: none; } }
