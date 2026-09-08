@@ -295,7 +295,8 @@ function preCountdown(trip, now) {
 const AREA_TINT = {
   Canggu: 'var(--area-canggu)', Uluwatu: 'var(--area-uluwatu)', Ubud: 'var(--area-ubud)',
   Seminyak: 'var(--area-seminyak)', Sanur: 'var(--area-sanur)', Denpasar: 'var(--area-denpasar)',
-  Islands: 'var(--area-islands)'
+  'Nusa Penida': 'var(--area-penida)', 'East Bali': 'var(--area-eastbali)',
+  'Gili Trawangan': 'var(--area-gili)', 'Lombok': 'var(--area-lombok)'
 };
 
 /* ─── THE LIVING MAP (LIVING_MAP_SPEC M1) — one abstract island, four homes:
@@ -303,11 +304,14 @@ const AREA_TINT = {
    later the wrapped replay. Abstract-not-cartographic by charter. ─── */
 const AREA_XY = {
   Canggu: [100, 128], Seminyak: [127, 144], Denpasar: [153, 131], Sanur: [172, 145],
-  Ubud: [142, 105], Uluwatu: [156, 180], Islands: [229, 175]
+  Ubud: [142, 105], Uluwatu: [156, 180], 'Nusa Penida': [229, 175],
+  /* satellites sit east of the island — abstract by charter, honest direction */
+  'East Bali': [252, 122], 'Gili Trawangan': [300, 150], 'Lombok': [306, 182]
 };
 const AREA_HEX = { /* canvas + SVG need literal colors — mirrors the CSS tokens */
   Canggu: '#3dffd0', Ubud: '#4ade80', Seminyak: '#ffb454', Uluwatu: '#a78bfa',
-  Islands: '#4cc9f0', Sanur: '#4cc9f0', Denpasar: '#ff6b6b'
+  'Nusa Penida': '#4cc9f0', Sanur: '#4cc9f0', Denpasar: '#ff6b6b',
+  'East Bali': '#fbbf24', 'Gili Trawangan': '#7dd3fc', 'Lombok': '#f472b6'
 };
 const ISLAND_PATH = 'M31,130 Q43,109 67,103 Q100,91 136,85 Q178,79 217,85 Q253,89.5 277,106 Q289,115 283,125.5 Q271,136 247,139 Q223,142 202,139 Q184,137.5 172,140.5 Q167.5,148 166,157 Q178,163 181,175 Q178,190 163,196 Q145,199 136,187 Q130,175 139,164.5 Q145,158.5 154,157 Q152.5,148 148,142 Q124,136 94,134.5 Q61,133 40,137.5 Q29.5,137.5 31,130 Z';
 
@@ -315,7 +319,15 @@ const ISLAND_PATH = 'M31,130 Q43,109 67,103 Q100,91 136,85 Q178,79 217,85 Q253,8
    never GPS precision (the island is abstract; pretending otherwise would lie) */
 function latLngRegion(lat, lng) {
   if (typeof lat !== 'number' || typeof lng !== 'number') return null;
-  if (lng > 115.40) return 'Islands';
+  /* Phase 1 (real names): same boxes as seed-places v4.3 — accuracy from now on */
+  if (lng >= 115.95) {
+    if (lat >= -8.42 && lng <= 116.08) return 'Gili Trawangan';
+    return 'Lombok';
+  }
+  if (lng > 115.42) {
+    if (lat <= -8.63) return 'Nusa Penida';
+    return 'East Bali';
+  }
   if (lat < -8.75 && lng < 115.25) return 'Uluwatu';
   const C = { Canggu: [-8.66, 115.13], Uluwatu: [-8.82, 115.10], Ubud: [-8.51, 115.26],
     Seminyak: [-8.69, 115.17], Sanur: [-8.69, 115.26], Denpasar: [-8.65, 115.21] };

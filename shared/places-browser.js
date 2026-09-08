@@ -24,11 +24,14 @@ export const AREA_META = {
   'Canggu':   { key: 'canggu',   ac: 'var(--area-canggu)',   tags: 'surf · cafes · nomads',         alt: 2100 },
   'Ubud':     { key: 'ubud',     ac: 'var(--area-ubud)',     tags: 'jungle · yoga · stillness',     alt: 3800 },
   'Seminyak': { key: 'seminyak', ac: 'var(--area-seminyak)', tags: 'boutique · dining · nightlife', alt: 1800 },
-  'Islands':  { key: 'islands',  ac: 'var(--area-islands)',  tags: 'penida · snorkel · mantas',     alt: 2600 },
-  'Sanur':    { key: 'sanur',    ac: 'var(--area-sanur)',    tags: 'local · calm · beach',          alt: 1600 },
-  'Denpasar': { key: 'denpasar', ac: 'var(--area-denpasar)', tags: 'real · local · city',           alt: 1400 }
+  'Nusa Penida':    { key: 'nusa penida',    ac: 'var(--area-penida)',   tags: 'cliffs · mantas · earned views', alt: 2600 },
+  'Sanur':          { key: 'sanur',          ac: 'var(--area-sanur)',    tags: 'local · calm · beach',          alt: 1600 },
+  'Denpasar':       { key: 'denpasar',       ac: 'var(--area-denpasar)', tags: 'real · local · city',           alt: 1400 },
+  'East Bali':      { key: 'east bali',      ac: 'var(--area-eastbali)', tags: 'candidasa · sidemen · quiet',   alt: 3000 },
+  'Gili Trawangan': { key: 'gili trawangan', ac: 'var(--area-gili)',     tags: 'turtles · dive certs · no motors', alt: 1200 },
+  'Lombok':         { key: 'lombok',         ac: 'var(--area-lombok)',   tags: 'raw surf · kuta l · rinjani',   alt: 3700 }
 };
-const AREA_ORDER = ['Uluwatu', 'Canggu', 'Ubud', 'Seminyak', 'Sanur', 'Denpasar', 'Islands'];
+const AREA_ORDER = ['Uluwatu', 'Canggu', 'Ubud', 'Seminyak', 'Sanur', 'Denpasar', 'East Bali', 'Nusa Penida', 'Gili Trawangan', 'Lombok'];
 
 const region = (area) => String(area || '').split('/')[0].trim();
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>

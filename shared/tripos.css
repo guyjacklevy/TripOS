@@ -21,9 +21,13 @@
   --area-ubud:     #4ade80;
   --area-seminyak: #ffb454;
   --area-uluwatu:  #a78bfa;
-  --area-islands:  #4cc9f0;
+  --area-islands:  #4cc9f0; /* legacy alias — Islands is dead, kept for cached bundles */
+  --area-penida:   #4cc9f0;
   --area-sanur:    #4cc9f0;
   --area-denpasar: #ff6b6b;
+  --area-eastbali: #fbbf24;
+  --area-gili:     #7dd3fc;
+  --area-lombok:   #f472b6;
 
   /* category colors */
   --cat-work:     #4cc9f0;

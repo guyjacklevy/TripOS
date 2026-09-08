@@ -21,11 +21,13 @@ const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion:
 const ISLAND = 'M31,130 Q43,109 67,103 Q100,91 136,85 Q178,79 217,85 Q253,89.5 277,106 Q289,115 283,125.5 Q271,136 247,139 Q223,142 202,139 Q184,137.5 172,140.5 Q167.5,148 166,157 Q178,163 181,175 Q178,190 163,196 Q145,199 136,187 Q130,175 139,164.5 Q145,158.5 154,157 Q152.5,148 148,142 Q124,136 94,134.5 Q61,133 40,137.5 Q29.5,137.5 31,130 Z';
 const AREA_XY = {
   Canggu: [100, 128], Seminyak: [127, 144], Denpasar: [153, 131], Sanur: [172, 145],
-  Ubud: [142, 105], Uluwatu: [156, 180], Islands: [229, 175]
+  Ubud: [142, 105], Uluwatu: [156, 180], 'Nusa Penida': [229, 175],
+  'East Bali': [252, 122], 'Gili Trawangan': [300, 150], 'Lombok': [306, 182]
 };
 const AREA_HEX = {
   Canggu: '#3dffd0', Ubud: '#4ade80', Seminyak: '#ffb454', Uluwatu: '#a78bfa',
-  Islands: '#4cc9f0', Sanur: '#4cc9f0', Denpasar: '#ff6b6b'
+  'Nusa Penida': '#4cc9f0', Sanur: '#4cc9f0', Denpasar: '#ff6b6b',
+  'East Bali': '#fbbf24', 'Gili Trawangan': '#7dd3fc', 'Lombok': '#f472b6'
 };
 
 /* sid is per browser SESSION on purpose — a sticky device id burned one
