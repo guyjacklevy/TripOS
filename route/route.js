@@ -13,11 +13,13 @@ const $ = (id) => document.getElementById(id);
 
 const AREA_XY = {
   Canggu: [100, 128], Seminyak: [127, 144], Denpasar: [153, 131], Sanur: [172, 145],
-  Ubud: [142, 105], Uluwatu: [156, 180], Islands: [229, 175]
+  Ubud: [142, 105], Uluwatu: [156, 180], 'Nusa Penida': [229, 175],
+  'East Bali': [252, 122], 'Gili Trawangan': [300, 150], 'Lombok': [306, 182]
 };
 const AREA_HEX = {
   Canggu: '#3dffd0', Ubud: '#4ade80', Seminyak: '#ffb454', Uluwatu: '#a78bfa',
-  Islands: '#4cc9f0', Sanur: '#4cc9f0', Denpasar: '#ff6b6b'
+  'Nusa Penida': '#4cc9f0', Sanur: '#4cc9f0', Denpasar: '#ff6b6b',
+  'East Bali': '#fbbf24', 'Gili Trawangan': '#7dd3fc', 'Lombok': '#f472b6'
 };
 
 (async function () {

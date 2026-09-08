@@ -13,11 +13,13 @@ const MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'Jul
 const AREA_TINT = {
   Canggu: 'var(--area-canggu)', Uluwatu: 'var(--area-uluwatu)', Ubud: 'var(--area-ubud)',
   Seminyak: 'var(--area-seminyak)', Sanur: 'var(--area-sanur)', Denpasar: 'var(--area-denpasar)',
-  Islands: 'var(--area-islands)'
+  'East Bali': 'var(--area-eastbali)', 'Nusa Penida': 'var(--area-penida)',
+  'Gili Trawangan': 'var(--area-gili)', Lombok: 'var(--area-lombok)'
 };
 const CAT_CC = {
   beach: 'var(--cat-beach)', food: 'var(--cat-food)', nightlife: 'var(--cat-night)',
-  work: 'var(--cat-work)', wellness: 'var(--cat-wellness)', explore: 'var(--cat-explore)', gym: 'var(--cat-gym)'
+  work: 'var(--cat-work)', wellness: 'var(--cat-wellness)', explore: 'var(--cat-explore)', gym: 'var(--cat-gym)',
+  cafe: 'var(--cat-work)', 'day-club': 'var(--cat-dayclub)', surf: 'var(--cat-surf)'
 };
 const PHASE_COLOR = { dawn: '#ffb454', day: '#3dffd0', golden: '#ffb454', dusk: '#a78bfa', night: '#4cc9f0' };
 
@@ -65,7 +67,11 @@ function stampHTML(s, count, viaName) {
     const r = await fetch(cfg.url + '/functions/v1/shared-trip?t=' + encodeURIComponent(token));
     if (r.ok) data = await r.json();
   } catch (_) {}
-  if (!data || data.error || !data.counts) { gone(); return; }
+  if (!data || data.error) { gone(); return; }
+  /* a route-card token belongs to the route page — send it home (the old
+     unfiltered share button handed those out; links live forever) */
+  if (data.kind === 'route') { location.replace('/route/?t=' + encodeURIComponent(token)); return; }
+  if (!data.counts) { gone(); return; }
 
   paintDial();
   setInterval(paintDial, 60000);

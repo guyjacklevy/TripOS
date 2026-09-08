@@ -2094,7 +2094,9 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .visa-name { font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: var(--st, var(--teal)); }
 .visa-date { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; color: var(--dim); }
 
-.stamp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* auto-fill so wide viewports (the /s/ share page) get more columns instead
+   of 254px circle-stamps — a phone column still lands on 2-up (Guy 2026-09-08) */
+.stamp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 /* grid items must never inherit a child's min-content width — a long chip
    line once inflated a circle stamp to full-screen (Guy's phone, 2026-08-10) */
 .stamp-grid > * { min-width: 0; }

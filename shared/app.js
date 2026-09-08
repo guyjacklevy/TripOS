@@ -2609,11 +2609,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (!sheet.hidden) { sheet.hidden = true; return; }
     sheet.hidden = false;
     sheet.innerHTML = '<p class="pulse-note">▸ opening the share desk…</p>';
+    /* kind='trip' ONLY (Guy 2026-09-08): an unfiltered pick grabbed the
+       route-card row and /s/ rendered nameless route data — NaN counts */
     let { data: rows } = await sb.from('trip_shares').select('*')
-      .eq('trip_id', trip.id).is('revoked_at', null).limit(1);
+      .eq('trip_id', trip.id).eq('kind', 'trip').is('revoked_at', null).limit(1);
     let share = rows && rows[0];
     if (!share) {
-      const ins = await sb.from('trip_shares').insert({ trip_id: trip.id, token: shareSlug() }).select().single();
+      const ins = await sb.from('trip_shares').insert({ trip_id: trip.id, token: shareSlug(), kind: 'trip' }).select().single();
       if (ins.error) { sheet.innerHTML = '<p class="pulse-note">couldn’t create the link — tap SHARE to retry</p>'; return; }
       share = ins.data;
     }
