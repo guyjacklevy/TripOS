@@ -3334,3 +3334,33 @@ input, select, textarea { font-size: 16px !important; }
 }
 .st-more:active { color: var(--tx); }
 #shMapSec .cer-map { margin: 0 auto; max-width: 560px; }
+
+/* ─── the You JUMP: section access from anywhere in the tab ─── */
+.you-jump {
+  position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
+  width: 48px; height: 48px; border-radius: 50%; z-index: 40;
+  font-size: 18px; line-height: 1; color: var(--teal);
+  background: rgba(10, 10, 20, 0.9);
+  border: 1px solid rgba(61, 255, 208, 0.35);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.you-jump:active { transform: scale(0.94); }
+.you-jump-menu {
+  position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 134px);
+  z-index: 40; display: flex; flex-direction: column; gap: 4px;
+  padding: 10px; border-radius: 16px; min-width: 150px;
+  background: rgba(10, 10, 20, 0.94);
+  border: 1px solid var(--line);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+}
+.you-jump-menu button {
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em;
+  color: var(--tx); background: none; border: none; text-align: right;
+  padding: 10px 12px; min-height: 42px; border-radius: 10px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.you-jump-menu button.on { color: var(--teal); }
+.you-jump-menu button:active { background: rgba(255, 255, 255, 0.06); }

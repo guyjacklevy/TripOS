@@ -2789,6 +2789,33 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       });
     }
   }
+  /* the JUMP (Guy 2026-09-08): the sticky index dies under the shell's
+     overflow-x guard, so the door floats with the thumb instead — a FAB
+     above the tab bar; its menu mirrors the index (one source of truth,
+     hidden chips stay hidden). */
+  const youJump = $('youJump'), youJumpMenu = $('youJumpMenu');
+  if (youJump && youJumpMenu) {
+    youJump.onclick = () => {
+      if (!youJumpMenu.hidden) { youJumpMenu.hidden = true; return; }
+      youJumpMenu.innerHTML = [...document.querySelectorAll('#youIndex button[data-goto]')]
+        .filter((b) => !b.hidden)
+        .map((b) => '<button type="button" data-goto="' + b.getAttribute('data-goto') + '"' +
+          (b.classList.contains('on') ? ' class="on"' : '') + '>' + esc(b.textContent) + '</button>').join('');
+      youJumpMenu.hidden = false;
+    };
+    youJumpMenu.onclick = (e) => {
+      const b = e.target.closest('button[data-goto]');
+      if (!b) return;
+      const t = $(b.getAttribute('data-goto'));
+      youJumpMenu.hidden = true;
+      if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    document.addEventListener('click', (e) => {
+      if (youJumpMenu.hidden) return;
+      if (e.target.closest('#youJump') || e.target.closest('#youJumpMenu')) return;
+      youJumpMenu.hidden = true;
+    });
+  }
 
   /* AI-3 · the live concierge: one message → today re-plans around it */
   /* ═══ MASTER CONTROL · pass 1 (ATLAS A1-A3 + Rachel S1-S3) ═══════════
