@@ -1083,7 +1083,7 @@ function stampedTodayIds() {
   });
   return out;
 }
-function windowCardHtml(w, p, lead) {
+function windowCardHtml(w, p, lead, winIdx) {
   const cc = (CAT_META[w.facet_category] || (p && CAT_META[p.category]) || { cc: 'var(--teal)' }).cc;
   return '<div class="win-card" style="--cc:' + cc + '">' +
     (lead ? '<span class="win-pick">▸ PICK</span>' : '') +
@@ -1093,6 +1093,9 @@ function windowCardHtml(w, p, lead) {
     (w.hours_note ? '<p class="win-hours">◷ ' + esc(w.hours_note) + '</p>' : '') +
     (p ? '<a class="place-maps" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' +
       encodeURIComponent(p.maps_query || (p.name + ', Bali')) + '">Maps ↗</a>' : '') +
+    /* windows swap (Guy 2026-09-13 — the rails-only debt, PAID): a swap
+       chip on every un-passed window; past windows are history */
+    (winIdx != null ? '<button type="button" class="swap-chip win-swap" data-swap-win="' + winIdx + '">↻ SWAP</button>' : '') +
   '</div>';
 }
 function windowsTimelineHtml(windows, places, plan, pool, now) {
@@ -1121,14 +1124,14 @@ function windowsTimelineHtml(windows, places, plan, pool, now) {
       html += '<div class="win win-current" style="--wc:' + ((CAT_META[w.facet_category] || {}).cc || 'var(--teal)') + '">' +
         '<div class="win-head lit">◉ ' + esc(w.start) + '–' + esc(w.end) + ' · <span class="win-label">' + esc(label) + '</span></div>' +
         '<p class="win-now">●━━ ' + hh + '</p>' +
-        windowCardHtml(w, p, true) +
+        windowCardHtml(w, p, true, i) +
         '<div class="win-alts">' + altCards(w.period, w.place_id, 2) + '</div>' +
       '</div>';
     } else {
       html += '<div class="win win-future">' +
         '<button type="button" class="ck-reset win-toggle win-head">◉ ' + esc(w.start) + '–' + esc(w.end) +
         ' · <span class="win-label">' + esc(label) + '</span> · <span class="win-fname">' + esc(p ? p.name : 'a place') + '</span></button>' +
-        '<div class="win-body" hidden>' + windowCardHtml(w, p, false) + '</div></div>';
+        '<div class="win-body" hidden>' + windowCardHtml(w, p, false, i) + '</div></div>';
     }
     /* the gap after this window — marked only while the clock is inside it */
     const next = windows[i + 1];
@@ -1898,6 +1901,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       swapPlanned(sw.getAttribute('data-swap-rail'));
       return;
     }
+    const wsw = e.target.closest('.win-swap');
+    if (wsw && e.target.closest('#timeline')) {
+      e.preventDefault();
+      swapWindow(+wsw.getAttribute('data-swap-win'));
+      return;
+    }
     const el = e.target.closest('[data-place]');
     if (!el || e.target.closest('a.place-maps')) return;
     /* Guy's phone: the spend suggestion lives INSIDE the card — editing the
@@ -2160,7 +2169,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
                 '<span class="it-name dim">+ ' + (winsRow.length - 4) + ' more</span></div>';
             }
           } else {
-            winsRow.forEach((wv) => {
+            winsRow.forEach((wv, wi) => {
               const p = resolve(wv.place_id);
               if (!p) return;
               html += '<div class="it-card" style="--cc:' + ((CAT_META[wv.facet_category] || {}).cc || 'var(--teal)') + '">' +
@@ -2169,6 +2178,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
                 '<strong>' + esc(p.name) + '</strong>' +
                 (p.verified ? '<span class="place-verified">✓</span>' : '') + '</div>' +
                 ((wv.why || p.why) ? '<p class="it-why">' + esc(wv.why || p.why) + '</p>' : '') +
+                '<button type="button" class="swap-chip it-wswap" data-leg="' + w.seq + '" data-day="' + dayInLeg +
+                  '" data-win="' + wi + '">↻ SWAP</button>' +
               '</div>';
             });
           }
@@ -2240,6 +2251,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (sw) {
       e.stopPropagation();
       swapFuture(+sw.getAttribute('data-leg'), +sw.getAttribute('data-day'), sw.getAttribute('data-rail'));
+      return;
+    }
+    const wsw = e.target.closest('.it-wswap');
+    if (wsw) {
+      e.stopPropagation();
+      swapFutureWindow(+wsw.getAttribute('data-leg'), +wsw.getAttribute('data-day'), +wsw.getAttribute('data-win'));
       return;
     }
     const pn = e.target.closest('.it-plan-now');
@@ -2318,8 +2335,74 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       .then(({ error }) => { if (error) console.warn('[Prevoya] future swap persist failed:', error.message); });
   }
 
+  /* windows swap (the rails-only debt, paid 2026-09-13): rotate the window's
+     pick through the period's honest alternatives; facet follows the pick */
+  function swapWindow(idx) {
+    if (Array.isArray(DAY_PLAN) || !DAY_PLAN || DAY_PLAN.v !== 2 || !todayCtx) return;
+    const w = (DAY_PLAN.windows || [])[idx];
+    if (!w) return;
+    const rs = routeState(todayCtx.trip, TRIP_LEGS, baliNow());
+    const ov = offRoute(todayCtx.trip, rs);
+    let pool = todayCtx.places;
+    if (ov) {
+      const local = pool.filter((p) => inAreaRegion(p, ov));
+      if (local.length >= 4) pool = local;
+    }
+    const plan = planFromTrip(todayCtx.trip);
+    const { picks } = railPicks(pool, plan, w.period, 6);
+    if (!picks.length) return;
+    const i = picks.findIndex((p) => String(p.id) === String(w.place_id));
+    const alt = picks[(i + 1) % picks.length];
+    if (!alt || String(alt.id) === String(w.place_id)) return;
+    w.place_id = alt.id;
+    w.facet_category = alt.category;
+    w.why = 'your swap — ↻ again for another';
+    TL_KEEP_SCROLL = true;
+    const scrollY = window.scrollY;
+    renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
+    window.scrollTo(0, scrollY);
+    if (rs && rs.cur && !ov) {
+      sb.from('day_plans').update({ slots: DAY_PLAN })
+        .eq('trip_id', todayCtx.trip.id).eq('leg_seq', rs.cur.idx + 1).eq('day_in_leg', rs.cur.nightOf)
+        .then(({ error }) => { if (error) console.warn('[Prevoya] window swap persist failed:', error.message); });
+    } else if (ov && DAY_PLAN_OFFROUTE && !DAY_PLAN_ADJUSTED) {
+      const day = Math.max(1, tripDayNumber(todayCtx.trip, baliNow()) || 1);
+      sb.from('day_plans').update({ slots: DAY_PLAN })
+        .eq('trip_id', todayCtx.trip.id).eq('leg_seq', 0).eq('day_in_leg', day)
+        .then(({ error }) => { if (error) console.warn('[Prevoya] window swap persist failed:', error.message); });
+    }
+  }
+
+  function swapFutureWindow(legSeq, dayInLeg, winIdx) {
+    const row = TRIP_DAY_PLANS.find((r) => r.leg_seq === legSeq && r.day_in_leg === dayInLeg);
+    if (!row || !todayCtx) return;
+    const s = row.slots;
+    if (Array.isArray(s) || !s || s.v !== 2) return;
+    const w = (s.windows || [])[winIdx];
+    if (!w) return;
+    const leg = TRIP_LEGS.find((l) => l.seq === legSeq);
+    let pool = todayCtx.places;
+    if (leg) {
+      const local = pool.filter((p) => inAreaRegion(p, leg.area));
+      if (local.length >= 4) pool = local;
+    }
+    const plan = planFromTrip(todayCtx.trip);
+    const { picks } = railPicks(pool, plan, w.period, 6);
+    if (!picks.length) return;
+    const i = picks.findIndex((p) => String(p.id) === String(w.place_id));
+    const alt = picks[(i + 1) % picks.length];
+    if (!alt || String(alt.id) === String(w.place_id)) return;
+    w.place_id = alt.id;
+    w.facet_category = alt.category;
+    w.why = 'your swap — ↻ again for another';
+    renderItinerary();
+    sb.from('day_plans').update({ slots: s })
+      .eq('trip_id', todayCtx.trip.id).eq('leg_seq', legSeq).eq('day_in_leg', dayInLeg)
+      .then(({ error }) => { if (error) console.warn('[Prevoya] window swap persist failed:', error.message); });
+  }
+
   function swapPlanned(railKey) {
-    if (!Array.isArray(DAY_PLAN)) return; /* windows swap arrives with its own grammar */
+    if (!Array.isArray(DAY_PLAN)) return; /* v2 windows swap = swapWindow */
     if (!DAY_PLAN || !todayCtx || !railKey) return;
     const slot = DAY_PLAN.find((s) => s.rail === railKey);
     if (!slot) return;
@@ -5151,8 +5234,14 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
        is readiness + previewing the plan — day-2 gating starved them of
        both (visa nudge pointed at a hidden checklist) */
     const preTrip = tdNow != null && tdNow < 1;
-    LAYERS.today = day2 || preTrip;
-    LAYERS.places = day2 || preTrip || CHECKINS.length > 0;
+    /* mid-trip unlocks EVERYTHING (Guy 2026-09-13, mybodypro: arrived days
+       before first open — neither day2 nor preTrip, so Today showed one
+       block, no strip, no itinerary. A traveler inside their trip gets the
+       whole instrument on open #1; the soft layer survives only for the
+       corridor's own first day). */
+    const inTrip = tdNow != null && tdNow >= 1;
+    LAYERS.today = day2 || preTrip || inTrip;
+    LAYERS.places = day2 || preTrip || inTrip || CHECKINS.length > 0;
     const packOn = tdNow != null && tdNow >= -6; /* T−7 and closer */
     /* readiness is ALWAYS on (Guy 2026-09-13, third strike of this bug: a
        day-1 account with no future arrive was neither day2 nor preTrip, so
