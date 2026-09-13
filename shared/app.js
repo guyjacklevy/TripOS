@@ -5154,9 +5154,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     LAYERS.today = day2 || preTrip;
     LAYERS.places = day2 || preTrip || CHECKINS.length > 0;
     const packOn = tdNow != null && tdNow >= -6; /* T−7 and closer */
-    $('readyCard').hidden = !(day2 || preTrip);
+    /* readiness is ALWAYS on (Guy 2026-09-13, third strike of this bug: a
+       day-1 account with no future arrive was neither day2 nor preTrip, so
+       the mission nudge pointed at a hidden list AGAIN). The list is the
+       user's own, personalized from the brief — it never hides. */
+    $('readyCard').hidden = false;
     $('packCard').hidden = !packOn;
-    document.querySelectorAll('#youIndex [data-goto="readyCard"]').forEach((b) => { b.hidden = !(day2 || preTrip); });
+    document.querySelectorAll('#youIndex [data-goto="readyCard"]').forEach((b) => { b.hidden = false; });
     document.querySelectorAll('#youIndex [data-goto="packCard"]').forEach((b) => { b.hidden = !packOn; });
     if (packOn && !capSeen('pack7')) {
       $('packCard').insertAdjacentHTML('afterbegin',
