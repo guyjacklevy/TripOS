@@ -242,13 +242,24 @@ export function mountConcierge(els) {
     return r.json().catch(() => null);
   }
 
-  async function build() {
+  async function build(isRetry) {
     const building = bubble('assistant', '<span class="cx-building">building your month<span class="cx-dots">…</span></span>');
     let r = null;
     try { r = await callFn({ action: 'build' }); } catch (_) {}
     building.remove();
     if (!r || !r.route || !r.route.legs) {
-      say('the route engine is catching its breath — try me again in a minute.');
+      /* Guy 2026-09-13: a worker died mid-build and the chat said "try me
+         again in a minute" with NO way to try — dead funnel. One silent
+         retry eats the transient blips; after that, a real rebuild door
+         (the brief is client-held — nothing is lost). */
+      if (!isRetry) {
+        await new Promise((res) => setTimeout(res, 1800));
+        return build(true);
+      }
+      say('the route engine is catching its breath — your brief is safe.');
+      els.chips.classList.remove('cx-chips-hidden');
+      els.chips.innerHTML = '<button type="button" class="btn btn-primary cx-keep-big" id="cxRebuild">⟳ build my month</button>';
+      document.getElementById('cxRebuild').onclick = () => { setChips([]); build(); };
       return;
     }
     route = r.route;
