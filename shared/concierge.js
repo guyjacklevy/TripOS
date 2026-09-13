@@ -66,6 +66,8 @@ export function mountConcierge(els) {
   let route = null;
   let busy = false;
   let mustsAsked = false; /* the locked-in question fires exactly once (server-enforced) */
+  let arriveAsked = false; /* the date question fires exactly once (client-enforced —
+    Guy 2026-09-13: the model treated arrive as optional and skipped it) */
 
   /* ── thread ops ── */
   function bubble(role, html) {
@@ -299,10 +301,22 @@ export function mountConcierge(els) {
     if (r.error) { say('I lost the thread for a second — say that again?'); return; }
     Object.assign(brief, r.patch || {});
     if (r.ask === 'musts') mustsAsked = true;
+    if (r.ask === 'arrive') arriveAsked = true;
     track('chat_turn', { ask: r.ask || 'none' });
     say(r.reply);
-    if (r.done) { setChips([]); await build(); }
-    else {
+    if (r.done) {
+      /* the date question is not the model's to skip: if the brief is done
+         and no arrival exists, the chat asks it — once, deterministically */
+      if (brief.arrive == null && !arriveAsked) {
+        arriveAsked = true;
+        say('one more — when do you land? a date anchors your day 1.');
+        setChips(chipsFor('arrive', brief));
+        els.chips.appendChild(arriveDateRow());
+        return;
+      }
+      setChips([]);
+      await build();
+    } else {
       setChips(chipsFor(r.ask, brief));
       /* Guy 2026-09-13 #2: dates were unaskable — the arrive turn now
          carries a real date picker beside the chips */
