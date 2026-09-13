@@ -5321,7 +5321,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       email, options: { emailRedirectTo: window.location.origin + '/app/' + viaSuffix() }
     });
     if (error) { $('welcomeStatus').textContent = '⚠ ' + error.message; return; }
-    $('welcomeStatus').textContent = '✓ Boarding email sent.';
+    $('welcomeStatus').textContent = '✓ Code sent — check your email.';
     $('codeBlock').hidden = false;
     setTimeout(() => $('codeInput').focus(), 40);
   });
@@ -5329,7 +5329,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     e.preventDefault();
     const token = $('codeInput').value.trim();
     if (!token || !pendingEmail) return;
-    $('welcomeStatus').textContent = 'Boarding…';
+    $('welcomeStatus').textContent = 'Signing you in…';
     const { error } = await sb.auth.verifyOtp({ email: pendingEmail, token, type: 'email' });
     if (error) $('welcomeStatus').textContent = '⚠ That code didn’t match. Codes last 60 minutes — resend?';
   });

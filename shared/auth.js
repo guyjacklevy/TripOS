@@ -38,7 +38,7 @@ if (!CONFIGURED) {
       '<p class="auth-sub">Enter your email — we\'ll send a one-tap magic link. No password, ever.</p>' +
       '<form class="auth-form">' +
         '<input class="auth-input" type="email" required placeholder="you@email.com" autocomplete="email">' +
-        '<button class="btn btn-primary auth-send" type="submit">Send boarding email</button>' +
+        '<button class="btn btn-primary auth-send" type="submit">Email me a code</button>' +
       '</form>' +
       /* F3½ (UX audit, lock parity): code-first — the main funnel gets the
          same 6-digit door as the app welcome; no inbox round-trip required */
@@ -88,7 +88,7 @@ if (!CONFIGURED) {
     if (error) { statusEl.textContent = '⚠ ' + error.message; return; }
     pendingEmail = email;
     try { window.pvTrack && window.pvTrack('lock_email_sent'); } catch (_) {}
-    statusEl.textContent = '✓ Boarding email sent.';
+    statusEl.textContent = '✓ Code sent — check your email.';
     codeWrap.hidden = false;
     setTimeout(() => codeInput.focus(), 40);
   });
@@ -97,7 +97,7 @@ if (!CONFIGURED) {
     e.preventDefault();
     const token = codeInput.value.trim();
     if (!token || !pendingEmail) return;
-    statusEl.textContent = 'Boarding…';
+    statusEl.textContent = 'Signing you in…';
     const { error } = await sb.auth.verifyOtp({ email: pendingEmail, token, type: 'email' });
     if (error) { statusEl.textContent = '⚠ That code didn’t match. Codes last 60 minutes — resend?'; return; }
     try { window.pvTrack && window.pvTrack('boarded_code'); } catch (_) {}
