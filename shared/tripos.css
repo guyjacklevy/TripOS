@@ -3403,3 +3403,7 @@ input, select, textarea { font-size: 16px !important; }
 .cx-date-row { display: flex; gap: 8px; width: 100%; margin-top: 8px; }
 .cx-date-row .cx-date { flex: 1; min-height: 44px; color-scheme: dark; }
 .cx-date-row .cx-date-go { flex-shrink: 0; }
+
+/* the info door is a BUTTON wearing the maps-chip suit — reset button skin */
+button.place-maps { background: none; font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.win-card .place-maps, .it-card .place-maps { margin: 8px 8px 0 0; display: inline-block; }
