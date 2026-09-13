@@ -3404,6 +3404,18 @@ input, select, textarea { font-size: 16px !important; }
 .cx-date-row .cx-date { flex: 1; min-height: 44px; color-scheme: dark; }
 .cx-date-row .cx-date-go { flex-shrink: 0; }
 
-/* the info door is a BUTTON wearing the maps-chip suit — reset button skin */
+/* the card action foot — ONE row, one voice: uniform mono chips, info
+   leads in teal, maps + swap quiet beside it (Guy 2026-09-13) */
 button.place-maps { background: none; font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.win-card .place-maps, .it-card .place-maps { margin: 8px 8px 0 0; display: inline-block; }
+.win-foot { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; margin-top: 12px; }
+.wf-chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 34px; padding: 0 6px; white-space: nowrap;
+  font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em;
+  color: var(--mut); text-decoration: none; text-transform: lowercase;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line); border-radius: 99px;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.wf-chip:active { transform: scale(0.96); }
+.wf-primary { color: var(--teal); background: rgba(61, 255, 208, 0.07); border-color: rgba(61, 255, 208, 0.3); }

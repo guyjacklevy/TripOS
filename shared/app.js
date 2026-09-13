@@ -1091,14 +1091,14 @@ function windowCardHtml(w, p, lead, winIdx) {
     (p && p.verified ? '<span class="place-verified">✓</span>' : '') +
     (w.why ? '<p class="win-why">' + esc(w.why) + '</p>' : '') +
     (w.hours_note ? '<p class="win-hours">◷ ' + esc(w.hours_note) + '</p>' : '') +
-    /* the info door (Guy 2026-09-13: 'I can't know the info of the place')
-       — every windows card opens the FULL place card in Places */
-    (p ? '<button type="button" class="place-maps win-info" data-place="' + esc(p.id) + '">ⓘ place info →</button>' : '') +
-    (p ? '<a class="place-maps" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' +
-      encodeURIComponent(p.maps_query || (p.name + ', Bali')) + '">Maps ↗</a>' : '') +
-    /* windows swap (Guy 2026-09-13 — the rails-only debt, PAID): a swap
-       chip on every un-passed window; past windows are history */
-    (winIdx != null ? '<button type="button" class="swap-chip win-swap" data-swap-win="' + winIdx + '">↻ SWAP</button>' : '') +
+    /* the action foot — ONE aligned row, one voice (Guy: 'make it with
+       good UI'): info leads (teal), maps + swap sit quiet beside it */
+    '<div class="win-foot">' +
+      (p ? '<button type="button" class="wf-chip wf-primary win-info" data-place="' + esc(p.id) + '">ⓘ place info</button>' : '') +
+      (p ? '<a class="wf-chip" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' +
+        encodeURIComponent(p.maps_query || (p.name + ', Bali')) + '">maps ↗</a>' : '') +
+      (winIdx != null ? '<button type="button" class="wf-chip win-swap" data-swap-win="' + winIdx + '">↻ swap</button>' : '') +
+    '</div>' +
   '</div>';
 }
 function windowsTimelineHtml(windows, places, plan, pool, now) {
@@ -2181,9 +2181,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
                 '<strong>' + esc(p.name) + '</strong>' +
                 (p.verified ? '<span class="place-verified">✓</span>' : '') + '</div>' +
                 ((wv.why || p.why) ? '<p class="it-why">' + esc(wv.why || p.why) + '</p>' : '') +
-                '<button type="button" class="place-maps it-info" data-place="' + esc(p.id) + '">ⓘ place info →</button>' +
-                '<button type="button" class="swap-chip it-wswap" data-leg="' + w.seq + '" data-day="' + dayInLeg +
-                  '" data-win="' + wi + '">↻ SWAP</button>' +
+                '<div class="win-foot">' +
+                  '<button type="button" class="wf-chip wf-primary it-info" data-place="' + esc(p.id) + '">ⓘ place info</button>' +
+                  '<button type="button" class="wf-chip it-wswap" data-leg="' + w.seq + '" data-day="' + dayInLeg +
+                    '" data-win="' + wi + '">↻ swap</button>' +
+                '</div>' +
               '</div>';
             });
           }
@@ -2204,9 +2206,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
                 '<strong>' + esc(p.name) + '</strong>' +
                 (p.verified ? '<span class="place-verified">✓</span>' : '') + '</div>' +
               ((sl.why || p.why) ? '<p class="it-why">' + esc(sl.why || p.why) + '</p>' : '') +
-              '<button type="button" class="place-maps it-info" data-place="' + esc(p.id) + '">ⓘ place info →</button>' +
-              '<button type="button" class="swap-chip it-swap" data-leg="' + w.seq + '" data-day="' + dayInLeg +
-                '" data-rail="' + r.key + '">↻ SWAP</button>' +
+              '<div class="win-foot">' +
+                '<button type="button" class="wf-chip wf-primary it-info" data-place="' + esc(p.id) + '">ⓘ place info</button>' +
+                '<button type="button" class="wf-chip it-swap" data-leg="' + w.seq + '" data-day="' + dayInLeg +
+                  '" data-rail="' + r.key + '">↻ swap</button>' +
+              '</div>' +
             '</div>';
           } else {
             html += '<div class="it-rail"><span class="it-hours">' + r.hours + '</span>' +
