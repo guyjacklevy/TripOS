@@ -2061,12 +2061,11 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 /* sticky + thumb-sized (Guy 2026-09-08: the small top buttons weren't
    comfortable) — rides the top of the scroll, one row, side-scrolls */
 .you-index {
-  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 8;
+  /* transparent (Guy 2026-09-13): sticky dies under the shell's overflow
+     guard, so the blur backdrop was a black box — the jump FAB is the
+     always-reachable nav; this bar is the top-of-tab index */
   display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto;
   margin: 0 -4px 16px; padding: 6px 4px;
-  background: rgba(10, 10, 20, 0.86);
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-  border-radius: 14px;
   scrollbar-width: none;
 }
 .you-index::-webkit-scrollbar { display: none; }
@@ -3120,11 +3119,10 @@ input, select, textarea { font-size: 16px !important; }
 
 /* the itinerary scrubber — an index that scrolls the river, not a container */
 .it-strip {
-  position: sticky; top: 0; z-index: 5;
+  /* transparent (Guy 2026-09-13): the sticky backdrop never sticks under
+     the shell's overflow guard — it was just a black box behind the chips */
   display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
   padding: 8px 2px 10px; margin: 0 0 6px;
-  background: color-mix(in srgb, var(--bg, #0a0a14) 88%, transparent);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   scrollbar-width: none;
 }
 .it-strip::-webkit-scrollbar { display: none; }
