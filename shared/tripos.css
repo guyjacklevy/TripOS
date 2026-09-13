@@ -1212,6 +1212,9 @@ html, body { overflow-x: hidden; }
 .rail-cards > * { min-width: 0; }
 /* future rail slot cards */
 .rail-slots { display: grid; gap: 8px; }
+/* same min-content trap as .rail-cards (Guy 2026-09-13: a long place name
+   pushed slot rows past the viewport) — grid items never dictate width */
+.rail-slots > * { min-width: 0; max-width: 100%; }
 .slot-card {
   display: flex; align-items: center; gap: 10px; min-height: 44px;
   padding: 10px 13px; text-decoration: none;
