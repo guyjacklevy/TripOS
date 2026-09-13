@@ -163,10 +163,23 @@ function renderBrief(trip) {
   const dailyK = TIER_IDR[trip.budget_tier] || 700;
   $('briefLine').textContent = 'Denpasar, Bali · ' + (d === 0 ? 'open-ended' : durLabel(d)) + ' · ' +
     (HOME_AREA[trip.vibe] || 'Bali') + ' base';
+  /* Guy 2026-09-13 #2: DATES on the pass — arrive → out, tappable to set.
+     Duration already reads on the brief line; the cell earns more as dates. */
+  let datesLabel = 'tap to set ✎';
+  if (trip.arrive) {
+    const a = String(trip.arrive).split('-');
+    const ad = new Date(+a[0], +a[1] - 1, +a[2]);
+    datesLabel = MONTH_ABBR[ad.getMonth()] + ' ' + ad.getDate();
+    if (d > 0) {
+      const ed = new Date(+a[0], +a[1] - 1, +a[2] + d);
+      datesLabel += ' → ' + MONTH_ABBR[ed.getMonth()] + ' ' + ed.getDate();
+    }
+    datesLabel += ' ✎';
+  }
   $('briefGrid').innerHTML =
     '<div><span>Passenger</span><strong id="bpPassenger">—</strong></div>' +
     '<div><span>Class</span><strong>' + esc(VIBE_LABEL[trip.vibe] || '—') + '</strong></div>' +
-    '<div><span>Duration</span><strong>' + esc(d === 0 ? 'Open-ended' : durLabel(d)) + '</strong></div>' +
+    '<div><span>Dates</span><strong id="bpDates" role="button" style="cursor:pointer">' + esc(datesLabel) + '</strong></div>' +
     '<div><span>Budget / day</span><strong>' + fmtK(dailyK) + ' IDR</strong></div>' +
     '<div><span>Base</span><strong>' + esc(HOME_AREA[trip.vibe] || 'Bali') + '</strong></div>' +
     '<div><span>Tier</span><strong>' + esc(TIER_LABEL[trip.budget_tier] || '—') + '</strong></div>' +
@@ -4096,12 +4109,41 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         };
       });
     }
-    /* beat 6 · the share moment */
-    $('cerShare').hidden = false;
-    $('cerShareBtn').onclick = () => shareRoute($('cerShareBtn'));
-    await wait(900);
-    /* beat 7 · notification warm-ask (§E) */
-    await warmAsk();
+    /* beats 6-7 v2 (Guy 2026-09-13 #3): their own stage — the route work
+       clears the screen and the two doors get proper light. Continue = the
+       quiet "not now" (§E: the day-2 re-ask banner still gets its one shot). */
+    await wait(600);
+    $('cerMap').hidden = true;
+    $('cerLegs').innerHTML = '';
+    $('cerSummary').hidden = true;
+    $('cerPass').hidden = true;
+    $('cerBuild').hidden = true;
+    const xs = $('cerExtras');
+    xs.hidden = false;
+    if (!reduce) xs.classList.add('cer-pop');
+    $('cerXShare').onclick = () => shareRoute($('cerXShare').querySelector('strong'));
+    const settleMorning = (optin) => {
+      const ts = new Date().toISOString();
+      profile = Object.assign({}, profile, { morning_note_optin: optin, morning_note_asked_at: ts });
+      if (user) sb.from('profiles').update({ morning_note_optin: optin, morning_note_asked_at: ts }).eq('id', user.id)
+        .then(({ error }) => { if (error) console.warn('[Prevoya] ask persist failed:', error.message); });
+      if (optin) ensurePush();
+    };
+    let morningSettled = ('Notification' in window && Notification.permission === 'granted') ||
+      !!(profile && profile.morning_note_asked_at);
+    if (profile && profile.morning_note_optin === true) $('cerXMorningState').textContent = '✓ on';
+    $('cerXMorning').onclick = () => {
+      if ($('cerXMorningState').textContent) return;
+      morningSettled = true;
+      const fin = () => { $('cerXMorningState').textContent = '✓ on'; };
+      if ('Notification' in window && Notification.permission === 'default') {
+        try { Notification.requestPermission().finally(() => { settleMorning(true); fin(); }); return; } catch (_) {}
+      }
+      settleMorning(true); fin();
+    };
+    await new Promise((res) => { $('cerExtrasGo').onclick = res; });
+    if (!morningSettled) settleMorning(false); /* the walk-past is the "not now" */
+    xs.hidden = true;
   }
 
   /* ─── PUSH_SPEC · the delivery layer: subscribe when (and only when) the
@@ -5064,6 +5106,31 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
 
     renderBrief(trip);
+    /* the Dates cell opens an inline arrival editor — arrival anchors day 1,
+       so a save re-runs the shell and everything re-numbers honestly */
+    const bpDatesEl = $('bpDates');
+    if (bpDatesEl) bpDatesEl.onclick = () => {
+      const old = $('bpArriveRow');
+      if (old) { old.remove(); return; }
+      const row = document.createElement('div');
+      row.id = 'bpArriveRow';
+      row.className = 'log-form add-form';
+      row.style.marginTop = '10px';
+      row.innerHTML =
+        '<input type="date" class="auth-input" id="bpArriveDate" value="' + esc(trip.arrive || new Date().toISOString().slice(0, 10)) + '">' +
+        '<button type="button" class="btn btn-primary log-btn" id="bpArriveSave">set arrival</button>';
+      $('briefGrid').insertAdjacentElement('afterend', row);
+      $('bpArriveSave').onclick = async () => {
+        const v = $('bpArriveDate').value;
+        if (!v) return;
+        $('bpArriveSave').disabled = true;
+        const { error } = await sb.from('trips').update({ arrive: v }).eq('id', trip.id);
+        if (error) { $('bpArriveSave').disabled = false; $('bpArriveSave').textContent = '⚠ retry'; return; }
+        trip.arrive = v;
+        row.remove();
+        loadShell(); /* day numbers, countdown, itinerary re-anchor on day 1 */
+      };
+    };
     renderPresets();
     setPassenger(profile && profile.title, profile && profile.full_name);
     updatePassRecord(); /* F3: "who's this route for?" on the pass, not a gate */
@@ -5160,31 +5227,38 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
     if (freshLogin) {
       const line = passengerLine(profile && profile.title, profile && profile.full_name);
-      $('arriveText').innerHTML = '✓ Aboard' + (line ? ', <strong>' + esc(line) + '</strong>' : '') +
-        '. Your brief is saved to your account — it travels with you.';
+      /* Guy 2026-09-13 #4: the first breath inside ORIENTS — say what the
+         three tabs are, in one line, instead of assuming the map is known */
+      $('arriveText').innerHTML = '✓ You’re in' + (line ? ', <strong>' + esc(line) + '</strong>' : '') +
+        '. <strong>Today</strong> plans your day · <strong>Places</strong> holds every spot · <strong>You</strong> is your pass + passport.';
       $('arriveBanner').hidden = false;
       freshLogin = false;
     }
     setTab(location.hash.slice(1) || 'today', false);
 
-    /* F2: any first signed-in open with a fresh routed brief lands on the
+    /* F2: a first signed-in open with a fresh routed brief lands on the
        reveal — You, scrolled to the route, stagger. Once per route, persisted
-       (never localStorage — the PWA lesson). */
+       (never localStorage — the PWA lesson). SKIPPED when the corridor just
+       ran: the ceremony IS the reveal, and dumping a first-timer mid-scroll
+       on You right after it was Guy's "sticky place, no idea what's going
+       on" (2026-09-13 #4). */
     if (!trip.route_revealed_at && TRIP_LEGS.length >= 2) {
       trip.route_revealed_at = new Date().toISOString();
       sb.from('trips').update({ route_revealed_at: trip.route_revealed_at }).eq('id', trip.id)
         .then(({ error }) => { if (error) console.warn('[Prevoya] reveal mark failed:', error.message); });
-      setTab('you');
-      renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
-      const el = $('youRoute');
-      if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400);
-      /* F3: identity is the victory lap — once the route has landed, glide up
-         to the pass asking "who's this route for?" */
-      if (profile && !profile.full_name && !profile.record_skipped_at) {
-        setTimeout(() => {
-          const yp = $('youPass');
-          if (yp) yp.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 2800);
+      if (!corridorRan) {
+        setTab('you');
+        renderRoute(trip, TRIP_LEGS, baliNow(), { reveal: true, onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
+        const el = $('youRoute');
+        if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400);
+        /* F3: identity is the victory lap — once the route has landed, glide up
+           to the pass asking "who's this route for?" */
+        if (profile && !profile.full_name && !profile.record_skipped_at) {
+          setTimeout(() => {
+            const yp = $('youPass');
+            if (yp) yp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 2800);
+        }
       }
     } else {
       /* M4: leg/trip wrap greets the first open past a boundary — never on
@@ -5192,10 +5266,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       maybeWrap();
     }
 
-    /* §B beat 8: the corridor ends with the bar rising onto Today —
-       ceremony path gets the rise; the fallback mounts plainly (no theater) */
+    /* §B beat 8: the corridor ends with the bar rising onto Today, at the
+       TOP — the first screen inside is the day, not a random scroll depth */
     if (corridorRan) {
       setTab('today', false);
+      window.scrollTo(0, 0);
       if (ceremonyFired) tabRise();
     }
   }

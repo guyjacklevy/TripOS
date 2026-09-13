@@ -128,6 +128,25 @@ export function mountConcierge(els) {
       '</svg>';
   };
 
+  /* the locked day-peek: a structural skeleton behind glass — real numbers,
+     zero invented content (never-fake: we blur shape, never fake names) */
+  function daypeekHtml(legs, days) {
+    const firstLeg = legs[0];
+    return '<div class="cx-daypeek">' +
+      '<div class="cx-dp-head">' + esc(firstLeg.area.toUpperCase()) + ' · DAY 1 OF ' + firstLeg.nights + '</div>' +
+      '<div class="cx-dp-rails">' +
+        ['MORNING', 'MIDDAY', 'GOLDEN HOUR', 'NIGHT'].map((r) =>
+          '<div class="cx-dp-rail"><span class="cx-dp-name">' + r + '</span>' +
+          '<span class="cx-dp-bar"></span><span class="cx-dp-bar cx-dp-b2"></span></div>').join('') +
+        '<svg class="cx-dp-lock" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true">' +
+          '<rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
+          '<path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>' +
+      '</div>' +
+      '<p class="cx-dp-line">every base comes with day-by-day plans — ' + days +
+        ' days of morning-to-night picks, matched to your brief from real places. keeping the plan unlocks them.</p>' +
+    '</div>';
+  }
+
   function showReveal() {
     const legs = route.legs;
     const days = legs.reduce((s, l) => s + (l.nights || 0), 0);
@@ -159,7 +178,12 @@ export function mountConcierge(els) {
         });
       } catch (_) {}
     }
-    els.revealGo.onclick = () => {
+    /* Guy 2026-09-13 #1: the route screen closes the deal itself — the
+       day-peek shows what's behind the door, the primary tap goes STRAIGHT
+       to sign-up. The chat stays one line away for arguing with the route. */
+    if (els.revealPeek) els.revealPeek.innerHTML = daypeekHtml(legs, days);
+    els.revealGo.onclick = () => { track('reveal_keep_tap'); keepPlan(); };
+    if (els.revealExplore) els.revealExplore.onclick = () => {
       els.reveal.hidden = true;
       document.body.classList.remove('cx-revealing');
       collapseIntoThread();
@@ -180,21 +204,7 @@ export function mountConcierge(els) {
        show) that DAY-BY-DAY plans exist behind the door. The teaser is a
        structural skeleton behind glass: real numbers, zero invented content
        (never-fake — we blur shape, never fake names). */
-    const firstLeg = legs[0];
-    bubble('assistant',
-      '<div class="cx-daypeek">' +
-        '<div class="cx-dp-head">' + esc(firstLeg.area.toUpperCase()) + ' · DAY 1 OF ' + firstLeg.nights + '</div>' +
-        '<div class="cx-dp-rails">' +
-          ['MORNING', 'MIDDAY', 'GOLDEN HOUR', 'NIGHT'].map((r) =>
-            '<div class="cx-dp-rail"><span class="cx-dp-name">' + r + '</span>' +
-            '<span class="cx-dp-bar"></span><span class="cx-dp-bar cx-dp-b2"></span></div>').join('') +
-          '<svg class="cx-dp-lock" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true">' +
-            '<rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
-            '<path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>' +
-        '</div>' +
-        '<p class="cx-dp-line">every base comes with day-by-day plans — ' + days +
-          ' days × 4 rails, matched to your brief from real places. keeping the plan unlocks them.</p>' +
-      '</div>').classList.add('cx-has-mini');
+    bubble('assistant', daypeekHtml(legs, days)).classList.add('cx-has-mini');
     say('this is yours if you want it.');
     setChips([]);
     els.chips.classList.remove('cx-chips-hidden');
@@ -280,7 +290,28 @@ export function mountConcierge(els) {
     track('chat_turn', { ask: r.ask || 'none' });
     say(r.reply);
     if (r.done) { setChips([]); await build(); }
-    else setChips(chipsFor(r.ask, brief));
+    else {
+      setChips(chipsFor(r.ask, brief));
+      /* Guy 2026-09-13 #2: dates were unaskable — the arrive turn now
+         carries a real date picker beside the chips */
+      if (r.ask === 'arrive') els.chips.appendChild(arriveDateRow());
+    }
+  }
+
+  function arriveDateRow() {
+    const wrap = document.createElement('div');
+    wrap.className = 'cx-date-row';
+    const today = new Date().toISOString().slice(0, 10);
+    wrap.innerHTML = '<input type="date" class="auth-input cx-date" min="' + today + '" aria-label="arrival date">' +
+      '<button type="button" class="ck-opt cx-chip cx-date-go">that’s my landing day</button>';
+    wrap.querySelector('.cx-date-go').onclick = () => {
+      const v = wrap.querySelector('.cx-date').value;
+      if (!v) return;
+      brief.arrive = v; /* belt: the brief carries the date even if the model paraphrases */
+      const d = new Date(v + 'T00:00:00');
+      send('I arrive ' + d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
+    };
+    return wrap;
   }
 
   /* Guy #4: start over — fresh thread, fresh brief, fresh session budget */

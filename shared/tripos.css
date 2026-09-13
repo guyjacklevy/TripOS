@@ -3364,3 +3364,39 @@ input, select, textarea { font-size: 16px !important; }
 }
 .you-jump-menu button.on { color: var(--teal); }
 .you-jump-menu button:active { background: rgba(255, 255, 255, 0.06); }
+
+/* ─── §C beats 6-7 v2 + reveal-first funnel (Guy 2026-09-13) ─── */
+.cer-extras { text-align: left; }
+.cer-extras-h { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; margin: 6px 0 18px; }
+.cer-x-card {
+  display: flex; align-items: flex-start; gap: 14px; width: 100%;
+  font: inherit; color: var(--tx); text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line); border-radius: 16px;
+  padding: 16px; margin-bottom: 12px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; position: relative;
+}
+.cer-x-card:active { transform: scale(0.985); }
+.cer-x-icon {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; color: var(--teal);
+  background: rgba(61, 255, 208, 0.08); border: 1px solid rgba(61, 255, 208, 0.3);
+}
+.cer-x-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cer-x-body strong { font-size: 14.5px; }
+.cer-x-body span { font-size: 12.5px; color: var(--dim); line-height: 1.45; }
+.cer-x-state {
+  position: absolute; top: 14px; right: 14px;
+  font-family: var(--mono); font-size: 11px; color: var(--teal);
+}
+.cer-extras-go { width: 100%; margin-top: 10px; }
+
+/* the reveal carries the day-peek + goes straight to sign-up */
+#cxRevealPeek .cx-daypeek { margin: 14px 0 18px; }
+.cx-reveal-explore { display: block; margin: 12px auto 0; }
+
+/* the arrive turn's date picker */
+.cx-date-row { display: flex; gap: 8px; width: 100%; margin-top: 8px; }
+.cx-date-row .cx-date { flex: 1; min-height: 44px; color-scheme: dark; }
+.cx-date-row .cx-date-go { flex-shrink: 0; }
