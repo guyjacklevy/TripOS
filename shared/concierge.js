@@ -30,20 +30,16 @@ const AREA_HEX = {
   'East Bali': '#fbbf24', 'Gili Trawangan': '#7dd3fc', 'Lombok': '#f472b6'
 };
 
-/* sid is per browser SESSION on purpose — a sticky device id burned one
-   shared daily budget across visits (Guy's "stuck chat", 2026-08-24). The
-   per-IP daily cap still guards abuse. */
+/* sid lives and dies with the THREAD — per page load. The thread is
+   client-held and resets on reload, but a sessionStorage sid kept burning
+   the old visit's budget: Guy got capped at question 4 of a fresh chat
+   because his morning test's turns lived on (2026-09-13). The per-IP daily
+   session cap still guards abuse. */
 const newSid = () => {
   const a = new Uint8Array(12); crypto.getRandomValues(a);
   return Array.from(a, (b) => (b % 36).toString(36)).join('');
 };
-const sid = (() => {
-  try {
-    let s = sessionStorage.getItem('tripos_cx_sid');
-    if (!s) { s = newSid(); sessionStorage.setItem('tripos_cx_sid', s); }
-    return s;
-  } catch (_) { return 'anon-' + Math.random().toString(36).slice(2, 14); }
-})();
+const sid = newSid();
 
 /* chip sets: the branching pre-knowledge, keyed to the last ask (R2 — static
    data, no model in the loop; cap 4 visible, the long tail belongs to text) */
@@ -260,13 +256,18 @@ export function mountConcierge(els) {
     showReveal();
   }
 
-  /* the cap is never a dead end (ATLAS): the door forward is always on screen */
+  /* the cap is never a dead end (ATLAS): the door forward is always on
+     screen — and when a route already exists, THE door is keeping it
+     (keepPlan is pure client; the cap must never hide it — Guy 2026-09-13) */
   function cappedState(reply) {
     say(reply || 'sign in and I’m yours without limits.');
     els.chips.classList.remove('cx-chips-hidden');
     els.chips.innerHTML =
+      (route ? '<button type="button" class="btn btn-primary cx-keep-big" id="cxKeepCap">KEEP THIS PLAN — unlock your days</button>' : '') +
       '<a class="ck-opt cx-chip" href="/app/">↗ sign in — no limits</a>' +
       '<button type="button" class="ck-reset cx-explore" id="cxRestart2">start over</button>';
+    const kb = document.getElementById('cxKeepCap');
+    if (kb) kb.onclick = keepPlan;
     const rb = document.getElementById('cxRestart2');
     if (rb) rb.onclick = restart;
   }
@@ -314,9 +315,8 @@ export function mountConcierge(els) {
     return wrap;
   }
 
-  /* Guy #4: start over — fresh thread, fresh brief, fresh session budget */
+  /* Guy #4: start over — a reload IS a fresh thread + fresh sid now */
   function restart() {
-    try { sessionStorage.removeItem('tripos_cx_sid'); } catch (_) {}
     location.reload();
   }
 
