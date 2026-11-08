@@ -5,6 +5,14 @@
   "start_url": "/app/",
   "scope": "/app/",
   "display": "standalone",
+  "share_target": {
+    "action": "/app/save",
+    "method": "GET",
+    "params": { "title": "title", "text": "text", "url": "url" }
+  },
+  "shortcuts": [
+    { "name": "Save a place", "url": "/app/save", "description": "Catch a place before the moment passes" }
+  ],
   "background_color": "#0a0a14",
   "theme_color": "#0a0a14",
   "icons": [

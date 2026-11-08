@@ -2087,6 +2087,31 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     track('place_saved');
     return true;
   }
+  /* SAVE-FIRST pivot (Nov 2026): saves made before the account existed —
+     buffered by the public shelf / the save catcher — claim themselves
+     here, once, on a signed-in open. Same handoff pattern as tripos_plan. */
+  async function claimAnonSaves() {
+    let buf = [];
+    try { buf = JSON.parse(localStorage.getItem('prevoya_saves_anon') || '[]'); } catch (_) {}
+    if (!Array.isArray(buf) || !buf.length || !user) return 0;
+    let claimed = 0;
+    for (const s of buf) {
+      const id = String(s.id || '');
+      if (!id || SAVES.has(id)) continue;
+      const { data: row, error } = await sb.from('places').insert({
+        user_id: user.id, curated_place_id: s.id,
+        name: s.name, area: s.area, category: s.category || null, curated: true
+      }).select('id').single();
+      if (error) { console.warn('[Prevoya] save claim failed:', error.message); continue; }
+      SAVES.set(id, s.ts || Date.now());
+      SAVE_ROWS.set(id, row.id);
+      claimed++;
+    }
+    try { localStorage.removeItem('prevoya_saves_anon'); } catch (_) {}
+    if (claimed) track('anon_saves_claimed', { n: claimed });
+    return claimed;
+  }
+
   const itinFlag = (p) => {
     const on = SAVES.has(String(p.id));
     return '<button type="button" class="it-flag' + (on ? ' on' : '') + '" data-flag="' + esc(p.id) +
@@ -2519,17 +2544,35 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         sheet.querySelector('.gps-else').onclick = () => { sheet.hidden = true; setTab('places'); };
         return;
       }
+      /* SAVE-FIRST pivot: the sheet carries BOTH verbs — stamp (I was here)
+         and ⚑ (I want this). Two taps from the street to a saved place. */
       sheet.innerHTML = '<p class="pulse-note">you’re near:</p>' +
         cands.map((c, i) =>
-          '<button type="button" class="ri-replan gps-pick" data-i="' + i + '">' +
-          esc(c.p.name) + ' · ' + (c.km < 1 ? Math.round(c.km * 1000) + ' m' : c.km.toFixed(1) + ' km') +
-          '</button>').join('') +
+          '<div class="gps-row">' +
+            '<button type="button" class="ri-replan gps-pick" data-i="' + i + '">' +
+            esc(c.p.name) + ' · ' + (c.km < 1 ? Math.round(c.km * 1000) + ' m' : c.km.toFixed(1) + ' km') +
+            '</button>' +
+            '<button type="button" class="gps-save' + (SAVES.has(String(c.p.id)) ? ' on' : '') + '" data-i="' + i +
+              '" aria-label="save for later"><svg width="15" height="15" aria-hidden="true"><use href="#icon-' +
+              (SAVES.has(String(c.p.id)) ? 'saved' : 'save') + '"/></svg></button>' +
+          '</div>').join('') +
         '<button type="button" class="ck-reset gps-new">none of these — name it</button>' +
         '<button type="button" class="ck-reset gps-else">somewhere else →</button>';
       sheet.querySelectorAll('.gps-pick').forEach((b) => {
         b.onclick = async () => {
           await checkinAt(cands[+b.getAttribute('data-i')].p, b);
           setTimeout(() => { sheet.hidden = true; }, 1400);
+        };
+      });
+      sheet.querySelectorAll('.gps-save').forEach((b) => {
+        b.onclick = async () => {
+          const p = cands[+b.getAttribute('data-i')].p;
+          const ok = await toggleSave(p);
+          if (!ok) return;
+          const on = SAVES.has(String(p.id));
+          b.classList.toggle('on', on);
+          const use = b.querySelector('use');
+          if (use) use.setAttribute('href', '#icon-' + (on ? 'saved' : 'save'));
         };
       });
       sheet.querySelector('.gps-new').onclick = nameFlow;
@@ -5310,6 +5353,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       .eq('user_id', user.id).not('curated_place_id', 'is', null);
     SAVES = new Map((savedRows || []).map((r) => [String(r.curated_place_id), new Date(r.created_at).getTime()]));
     SAVE_ROWS = new Map((savedRows || []).map((r) => [String(r.curated_place_id), r.id]));
+    /* saves made before the account claim themselves now (save-first pivot) */
+    const claimedN = await claimAnonSaves();
+    if (claimedN) {
+      $('arriveText').innerHTML = '⚑ <strong>' + claimedN + ' place' + (claimedN === 1 ? '' : 's') + '</strong> from your list ' +
+        (claimedN === 1 ? 'is' : 'are') + ' in your account now — find them in Places.';
+      $('arriveBanner').hidden = false;
+    }
     const { data: recRows } = await sb.from('place_recs').select('place_id').eq('user_id', user.id);
     RECS = new Set((recRows || []).map((r) => String(r.place_id)));
     mountPlacesTab(places || []);

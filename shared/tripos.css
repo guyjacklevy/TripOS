@@ -3417,3 +3417,42 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
 }
 .wf-chip:active { transform: scale(0.96); }
 .wf-primary { color: var(--teal); background: rgba(61, 255, 208, 0.07); border-color: rgba(61, 255, 208, 0.3); }
+
+/* ─── SAVE-FIRST pivot (Nov 2026): the ⚑ surfaces ─── */
+/* the anonymous/own list bar — count + the keep door, floats above the fold */
+.save-bar {
+  position: fixed; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 10px 10px 16px; border-radius: 16px;
+  background: rgba(10, 10, 20, 0.92);
+  border: 1px solid rgba(61, 255, 208, 0.3);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+}
+.sb-count { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--teal); }
+.sb-keep { min-height: 40px; white-space: nowrap; }
+
+/* GPS sheet: stamp + save side by side */
+.gps-row { display: flex; gap: 8px; align-items: stretch; }
+.gps-row .gps-pick { flex: 1; min-width: 0; }
+.gps-save {
+  flex: 0 0 44px; min-height: 44px; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--mut); background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.gps-save.on { color: var(--teal); border-color: rgba(61, 255, 208, 0.4); }
+.gps-save:active { transform: scale(0.94); }
+
+/* the save catcher (/app/save) */
+.sv-head { margin: 10px 0 16px; }
+.sv-h { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; margin: 6px 0 10px; }
+.sv-form { margin-bottom: 10px; }
+.sv-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 12px 12px 14px; margin-bottom: 8px;
+  background: var(--glass); border: 1px solid var(--line); border-radius: 12px;
+}
+.sv-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.sv-row-main strong { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sv-row-sub { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--dim); }

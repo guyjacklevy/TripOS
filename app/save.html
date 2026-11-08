@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Save a place — Prevoya</title>
+  <meta name="description" content="The fastest way to save a place you discover.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a0a14">
+  <link rel="manifest" href="/app/manifest.json">
+  <link rel="apple-touch-icon" href="/shared/brand/icon-192.png">
+  <link rel="icon" href="/shared/brand/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/shared/tripos.css">
+</head>
+<body>
+  <div class="cosmos"></div>
+  <div class="wrap" style="max-width:560px">
+    <nav class="nav">
+      <a class="brand" href="/"><img src="/shared/brand/logo-mark.svg" width="28" height="28" alt="Prevoya" class="nav-mark">Prevoya</a>
+      <a class="nav-cta" href="/app/">my places</a>
+    </nav>
+
+    <header class="sv-head">
+      <p class="cx-reveal-kicker">// SAVE A PLACE</p>
+      <h1 class="sv-h">Caught something good?</h1>
+      <p class="sec-context">Type a name, or paste a Google Maps link or any text with the place in it. It lands in your list with real context.</p>
+    </header>
+
+    <form class="log-form add-form sv-form" id="svForm">
+      <input class="auth-input" id="svInput" type="text" maxlength="300"
+        placeholder="place name, or paste a link…" autocomplete="off" autofocus>
+      <button class="btn btn-primary log-btn" type="submit">find it</button>
+    </form>
+    <p class="auth-status" id="svStatus" role="status"></p>
+    <div id="svResults"></div>
+
+    <div class="save-bar" id="saveBar" hidden></div>
+
+    <footer class="sh-foot" style="margin-top:28px">
+      <p class="sec-context" id="svShortcut">On iPhone? Add the “Save to Prevoya” shortcut and send places here straight from the share sheet.</p>
+    </footer>
+  </div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="icon-save" viewBox="0 0 16 16"><path d="M4 2v12M4 2.5h7l-2 3 2 3H4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="icon-saved" viewBox="0 0 16 16"><path d="M4 2v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4 2.5h7l-2 3 2 3H4z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <script src="/shared/supabase-config.js"></script>
+  <script src="/shared/track.js"></script>
+  <script type="module" src="/shared/save-catcher.js"></script>
+  <script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
