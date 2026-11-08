@@ -21,6 +21,7 @@ const $ = (id) => document.getElementById(id);
 const track = (n, p) => { try { window.pvTrack && window.pvTrack(n, p || {}); } catch (_) {} };
 
 /* ── pull a usable search seed out of whatever arrived ── */
+const GOOGLE_LINK = /^https:\/\/(maps\.app\.goo\.gl|goo\.gl|g\.co|maps\.google\.com|www\.google\.com|google\.com)\//i;
 function seedFrom(raw) {
   const s = String(raw || '').trim();
   if (!s) return '';
@@ -30,10 +31,20 @@ function seedFrom(raw) {
     try { return decodeURIComponent(m[1]).replace(/\+/g, ' ').trim(); } catch (_) { /* fall through */ }
   }
   /* a bare URL with no readable name (short links, reels) → nothing to
-     guess from; the traveler types the name (honest over clever) */
+     guess from here; google short links get a second chance server-side */
   if (/^https?:\/\/\S+$/i.test(s)) return '';
-  /* shared text: first line, trimmed of emoji noise, capped */
-  return s.split('\n')[0].replace(/[\u{1F300}-\u{1FAFF}]/gu, '').trim().slice(0, 80);
+  /* shared text: first line, trimmed of emoji noise, capped. If the text
+     wraps a google link ("Check out X! https://maps.app.goo.gl/…"), prefer
+     the human part before the link. */
+  const beforeLink = s.replace(/https?:\/\/\S+/g, ' ');
+  return beforeLink.split('\n')[0].replace(/[\u{1F300}-\u{1FAFF}]/gu, '')
+    .replace(/^check out\s*/i, '').replace(/[!·]+$/g, '').trim().slice(0, 80);
+}
+/* google short links (maps.app.goo.gl & friends) carry no name — a tiny
+   allowlisted edge fn follows the redirect and reads the name server-side */
+function googleLinkIn(raw) {
+  const m = String(raw || '').match(/https:\/\/\S+/);
+  return m && GOOGLE_LINK.test(m[0]) ? m[0] : null;
 }
 
 (async function () {
@@ -172,8 +183,20 @@ function seedFrom(raw) {
     const seed = seedFrom(incoming);
     if (seed) { $('svInput').value = seed; run(seed); }
     else {
-      $('svInput').value = '';
-      $('svStatus').textContent = 'that link doesn’t carry the place name — type it and I’ll find it.';
+      const glink = googleLinkIn(incoming);
+      if (glink) {
+        $('svStatus').textContent = 'reading the link…';
+        const { data } = await sb.functions.invoke('expand-link', { body: { url: glink } })
+          .catch(() => ({ data: null }));
+        if (data && data.name) { $('svInput').value = data.name; run(data.name); }
+        else {
+          $('svInput').value = '';
+          $('svStatus').textContent = 'that link doesn’t carry the place name — type it and I’ll find it.';
+        }
+      } else {
+        $('svInput').value = '';
+        $('svStatus').textContent = 'that link doesn’t carry the place name — type it and I’ll find it.';
+      }
     }
   }
 })();
