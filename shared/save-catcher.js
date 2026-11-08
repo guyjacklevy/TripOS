@@ -37,8 +37,13 @@ function seedFrom(raw) {
      wraps a google link ("Check out X! https://maps.app.goo.gl/…"), prefer
      the human part before the link. */
   const beforeLink = s.replace(/https?:\/\/\S+/g, ' ');
-  return beforeLink.split('\n')[0].replace(/[\u{1F300}-\u{1FAFF}]/gu, '')
-    .replace(/^check out\s*/i, '').trim().replace(/[!.,:;·]+$/g, '').trim().slice(0, 80);
+  let t = beforeLink.split('\n')[0].replace(/[\u{1F300}-\u{1FAFF}]/gu, '')
+    .replace(/^check out\s*/i, '').trim().replace(/[!.,:;·]+$/g, '').trim();
+  /* address-shaped shares ("943H+W8F WOODS PERERENAN, Jl. …, Indonesia")
+     → drop the plus code, keep the name before the address commas */
+  t = t.replace(/^[A-Z0-9]{4,8}\+[A-Z0-9]{2,4}\s*,?\s*/i, '');
+  if ((t.match(/,/g) || []).length >= 2) t = t.split(',')[0].trim();
+  return t.slice(0, 80);
 }
 /* google short links (maps.app.goo.gl & friends) carry no name — a tiny
    allowlisted edge fn follows the redirect and reads the name server-side */
