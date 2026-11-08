@@ -42,6 +42,11 @@ function seedFrom(raw) {
   /* address-shaped shares ("943H+W8F WOODS PERERENAN, Jl. …, Indonesia")
      → drop the plus code, keep the name before the address commas */
   t = t.replace(/^[A-Z0-9]{4,8}\+[A-Z0-9]{2,4}\s*,?\s*/i, '');
+  /* the same plus code after URL decoding ate its '+' ("943H W8F …") —
+     both halves use the plus-code alphabet (no vowels) and carry a digit,
+     so this can never eat a real place name */
+  const pc = t.match(/^[23456789CFGHJMPQRVWX]{4,8}\s+[23456789CFGHJMPQRVWX]{2,4}\s+/i);
+  if (pc && /\d/.test(pc[0])) t = t.slice(pc[0].length);
   if ((t.match(/,/g) || []).length >= 2) t = t.split(',')[0].trim();
   return t.slice(0, 80);
 }
