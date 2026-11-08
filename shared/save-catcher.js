@@ -38,7 +38,7 @@ function seedFrom(raw) {
      the human part before the link. */
   const beforeLink = s.replace(/https?:\/\/\S+/g, ' ');
   return beforeLink.split('\n')[0].replace(/[\u{1F300}-\u{1FAFF}]/gu, '')
-    .replace(/^check out\s*/i, '').replace(/[!·]+$/g, '').trim().slice(0, 80);
+    .replace(/^check out\s*/i, '').trim().replace(/[!.,:;·]+$/g, '').trim().slice(0, 80);
 }
 /* google short links (maps.app.goo.gl & friends) carry no name — a tiny
    allowlisted edge fn follows the redirect and reads the name server-side */
