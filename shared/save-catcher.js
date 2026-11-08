@@ -178,6 +178,12 @@ function googleLinkIn(raw) {
   /* share_target / shortcut / deep-link arrivals */
   const qs = new URLSearchParams(location.search);
   const incoming = qs.get('q') || qs.get('url') || qs.get('text') || qs.get('title') || '';
+  if (!incoming && ['q', 'url', 'text', 'title'].some((k) => qs.has(k))) {
+    /* the shortcut/share fired but handed us nothing — say so, loudly,
+       so a miswired shortcut diagnoses itself instead of a blank page */
+    track('save_catcher_arrival', { shared: true, empty: true });
+    $('svStatus').textContent = 'the share arrived empty — nothing came through with it. Type the place name above, and check the shortcut’s URL step ends with q= followed by the URL-Encoded Text variable.';
+  }
   if (incoming) {
     track('save_catcher_arrival', { shared: true });
     const seed = seedFrom(incoming);
