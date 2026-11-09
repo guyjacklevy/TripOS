@@ -1992,6 +1992,38 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .sv-breath .svb-name { position: relative; z-index: 1; font-weight: 800; font-size: 26px; line-height: 1.15; }
 .sv-breath .svb-sub { position: relative; z-index: 1; color: var(--teal); font-weight: 700; font-size: 13px; margin-top: 6px; }
 
+/* THE MEMORY ASK (step 3, Guy's B + auto-fade 9 Nov): one breath after a
+   live check-in — camera optional, fades on its own */
+.mem-frame { position: fixed; inset: 0; z-index: 80; display: flex; flex-direction: column;
+  justify-content: flex-end; align-items: flex-start;
+  padding: 28px 22px calc(40px + env(safe-area-inset-bottom, 0px));
+  opacity: 0; transition: opacity 0.45s ease; }
+.mem-frame.show { opacity: 1; }
+.mem-frame > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; }
+.mem-frame::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(10, 10, 20, 0.5), rgba(10, 10, 20, 0.92)); }
+.mem-frame .mfr-h, .mem-frame .mfr-sub, .mem-frame .mfr-cam, .mem-frame .mfr-skip { position: relative; z-index: 1; }
+.mfr-h { font-weight: 800; font-size: 24px; line-height: 1.15; }
+.mfr-sub { color: #b9b9cc; font-size: 13px; font-weight: 600; margin-top: 5px; }
+.mfr-cam { width: 54px; height: 54px; border-radius: 50%; border: 1.5px solid var(--teal);
+  background: rgba(61, 255, 208, 0.08); color: var(--teal); font-size: 22px;
+  display: grid; place-items: center; margin: 16px 0 2px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.mfr-cam:active { transform: scale(0.94); }
+.mfr-skip { background: none; border: none; color: #8a8aa0; font: inherit; font-size: 12px;
+  font-weight: 700; padding: 10px 0; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .mem-frame { transition: none; } }
+
+/* the memory on the stamp: polaroid corner + the quiet backfill door */
+.st-mem { position: absolute; right: 4px; top: 4px; width: 40px; height: 40px;
+  object-fit: cover; border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--st, var(--teal)) 40%, transparent); }
+.stamp.has-mem .st-count { margin-right: 46px; }
+.st-addph { grid-column: 2 / -1; font-family: var(--mono); font-size: 8.5px;
+  letter-spacing: 0.08em; color: var(--mut); cursor: pointer; padding: 3px 0 1px;
+  -webkit-tap-highlight-color: transparent; }
+.st-addph:active { color: var(--teal); }
+
 /* Hero photo: REMOVED by Guy's call (Jul 23) — full-bleed Bali at the hero's
    mobile crop read as mud, not place. Real Bali lives on the cards (22%
    texture windows, where the grade works). A hero treatment needs Rachel's

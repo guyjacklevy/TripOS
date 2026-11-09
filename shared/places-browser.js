@@ -77,14 +77,14 @@ const PHOTO_FILE = {
   explore: 'explore', beach: 'beach', nightlife: 'nightlife', 'day-club': 'beach',
   stay: 'explore', health: 'wellness', services: 'explore', rental: 'explore'
 };
-const photoLead = (p, cat) => {
-  const src = p.photo_uri || ('../shared/img/cat-' + (PHOTO_FILE[cat] || 'explore') + '.webp');
+const photoLead = (p, cat, own) => {
+  const src = own || p.photo_uri || ('../shared/img/cat-' + (PHOTO_FILE[cat] || 'explore') + '.webp');
   return '<figure class="lead-photo" aria-hidden="true"><img loading="lazy" alt="" src="' + esc(src) +
     '" onerror="this.parentNode.style.display=\'none\'"></figure>';
 };
 
 export function mountPlaces(cfg) {
-  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec } = cfg;
+  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec, userPhotoOf } = cfg;
   const allPlaces = places.slice();
   const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const state = { area: 'all', cat: 'all', q: '', view: 'rows' };
@@ -152,7 +152,7 @@ export function mountPlaces(cfg) {
     return (
       '<article class="place-card" data-cat="' + esc(moodCat) + '" data-region="' + esc(region(p.area)) +
         '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
-        photoLead(p, moodCat) +
+        photoLead(p, moodCat, userPhotoOf ? userPhotoOf(p.id) : null) +
         flagBtn(p) +
         (matched ? '<span class="match-badge">✦ ' + bd.pct + '% match</span>' : disc) +
         '<div class="place-top">' +
@@ -232,7 +232,7 @@ export function mountPlaces(cfg) {
     return (
       '<article class="place-card poi-mini" data-cat="' + esc(moodCat) + '" data-region="' + esc(region(p.area)) +
         '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
-        photoLead(p, moodCat) +
+        photoLead(p, moodCat, userPhotoOf ? userPhotoOf(p.id) : null) +
         flagBtn(p) +
         (matched ? '<span class="match-badge">✦ ' + bd.pct + '%</span>' : disc) +
         '<div class="place-top">' +

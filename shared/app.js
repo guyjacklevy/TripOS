@@ -705,6 +705,45 @@ function baliDateOf(iso) {
 }
 const dateLbl = (dd) => MONTH_ABBR[dd.m] + ' ' + dd.d;
 
+/* ── THE MEMORY ASK (brand pivot step 3, Guy's pick 9 Nov: B + auto-fade) ──
+   Your photo at the place: private bucket, one per stamp, outranks the
+   display-time Google photo on YOUR cards, and is the trip film's raw frame. */
+let MEM_URLS = new Map();   /* photo_path → signed url (this session) */
+let MEM_PLACE = new Map();  /* place_id → newest own-photo url, for card leads */
+const MEM_FILE = {
+  food: 'food', cafe: 'work', work: 'work', gym: 'gym', wellness: 'wellness',
+  explore: 'explore', beach: 'beach', nightlife: 'nightlife', 'day-club': 'beach',
+  stay: 'explore', health: 'wellness', services: 'explore', rental: 'explore'
+};
+function rebuildMemPlace() {
+  MEM_PLACE = new Map();
+  CHECKINS.slice()
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    .forEach((c) => {
+      if (c.photo_path && c.place_id && MEM_URLS.has(c.photo_path))
+        MEM_PLACE.set(String(c.place_id), MEM_URLS.get(c.photo_path));
+    });
+}
+/* canvas re-encode: ≤1600px JPEG — small upload, and the camera's hidden
+   location metadata never leaves the phone */
+function memShrink(file) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const s = Math.min(1, 1600 / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * s));
+      c.height = Math.max(1, Math.round(img.naturalHeight * s));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob((b) => (b ? res(b) : rej(new Error('encode failed'))), 'image/jpeg', 0.82);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('unreadable image')); };
+    img.src = url;
+  });
+}
+
 function stampEl(ck, p, opts) {
   const o = opts || {};
   const seed = stampSeed(ck.place_id || ck.place_name);
@@ -738,15 +777,20 @@ function stampEl(ck, p, opts) {
   const liked = p && ck.place_id && RECS.has(String(ck.place_id));
   const like = (p && ck.place_id)
     ? '<span class="st-like' + (liked ? ' on' : '') + '" data-like="' + esc(ck.place_id) + '" role="button" aria-label="worth it">' + (liked ? '♥' : '♡') + '</span>' : '';
+  /* the memory: own photo as a polaroid corner; photo-less stamps offer it */
+  const mem = (ck.photo_path && MEM_URLS.has(ck.photo_path))
+    ? '<img class="st-mem" alt="" src="' + esc(MEM_URLS.get(ck.photo_path)) + '">' : '';
+  const addPh = (!ck.photo_path && ck.id && p)
+    ? '<span class="st-addph" data-ck="' + esc(ck.id) + '" role="button" aria-label="add your photo">+ your photo</span>' : '';
   return '<' + (tap ? 'button type="button"' : 'div') +
-    ' class="stamp ' + shape + (o.ceremony ? ' st-new' : '') + '"' +
+    ' class="stamp ' + shape + (o.ceremony ? ' st-new' : '') + (mem ? ' has-mem' : '') + '"' +
     (tap ? ' data-place="' + esc(ck.place_id) + '"' : '') +
     ' style="--st:' + tint + ';--rot:' + rot + 'deg">' +
       delX + count + like +
       '<span class="st-dot" style="background:' + cc + '"></span>' +
       '<span class="st-name">' + esc(p ? p.name : (ck.place_name || '—')) + '</span>' +
       '<span class="st-date">' + dateLbl(dd) + catWord + ' ' + badge + '</span>' +
-      worth + meta + savedPair + resolveChip +
+      worth + meta + savedPair + addPh + resolveChip + mem +
     '</' + (tap ? 'button' : 'div') + '>';
 }
 function visaEl(area, firstIso) {
@@ -1697,6 +1741,96 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     food: 'food', work: 'food', nightlife: 'nightlife', beach: 'nightlife',
     wellness: 'wellness', gym: 'wellness', explore: 'transport'
   };
+  /* sign the stored memories once per load; stamps + cards read the maps */
+  async function memSignAll() {
+    const paths = CHECKINS.filter((c) => c.photo_path && !MEM_URLS.has(c.photo_path))
+      .map((c) => c.photo_path);
+    if (paths.length) {
+      const { data, error } = await sb.storage.from('memories').createSignedUrls(paths, 3600);
+      if (error) console.error('[Prevoya] memory sign failed:', error.message);
+      (data || []).forEach((r) => { if (r.signedUrl) MEM_URLS.set(r.path, r.signedUrl); });
+    }
+    rebuildMemPlace();
+    return MEM_URLS.size;
+  }
+
+  /* one camera door for both the frame and the passport backfill.
+     onDone: true = saved · false = failed · null = camera closed, no shot */
+  function memCapture(ck, onDone, via) {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'image/*';
+    inp.capture = 'environment';
+    inp.hidden = true;
+    document.body.appendChild(inp);
+    const fin = (v) => { inp.remove(); if (onDone) onDone(v); };
+    inp.oncancel = () => fin(null);
+    inp.onchange = async () => {
+      const f = inp.files && inp.files[0];
+      if (!f) return fin(null);
+      try {
+        const blob = await memShrink(f);
+        const path = ck.user_id + '/' + ck.id + '.jpg';
+        const up = await sb.storage.from('memories')
+          .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+        if (up.error) throw up.error;
+        const { error } = await sb.from('checkins').update({ photo_path: path }).eq('id', ck.id);
+        if (error) throw error;
+        ck.photo_path = path;
+        const s = await sb.storage.from('memories').createSignedUrl(path, 3600);
+        if (s.data && s.data.signedUrl) MEM_URLS.set(path, s.data.signedUrl);
+        rebuildMemPlace();
+        track('memory_photo', { via: via || 'ask' });
+        if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+        fin(true);
+      } catch (err) {
+        console.error('[Prevoya] memory photo failed:', err.message || err);
+        fin(false);
+      }
+    };
+    inp.click();
+  }
+
+  /* Guy's B + the hidden timer (9 Nov): one breath (~6s), camera optional,
+     fades on its own — the save already happened, the photo is an invitation */
+  function memFrame(ck, p) {
+    if (!ck || !ck.id || document.querySelector('.mem-frame')) return;
+    const cat = (p && p.category) || 'explore';
+    const host = document.createElement('div');
+    host.className = 'mem-frame';
+    host.innerHTML =
+      '<img alt="" src="../shared/img/cat-' + esc(MEM_FILE[cat] || 'explore') + '.webp">' +
+      '<div class="mfr-h">You’re here. Make it yours.</div>' +
+      '<div class="mfr-sub">your photo leads this card from now on</div>' +
+      '<button type="button" class="mfr-cam" aria-label="add your photo">📷</button>' +
+      '<button type="button" class="mfr-skip">not now</button>';
+    document.body.appendChild(host);
+    requestAnimationFrame(() => host.classList.add('show'));
+    track('memory_ask', {});
+    const away = () => {
+      clearTimeout(auto);
+      host.classList.remove('show');
+      setTimeout(() => host.remove(), 500);
+    };
+    let auto = setTimeout(away, 6000);
+    /* touching the frame = deciding — the clock stops (the 45s spend lesson) */
+    host.addEventListener('pointerdown', () => clearTimeout(auto), { once: true });
+    host.querySelector('.mfr-skip').onclick = away;
+    host.querySelector('.mfr-cam').onclick = () => {
+      clearTimeout(auto);
+      memCapture(ck, (ok) => {
+        if (ok) {
+          host.querySelector('.mfr-h').textContent = '✓ Yours.';
+          host.querySelector('.mfr-sub').textContent = 'on the stamp, on the card, in the film';
+          setTimeout(away, 1400);
+        } else if (ok === false) {
+          host.querySelector('.mfr-sub').textContent = 'didn’t save — add it from your passport anytime';
+          setTimeout(away, 2400);
+        } else away(); /* camera closed without a shot */
+      });
+    };
+  }
+
   async function checkinAt(p, btn) {
     if (!user) return;
     btn.disabled = true;
@@ -1731,6 +1865,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       milestone = inArea === 1 || (CHECKINS.length > 0 && CHECKINS.length % 10 === 0);
     }
     if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places, { ceremony: p.id, milestone });
+    /* step 3 · the memory ask — one breath, then it lets go (Guy 9 Nov) */
+    if (ckRow && ckRow.id) memFrame(ckRow, p);
     /* R5: a stamp at a saved place — the flag on the card becomes the ✓,
        quietly (no toast, no confetti; the story format is the reward) */
     const cardEl = btn.closest('.place-card');
@@ -1809,6 +1945,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       places,
       plan: planFromTrip(trip),
       onCheckin: checkinAt,
+      /* step 3: your own photo outranks every other lead on YOUR cards */
+      userPhotoOf: (pid) => MEM_PLACE.get(String(pid)) || null,
       /* SAVED PLACES v1 (R1/R2): the bank + the mark, wired to the original
          user-places table. Saves are private by default, always. */
       saves: SAVES,
@@ -2821,6 +2959,19 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       e.preventDefault();
       e.stopPropagation();
       openStampSheet(add.getAttribute('data-date'));
+      return;
+    }
+    /* the memory backfill — any photo-less stamp quietly offers the camera */
+    const ap = e.target.closest('.st-addph');
+    if (ap) {
+      e.preventDefault();
+      e.stopPropagation();
+      const ck = CHECKINS.find((c) => String(c.id) === String(ap.getAttribute('data-ck')));
+      if (!ck) return;
+      ap.textContent = 'camera…';
+      memCapture(ck, (ok) => {
+        if (!ok) ap.textContent = '+ your photo'; /* success re-renders the passport */
+      }, 'backfill');
       return;
     }
     /* the LIKE toggle — optimistic, same place_recs row the Places tab uses */
@@ -5282,6 +5433,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const { data: ckAll } = await sb.from('checkins').select('*').order('created_at');
     CHECKINS = ckAll || [];
     await autoAnchor(); /* REALITY FIRST: Today anchors on evidence before first paint */
+    /* the memories arrive quietly after first paint — then stamps show them */
+    memSignAll().then((n) => {
+      if (n && todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+    });
 
     /* §F · layer state, derived from data only. Corridor day = layer 1;
        day-2 open (Bali clock) unlocks Today + Places; check-ins unlock
