@@ -1958,6 +1958,40 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .place-card > *:not(.card-photo) { z-index: 1; }
 .place-card > *:not(.card-photo):not(.match-badge):not(.disc-badge):not(.save-flag) { position: relative; }
 
+/* ═══ SAVE-FIRST · THE PHOTO LEADS (Guy's pick, 9 Nov) — real colour
+   photography tops the place card, in-flow; text breathes below it. The 22%
+   grade (.card-photo) stays for Today's cards until their own pass. Chain:
+   the place's own photo > category photography (no 404 floors). */
+.lead-photo { margin: -20px -20px 0; border-radius: 15px 15px 0 0; overflow: hidden; aspect-ratio: 16 / 9; background: #0d0d1a; flex: none; }
+.lead-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.poi-mini .lead-photo { aspect-ratio: 2 / 1; }
+/* the ⚑ sits on photography now — it needs its own floor to stay legible */
+.place-card .save-flag svg, .place-card .save-flag .sf-check { filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.85)); }
+.place-card .save-flag { color: #d9d9e8; }
+.place-card .save-flag.on { color: var(--teal); }
+/* the quiet fill — the dense-list save ceremony: one line, then gone */
+.kept-note {
+  position: absolute; top: 44px; right: 8px; z-index: 3; pointer-events: none;
+  background: rgba(10, 10, 20, 0.8); border: 1px solid rgba(61, 255, 208, 0.35);
+  color: var(--teal); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+  animation: keptIn 2.1s ease forwards;
+}
+@keyframes keptIn { 0% { opacity: 0; transform: translateY(-3px); } 12%, 78% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .kept-note { animation: none; } }
+
+/* the photo breath — the catcher's save ceremony: the place itself, one breath */
+.sv-breath {
+  position: fixed; inset: 0; z-index: 80; pointer-events: none;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 28px 22px calc(36px + env(safe-area-inset-bottom, 0px));
+  opacity: 0; transition: opacity 0.45s ease;
+}
+.sv-breath.show { opacity: 1; }
+.sv-breath img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.sv-breath::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 10, 20, 0.2), rgba(10, 10, 20, 0.86)); }
+.sv-breath .svb-name { position: relative; z-index: 1; font-weight: 800; font-size: 26px; line-height: 1.15; }
+.sv-breath .svb-sub { position: relative; z-index: 1; color: var(--teal); font-weight: 700; font-size: 13px; margin-top: 6px; }
+
 /* Hero photo: REMOVED by Guy's call (Jul 23) — full-bleed Bali at the hero's
    mobile crop read as mud, not place. Real Bali lives on the cards (22%
    texture windows, where the grade works). A hero treatment needs Rachel's

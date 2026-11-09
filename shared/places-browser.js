@@ -68,6 +68,21 @@ export const catPhoto = (cat) => CAT[cat]
     'src="../shared/img/cat-' + esc(cat) + '.webp" onerror="this.parentNode.remove()"></span>'
   : '';
 
+/* SAVE-FIRST (Guy's pick, 9 Nov): the photo LEADS the place card — full
+   colour, in-flow, text breathes under it. Chain: the place's own photo
+   (photo_uri — user photo or display-time Google photo, future steps) >
+   category photography. Every category maps to a file that EXISTS. */
+const PHOTO_FILE = {
+  food: 'food', cafe: 'work', work: 'work', gym: 'gym', wellness: 'wellness',
+  explore: 'explore', beach: 'beach', nightlife: 'nightlife', 'day-club': 'beach',
+  stay: 'explore', health: 'wellness', services: 'explore', rental: 'explore'
+};
+const photoLead = (p, cat) => {
+  const src = p.photo_uri || ('../shared/img/cat-' + (PHOTO_FILE[cat] || 'explore') + '.webp');
+  return '<figure class="lead-photo" aria-hidden="true"><img loading="lazy" alt="" src="' + esc(src) +
+    '" onerror="this.parentNode.style.display=\'none\'"></figure>';
+};
+
 export function mountPlaces(cfg) {
   const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec } = cfg;
   const allPlaces = places.slice();
@@ -137,7 +152,7 @@ export function mountPlaces(cfg) {
     return (
       '<article class="place-card" data-cat="' + esc(moodCat) + '" data-region="' + esc(region(p.area)) +
         '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
-        catPhoto(moodCat) +
+        photoLead(p, moodCat) +
         flagBtn(p) +
         (matched ? '<span class="match-badge">✦ ' + bd.pct + '% match</span>' : disc) +
         '<div class="place-top">' +
@@ -217,7 +232,7 @@ export function mountPlaces(cfg) {
     return (
       '<article class="place-card poi-mini" data-cat="' + esc(moodCat) + '" data-region="' + esc(region(p.area)) +
         '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
-        catPhoto(moodCat) +
+        photoLead(p, moodCat) +
         flagBtn(p) +
         (matched ? '<span class="match-badge">✦ ' + bd.pct + '%</span>' : disc) +
         '<div class="place-top">' +
@@ -564,6 +579,18 @@ export function mountPlaces(cfg) {
       if (use) use.setAttribute('href', '#icon-' + (wasOn ? 'save' : 'saved'));
       if (!wasOn && !REDUCED) { sf.classList.remove('sf-ping'); void sf.offsetWidth; sf.classList.add('sf-ping'); }
       if (state.view === 'rows') renderRows(); /* the rail reflects the bank live */
+      /* the quiet fill (brand pivot, 9 Nov): one line on the card, then gone */
+      if (!wasOn) {
+        const anchor = els.grid.querySelector('.save-flag[data-save="' +
+          (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+        if (anchor && anchor.parentElement) {
+          const n = document.createElement('span');
+          n.className = 'kept-note';
+          n.textContent = 'Kept · in your Bali';
+          anchor.insertAdjacentElement('afterend', n);
+          setTimeout(() => n.remove(), 2200);
+        }
+      }
       Promise.resolve(onSave(p, !wasOn)).then((ok) => {
         if (ok !== false) return;
         if (wasOn) { saves.set ? saves.set(id, Date.now()) : saves.add(id); } else { saves.delete(id); }

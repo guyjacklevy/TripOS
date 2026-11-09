@@ -109,6 +109,40 @@ function googleLinkIn(raw) {
     return true;
   }
 
+  /* ── the save ceremony: the photo breath (Guy's pick, 9 Nov) ──
+     The place's real photo fades up for one breath — the place itself is
+     the ceremony. Chain: live Google photo (display-time, never stored) >
+     category photography. Reduced motion gets the quiet line only. */
+  const CAT_FILE = {
+    food: 'food', cafe: 'work', work: 'work', gym: 'gym', wellness: 'wellness',
+    explore: 'explore', beach: 'beach', nightlife: 'nightlife', 'day-club': 'beach',
+    stay: 'explore', health: 'wellness', services: 'explore', rental: 'explore'
+  };
+  const ord = (n) => n + (n % 10 === 1 && n % 100 !== 11 ? 'st'
+    : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th');
+  async function breath(name, photoName, category, nth) {
+    const host = $('svBreath');
+    const line = 'Kept · your ' + ord(nth) + ' place';
+    track('save_ceremony', { photo: !!photoName });
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!host || reduced) { $('svStatus').textContent = line; return; }
+    let src = '/shared/img/cat-' + (CAT_FILE[category] || 'explore') + '.webp';
+    if (photoName) {
+      const { data } = await sb.functions.invoke('places-search', { body: { action: 'photo', photo_name: photoName, maxw: 800 } })
+        .catch(() => ({ data: null }));
+      if (data && data.uri) src = data.uri;
+    }
+    host.innerHTML = '<img alt="" src="' + esc(src) + '">' +
+      '<div class="svb-name">' + esc(name) + '</div>' +
+      '<div class="svb-sub">' + esc(line) + '</div>';
+    host.hidden = false;
+    requestAnimationFrame(() => host.classList.add('show'));
+    setTimeout(() => {
+      host.classList.remove('show');
+      setTimeout(() => { host.hidden = true; host.innerHTML = ''; }, 500);
+    }, 1800);
+  }
+
   const rowHtml = (p, sub) => {
     const on = SAVES.has(String(p.id));
     return '<div class="sv-row">' +
@@ -164,6 +198,8 @@ function googleLinkIn(raw) {
       f.classList.toggle('on', on);
       f.querySelector('use').setAttribute('href', '#icon-' + (on ? 'saved' : 'save'));
       paintBar();
+      /* the quiet fill — curated rows are a dense list, so one line only */
+      if (on) $('svStatus').textContent = 'Kept · in your Bali';
       return;
     }
     const g = e.target.closest('.sv-gadd');
@@ -179,6 +215,9 @@ function googleLinkIn(raw) {
         g.classList.add('on');
         g.querySelector('use').setAttribute('href', '#icon-saved');
         paintBar();
+        /* the big moment gets the photo breath */
+        const nth = user ? SAVES.size : anonCount();
+        breath(p.name, (data && data.photo_name) || cand.photo_name || null, p.category, nth);
       } else g.disabled = false;
     }
   });
