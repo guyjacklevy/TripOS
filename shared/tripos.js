@@ -14,6 +14,19 @@
       });
     }, { threshold: 0.12 });
     els.forEach(function (el) { io.observe(el); });
+    /* catch-up: a fast scroll can jump an element clean through the viewport
+       between observer frames (isIntersecting never fires) — anything whose
+       top has entered the lower viewport reveals, even mid-flight */
+    var catchUp = function () {
+      var vh = window.innerHeight;
+      els.forEach(function (el) {
+        if (!el.classList.contains('in') && el.getBoundingClientRect().top < vh * 0.95) {
+          el.classList.add('in');
+          io.unobserve(el);
+        }
+      });
+    };
+    window.addEventListener('scroll', catchUp, { passive: true });
   } else {
     els.forEach(function (el) { el.classList.add('in'); });
   }
