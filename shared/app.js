@@ -1782,6 +1782,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         rebuildMemPlace();
         track('memory_photo', { via: via || 'ask' });
         if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+        if (placesApi && placesApi.repaint) placesApi.repaint();
         fin(true);
       } catch (err) {
         console.error('[Prevoya] memory photo failed:', err.message || err);
@@ -5435,7 +5436,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     await autoAnchor(); /* REALITY FIRST: Today anchors on evidence before first paint */
     /* the memories arrive quietly after first paint — then stamps show them */
     memSignAll().then((n) => {
-      if (n && todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+      if (!n) return;
+      if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+      if (placesApi && placesApi.repaint) placesApi.repaint();
     });
 
     /* §F · layer state, derived from data only. Corridor day = layer 1;

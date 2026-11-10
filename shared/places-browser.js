@@ -656,6 +656,13 @@ export function mountPlaces(cfg) {
   /* ── public handle: deep-focus one place (Today timeline taps land HERE,
      on the exact card, not on an unrelated grid) ── */
   return {
+    /* own-photo urls are signed AFTER mount — the shelf repaints in place
+       so the user's photo leads the card in the same session it was taken */
+    repaint() {
+      if (state.view === 'rows') renderRows();
+      else renderCatGrid(state.view);
+      applyFilters(false);
+    },
     focusPlace(id) {
       shelfUnlocked = true; /* asked-for content is never gated (§F carve-out) */
       const p = allPlaces.find((x) => String(x.id) === String(id));
