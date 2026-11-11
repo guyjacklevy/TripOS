@@ -3611,3 +3611,20 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
 .gift-msg i { color: var(--dim); font-style: normal; }
 .gift-acts { display: flex; flex-direction: column; gap: 9px; margin-top: 14px; }
 .gift-priv { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.06em; color: var(--dim); margin: 10px 0 0; text-align: center; }
+
+/* ─── ROUND 5 · the quiet card (Guy approved 11 Nov) ──────────────────
+   Collapsed: photo · name ✓ · area · one clamped why · verbs · ⚑ · badge.
+   .pc-x layers (facets, matched-on, personas-as-words, timing, tip, price,
+   Maps) appear only when the card is .open — "more ⌄" is the visible door. */
+.place-card:not(.open) .pc-x { display: none !important; }
+.place-card:not(.open) .place-why {
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
+.place-card .mini-why { -webkit-line-clamp: 2; } /* minis keep their two lines */
+.pc-more {
+  display: block; width: 100%; background: none; border: none; cursor: pointer;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--mut);
+  padding: 7px 0 2px; -webkit-tap-highlight-color: transparent;
+}
+.pc-more:active { color: var(--teal); }
+.poi-mini .pc-more { display: none; } /* minis expand through "more ›" instead */

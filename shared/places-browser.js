@@ -92,17 +92,8 @@ export function mountPlaces(cfg) {
   let list = places;            // brief-sorted place list (matches float to top)
   const matchedMap = new Map(); // place → scoreBreakdown, matches only
 
-  /* ── persona dot colours (2b): 6 filled hues + 2 ring dots, zero new tokens ── */
-  const PERSONA_DOT = {
-    surfer:   { c: 'var(--teal)',         ring: false },
-    nomad:    { c: 'var(--cy)',           ring: false },
-    foodie:   { c: 'var(--am)',           ring: false },
-    party:    { c: 'var(--area-denpasar)', ring: false },
-    luxury:   { c: 'var(--purple)',       ring: false },
-    wellness: { c: 'var(--area-ubud)',    ring: false },
-    family:   { c: 'var(--area-ubud)',    ring: true  },
-    culture:  { c: 'var(--purple)',       ring: true  },
-  };
+  /* ROUND 5 (Guy approved 11 Nov): the persona dots retired — personas now
+     speak as plain words in the expanded card ("for: foodie · nomad"). */
 
   /* ── altitude counter ── */
   let altCurrent = 35000;
@@ -125,26 +116,28 @@ export function mountPlaces(cfg) {
     altRAF = requestAnimationFrame(step);
   }
 
-  /* ── POI card (bd = scoreBreakdown when this place matches the brief) ── */
+  /* ── POI card (bd = scoreBreakdown when this place matches the brief) ──
+     ROUND 5 "the quiet card" (Guy approved 11 Nov): the default card is
+     photo · name ✓ · area · one clamped why · 📍/👍 · ⚑ · match badge, with
+     a visible "more ⌄" that expands the card IN PLACE. Everything else —
+     facets, matched-on, personas (as words now, the dots retired), timing,
+     tip, price, Maps — lives in the .pc-x layer, shown only when .open. */
   function card(p, bd, rowCat) {
     const matched = !!bd;
     /* v3 §3: in the shelf, the ROW's facet decides the mood */
     const moodCat = rowCat && hasCat(p, rowCat) ? rowCat : p.category;
     const cat = CAT[moodCat] || { orb: 'planet-teal', cc: 'var(--teal)', icon: '📍', label: moodCat };
-    const personas = (p.personas || []).map((x) => {
-      const d = PERSONA_DOT[x] || { c: 'var(--mut)', ring: false };
-      return '<span class="persona-chip"><span class="pdot' + (d.ring ? ' ring' : '') +
-        '" style="--pd:' + d.c + '"></span>' + esc(x) + '</span>';
-    }).join('');
+    const personaWords = (p.personas || []).length
+      ? '<p class="match-why">for: ' + (p.personas || []).slice(0, 5).map(esc).join(' · ') + '</p>' : '';
     const maps = p.maps_query
-      ? '<a class="place-maps" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' +
+      ? '<a class="place-maps pc-x" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' +
         encodeURIComponent(p.maps_query) + '">Maps ↗</a>' : '';
     const here = onCheckin
       ? '<button type="button" class="place-maps place-here" data-place-id="' + esc(p.id) + '">📍 I’m here</button>'
       : '';
     const timing = p.timing_note
       ? '<div class="row"><span class="k">🕑</span><span>' + esc(p.timing_note) + '</span></div>' : '';
-    const tip = p.tip ? '<p class="place-tip">' + esc(p.tip) + '</p>' : '';
+    const tip = p.tip ? '<p class="place-tip pc-x">' + esc(p.tip) + '</p>' : '';
     const searchHay = [p.name, p.area, cat.label, (p.personas || []).join(' '), (p.tags || []).join(' ')]
       .join(' ').toLowerCase();
     const disc = p.source === 'google'
@@ -154,27 +147,29 @@ export function mountPlaces(cfg) {
         '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
         photoLead(p, moodCat, userPhotoOf ? userPhotoOf(p.id) : null) +
         flagBtn(p) +
-        (matched ? '<span class="match-badge">✦ ' + bd.pct + '% match</span>' : disc) +
+        (matched ? '<span class="match-badge">✦ ' + bd.pct + '%</span>' : disc) +
         '<div class="place-top">' +
-          '<span class="orb ' + cat.orb + '"></span>' +
           '<div>' +
             '<div class="place-name">' + esc(p.name) +
               (p.verified ? '<span class="place-verified" title="Verified">✓</span>' : '') + '</div>' +
-            '<div class="poi-type">' + cat.icon + ' ' + esc(p.area) + '</div>' +
+            '<div class="poi-type">' + esc(p.area) + '</div>' +
           '</div>' +
         '</div>' +
-        facetBand(p) +
-        (matched && bd.reasons.length
-          ? '<p class="match-why">matched on: ' + bd.reasons.slice(0, 4).map(esc).join(' · ') + '</p>'
-          : '') +
-        (personas ? '<div class="place-personas">' + personas + '</div>' : '') +
         (p.why ? '<p class="place-why">' + esc(p.why) + '</p>' : '') +
-        '<div class="place-meta">' + timing + '</div>' +
+        '<div class="pc-x">' +
+          facetBand(p) +
+          (matched && bd.reasons.length
+            ? '<p class="match-why">matched on: ' + bd.reasons.slice(0, 4).map(esc).join(' · ') + '</p>'
+            : '') +
+          personaWords +
+          '<div class="place-meta">' + timing + '</div>' +
+        '</div>' +
         tip +
         '<div class="place-foot">' +
-          '<span class="place-price">' + esc(p.price_note || '') + '</span>' +
+          '<span class="place-price pc-x">' + esc(p.price_note || '') + '</span>' +
           '<span class="pf-actions">' + here + maps + recBtn(p) + '</span>' +
         '</div>' +
+        '<button type="button" class="pc-more" aria-expanded="false">more ⌄</button>' +
       '</article>'
     );
   }
@@ -222,13 +217,12 @@ export function mountPlaces(cfg) {
     const here = onCheckin
       ? '<button type="button" class="place-maps place-here" data-place-id="' + esc(p.id) + '">📍 I’m here</button>'
       : '';
-    const maps = p.maps_query
-      ? '<a class="place-maps" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' +
-        encodeURIComponent(p.maps_query) + '">Maps ↗</a>' : '';
     const searchHay = [p.name, p.area, cat.label, (p.personas || []).join(' '), (p.tags || []).join(' ')]
       .join(' ').toLowerCase();
     const disc = p.source === 'google'
       ? '<span class="disc-badge" title="Discovered via Google Maps — unverified">◔ discovered</span>' : '';
+    /* ROUND 5: minis go quiet too — orb, emoji icon, facet band and Maps
+       retired here; the full card (one "more ›" away) carries the depth */
     return (
       '<article class="place-card poi-mini" data-cat="' + esc(moodCat) + '" data-region="' + esc(region(p.area)) +
         '" data-id="' + esc(p.id) + '" data-search="' + esc(searchHay) + '" style="--cc:' + cat.cc + '">' +
@@ -236,16 +230,14 @@ export function mountPlaces(cfg) {
         flagBtn(p) +
         (matched ? '<span class="match-badge">✦ ' + bd.pct + '%</span>' : disc) +
         '<div class="place-top">' +
-          '<span class="orb ' + cat.orb + '"></span>' +
           '<div>' +
             '<div class="place-name">' + esc(p.name) +
               (p.verified ? '<span class="place-verified" title="Verified">✓</span>' : '') + '</div>' +
-            '<div class="poi-type">' + cat.icon + ' ' + esc(p.area) + '</div>' +
+            '<div class="poi-type">' + esc(p.area) + '</div>' +
           '</div>' +
         '</div>' +
-        facetBand(p) +
         (p.why ? '<p class="place-why mini-why">' + esc(p.why) + '</p>' : '') +
-        '<div class="mini-foot">' + here + maps + recBtn(p) + '<span class="mini-more">more ›</span></div>' +
+        '<div class="mini-foot">' + here + recBtn(p) + '<span class="mini-more">more ›</span></div>' +
       '</article>'
     );
   }
@@ -548,6 +540,17 @@ export function mountPlaces(cfg) {
      carousel card opens its category detail, scrolled to that place */
   els.grid.onclick = (e) => {
     if (e.target.closest('a')) return;
+    /* ROUND 5: "more ⌄" expands the quiet card in place — same spot, no new
+       screen. The depth stays one visible tap away, never hidden. */
+    const pm = e.target.closest('.pc-more');
+    if (pm) {
+      e.stopPropagation();
+      const art = pm.closest('.place-card');
+      const open = art.classList.toggle('open');
+      pm.textContent = open ? 'less ⌃' : 'more ⌄';
+      pm.setAttribute('aria-expanded', open ? 'true' : 'false');
+      return;
+    }
     /* R1: the flag toggles — optimistic, reverted on a failed write. A tap
        on the mark never opens the card (it's a mark, not the card). */
     const rb = e.target.closest('.rec-btn');
