@@ -2312,6 +2312,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const paintMsg = () => {
       $('giftMsg').innerHTML = esc(giftMessage(list.length, '')) +
         '<i>' + esc(GIFT_SHARE ? location.origin + '/s/?t=' + GIFT_SHARE.token : location.origin + '/s/?t=…') + '</i>';
+      $('giftRevoke').hidden = !GIFT_SHARE; /* the promise in the fine print needs its button */
     };
     paintMsg();
     const copyBtn = $('giftCopy');
@@ -2338,6 +2339,17 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       paintMsg();
       track('share_created', { kind: 'list', n: list.length, photos: photos, via: via || 'door' });
       copyBtn.disabled = false;
+    };
+    $('giftRevoke').onclick = async () => {
+      const live = await giftRow();
+      if (!live) return;
+      const { error } = await sb.from('trip_shares')
+        .update({ revoked_at: new Date().toISOString() }).eq('id', live.id);
+      if (error) { $('giftRevoke').textContent = '⚠ couldn’t revoke — retry'; return; }
+      GIFT_SHARE = null;
+      $('giftRevoke').textContent = 'revoke the link';
+      copyBtn.textContent = 'copy message + link'; /* the next copy mints a fresh link */
+      paintMsg();
     };
     $('giftClose').onclick = () => { sheet.hidden = true; };
     sheet.onclick = (e) => { if (e.target === sheet) sheet.hidden = true; };
