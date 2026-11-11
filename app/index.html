@@ -15,6 +15,7 @@
   <link rel="icon" href="/shared/brand/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/shared/brand/icon-192.png" type="image/png">
 <link rel="stylesheet" href="../shared/tripos.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap">
 </head>
 <body>
   <div class="cosmos"></div>
@@ -348,6 +349,8 @@
           <span class="coord-sep">·</span>
           <span id="appCoordArea">ALL AREAS</span>
         </div>
+        <!-- the gift door (Week 3): your collection has a name and one verb -->
+        <div class="gift-door" id="giftDoor" role="button" hidden></div>
         <input class="auth-input place-search" id="appPlaceSearch" type="search" placeholder="🔎 search a place — or find it on Google Maps" autocomplete="off">
         <div class="area-cards" id="appAreaBar"></div>
         <div class="filters legend" id="appCatBar"></div>
@@ -651,6 +654,22 @@
       <button type="button" class="tab-slot" data-tab="pulse"><svg class="tab-ic"><use href="#tab-pulse"/></svg><span>PULSE</span></button>
       <button type="button" class="tab-slot" data-tab="you"><svg class="tab-ic"><use href="#tab-you"/></svg><span>YOU</span></button>
     </nav>
+  </div>
+
+  <!-- the gift composer (Week 3): note + photo consent + prewritten message -->
+  <div class="gift-sheet" id="giftSheet" hidden>
+    <div class="gift-sheet-card">
+      <h3 class="gift-sheet-h" id="giftH">Gift your Bali</h3>
+      <p class="gift-sheet-sub" id="giftSub"></p>
+      <textarea class="gift-note-in" id="giftNote" maxlength="280" placeholder="a note in your words — it leads the page"></textarea>
+      <label class="gift-consent"><input type="checkbox" id="giftPhotos" checked><span id="giftPhotosLbl">include my photos — they travel only with this gift</span></label>
+      <div class="gift-msg" id="giftMsg"></div>
+      <div class="gift-acts">
+        <button type="button" class="btn btn-primary" id="giftCopy">copy message + link</button>
+        <button type="button" class="ck-reset" id="giftClose">close</button>
+      </div>
+      <p class="gift-priv" id="giftPriv">revoke any time — the link and the photos die instantly</p>
+    </div>
   </div>
 
   <script src="../shared/supabase-config.js"></script>

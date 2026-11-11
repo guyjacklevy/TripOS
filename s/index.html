@@ -11,6 +11,7 @@
   <link rel="icon" href="/shared/brand/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/shared/brand/icon-192.png" type="image/png">
 <link rel="stylesheet" href="/shared/tripos.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap">
 </head>
 <body>
   <div class="cosmos"></div>
@@ -32,6 +33,24 @@
       <h1 class="sh-gone-h">this passport went private</h1>
       <p class="sec-context">The traveler closed this link. You can still start your own.</p>
       <a class="btn btn-primary" href="/bali/plan/">Plan my Bali — free</a>
+    </div>
+
+    <!-- state: the gift (kind=list) — a collection, given person to person -->
+    <div id="gfBody" hidden>
+      <header class="gf-hero">
+        <p class="gf-eyebrow" id="gfEyebrow">A GIFT · PREVOYA</p>
+        <h1 class="gf-title" id="gfTitle"></h1>
+        <p class="sh-counts" id="gfCounts"></p>
+        <p class="gf-note" id="gfNote" hidden></p>
+      </header>
+      <div class="gf-mosaic" id="gfMosaic" hidden></div>
+      <p class="gf-moscap" id="gfMosCap" hidden></p>
+      <div class="gf-rows" id="gfRows"></div>
+      <section class="sh-cta gf-door">
+        <button type="button" class="btn btn-primary" id="gfSaveAll"></button>
+        <p class="note" id="gfSaveNote">free · no login — they’ll be on your list when you open Prevoya</p>
+        <p class="gf-own"><a href="/bali/plan/" id="gfOwn">…or start your own collection →</a></p>
+      </section>
     </div>
 
     <!-- state: the passport -->

@@ -3,6 +3,8 @@
  * no slot for spend, coordinates, times, or the current day (defense by
  * anatomy, ASSET_SURFACES_SPEC §2.2). Anonymous, token-gated, no login. */
 
+import { anonMap, anonToggle } from '../shared/anon-saves.js';
+
 const cfg = window.TRIPOS_SUPABASE || {};
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -81,6 +83,92 @@ function paintDial() {
 function stampSeed(k) { let h = 0; const s = String(k || ''); for (let i = 0; i < s.length; i++) h = ((h * 31) + s.charCodeAt(i)) >>> 0; return h; }
 const dateLbl = (iso) => { const [, m, d] = String(iso).split('-'); return MONTH_ABBR[+m - 1] + ' ' + (+d); };
 
+/* ─── THE GIFT (kind=list, Week 3) — a collection given person to person.
+   Own photos lead (1h signed URLs minted by the endpoint, consent-gated);
+   category photography fills the rest — never a photo we can't vouch for. */
+const CAT_FILE = {
+  food: 'food', cafe: 'work', work: 'work', gym: 'gym', wellness: 'wellness',
+  explore: 'explore', beach: 'beach', nightlife: 'nightlife', 'day-club': 'beach',
+  stay: 'explore', health: 'wellness', services: 'explore', rental: 'explore'
+};
+const catSrc = (c) => '/shared/img/cat-' + (CAT_FILE[c] || 'explore') + '.webp';
+const MARK = {
+  been: ['✓ been', 'var(--teal)'],
+  worth: ['♥ worth it', '#ff6b8a'],
+  saved: ['⚑ saved', 'var(--tx)']
+};
+
+function renderGift(data, token) {
+  const name = data.name || 'a traveler';
+  const places = data.places || [];
+  const n = (data.counts && data.counts.places) || places.length;
+  document.title = name + '’s Bali — a gift · Prevoya';
+  $('gfEyebrow').textContent = 'A GIFT FROM ' + name.toUpperCase() + ' · PREVOYA';
+  $('gfTitle').textContent = name + '’s Bali — ' + n + ' place' + (n === 1 ? '' : 's') + ' saved for you';
+  const withPh = (data.counts && data.counts.withPhotos) || 0;
+  $('gfCounts').innerHTML = '<em>' + n + '</em> PLACES · <em>' + ((data.counts && data.counts.areas) || 1) + '</em> AREAS' +
+    (withPh ? ' · <em>' + withPh + '</em> WITH ' + name.toUpperCase() + '’S PHOTOS' : '');
+  if (data.note) { $('gfNote').textContent = '“' + data.note + '”'; $('gfNote').hidden = false; }
+
+  /* the mosaic — only their own photos earn it; no own photos, no mosaic */
+  const own = places.filter((p) => p.photo).slice(0, 3);
+  if (own.length) {
+    $('gfMosaic').innerHTML = own.map((p) =>
+      '<img alt="' + esc(p.name) + ' — photo by ' + esc(name) + '" src="' + esc(p.photo) + '">').join('');
+    $('gfMosaic').hidden = false;
+    $('gfMosCap').textContent = 'photos by ' + name + ' — taken standing there';
+    $('gfMosCap').hidden = false;
+  }
+
+  /* the rows — every place with its provenance mark */
+  $('gfRows').innerHTML = places.map((p) => {
+    const [mk, mc] = MARK[p.mark] || MARK.saved;
+    return '<div class="gf-row">' +
+      '<img alt="" loading="lazy" src="' + esc(p.photo || catSrc(p.category)) + '">' +
+      '<div class="gf-row-main"><span class="gf-row-nm">' + esc(p.name) +
+        (p.verified ? ' <span class="place-verified">✓</span>' : '') + '</span>' +
+      '<span class="gf-row-sub">' + esc([p.category, p.area].filter(Boolean).join(' · ')) + '</span></div>' +
+      '<span class="gf-mark" style="color:' + mc + '">' + mk + '</span></div>';
+  }).join('');
+
+  /* provenance travels into sign-up — same seed the passport share plants */
+  const seed = (place) => {
+    try {
+      localStorage.setItem('tripos_via', JSON.stringify({
+        via: name, place: place || null, token: token, at: Date.now(),
+        places: n, kind: 'list'
+      }));
+    } catch (_) {}
+  };
+  $('gfOwn').addEventListener('click', () => seed(null));
+
+  /* the door: every place lands in the anonymous buffer — the same buffer
+     the public shelf fills, claimed on the first signed-in open */
+  const btn = $('gfSaveAll');
+  const already = places.length && places.every((p) => anonMap().has(String(p.id)));
+  const taken = () => {
+    btn.textContent = '✓ on your list — keep them free →';
+    btn.onclick = () => { seed(null); location.href = '/app/'; };
+  };
+  if (already) taken();
+  else {
+    btn.textContent = 'save these ' + n + ' to my list';
+    btn.onclick = () => {
+      const have = anonMap();
+      places.forEach((p) => {
+        if (!have.has(String(p.id))) anonToggle({ id: p.id, name: p.name, area: p.area, category: p.category });
+      });
+      seed(null);
+      try { window.pvTrack && window.pvTrack('share_save_tap', { kind: 'list', n: n }); } catch (_) {}
+      taken();
+    };
+  }
+
+  $('shLoading').hidden = true;
+  $('gfBody').hidden = false;
+  try { window.pvTrack && window.pvTrack('share_visit', { kind: 'list' }); } catch (_) {}
+}
+
 function stampHTML(s, count, viaName, hide) {
   const seed = stampSeed(s.key);
   const rot = (((seed % 61) / 10) - 3).toFixed(1);
@@ -113,6 +201,8 @@ function stampHTML(s, count, viaName, hide) {
   /* a route-card token belongs to the route page — send it home (the old
      unfiltered share button handed those out; links live forever) */
   if (data.kind === 'route') { location.replace('/route/?t=' + encodeURIComponent(token)); return; }
+  /* the gift — a collection, not a passport: its own render, then done */
+  if (data.kind === 'list') { renderGift(data, token); return; }
   if (!data.counts) { gone(); return; }
 
   paintDial();

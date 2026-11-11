@@ -1962,6 +1962,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           if (error) { console.warn('[Prevoya] save failed:', error.message); return false; }
           SAVE_ROWS.set(String(p.id), row.id);
           track('place_saved');
+          maybeGiftCoda();
           return true;
         }
         const rowId = SAVE_ROWS.get(String(p.id));
@@ -1969,6 +1970,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         const { error } = await sb.from('places').delete().eq('id', rowId);
         if (error) { console.warn('[Prevoya] unsave failed:', error.message); return false; }
         SAVE_ROWS.delete(String(p.id));
+        paintGiftDoor();
         return true;
       },
       /* WORTH-IT RECS (Guy #5, 2026-09-09): an opinion, not a presence claim —
@@ -2214,6 +2216,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       if (error) return false;
       SAVES.delete(id);
       SAVE_ROWS.delete(id);
+      paintGiftDoor();
       return true;
     }
     const { data: row, error } = await sb.from('places').insert({
@@ -2224,6 +2227,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     SAVES.set(id, Date.now());
     SAVE_ROWS.set(id, row.id);
     track('place_saved');
+    maybeGiftCoda();
     return true;
   }
   /* SAVE-FIRST pivot (Nov 2026): saves made before the account existed —
@@ -2247,8 +2251,131 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       claimed++;
     }
     try { localStorage.removeItem('prevoya_saves_anon'); } catch (_) {}
-    if (claimed) track('anon_saves_claimed', { n: claimed });
+    if (claimed) {
+      /* K attribution: if these saves rode in from someone's gift, the claim
+         carries the token (seed first; the profile keeps it if already picked up) */
+      let viaTok = null;
+      try { const s = JSON.parse(localStorage.getItem('tripos_via') || 'null'); viaTok = (s && s.token) || null; } catch (_) {}
+      if (!viaTok && profile && profile.via_token) viaTok = profile.via_token;
+      track('anon_saves_claimed', viaTok ? { n: claimed, via: viaTok } : { n: claimed });
+    }
     return claimed;
+  }
+
+  /* ─── THE GIFT (Week 3): the collection, given person to person ───────
+     Doors: the standing row on Places (B) + the milestone coda (A, fades on
+     its own — the hidden timer). One composer; the gift page is /s/ kind=list. */
+  const GIFT_QUIET = new Set(['practical', 'stay', 'health', 'services']);
+  function giftable() {
+    const pool = (todayCtx && todayCtx.places) || [];
+    return pool.filter((p) => {
+      if (!SAVES.has(String(p.id))) return false;
+      const cats = (Array.isArray(p.categories) && p.categories.length) ? p.categories : [p.category];
+      return !cats.every((c) => GIFT_QUIET.has(String(c))); /* same sanitizer as the endpoint */
+    });
+  }
+  function giftPhotoCount(list) {
+    const ids = new Set(list.map((p) => String(p.id)));
+    const seen = new Set();
+    CHECKINS.forEach((c) => { if (c.photo_path && c.place_id && ids.has(String(c.place_id))) seen.add(String(c.place_id)); });
+    return seen.size;
+  }
+  let GIFT_SHARE = null; /* the live kind='list' row, fetched once per session */
+  async function giftRow() {
+    if (GIFT_SHARE) return GIFT_SHARE;
+    const { data: rows } = await sb.from('trip_shares').select('*')
+      .eq('trip_id', trip.id).eq('kind', 'list').is('revoked_at', null).limit(1);
+    GIFT_SHARE = (rows && rows[0]) || null;
+    return GIFT_SHARE;
+  }
+  const giftMessage = (n, link) =>
+    'I made you a list of my Bali places — ' + n + ' spot' + (n === 1 ? '' : 's') + ' I actually saved. ' + link;
+  async function openGiftSheet(via) {
+    const sheet = $('giftSheet');
+    if (!sheet) return;
+    const list = giftable();
+    if (!list.length) return;
+    const phN = giftPhotoCount(list);
+    $('giftH').textContent = 'Gift your Bali — ' + list.length + ' place' + (list.length === 1 ? '' : 's');
+    $('giftSub').textContent = 'ONE LINK, PERSON TO PERSON — THE PLACES ARE THE GIFT';
+    const row = await giftRow();
+    if (row) { $('giftNote').value = row.note || ''; $('giftPhotos').checked = row.photos !== false; }
+    const phBox = $('giftPhotos');
+    if (phN) {
+      $('giftPhotosLbl').textContent = 'include my photos (' + phN + ' place' + (phN === 1 ? '' : 's') + ') — they travel only with this gift';
+      phBox.disabled = false;
+    } else {
+      $('giftPhotosLbl').textContent = 'no photos of yours yet — your next check-in can make one';
+      phBox.checked = false;
+      phBox.disabled = true;
+    }
+    const paintMsg = () => {
+      $('giftMsg').innerHTML = esc(giftMessage(list.length, '')) +
+        '<i>' + esc(GIFT_SHARE ? location.origin + '/s/?t=' + GIFT_SHARE.token : location.origin + '/s/?t=…') + '</i>';
+    };
+    paintMsg();
+    const copyBtn = $('giftCopy');
+    copyBtn.disabled = false;
+    copyBtn.textContent = 'copy message + link';
+    copyBtn.onclick = async () => {
+      copyBtn.disabled = true;
+      const note = $('giftNote').value.trim().slice(0, 280) || null;
+      const photos = !!$('giftPhotos').checked;
+      let live = await giftRow();
+      if (live) {
+        const { error } = await sb.from('trip_shares').update({ note, photos }).eq('id', live.id);
+        if (error) { copyBtn.disabled = false; copyBtn.textContent = '⚠ didn’t save — retry'; return; }
+        live.note = note; live.photos = photos;
+      } else {
+        const ins = await sb.from('trip_shares')
+          .insert({ trip_id: trip.id, token: shareSlug(), kind: 'list', note, photos }).select().single();
+        if (ins.error) { copyBtn.disabled = false; copyBtn.textContent = '⚠ didn’t save — retry'; return; }
+        GIFT_SHARE = live = ins.data;
+      }
+      const msg = giftMessage(list.length, location.origin + '/s/?t=' + live.token);
+      try { await navigator.clipboard.writeText(msg); copyBtn.textContent = '✓ copied — paste it anywhere'; }
+      catch (_) { copyBtn.textContent = 'copy failed — long-press the message below'; }
+      paintMsg();
+      track('share_created', { kind: 'list', n: list.length, photos: photos, via: via || 'door' });
+      copyBtn.disabled = false;
+    };
+    $('giftClose').onclick = () => { sheet.hidden = true; };
+    sheet.onclick = (e) => { if (e.target === sheet) sheet.hidden = true; };
+    sheet.hidden = false;
+  }
+  function paintGiftDoor() {
+    const door = $('giftDoor');
+    if (!door) return;
+    const list = giftable();
+    if (!list.length) { door.hidden = true; return; }
+    const phN = giftPhotoCount(list);
+    door.innerHTML =
+      '<div class="gift-door-main"><span class="gift-door-nm">Your Bali</span>' +
+      '<span class="gift-door-sub">' + list.length + ' PLACE' + (list.length === 1 ? '' : 'S') +
+      (phN ? ' · ' + phN + ' WITH YOUR PHOTOS' : '') + '</span></div>' +
+      '<span class="gift-door-go">⤴ GIFT IT</span>';
+    door.onclick = () => openGiftSheet('door');
+    door.hidden = false;
+  }
+  /* door A — the milestone coda: rises once at 5/10/20/… saves, fades alone */
+  const GIFT_MILESTONES = new Set([5, 10, 20, 30, 50, 75, 100]);
+  let CODA_DONE = false;
+  function maybeGiftCoda() {
+    paintGiftDoor();
+    if (CODA_DONE || document.querySelector('.gift-coda')) return;
+    if (!GIFT_MILESTONES.has(SAVES.size)) return;
+    const list = giftable();
+    if (list.length < 5) return;
+    CODA_DONE = true;
+    const chip = document.createElement('div');
+    chip.className = 'gift-coda';
+    chip.innerHTML = '<span><em>⤴</em> ' + list.length + ' places — someone going to Bali? <em>gift them your list</em></span>';
+    document.body.appendChild(chip);
+    requestAnimationFrame(() => chip.classList.add('show'));
+    track('gift_coda', { n: list.length });
+    const away = () => { chip.classList.remove('show'); setTimeout(() => chip.remove(), 450); };
+    const auto = setTimeout(away, 8000);
+    chip.onclick = () => { clearTimeout(auto); away(); openGiftSheet('coda'); };
   }
 
   const itinFlag = (p) => {
@@ -5533,6 +5660,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     TRIP_DAY_PLANS = dpAll || [];
     renderItinerary(); /* day plans arrived after the render — fill the rows in place */
     renderPassport(trip, places || []);
+    paintGiftDoor(); /* the gift door reads SAVES + todayCtx — both ready here */
     startClock();
     ensurePush();          /* opted-in + granted devices re-subscribe silently */
     paintMorningToggle();

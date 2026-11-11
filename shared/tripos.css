@@ -3522,3 +3522,92 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
 .sv-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .sv-row-main strong { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sv-row-sub { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--dim); }
+
+/* ─── THE GIFT (Week 3) · receiver page (/s/ kind=list) ─────────────── */
+.gf-hero { text-align: left; padding: 18px 0 6px; }
+.gf-eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--dim); margin: 0 0 8px; }
+.gf-title { font-size: 27px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.12; margin: 0 0 10px; }
+.gf-note {
+  font-family: 'Caveat', 'Bradley Hand', cursive; font-size: 22px; line-height: 1.3;
+  color: var(--am, #ffb454); margin: 12px 0 2px; transform: rotate(-0.6deg); max-width: 34ch;
+}
+.gf-mosaic {
+  display: grid; grid-template-columns: 3fr 2fr; grid-auto-rows: 108px; gap: 5px;
+  border-radius: 16px; overflow: hidden; margin-top: 14px;
+}
+.gf-mosaic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gf-mosaic img:first-child { grid-row: span 2; }
+.gf-mosaic img:only-child { grid-column: span 2; }
+.gf-moscap { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--dim); margin: 7px 2px 0; }
+.gf-rows { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+.gf-row {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 12px 9px 9px;
+  background: var(--glass); border: 1px solid var(--line); border-radius: 13px;
+}
+.gf-row > img { width: 46px; height: 46px; border-radius: 9px; object-fit: cover; flex: none; }
+.gf-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.gf-row-nm { font-size: 14.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gf-row-sub { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--dim); }
+.gf-mark { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; flex: none; white-space: nowrap; }
+.gf-door { margin-top: 26px; }
+.gf-own { margin-top: 14px; }
+.gf-own a { color: var(--dim); font-size: 13px; text-decoration: none; }
+.gf-own a:active { color: var(--teal); }
+
+/* ─── THE GIFT · sender side (door, coda, composer) ─────────────────── */
+.gift-door {
+  display: flex; align-items: center; gap: 10px; margin: 14px 0 4px;
+  padding: 11px 13px; background: var(--glass); border: 1px solid var(--line); border-radius: 13px;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.gift-door:active { transform: scale(0.99); }
+.gift-door-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.gift-door-nm { font-size: 14.5px; font-weight: 800; }
+.gift-door-sub { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--dim); }
+.gift-door-go {
+  flex: none; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--teal);
+  border: 1px solid rgba(61, 255, 208, 0.4); border-radius: 999px; padding: 7px 12px;
+}
+.gift-coda {
+  position: fixed; left: 14px; right: 14px; bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  z-index: 70; display: flex; align-items: center; gap: 9px;
+  padding: 12px 14px; border-radius: 14px;
+  background: rgba(14, 14, 26, 0.92); border: 1px solid rgba(61, 255, 208, 0.35);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+  opacity: 0; transition: opacity 0.4s ease; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.gift-coda.show { opacity: 1; }
+.gift-coda span { font-size: 13px; font-weight: 700; color: var(--tx); }
+.gift-coda em { color: var(--teal); font-style: normal; }
+@media (prefers-reduced-motion: reduce) { .gift-coda { transition: none; } }
+.gift-sheet {
+  position: fixed; inset: 0; z-index: 85; display: flex; flex-direction: column; justify-content: flex-end;
+  background: rgba(5, 5, 12, 0.6); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+}
+.gift-sheet-card {
+  background: var(--surf); border: 1px solid var(--line); border-radius: 18px 18px 0 0;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  max-height: 86vh; overflow-y: auto;
+}
+.gift-sheet-h { font-size: 18px; font-weight: 800; margin: 0 0 4px; }
+.gift-sheet-sub { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--dim); margin: 0 0 12px; }
+.gift-note-in {
+  width: 100%; box-sizing: border-box; min-height: 64px; resize: vertical;
+  background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(255, 255, 255, 0.25); border-radius: 12px;
+  padding: 10px 12px; color: var(--am, #ffb454);
+  font-family: 'Caveat', 'Bradley Hand', cursive; font-size: 20px; line-height: 1.3;
+}
+.gift-note-in::placeholder { color: var(--dim); font-family: 'Caveat', 'Bradley Hand', cursive; }
+.gift-consent { display: flex; align-items: flex-start; gap: 9px; margin: 12px 0 0; cursor: pointer; }
+.gift-consent input { width: 16px; height: 16px; accent-color: var(--teal); margin-top: 1px; flex: none; }
+.gift-consent span { font-size: 12.5px; color: var(--mut); line-height: 1.45; }
+.gift-msg {
+  margin-top: 12px; padding: 10px 12px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line);
+  font-size: 12.5px; line-height: 1.5; color: var(--tx); word-break: break-word;
+}
+.gift-msg i { color: var(--dim); font-style: normal; }
+.gift-acts { display: flex; flex-direction: column; gap: 9px; margin-top: 14px; }
+.gift-priv { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.06em; color: var(--dim); margin: 10px 0 0; text-align: center; }
