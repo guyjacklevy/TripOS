@@ -77,14 +77,26 @@ const PHOTO_FILE = {
   explore: 'explore', beach: 'beach', nightlife: 'nightlife', 'day-club': 'beach',
   stay: 'explore', health: 'wellness', services: 'explore', rental: 'explore'
 };
+/* GOOGLE PHOTOS (12 Nov): 405 curated places carry a stored photo RESOURCE
+   NAME (never the photo — TOS). The card renders the category floor first,
+   then an IntersectionObserver batches visible names through the places-
+   search `photos` action and swaps the real photo in, with its visible
+   author credit. Session cache so a photo resolves once. */
+const PHOTO_CACHE = new Map(); /* photo_name → uri (this session) */
 const photoLead = (p, cat, own) => {
-  const src = own || p.photo_uri || ('../shared/img/cat-' + (PHOTO_FILE[cat] || 'explore') + '.webp');
-  return '<figure class="lead-photo" aria-hidden="true"><img loading="lazy" alt="" src="' + esc(src) +
-    '" onerror="this.parentNode.style.display=\'none\'"></figure>';
+  const g = (!own && p.photo_name) ? PHOTO_CACHE.get(p.photo_name) : null;
+  const src = own || p.photo_uri || g || ('../shared/img/cat-' + (PHOTO_FILE[cat] || 'explore') + '.webp');
+  const pend = (!own && !p.photo_uri && !g && p.photo_name) ? ' data-pn="' + esc(p.photo_name) + '"' : '';
+  const credit = (g && p.photo_author)
+    ? '<figcaption class="ph-credit">📷 ' + esc(p.photo_author) + ' · Google</figcaption>' : '';
+  return '<figure class="lead-photo" aria-hidden="true"' + pend +
+    (p.photo_author ? ' data-pa="' + esc(p.photo_author) + '"' : '') +
+    '><img loading="lazy" alt="" src="' + esc(src) +
+    '" onerror="this.parentNode.style.display=\'none\'">' + credit + '</figure>';
 };
 
 export function mountPlaces(cfg) {
-  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec, userPhotoOf } = cfg;
+  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec, userPhotoOf, resolvePhotos } = cfg;
   const allPlaces = places.slice();
   const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const state = { area: 'all', cat: 'all', q: '', view: 'rows' };
@@ -94,6 +106,61 @@ export function mountPlaces(cfg) {
 
   /* ROUND 5 (Guy approved 11 Nov): the persona dots retired — personas now
      speak as plain words in the expanded card ("for: foodie · nomad"). */
+
+  /* ── the lazy Google-photo loader (12 Nov): visible cards batch their
+     stored photo names through ONE `photos` call; the category floor shows
+     until the real photo lands; a resolved photo carries its credit. ── */
+  let phIO = null;
+  let phPending = new Set();
+  let phTimer = null;
+  const phInflight = new Set();
+  function phApply(fig) {
+    const n = fig.getAttribute('data-pn');
+    if (!n || !PHOTO_CACHE.has(n)) return false;
+    const img = fig.querySelector('img');
+    if (img) img.src = PHOTO_CACHE.get(n);
+    const author = fig.getAttribute('data-pa');
+    if (author && !fig.querySelector('.ph-credit')) {
+      const c = document.createElement('figcaption');
+      c.className = 'ph-credit';
+      c.textContent = '📷 ' + author + ' · Google';
+      fig.appendChild(c);
+    }
+    fig.removeAttribute('data-pn');
+    return true;
+  }
+  function phFlush() {
+    phTimer = null;
+    const batch = [...phPending].filter((n) => !PHOTO_CACHE.has(n) && !phInflight.has(n)).slice(0, 16);
+    phPending = new Set([...phPending].filter((n) => batch.indexOf(n) === -1));
+    if (!batch.length || !resolvePhotos) return;
+    batch.forEach((n) => phInflight.add(n));
+    Promise.resolve(resolvePhotos(batch)).then((uris) => {
+      batch.forEach((n) => {
+        phInflight.delete(n);
+        const uri = uris && uris[n];
+        if (!uri) return; /* no retry this session — the honest floor stays */
+        PHOTO_CACHE.set(n, uri);
+      });
+      document.querySelectorAll('.lead-photo[data-pn]').forEach(phApply);
+      if (phPending.size && !phTimer) phTimer = setTimeout(phFlush, 150);
+    }).catch(() => { batch.forEach((n) => phInflight.delete(n)); });
+  }
+  function watchPhotos() {
+    if (!resolvePhotos || !('IntersectionObserver' in window)) return;
+    if (!phIO) phIO = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        phIO.unobserve(en.target);
+        if (phApply(en.target)) return; /* resolved meanwhile by another card */
+        const n = en.target.getAttribute('data-pn');
+        if (!n) return;
+        phPending.add(n);
+        if (!phTimer) phTimer = setTimeout(phFlush, 150);
+      });
+    }, { rootMargin: '300px' });
+    els.grid.querySelectorAll('.lead-photo[data-pn]').forEach((el) => phIO.observe(el));
+  }
 
   /* ── altitude counter ── */
   let altCurrent = 35000;
@@ -354,6 +421,7 @@ export function mountPlaces(cfg) {
       body.hidden = !body.hidden;
       qh.querySelector('.plb-quiet-caret').textContent = body.hidden ? '▸' : '▾';
     };
+    watchPhotos();
   }
 
   /* see-all view — full cards for a single category, with a back control.
@@ -367,6 +435,7 @@ export function mountPlaces(cfg) {
       '<div class="poi-grid">' + cards.map((p) => card(p, matchedMap.get(p) || null, catKey)).join('') + '</div>' +
     '</div>';
     dropIn(Array.from(els.grid.querySelectorAll('.place-card')));
+    watchPhotos();
     els.grid.querySelector('.row-back').onclick = () => { state.view = 'rows'; renderRows(); applyFilters(false); };
     if (focusId) {
       const el = els.grid.querySelector('.place-card[data-id="' + CSS.escape(String(focusId)) + '"]');

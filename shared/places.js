@@ -58,7 +58,14 @@ const statusEl = document.getElementById('placesStatus');
       places: data,
       plan: readPlan(),
       saves,
-      onSave: (p) => { anonToggle(p); paintBar(); return true; }
+      onSave: (p) => { anonToggle(p); paintBar(); return true; },
+      /* 12 Nov: visible cards resolve their stored Google photo names in
+         one batched call — display-time URIs, never stored */
+      resolvePhotos: async (names) => {
+        const { data: r } = await sb.functions.invoke('places-search', { body: { action: 'photos', names } })
+          .catch(() => ({ data: null }));
+        return (r && r.uris) || {};
+      }
     });
   } catch (err) {
     console.error('[Prevoya] places load failed:', err.message || err);

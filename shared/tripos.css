@@ -3628,3 +3628,13 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
 }
 .pc-more:active { color: var(--teal); }
 .poi-mini .pc-more { display: none; } /* minis expand through "more ›" instead */
+
+/* GOOGLE PHOTOS (12 Nov) · the visible author credit on a resolved photo */
+.lead-photo { position: relative; }
+.ph-credit {
+  position: absolute; left: 6px; bottom: 5px; margin: 0; max-width: 72%;
+  font-family: var(--mono); font-size: 7.5px; letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.78); background: rgba(10, 10, 20, 0.55);
+  border-radius: 6px; padding: 2px 6px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}

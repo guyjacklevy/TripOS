@@ -1948,6 +1948,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       onCheckin: checkinAt,
       /* step 3: your own photo outranks every other lead on YOUR cards */
       userPhotoOf: (pid) => MEM_PLACE.get(String(pid)) || null,
+      /* 12 Nov: visible cards resolve their stored Google photo names in
+         one batched call — display-time URIs, never stored */
+      resolvePhotos: async (names) => {
+        const { data: r } = await sb.functions.invoke('places-search', { body: { action: 'photos', names } })
+          .catch(() => ({ data: null }));
+        return (r && r.uris) || {};
+      },
       /* SAVED PLACES v1 (R1/R2): the bank + the mark, wired to the original
          user-places table. Saves are private by default, always. */
       saves: SAVES,
