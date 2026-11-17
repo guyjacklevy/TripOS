@@ -3688,3 +3688,58 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
 }
 .hb-back { margin-top: 14px; }
 .hb-dist { color: var(--teal); }
+
+/* ─── THE GIFT · receiver ceremony (ROUND 8, Guy 17 Nov) ──────────────
+ * The gift link opens playing: address → places (own photos first, with
+ * their marks) → the note → the handover. Live page only — nothing here
+ * is exported or stored. */
+.gfc {
+  position: fixed; inset: 0; z-index: 90; background: #0a0a14;
+  display: flex; flex-direction: column; opacity: 1; transition: opacity 0.42s ease;
+}
+.gfc.gfc-out { opacity: 0; pointer-events: none; }
+.gfc-stage { flex: 1; position: relative; overflow: hidden; }
+.gfc-beat {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  padding: 28px 24px; opacity: 0; transition: opacity 0.45s ease; pointer-events: none;
+}
+.gfc-beat.on { opacity: 1; pointer-events: auto; }
+.gfc-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
+.gfc-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 10, 20, 0.2), rgba(10, 10, 20, 0.84) 80%); }
+.gfc-t1 {
+  position: relative; margin: 0; color: var(--tx);
+  font-size: clamp(27px, 7vw, 40px); font-weight: 800; line-height: 1.22;
+  letter-spacing: -0.01em; max-width: 16ch; text-wrap: balance;
+}
+.gfc-t2 {
+  position: relative; margin: 14px 0 0; color: var(--teal); font-family: var(--mono);
+  font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.gfc-mark { position: relative; margin: 12px 0 0; font-weight: 700; font-size: 15.5px; }
+.gfc-cap { position: relative; margin: 8px 0 0; color: #a8a8c0; font-size: 13px; }
+.gfc-note {
+  position: relative; margin: 0; font-family: 'Caveat', cursive;
+  font-size: clamp(30px, 8vw, 44px); line-height: 1.25; color: var(--tx); max-width: 18ch;
+}
+.gfc-take {
+  position: relative; margin-top: 18px; cursor: pointer;
+  background: none; color: var(--teal); font-size: 15px; font-weight: 700;
+  border: 1px solid rgba(61, 255, 208, 0.5); border-radius: 999px; padding: 11px 20px;
+  -webkit-tap-highlight-color: transparent;
+}
+.gfc-progress { height: 3px; background: rgba(255, 255, 255, 0.08); }
+.gfc-fill { height: 100%; width: 0; background: var(--teal); }
+.gfc-skip {
+  position: absolute; left: 0; right: 0;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  margin: 0; text-align: center; font-family: var(--mono); font-size: 10px;
+  color: #55556e; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.gf-replay {
+  display: inline-block; margin-top: 10px; cursor: pointer; background: none;
+  border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px;
+  color: var(--dim); font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+  -webkit-tap-highlight-color: transparent;
+}
+.gf-replay:active { color: var(--teal); border-color: rgba(61, 255, 208, 0.4); }

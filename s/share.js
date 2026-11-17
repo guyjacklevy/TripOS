@@ -98,6 +98,86 @@ const MARK = {
   saved: ['⚑ saved', 'var(--tx)']
 };
 
+/* ─── ROUND 8 (Guy, 17 Nov): THE RECEIVER'S CEREMONY — the gift opens
+   playing. Beats: the address → the places (sender's own photos first,
+   each wearing its mark) → the handwritten note → "It's yours." Live
+   page animation only: it shows exactly what the page itself shows
+   (own photos + category art — nothing is exported or stored). Tap =
+   skip · reduced motion = straight to the list · plays once per
+   browser per token, ▶ replays. */
+function giftCeremony(data, token, replay, done) {
+  const cer = $('gfCer');
+  const stage = $('gfcStage');
+  if (!cer || !stage) { done(); return; }
+  const name = data.name || 'a traveler';
+  const places = (data.places || []).slice();
+  const n = (data.counts && data.counts.places) || places.length;
+  const rank = { been: 0, worth: 1, saved: 2 };
+  const cascade = places.sort((a, b) =>
+    ((b.photo ? 1 : 0) - (a.photo ? 1 : 0)) ||
+    ((rank[a.mark] != null ? rank[a.mark] : 3) - (rank[b.mark] != null ? rank[b.mark] : 3))
+  ).slice(0, places.some((p) => p.photo) ? 4 : 3);
+  const MARKL = { been: '✓ been', worth: '♥ worth it', saved: '⚑ saved' };
+  const beats = [];
+  beats.push({ ms: 2300, html:
+    '<div class="gfc-beat"><p class="gfc-t1">' + esc(name) + ' kept ' + n +
+    ' place' + (n === 1 ? '' : 's') + ' in Bali.</p><p class="gfc-t2">for you</p></div>' });
+  cascade.forEach((p) => {
+    beats.push({ ms: 1700, html:
+      '<div class="gfc-beat">' +
+        '<img class="gfc-photo" alt="" src="' + esc(p.photo || catSrc(p.category)) + '">' +
+        '<div class="gfc-shade"></div>' +
+        '<p class="gfc-t1">' + esc(p.name) + '</p>' +
+        '<p class="gfc-mark" style="color:' + (MARK[p.mark] || MARK.saved)[1] + '">' +
+          (MARKL[p.mark] || MARKL.saved) + '</p>' +
+        '<p class="gfc-cap">' + esc(p.area || '') +
+          (p.photo ? ' · ' + esc(name) + '’s photo' : '') + '</p>' +
+      '</div>' });
+  });
+  if (data.note) beats.push({ ms: 2500, html:
+    '<div class="gfc-beat"><p class="gfc-note">“' + esc(data.note) + '”</p>' +
+    '<p class="gfc-cap">— ' + esc(name) + '</p></div>' });
+  beats.push({ ms: 2200, html:
+    '<div class="gfc-beat"><p class="gfc-t1">It’s yours.</p>' +
+    '<button type="button" class="gfc-take">⚑ take all ' + n + ' →</button></div>' });
+
+  const total = beats.reduce((s, b) => s + b.ms, 0);
+  const timers = [];
+  let ended = false;
+  const end = (how) => {
+    if (ended) return;
+    ended = true;
+    timers.forEach(clearTimeout);
+    try { localStorage.setItem('pv_gcer_' + token, '1'); } catch (_) {}
+    cer.classList.add('gfc-out');
+    setTimeout(() => { cer.hidden = true; cer.classList.remove('gfc-out'); }, 440);
+    done();
+    try { window.pvTrack && window.pvTrack('gift_ceremony', { end: how, n: n, replay: !!replay }); } catch (_) {}
+    if (how === 'take') {
+      const btn = $('gfSaveAll');
+      if (btn) { btn.click(); btn.scrollIntoView({ block: 'center' }); }
+    }
+  };
+  cer.onclick = (e) => { end(e.target.closest('.gfc-take') ? 'take' : 'skip'); };
+  stage.innerHTML = beats.map((b) => b.html).join('');
+  const els = stage.querySelectorAll('.gfc-beat');
+  let t = 0;
+  beats.forEach((b, i) => {
+    timers.push(setTimeout(() => {
+      els.forEach((el, j) => el.classList.toggle('on', j === i));
+    }, t));
+    t += b.ms;
+  });
+  timers.push(setTimeout(() => end('done'), total + 450));
+  const fill = $('gfcFill');
+  if (fill) { fill.style.transition = 'none'; fill.style.width = '0'; }
+  cer.hidden = false;
+  $('shLoading').hidden = true;
+  requestAnimationFrame(() => {
+    if (fill) { fill.style.transition = 'width ' + total + 'ms linear'; fill.style.width = '100%'; }
+  });
+}
+
 function renderGift(data, token) {
   const name = data.name || 'a traveler';
   const places = data.places || [];
@@ -164,9 +244,26 @@ function renderGift(data, token) {
     };
   }
 
-  $('shLoading').hidden = true;
-  $('gfBody').hidden = false;
   try { window.pvTrack && window.pvTrack('share_visit', { kind: 'list' }); } catch (_) {}
+
+  /* ROUND 8: the gift opens playing — once per browser; ▶ replays. The
+     list beneath is fully painted first, so skip always lands somewhere. */
+  const addReplay = () => {
+    if (document.getElementById('gfReplay') || !places.length) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.id = 'gfReplay';
+    b.className = 'gf-replay';
+    b.textContent = '▶ play it again';
+    b.onclick = () => giftCeremony(data, token, true, () => {});
+    $('gfCounts').insertAdjacentElement('afterend', b);
+  };
+  const reveal = () => { $('shLoading').hidden = true; $('gfBody').hidden = false; addReplay(); };
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let seen = false;
+  try { seen = !!localStorage.getItem('pv_gcer_' + token); } catch (_) {}
+  if (reduced || seen || !places.length) reveal();
+  else giftCeremony(data, token, false, reveal);
 }
 
 function stampHTML(s, count, viaName, hide) {
