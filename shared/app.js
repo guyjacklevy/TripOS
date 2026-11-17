@@ -76,13 +76,14 @@ function passengerLine(title, fullName) {
 let placesCount = 52;
 const BOOT_ANCHOR = {
   today: () => document.querySelector('#panel-today .today-head'),
-  places: () => document.querySelector('#panel-places .coord-display'),
+  places: () => document.querySelector('#panel-places .hb-title') ||
+                document.querySelector('#panel-places .coord-display'),
   pulse: () => document.querySelector('#panel-pulse .inst-strip'),
   you: () => document.querySelector('#panel-you .inst-strip')
 };
 const BOOT_TEXT = {
   today: () => 'your concierge · refreshes with the clock',
-  places: () => 'your curated layer · ' + placesCount + ' spots',
+  places: () => 'your collection · every save lands here · the shelf holds ' + placesCount,
   pulse: () => 'your fuel gauge · log in 5s',
   you: () => 'your flight prep · visa, gear, repacking'
 };
@@ -114,7 +115,7 @@ function maybeBootCaption(tab) {
 const TABS = ['today', 'places', 'pulse', 'you'];
 let activeTab = null;
 function setTab(name, push) {
-  if (TABS.indexOf(name) === -1) name = 'today';
+  if (TABS.indexOf(name) === -1) name = 'places'; /* ROUND 6: the front door is Your Bali */
   if (name === activeTab) return;
   activeTab = name;
   TABS.forEach((t) => {
@@ -650,8 +651,8 @@ function renderRoute(trip, legs, now, opts) {
     b.onclick = (e) => {
       e.stopPropagation();
       setTab('places');
-      const card = document.querySelector('#appAreaBar .area-card[data-v="' + b.getAttribute('data-area') + '"]');
-      if (card) card.click();
+      /* ROUND 6: an area jump is a browse ask — land on the shelf, not home */
+      if (placesApi && placesApi.focusArea) placesApi.focusArea(b.getAttribute('data-area'));
     };
   });
   if (o.onReplan) {
@@ -842,7 +843,10 @@ function renderPassport(trip, places, opts) {
     $('ppFilter').innerHTML = '';
     host.innerHTML = '<p class="sec-context">No stamps yet — your first check-in starts the passport.</p>' +
       '<button type="button" class="btn btn-primary pp-start">Find where you are →</button>';
-    host.querySelector('.pp-start').onclick = () => setTab('places');
+    host.querySelector('.pp-start').onclick = () => {
+      setTab('places');
+      if (placesApi && placesApi.focusArea) placesApi.focusArea('all'); /* finding = the shelf */
+    };
     return;
   }
   $('ppToggle').hidden = false;
@@ -1931,7 +1935,15 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     $('appAreaBar').innerHTML = '';
     $('appCatBar').innerHTML = '';
     $('appPlacesGrid').innerHTML = '';
+    $('hbGrid').innerHTML = '';
     placesApi = mountPlaces({
+      /* ROUND 6 (Guy: B): the home — saves first, the shelf one door down */
+      home: {
+        host: $('homeBali'), counts: $('hbCounts'), grid: $('hbGrid'),
+        browse: $('hbBrowse'), browse0: $('hbBrowse0'),
+        empty: $('hbEmpty'), e2: $('hbE2'),
+        shelfWrap: $('shelfWrap'), back: $('shelfBack')
+      },
       els: {
         alt: $('appAlt'),
         coordArea: $('appCoordArea'),
@@ -2009,6 +2021,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       $('appPlacesGrid').insertAdjacentHTML('beforebegin',
         layerCap('places2', 'the full shelf — ' + (places || []).length + ' places, every row, search'));
     }
+    /* ROUND 6: the home's trip instruments — the route door (mid-trip) and
+       the live line (mid-trip + GPS already granted; never a boot-time ask) */
+    if (LAST_FIX && placesApi.setLive) placesApi.setLive(LAST_FIX);
+    paintRouteDoor();
+    tryLiveLine();
   }
 
   /* Today → Places, with relation (Guy's phone test): any tap on a card that
@@ -2375,6 +2392,66 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       '<span class="gift-door-go">⤴ GIFT IT</span>';
     door.onclick = () => openGiftSheet('door');
     door.hidden = false;
+  }
+
+  /* ─── ROUND 6 (Guy: B) · the home's trip instruments ───
+     The route door: mid-trip, the planner is one honest door on the home —
+     "your route — day 4 of 14". The live line: where you are, which of
+     your saves are near, check in right there. GPS is read ONLY when the
+     user already granted it (check-ins asked contextually) — the front
+     door never prompts. */
+  let LAST_FIX = null; /* {lat,lng} — survives remounts so distances stay */
+  function onTripNow() {
+    const t = (todayCtx && todayCtx.trip) || trip;
+    if (!t) return null;
+    const dayN = tripDayNumber(t, baliNow());
+    if (dayN == null || dayN < 1) return null;
+    if (t.duration_days && dayN > t.duration_days) return null;
+    return { t, dayN };
+  }
+  function paintRouteDoor() {
+    const el = $('hbRoute');
+    if (!el) return;
+    const on = onTripNow();
+    if (!on || TRIP_LEGS.length < 1) { el.hidden = true; return; }
+    const rs = routeState(on.t, TRIP_LEGS, baliNow());
+    const legArea = rs && rs.cur && rs.cur.area ? rs.cur.area : null;
+    el.innerHTML = '<span>▸ your route — day ' + on.dayN +
+      (on.t.duration_days ? ' of ' + on.t.duration_days : '') +
+      (legArea ? ', ' + esc(legArea) + ' leg' : '') + '</span>' +
+      '<span class="hb-route-go">TODAY →</span>';
+    el.onclick = () => setTab('today');
+    el.hidden = false;
+  }
+  let liveAsked = false;
+  function tryLiveLine() {
+    const el = $('hbLive');
+    if (!el) return;
+    const on = onTripNow();
+    if (!on) { el.hidden = true; return; }
+    if (liveAsked) return;
+    liveAsked = true;
+    if (!navigator.geolocation || !navigator.permissions || !navigator.permissions.query) return;
+    navigator.permissions.query({ name: 'geolocation' }).then((st) => {
+      if (st.state !== 'granted') return; /* not granted = not asked — stays quiet */
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const la = pos.coords.latitude, ln = pos.coords.longitude;
+        const reg = latLngRegion(la, ln);
+        if (!reg) return; /* off-island fix — the home stays quiet */
+        LAST_FIX = { lat: la, lng: ln };
+        const pool = (todayCtx && todayCtx.places) || [];
+        const near = pool.filter((p) => SAVES.has(String(p.id)) &&
+          typeof p.lat === 'number' && typeof p.lng === 'number' &&
+          havKm(la, ln, p.lat, p.lng) <= 3).length;
+        el.innerHTML = '<span class="hb-live-dot"></span><span>you’re in ' + esc(reg) +
+          (near ? ' — ' + near + ' of your saves nearby' : '') + '</span>' +
+          '<button type="button" class="hb-live-ci" id="hbLiveCi">◉ CHECK IN</button>';
+        el.hidden = false;
+        const ci = $('hbLiveCi');
+        if (ci) ci.onclick = () => { setTab('today'); const g = $('gpsBtn'); if (g) g.click(); };
+        if (placesApi && placesApi.setLive) placesApi.setLive(LAST_FIX);
+      }, () => {}, { maximumAge: 120000, timeout: 8000 });
+    }).catch(() => {});
   }
   /* door A — the milestone coda: rises once at 5/10/20/… saves, fades alone */
   const GIFT_MILESTONES = new Set([5, 10, 20, 30, 50, 75, 100]);
@@ -2826,7 +2903,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           '<button type="button" class="ri-replan gps-new">📍 name this place</button>' +
           '<button type="button" class="ck-reset gps-else">or pick it in Places →</button>';
         sheet.querySelector('.gps-new').onclick = nameFlow;
-        sheet.querySelector('.gps-else').onclick = () => { sheet.hidden = true; setTab('places'); };
+        sheet.querySelector('.gps-else').onclick = () => { sheet.hidden = true; setTab('places'); if (placesApi && placesApi.focusArea) placesApi.focusArea('all'); /* picking = the shelf */ };
         return;
       }
       /* SAVE-FIRST pivot: the sheet carries BOTH verbs — stamp (I was here)
@@ -2861,7 +2938,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         };
       });
       sheet.querySelector('.gps-new').onclick = nameFlow;
-      sheet.querySelector('.gps-else').onclick = () => { sheet.hidden = true; setTab('places'); };
+      sheet.querySelector('.gps-else').onclick = () => { sheet.hidden = true; setTab('places'); if (placesApi && placesApi.focusArea) placesApi.focusArea('all'); /* picking = the shelf */ };
     }, (err) => {
       /* say what actually happened — a generic line hides the fix (Guy's test) */
       const denied = err && err.code === 1;
@@ -2875,7 +2952,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const retry = sheet.querySelector('.gps-retry');
       if (retry) retry.onclick = () => gpsBtnEl.onclick();
       const elseB = sheet.querySelector('.gps-else');
-      if (elseB) elseB.onclick = () => { sheet.hidden = true; setTab('places'); };
+      if (elseB) elseB.onclick = () => { sheet.hidden = true; setTab('places'); if (placesApi && placesApi.focusArea) placesApi.focusArea('all'); /* picking = the shelf */ };
     }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
   };
 
@@ -5694,11 +5771,14 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       /* Guy 2026-09-13 #4: the first breath inside ORIENTS — say what the
          three tabs are, in one line, instead of assuming the map is known */
       $('arriveText').innerHTML = '✓ You’re in' + (line ? ', <strong>' + esc(line) + '</strong>' : '') +
-        '. <strong>Today</strong> plans your day · <strong>Places</strong> holds every spot · <strong>You</strong> is your pass + passport.';
+        '. <strong>Your Bali</strong> holds what you keep · <strong>Today</strong> plans your day · <strong>You</strong> is your pass + passport.';
       $('arriveBanner').hidden = false;
       freshLogin = false;
     }
-    setTab(location.hash.slice(1) || 'today', false);
+    /* ROUND 6 (Guy: B, 16 Nov): the app opens on YOUR BALI — the collection
+       is the product's face, every open, mid-trip included. Today is one
+       tap over; deep links (#today etc.) still land where they point. */
+    setTab(location.hash.slice(1) || 'places', false);
 
     /* F2: a first signed-in open with a fresh routed brief lands on the
        reveal — You, scrolled to the route, stagger. Once per route, persisted

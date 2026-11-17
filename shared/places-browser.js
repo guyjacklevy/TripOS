@@ -97,6 +97,12 @@ const photoLead = (p, cat, own) => {
 
 export function mountPlaces(cfg) {
   const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec, userPhotoOf, resolvePhotos } = cfg;
+  /* ROUND 6 (Guy: B, 16 Nov) — the app mount passes `home`: the front door
+     IS the collection. Home renders the saved places as full photo-led
+     cards; the whole shelf stays one visible door down. Public mounts pass
+     nothing and behave exactly as before. */
+  const home = cfg.home || null;
+  let LIVE = null; /* {lat,lng} — set by the app when on-trip GPS is already granted */
   const allPlaces = places.slice();
   const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const state = { area: 'all', cat: 'all', q: '', view: 'rows' };
@@ -146,7 +152,7 @@ export function mountPlaces(cfg) {
       if (phPending.size && !phTimer) phTimer = setTimeout(phFlush, 150);
     }).catch(() => { batch.forEach((n) => phInflight.delete(n)); });
   }
-  function watchPhotos() {
+  function watchPhotos(root) {
     if (!resolvePhotos || !('IntersectionObserver' in window)) return;
     if (!phIO) phIO = new IntersectionObserver((entries) => {
       entries.forEach((en) => {
@@ -159,7 +165,7 @@ export function mountPlaces(cfg) {
         if (!phTimer) phTimer = setTimeout(phFlush, 150);
       });
     }, { rootMargin: '300px' });
-    els.grid.querySelectorAll('.lead-photo[data-pn]').forEach((el) => phIO.observe(el));
+    (root || els.grid).querySelectorAll('.lead-photo[data-pn]').forEach((el) => phIO.observe(el));
   }
 
   /* ── altitude counter ── */
@@ -307,6 +313,83 @@ export function mountPlaces(cfg) {
         '<div class="mini-foot">' + here + recBtn(p) + '<span class="mini-more">more ›</span></div>' +
       '</article>'
     );
+  }
+
+  /* ── ROUND 6 home (Guy: B): the saved places ARE the first screen ──
+     Full photo-led cards, counts real or absent, one visible door to the
+     shelf. When the app hands in a live position (on-trip, permission
+     already granted — never asked here) the collection re-sorts by
+     distance and each card says how far it is. */
+  const havKm = (la1, ln1, la2, ln2) => {
+    const R = 6371, dLa = (la2 - la1) * Math.PI / 180, dLn = (ln2 - ln1) * Math.PI / 180;
+    const a = Math.sin(dLa / 2) ** 2 +
+      Math.cos(la1 * Math.PI / 180) * Math.cos(la2 * Math.PI / 180) * Math.sin(dLn / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+  const distLabel = (km) => km < 1
+    ? Math.max(50, Math.round(km * 1000 / 50) * 50) + ' m'
+    : (km < 10 ? km.toFixed(1) : Math.round(km)) + ' km';
+  function savedList() {
+    if (!saves) return [];
+    const rows = allPlaces.filter((p) => saves.has(String(p.id)));
+    if (LIVE) {
+      return rows.map((p) => ({
+        p,
+        km: (typeof p.lat === 'number' && typeof p.lng === 'number')
+          ? havKm(LIVE.lat, LIVE.lng, p.lat, p.lng) : null
+      })).sort((a, b) =>
+        ((a.km == null ? 1 : 0) - (b.km == null ? 1 : 0)) || ((a.km || 0) - (b.km || 0)));
+    }
+    return rows.sort((a, b) => {
+      const ra = AREA_ORDER.indexOf(region(a.area)), rb = AREA_ORDER.indexOf(region(b.area));
+      if (ra !== rb) return (ra === -1 ? 99 : ra) - (rb === -1 ? 99 : rb);
+      const ta = (saves.get && saves.get(String(a.id))) || 0;
+      const tb = (saves.get && saves.get(String(b.id))) || 0;
+      return tb - ta;
+    }).map((p) => ({ p, km: null }));
+  }
+  function renderHome() {
+    if (!home) return;
+    const rows = savedList();
+    if (!rows.length) {
+      /* day zero: one sentence, one door (the decided mock) */
+      if (home.counts) home.counts.hidden = true;
+      home.grid.innerHTML = '';
+      if (home.browse) home.browse.hidden = true;
+      if (home.e2) home.e2.textContent = allPlaces.length +
+        ' real places on the shelf — tap ⚑ on anything that looks like you.';
+      if (home.empty) home.empty.hidden = false;
+      return;
+    }
+    if (home.empty) home.empty.hidden = true;
+    const phN = userPhotoOf ? rows.filter((r) => userPhotoOf(r.p.id)).length : 0;
+    const beenN = stampedIds ? rows.filter((r) => stampedIds.has(String(r.p.id))).length : 0;
+    if (home.counts) {
+      home.counts.textContent = rows.length + ' place' + (rows.length === 1 ? '' : 's') +
+        (phN ? ' · ' + phN + ' with your photos' : '') +
+        (beenN ? ' · ' + beenN + ' been' : '');
+      home.counts.hidden = false;
+    }
+    home.grid.innerHTML = rows.map((r) => card(r.p, matchedMap.get(r.p) || null)).join('');
+    if (LIVE && window.CSS && CSS.escape) rows.forEach((r) => {
+      if (r.km == null) return;
+      const el = home.grid.querySelector('.place-card[data-id="' + CSS.escape(String(r.p.id)) + '"] .poi-type');
+      if (el) el.insertAdjacentHTML('beforeend', ' <span class="hb-dist">· ' + distLabel(r.km) + ' away</span>');
+    });
+    if (home.browse) home.browse.hidden = false;
+    watchPhotos(home.grid);
+  }
+  function showShelf() {
+    if (!home) return;
+    home.host.hidden = true;
+    if (home.shelfWrap) home.shelfWrap.hidden = false;
+  }
+  function showHome() {
+    if (!home) return;
+    renderHome();
+    if (home.shelfWrap) home.shelfWrap.hidden = true;
+    home.host.hidden = false;
+    window.scrollTo(0, 0);
   }
 
   /* group brief-sorted list by category; matched categories float to top
@@ -604,10 +687,11 @@ export function mountPlaces(cfg) {
 
   renderRows();
 
-  /* one delegated handler on the grid, survives every re-render:
+  /* one delegated handler on the grid(s), survives every re-render:
      Maps links pass through · "I'm here" checks in · any other tap on a
-     carousel card opens its category detail, scrolled to that place */
-  els.grid.onclick = (e) => {
+     carousel card opens its category detail, scrolled to that place.
+     ROUND 6: the home grid shares it — same cards, same verbs. */
+  const gridClick = (e) => {
     if (e.target.closest('a')) return;
     /* ROUND 5: "more ⌄" expands the quiet card in place — same spot, no new
        screen. The depth stays one visible tap away, never hidden. */
@@ -650,10 +734,12 @@ export function mountPlaces(cfg) {
       const use = sf.querySelector('use');
       if (use) use.setAttribute('href', '#icon-' + (wasOn ? 'save' : 'saved'));
       if (!wasOn && !REDUCED) { sf.classList.remove('sf-ping'); void sf.offsetWidth; sf.classList.add('sf-ping'); }
+      if (home && !home.host.hidden) renderHome(); /* the front door reflects the bank live */
       if (state.view === 'rows') renderRows(); /* the rail reflects the bank live */
       /* the quiet fill (brand pivot, 9 Nov): one line on the card, then gone */
       if (!wasOn) {
-        const anchor = els.grid.querySelector('.save-flag[data-save="' +
+        const scope = (home && !home.host.hidden) ? home.grid : els.grid;
+        const anchor = scope.querySelector('.save-flag[data-save="' +
           (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
         if (anchor && anchor.parentElement) {
           const n = document.createElement('span');
@@ -666,6 +752,7 @@ export function mountPlaces(cfg) {
       Promise.resolve(onSave(p, !wasOn)).then((ok) => {
         if (ok !== false) return;
         if (wasOn) { saves.set ? saves.set(id, Date.now()) : saves.add(id); } else { saves.delete(id); }
+        if (home && !home.host.hidden) renderHome();
         if (state.view === 'rows') renderRows();
       });
       return;
@@ -683,6 +770,14 @@ export function mountPlaces(cfg) {
       applyFilters(false);
     }
   };
+  els.grid.onclick = gridClick;
+  if (home && home.grid) home.grid.onclick = gridClick;
+  if (home) {
+    if (home.browse) home.browse.onclick = showShelf;
+    if (home.browse0) home.browse0.onclick = showShelf;
+    if (home.back) home.back.onclick = showHome;
+    showHome(); /* the front door: the collection first, every open */
+  }
 
   const regions = [];
   places.forEach((p) => { const r = region(p.area); if (regions.indexOf(r) === -1) regions.push(r); });
@@ -731,11 +826,20 @@ export function mountPlaces(cfg) {
     /* own-photo urls are signed AFTER mount — the shelf repaints in place
        so the user's photo leads the card in the same session it was taken */
     repaint() {
+      if (home && !home.host.hidden) renderHome();
       if (state.view === 'rows') renderRows();
       else renderCatGrid(state.view);
       applyFilters(false);
     },
+    /* ROUND 6: the app hands in a live fix (on-trip, permission already
+       granted) — the home collection re-sorts by distance, cards say how far */
+    setLive(pos) {
+      LIVE = pos && typeof pos.lat === 'number' && typeof pos.lng === 'number' ? pos : null;
+      if (home && !home.host.hidden) renderHome();
+    },
+    refreshHome() { if (home && !home.host.hidden) renderHome(); },
     focusPlace(id) {
+      showShelf(); /* deep-links land on the shelf, never behind the home */
       shelfUnlocked = true; /* asked-for content is never gated (§F carve-out) */
       const p = allPlaces.find((x) => String(x.id) === String(id));
       if (!p) return;
@@ -750,6 +854,7 @@ export function mountPlaces(cfg) {
     /* build #5 (audit J3): Today's rail footers land here — category rows,
        pre-filtered to the day's area. Unknown area falls back to all. */
     focusArea(area) {
+      showShelf(); /* deep-links land on the shelf, never behind the home */
       shelfUnlocked = true; /* asked-for content is never gated (§F carve-out) */
       if (state.view !== 'rows') { state.view = 'rows'; renderRows(); }
       else renderRows();

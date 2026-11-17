@@ -3638,3 +3638,53 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
   border-radius: 6px; padding: 2px 6px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+
+/* ─── YOUR BALI · the front door (ROUND 6, Guy: B) ────────────────────
+ * Home = the living collection: counts, live line (on-trip only), gift
+ * door, saved cards photo-led, route door, one visible door to the shelf. */
+.hb-title { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; margin: 16px 0 2px; }
+.hb-counts {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+  color: var(--dim); margin: 0 0 4px; text-transform: uppercase;
+}
+.hb-live {
+  display: flex; align-items: center; gap: 9px; margin: 12px 0 2px;
+  padding: 10px 12px; border: 1px solid rgba(61, 255, 208, 0.35);
+  background: rgba(61, 255, 208, 0.07); border-radius: 12px;
+  font-size: 13px; font-weight: 700;
+}
+.hb-live-dot {
+  flex: none; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--teal); box-shadow: 0 0 8px var(--teal);
+}
+.hb-live-ci {
+  margin-left: auto; flex: none; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.05em; color: var(--teal); background: none;
+  border: 1px solid rgba(61, 255, 208, 0.4); border-radius: 999px; padding: 6px 11px;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.hb-grid { margin-top: 10px; }
+.hb-route {
+  display: flex; align-items: center; gap: 9px; margin: 12px 0 0;
+  padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px;
+  font-size: 13.5px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.hb-route:active { transform: scale(0.99); }
+.hb-route-go { margin-left: auto; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--dim); }
+.hb-browse {
+  display: block; width: 100%; margin: 14px 0 4px; padding: 11px;
+  background: none; border: 1px dashed var(--line); border-radius: 12px;
+  color: var(--dim); font-size: 13px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.hb-browse em { color: var(--teal); font-style: normal; font-weight: 700; }
+.hb-empty { text-align: center; padding: 34px 12px 16px; }
+.hb-e1 { font-size: 21px; font-weight: 800; line-height: 1.3; margin: 0; }
+.hb-e2 { color: var(--dim); font-size: 13.5px; line-height: 1.55; margin: 10px 0 0; }
+.hb-e3 {
+  display: inline-block; margin-top: 18px; background: none; cursor: pointer;
+  border: 1px solid rgba(61, 255, 208, 0.5); color: var(--teal);
+  border-radius: 999px; padding: 10px 18px; font-size: 14px; font-weight: 700;
+  -webkit-tap-highlight-color: transparent;
+}
+.hb-back { margin-top: 14px; }
+.hb-dist { color: var(--teal); }

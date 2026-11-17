@@ -337,8 +337,28 @@
         <div class="itinerary" id="itinerary"></div>
       </section>
 
-      <!-- PLACES — the full spatial browser, in-shell (slice 5) -->
+      <!-- YOUR BALI — ROUND 6 (Guy: B): the front door is the living
+           collection. Home = your saves, photo-led, gift door on top; the
+           full shelf is one visible door down. On-trip the home wakes: live
+           line + distance sort (painted by app.js, never a permission ask). -->
       <section class="panel" id="panel-places">
+        <div class="home-bali" id="homeBali" hidden>
+          <h2 class="hb-title">Your Bali</h2>
+          <p class="hb-counts" id="hbCounts" hidden></p>
+          <div class="hb-live" id="hbLive" hidden></div>
+          <!-- the gift door (Week 3): your collection has a name and one verb -->
+          <div class="gift-door" id="giftDoor" role="button" hidden></div>
+          <div class="places-grid hb-grid" id="hbGrid"></div>
+          <div class="hb-route" id="hbRoute" role="button" hidden></div>
+          <button type="button" class="hb-browse" id="hbBrowse" hidden>+ find more places — <em>browse the shelf →</em></button>
+          <div class="hb-empty" id="hbEmpty" hidden>
+            <p class="hb-e1">Your Bali starts<br>with one save.</p>
+            <p class="hb-e2" id="hbE2"></p>
+            <button type="button" class="hb-e3" id="hbBrowse0">browse the shelf →</button>
+          </div>
+        </div>
+        <div id="shelfWrap" hidden>
+        <button type="button" class="row-back hb-back" id="shelfBack">← your Bali</button>
         <div class="altitude-bar" style="margin-top:14px">
           <span class="alt-label">ALTITUDE</span>
           <span class="alt-value" id="appAlt">-- ft</span>
@@ -349,8 +369,6 @@
           <span class="coord-sep">·</span>
           <span id="appCoordArea">ALL AREAS</span>
         </div>
-        <!-- the gift door (Week 3): your collection has a name and one verb -->
-        <div class="gift-door" id="giftDoor" role="button" hidden></div>
         <input class="auth-input place-search" id="appPlaceSearch" type="search" placeholder="🔎 search a place — or find it on Google Maps" autocomplete="off">
         <div class="area-cards" id="appAreaBar"></div>
         <div class="filters legend" id="appCatBar"></div>
@@ -363,6 +381,7 @@
           </div>
         </div>
         <div class="places-grid" id="appPlacesGrid"></div>
+        </div><!-- /shelfWrap -->
       </section>
 
       <!-- PULSE -->
@@ -649,8 +668,10 @@
 
     <nav class="tab-bar" id="tabBar">
       <span class="runway" id="runway"></span>
+      <!-- ROUND 6 (Guy: B, 16 Nov): the collection IS the front door — the
+           tab wears its true name and boots first; Today is one tap over -->
+      <button type="button" class="tab-slot" data-tab="places"><svg class="tab-ic"><use href="#tab-places"/></svg><span>YOUR BALI</span></button>
       <button type="button" class="tab-slot" data-tab="today"><svg class="tab-ic"><use href="#tab-today"/></svg><span>TODAY</span></button>
-      <button type="button" class="tab-slot" data-tab="places"><svg class="tab-ic"><use href="#tab-places"/></svg><span>PLACES</span></button>
       <button type="button" class="tab-slot" data-tab="pulse"><svg class="tab-ic"><use href="#tab-pulse"/></svg><span>PULSE</span></button>
       <button type="button" class="tab-slot" data-tab="you"><svg class="tab-ic"><use href="#tab-you"/></svg><span>YOU</span></button>
     </nav>
