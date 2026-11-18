@@ -96,7 +96,7 @@ const photoLead = (p, cat, own) => {
 };
 
 export function mountPlaces(cfg) {
-  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec, userPhotoOf, resolvePhotos } = cfg;
+  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec, userPhotoOf, resolvePhotos, beenCounts, onMemory } = cfg;
   /* ROUND 6 (Guy: B, 16 Nov) — the app mount passes `home`: the front door
      IS the collection. Home renders the saved places as full photo-led
      cards; the whole shelf stays one visible door down. Public mounts pass
@@ -262,7 +262,8 @@ export function mountPlaces(cfg) {
     if (!onSave || !saves) return '';
     const id = String(p.id);
     const on = saves.has(id);
-    const done = on && stampedIds && stampedIds.has(id);
+    /* ROUND 9: ✓ marks BEEN — the strongest mark there is, saved or not */
+    const done = !!(stampedIds && stampedIds.has(id));
     return '<button type="button" class="save-flag' + (on ? ' on' : '') + (done ? ' done' : '') +
       '" data-save="' + esc(id) + '" aria-label="' + (on ? 'saved — tap to remove' : 'save for later') + '">' +
       (done ? '<span class="sf-check">✓</span>'
@@ -329,9 +330,18 @@ export function mountPlaces(cfg) {
   const distLabel = (km) => km < 1
     ? Math.max(50, Math.round(km * 1000 / 50) * 50) + ' m'
     : (km < 10 ? km.toFixed(1) : Math.round(km)) + ' km';
+  /* ROUND 9 (Guy: yes ×3, 18 Nov) — THE LIVED COLLECTION. Membership is
+     saves ∪ stamped: a ✓ check-in is the strongest mark there is, so every
+     place you've BEEN belongs to Your Bali, not only the ones you flagged.
+     Big collections group by area (reads like the route); one group open
+     at a time keeps 150+ cards honest on a phone. */
   function savedList() {
-    if (!saves) return [];
-    const rows = allPlaces.filter((p) => saves.has(String(p.id)));
+    if (!saves && !stampedIds) return [];
+    const member = (p) => {
+      const id = String(p.id);
+      return (saves && saves.has(id)) || (stampedIds && stampedIds.has(id));
+    };
+    const rows = allPlaces.filter(member);
     if (LIVE) {
       return rows.map((p) => ({
         p,
@@ -343,11 +353,39 @@ export function mountPlaces(cfg) {
     return rows.sort((a, b) => {
       const ra = AREA_ORDER.indexOf(region(a.area)), rb = AREA_ORDER.indexOf(region(b.area));
       if (ra !== rb) return (ra === -1 ? 99 : ra) - (rb === -1 ? 99 : rb);
-      const ta = (saves.get && saves.get(String(a.id))) || 0;
-      const tb = (saves.get && saves.get(String(b.id))) || 0;
+      const ba = beenCounts ? (beenCounts.get(String(a.id)) || 0) : 0;
+      const bb = beenCounts ? (beenCounts.get(String(b.id)) || 0) : 0;
+      if (ba !== bb) return bb - ba; /* most-stamped first — the places that made the trip */
+      const ta = (saves && saves.get && saves.get(String(a.id))) || 0;
+      const tb = (saves && saves.get && saves.get(String(b.id))) || 0;
       return tb - ta;
     }).map((p) => ({ p, km: null }));
   }
+  /* the ✓ been ×N chip and the memory door (+ add your photo / your photo ↻)
+     land as post-annotations — the card itself stays one shared component */
+  function annotateHome(rows) {
+    const byId = new Map(rows.map((r) => [String(r.p.id), r]));
+    home.grid.querySelectorAll('.place-card').forEach((el) => {
+      const id = String(el.getAttribute('data-id'));
+      const r = byId.get(id);
+      const n = beenCounts ? (beenCounts.get(id) || 0)
+        : (stampedIds && stampedIds.has(id) ? 1 : 0);
+      const t = el.querySelector('.poi-type');
+      if (t && r && r.km != null && !el.querySelector('.hb-dist'))
+        t.insertAdjacentHTML('beforeend', ' <span class="hb-dist">· ' + distLabel(r.km) + ' away</span>');
+      if (t && n && !el.querySelector('.hb-been'))
+        t.insertAdjacentHTML('beforeend', ' <span class="hb-been">✓ been' + (n > 1 ? ' ×' + n : '') + '</span>');
+      if (onMemory && n) {
+        const fig = el.querySelector('.lead-photo');
+        const own = userPhotoOf ? userPhotoOf(id) : null;
+        if (fig && !fig.querySelector('.hb-ph')) fig.insertAdjacentHTML('beforeend',
+          '<button type="button" class="hb-ph' + (own ? ' has' : '') + '" data-mem="' + esc(id) + '">' +
+          (own ? '📷 your photo ↻' : '+ add your photo') + '</button>');
+      }
+    });
+  }
+  let hbOpen; /* the one open area group — the first, until a tap moves it */
+  const HB_GROUP_MIN = 9; /* small collections read better flat */
   function renderHome() {
     if (!home) return;
     const rows = savedList();
@@ -355,6 +393,7 @@ export function mountPlaces(cfg) {
       /* day zero: one sentence, one door (the decided mock) */
       if (home.counts) home.counts.hidden = true;
       home.grid.innerHTML = '';
+      home.grid.classList.remove('hb-grouped');
       if (home.browse) home.browse.hidden = true;
       if (home.e2) home.e2.textContent = allPlaces.length +
         ' real places on the shelf — tap ⚑ on anything that looks like you.';
@@ -364,18 +403,52 @@ export function mountPlaces(cfg) {
     if (home.empty) home.empty.hidden = true;
     const phN = userPhotoOf ? rows.filter((r) => userPhotoOf(r.p.id)).length : 0;
     const beenN = stampedIds ? rows.filter((r) => stampedIds.has(String(r.p.id))).length : 0;
+    const savedN = saves ? rows.filter((r) => saves.has(String(r.p.id))).length : 0;
     if (home.counts) {
-      home.counts.textContent = rows.length + ' place' + (rows.length === 1 ? '' : 's') +
-        (phN ? ' · ' + phN + ' with your photos' : '') +
-        (beenN ? ' · ' + beenN + ' been' : '');
+      home.counts.textContent = [
+        rows.length + ' place' + (rows.length === 1 ? '' : 's'),
+        beenN ? beenN + ' been' : '',
+        savedN ? savedN + ' saved' : '',
+        phN ? phN + ' with your photos' : ''
+      ].filter(Boolean).join(' · ');
       home.counts.hidden = false;
     }
-    home.grid.innerHTML = rows.map((r) => card(r.p, matchedMap.get(r.p) || null)).join('');
-    if (LIVE && window.CSS && CSS.escape) rows.forEach((r) => {
-      if (r.km == null) return;
-      const el = home.grid.querySelector('.place-card[data-id="' + CSS.escape(String(r.p.id)) + '"] .poi-type');
-      if (el) el.insertAdjacentHTML('beforeend', ' <span class="hb-dist">· ' + distLabel(r.km) + ' away</span>');
-    });
+    if (!LIVE && rows.length >= HB_GROUP_MIN) {
+      /* area groups — the collection reads like the route, not a wall */
+      const byA = new Map();
+      rows.forEach((r) => {
+        const a = region(r.p.area) || 'Bali';
+        if (!byA.has(a)) byA.set(a, []);
+        byA.get(a).push(r);
+      });
+      const names = [...byA.keys()].sort((x, y) => {
+        const ix = AREA_ORDER.indexOf(x), iy = AREA_ORDER.indexOf(y);
+        return (ix === -1 ? 99 : ix) - (iy === -1 ? 99 : iy);
+      });
+      /* undefined = first open by default · '' = user closed them all */
+      if (hbOpen === undefined || (hbOpen !== '' && !byA.has(hbOpen))) hbOpen = names[0];
+      home.grid.classList.add('hb-grouped');
+      home.grid.innerHTML = names.map((nm) => {
+        const g = byA.get(nm);
+        const open = nm === hbOpen;
+        const gPh = userPhotoOf ? g.filter((r) => userPhotoOf(r.p.id)).length : 0;
+        return '<section class="hb-group' + (open ? ' open' : '') + '" data-area="' + esc(nm) + '">' +
+          '<button type="button" class="hb-area" aria-expanded="' + (open ? 'true' : 'false') + '">' +
+            '<span class="hb-area-nm">' + esc(nm.toUpperCase()) + '</span>' +
+            '<span class="hb-area-n">' + g.length + (gPh ? ' · ' + gPh + ' 📷' : '') + '</span>' +
+            '<span class="hb-area-car">' + (open ? '▾' : '▸') + '</span>' +
+          '</button>' +
+          '<div class="hb-gbody"' + (open ? '' : ' hidden') + '>' +
+            (open ? g.map((r) => card(r.p, matchedMap.get(r.p) || null)).join('') : '') +
+          '</div>' +
+        '</section>';
+      }).join('');
+      annotateHome(rows);
+    } else {
+      home.grid.classList.remove('hb-grouped');
+      home.grid.innerHTML = rows.map((r) => card(r.p, matchedMap.get(r.p) || null)).join('');
+      annotateHome(rows);
+    }
     if (home.browse) home.browse.hidden = false;
     watchPhotos(home.grid);
   }
@@ -693,6 +766,23 @@ export function mountPlaces(cfg) {
      ROUND 6: the home grid shares it — same cards, same verbs. */
   const gridClick = (e) => {
     if (e.target.closest('a')) return;
+    /* ROUND 9: an area group header toggles — one open at a time (accordion
+       keeps a 150-card collection honest; the open group renders its cards) */
+    const ga = e.target.closest('.hb-area');
+    if (ga) {
+      const nm = ga.closest('.hb-group').getAttribute('data-area');
+      hbOpen = (hbOpen === nm) ? '' : nm;
+      renderHome();
+      return;
+    }
+    /* ROUND 9: the memory door — retro photos on any been place */
+    const mb = e.target.closest('.hb-ph');
+    if (mb) {
+      e.stopPropagation();
+      const pMem = allPlaces.find((x) => String(x.id) === mb.getAttribute('data-mem'));
+      if (pMem && onMemory) onMemory(pMem);
+      return;
+    }
     /* ROUND 5: "more ⌄" expands the quiet card in place — same spot, no new
        screen. The depth stays one visible tap away, never hidden. */
     const pm = e.target.closest('.pc-more');

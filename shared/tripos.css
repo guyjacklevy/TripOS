@@ -3743,3 +3743,59 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
   -webkit-tap-highlight-color: transparent;
 }
 .gf-replay:active { color: var(--teal); border-color: rgba(61, 255, 208, 0.4); }
+
+/* ═══ ROUND 9 (Guy: yes ×3, 18 Nov) · THE LIVED COLLECTION ═══════════
+   Been places join Your Bali; big collections group by area (one group
+   open — the accordion keeps 150+ cards honest); every been card carries
+   the memory door; the gift composer grows one light pick. */
+.hb-grouped { display: block; }
+.hb-group { margin: 0; }
+.hb-area {
+  display: flex; width: 100%; align-items: baseline; gap: 10px; cursor: pointer;
+  background: none; border: 0; border-top: 1px solid rgba(255, 255, 255, 0.09);
+  padding: 13px 2px 11px; text-align: left;
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.14em;
+  -webkit-tap-highlight-color: transparent;
+}
+.hb-group:first-child .hb-area { border-top: 0; }
+.hb-area-nm { color: var(--tx); font-weight: 700; }
+.hb-area-n { color: var(--dim); font-size: 10.5px; }
+.hb-area-car { margin-left: auto; color: var(--teal); font-size: 12px; }
+.hb-gbody { padding-bottom: 6px; }
+.hb-been { color: var(--teal); font-weight: 600; white-space: nowrap; }
+.hb-ph {
+  position: absolute; left: 10px; bottom: 10px; z-index: 2; cursor: pointer;
+  background: rgba(10, 10, 20, 0.74); backdrop-filter: blur(4px);
+  border: 1px solid rgba(61, 255, 208, 0.55); border-radius: 999px;
+  color: var(--teal); font-family: var(--mono); font-size: 9.5px;
+  letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 11px;
+  -webkit-tap-highlight-color: transparent;
+}
+.hb-ph.has { border-color: rgba(255, 255, 255, 0.28); color: var(--mut); }
+
+/* the memory sheet — library · camera · replace · remove */
+.ms-opt {
+  display: flex; width: 100%; align-items: center; gap: 10px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line);
+  border-radius: 12px; padding: 13px 14px; margin-top: 9px; text-align: left;
+  color: var(--tx); font-size: 14.5px; font-weight: 600;
+  -webkit-tap-highlight-color: transparent;
+}
+.ms-opt:active { border-color: rgba(61, 255, 208, 0.4); }
+.ms-opt:disabled { opacity: 0.5; }
+.ms-rm { color: var(--mut); font-weight: 500; }
+
+/* the gift's one light pick — two chips, the keepers on by default */
+.gift-scope { display: flex; gap: 8px; margin: 2px 0 12px; }
+.gs-chip {
+  flex: 1; display: flex; flex-direction: column; gap: 3px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line);
+  border-radius: 12px; padding: 10px 12px; text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.gs-chip b { color: var(--tx); font-size: 13px; font-weight: 700; }
+.gs-chip span {
+  color: var(--dim); font-family: var(--mono); font-size: 9px; letter-spacing: 0.07em;
+}
+.gs-chip.on { border-color: rgba(61, 255, 208, 0.55); background: rgba(61, 255, 208, 0.06); }
+.gs-chip.on b { color: var(--teal); }

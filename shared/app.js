@@ -83,7 +83,7 @@ const BOOT_ANCHOR = {
 };
 const BOOT_TEXT = {
   today: () => 'your concierge · refreshes with the clock',
-  places: () => 'your collection · every save lands here · the shelf holds ' + placesCount,
+  places: () => 'your collection · saved or been, it lands here · the shelf holds ' + placesCount,
   pulse: () => 'your fuel gauge · log in 5s',
   you: () => 'your flight prep · visa, gear, repacking'
 };
@@ -686,6 +686,20 @@ let CHECKINS = [];        /* the user's check-in rows, chronological */
 let SAVES = new Map();    /* saved places: curated_place_id → save-time ms (R2 recency) */
 let SAVE_ROWS = new Map(); /* curated_place_id → places-table row id, for unsave */
 let RECS = new Set();      /* worth-it recs: curated_place_id — an opinion, not presence */
+/* ROUND 9 (18 Nov): the lived collection — stamped places are MEMBERS of
+   Your Bali, not just passport history. Same objects for the app's life;
+   rebuildStamped() mutates in place so every surface holding them stays live. */
+const STAMPED = new Set();      /* place_id strings with ≥1 stamp */
+const BEEN_COUNTS = new Map();  /* place_id → stamp count (the ✓ been ×N chip) */
+function rebuildStamped() {
+  STAMPED.clear(); BEEN_COUNTS.clear();
+  (CHECKINS || []).forEach((c) => {
+    const k = String(c.place_id);
+    if (k === 'null') return; /* unmatched stamps are passport-only */
+    STAMPED.add(k);
+    BEEN_COUNTS.set(k, (BEEN_COUNTS.get(k) || 0) + 1);
+  });
+}
 let TRIP_DAY_PLANS = [];  /* [{leg_seq, day_in_leg, slots}] for planned-vs-actual */
 let PP_VIEW = 'place';
 let PP_CAT = 'all';
@@ -1758,13 +1772,15 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     return MEM_URLS.size;
   }
 
-  /* one camera door for both the frame and the passport backfill.
-     onDone: true = saved · false = failed · null = camera closed, no shot */
-  function memCapture(ck, onDone, via) {
+  /* one camera door for the frame, the passport backfill AND (Round 9) the
+     retro library pick — opts.library skips `capture`, so the phone offers
+     the photo library instead of jumping straight to the camera.
+     onDone: true = saved · false = failed · null = closed, no shot */
+  function memCapture(ck, onDone, via, opts) {
     const inp = document.createElement('input');
     inp.type = 'file';
     inp.accept = 'image/*';
-    inp.capture = 'environment';
+    if (!(opts && opts.library)) inp.capture = 'environment';
     inp.hidden = true;
     document.body.appendChild(inp);
     const fin = (v) => { inp.remove(); if (onDone) onDone(v); };
@@ -1836,6 +1852,72 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     };
   }
 
+  /* ─── ROUND 9 · THE MEMORY SHEET (Guy: yes, 18 Nov) ───────────────
+     Retro photos: any been place takes a photo FROM THE LIBRARY, a fresh
+     shot, a replacement, or removal — attached to the user's real stamp
+     (the check-in proves presence; the photo is the memory of it). Same
+     privacy spine as the moment-capture: private bucket, own folder,
+     signed URLs, and it ships only in a gift with photos consent ON. */
+  function openMemorySheet(p) {
+    if (!user || !p) return;
+    const pid = String(p.id);
+    const cks = CHECKINS.filter((c) => c.id && String(c.place_id) === pid)
+      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1)); /* newest first */
+    if (!cks.length) return; /* no stamp, no photo — presence first */
+    const cur = cks.find((c) => c.photo_path) || null;
+    const target = cur || cks[0];
+    const old = document.querySelector('.mem-sheet');
+    if (old) old.remove();
+    const sheet = document.createElement('div');
+    sheet.className = 'gift-sheet mem-sheet';
+    sheet.innerHTML =
+      '<div class="gift-sheet-card">' +
+        '<h3 class="gift-sheet-h">' + esc(p.name) + '</h3>' +
+        '<p class="gift-sheet-sub">' + (cur
+          ? 'YOUR PHOTO LEADS THIS CARD — ATTACHED TO YOUR STAMP'
+          : 'YOUR PHOTO WILL LEAD THIS CARD — ATTACHED TO YOUR STAMP') + '</p>' +
+        '<button type="button" class="ms-opt" data-act="lib">⌲ ' +
+          (cur ? 'replace from your library' : 'choose from your library') + '</button>' +
+        '<button type="button" class="ms-opt" data-act="cam">◉ ' +
+          (cur ? 'retake one now' : 'take one now') + '</button>' +
+        (cur ? '<button type="button" class="ms-opt ms-rm" data-act="rm">✕ remove — the card falls back honestly</button>' : '') +
+        '<p class="gift-priv">yours only — until you gift with photos ON · the ceremony picks it up by itself</p>' +
+        '<div class="gift-acts"><button type="button" class="ck-reset ms-close">close</button></div>' +
+      '</div>';
+    document.body.appendChild(sheet);
+    const close = () => sheet.remove();
+    sheet.onclick = (e) => { if (e.target === sheet) close(); };
+    sheet.querySelector('.ms-close').onclick = close;
+    sheet.querySelectorAll('.ms-opt').forEach((b) => {
+      b.onclick = async () => {
+        const act = b.getAttribute('data-act');
+        if (act === 'rm') {
+          b.disabled = true;
+          const path = cur.photo_path;
+          const { error } = await sb.from('checkins').update({ photo_path: null }).eq('id', cur.id);
+          if (error) { b.disabled = false; b.textContent = '⚠ didn’t remove — retry'; return; }
+          try { await sb.storage.from('memories').remove([path]); } catch (_) {}
+          cur.photo_path = null;
+          MEM_URLS.delete(path);
+          rebuildMemPlace();
+          track('memory_photo_removed', {});
+          if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+          if (placesApi && placesApi.repaint) placesApi.repaint();
+          close();
+          return;
+        }
+        const label = b.textContent;
+        b.textContent = act === 'lib' ? 'your library…' : 'camera…';
+        memCapture(target, (ok) => {
+          if (ok) close();
+          else if (ok === false) b.textContent = '⚠ didn’t save — retry';
+          else b.textContent = label; /* picker closed, nothing chosen */
+        }, act === 'lib' ? 'retro-lib' : 'retro-cam', { library: act === 'lib' });
+      };
+    });
+    track('memory_sheet', { has: cur ? 1 : 0 });
+  }
+
   async function checkinAt(p, btn) {
     if (!user) return;
     btn.disabled = true;
@@ -1852,6 +1934,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     setTimeout(() => { btn.textContent = '📍 I’m here'; btn.disabled = false; }, 2600);
     /* A1: the stamp ceremony — the check-in lands in the passport live */
     CHECKINS.push(ckRow || { user_id: user.id, place_id: p.id, place_name: p.name, lat: p.lat, lng: p.lng, created_at: new Date().toISOString() });
+    rebuildStamped(); /* ROUND 9: the collection grows the moment you're there */
+    if (placesApi && placesApi.refreshHome) placesApi.refreshHome();
     autoAnchor(); /* REALITY FIRST: a live check-in is the strongest signal — Today follows it now */
     /* F5: pride moments are deterministic — first stamp in an area, every
        10th trip-wide. Never random, never nagging. */
@@ -1930,6 +2014,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   /* the full spatial browser in the Places tab (remount-safe for brief changes) */
   let placesApi = null; /* mountPlaces handle — Today taps deep-focus through it */
   function mountPlacesTab(places) {
+    rebuildStamped(); /* ROUND 9: membership = saves ∪ stamped, always fresh */
     const panel = $('panel-places');
     panel.querySelectorAll('.match-banner').forEach((b) => b.remove());
     $('appAreaBar').innerHTML = '';
@@ -1970,7 +2055,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       /* SAVED PLACES v1 (R1/R2): the bank + the mark, wired to the original
          user-places table. Saves are private by default, always. */
       saves: SAVES,
-      stampedIds: new Set((CHECKINS || []).map((c) => String(c.place_id)).filter((k) => k !== 'null')),
+      /* ROUND 9: live sets — check-ins and photo changes reflect without a remount */
+      stampedIds: STAMPED,
+      beenCounts: BEEN_COUNTS,
+      onMemory: (p) => openMemorySheet(p),
       onSave: async (p, nowSaved) => {
         if (!user) return false;
         if (nowSaved) {
@@ -2290,13 +2378,29 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
      Doors: the standing row on Places (B) + the milestone coda (A, fades on
      its own — the hidden timer). One composer; the gift page is /s/ kind=list. */
   const GIFT_QUIET = new Set(['practical', 'stay', 'health', 'services']);
-  function giftable() {
+  /* ROUND 9: the gift draws from the LIVED collection (saves ∪ been). Two
+     scopes, one light pick: 'keepers' = own photo · worth-it · saved (the
+     vouched-for core, the default) · 'all' = everything. Legacy links (no
+     scope on the row) stay saves-only server-side — a sent link never
+     changes under its receiver. */
+  function giftable(scope) {
     const pool = (todayCtx && todayCtx.places) || [];
+    const ph = new Set();
+    CHECKINS.forEach((c) => { if (c.photo_path && c.place_id) ph.add(String(c.place_id)); });
     return pool.filter((p) => {
-      if (!SAVES.has(String(p.id))) return false;
+      const id = String(p.id);
+      if (!SAVES.has(id) && !STAMPED.has(id)) return false;
       const cats = (Array.isArray(p.categories) && p.categories.length) ? p.categories : [p.category];
-      return !cats.every((c) => GIFT_QUIET.has(String(c))); /* same sanitizer as the endpoint */
+      if (cats.every((c) => GIFT_QUIET.has(String(c)))) return false; /* same sanitizer as the endpoint */
+      if (scope === 'keepers') return SAVES.has(id) || RECS.has(id) || ph.has(id);
+      return true;
     });
+  }
+  /* the default gift: the keepers — falling back to everything when the
+     keepers set is empty (a traveler with stamps but no marks yet) */
+  function giftDefault() {
+    const keep = giftable('keepers');
+    return keep.length ? keep : giftable('all');
   }
   function giftPhotoCount(list) {
     const ids = new Set(list.map((p) => String(p.id)));
@@ -2312,32 +2416,66 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     GIFT_SHARE = (rows && rows[0]) || null;
     return GIFT_SHARE;
   }
-  const giftMessage = (n, link) =>
-    'I made you a list of my Bali places — ' + n + ' spot' + (n === 1 ? '' : 's') + ' I actually saved. ' + link;
+  const giftMessage = (n, link, scope) =>
+    (scope === 'all'
+      ? 'My whole Bali — ' + n + ' place' + (n === 1 ? '' : 's') + ' I’ve been to or kept. '
+      : 'I made you a list of my Bali places — ' + n + ' spot' + (n === 1 ? '' : 's') + ' I vouch for. ') + link;
   async function openGiftSheet(via) {
     const sheet = $('giftSheet');
     if (!sheet) return;
-    const list = giftable();
-    if (!list.length) return;
-    const phN = giftPhotoCount(list);
-    $('giftH').textContent = 'Gift your Bali — ' + list.length + ' place' + (list.length === 1 ? '' : 's');
-    $('giftSub').textContent = 'ONE LINK, PERSON TO PERSON — THE PLACES ARE THE GIFT';
+    const all = giftable('all');
+    const keep = giftable('keepers');
+    if (!all.length) return;
     const row = await giftRow();
+    /* ROUND 9: one light pick — keepers by default; a live row keeps its pick */
+    let scope = (row && (row.scope === 'all' || row.scope === 'keepers'))
+      ? row.scope : (keep.length ? 'keepers' : 'all');
+    const cur = () => (scope === 'all' ? all : keep);
     if (row) { $('giftNote').value = row.note || ''; $('giftPhotos').checked = row.photos !== false; }
-    const phBox = $('giftPhotos');
-    if (phN) {
-      $('giftPhotosLbl').textContent = 'include my photos (' + phN + ' place' + (phN === 1 ? '' : 's') + ') — they travel only with this gift';
-      phBox.disabled = false;
-    } else {
-      $('giftPhotosLbl').textContent = 'no photos of yours yet — your next check-in can make one';
-      phBox.checked = false;
-      phBox.disabled = true;
+    $('giftSub').textContent = 'ONE LINK, PERSON TO PERSON — THE PLACES ARE THE GIFT';
+    const scopeHost = $('giftScope');
+    const paintHead = () => {
+      const list = cur();
+      const phN = giftPhotoCount(list);
+      $('giftH').textContent = 'Gift your Bali — ' + list.length + ' place' + (list.length === 1 ? '' : 's');
+      const phBox = $('giftPhotos');
+      if (phN) {
+        $('giftPhotosLbl').textContent = 'include my photos (' + phN + ' place' + (phN === 1 ? '' : 's') + ') — they travel only with this gift';
+        phBox.disabled = false;
+      } else {
+        $('giftPhotosLbl').textContent = 'no photos of yours yet — add one to any been place from Your Bali';
+        phBox.checked = false;
+        phBox.disabled = true;
+      }
+      if (scopeHost) scopeHost.querySelectorAll('.gs-chip').forEach((c) =>
+        c.classList.toggle('on', c.getAttribute('data-s') === scope));
+    };
+    if (scopeHost) {
+      if (keep.length && keep.length < all.length) {
+        scopeHost.innerHTML =
+          '<button type="button" class="gs-chip" data-s="keepers"><b>the keepers · ' + keep.length + '</b>' +
+            '<span>photos · worth-its · saves</span></button>' +
+          '<button type="button" class="gs-chip" data-s="all"><b>everything · ' + all.length + '</b>' +
+            '<span>every place been or kept</span></button>';
+        scopeHost.hidden = false;
+        scopeHost.onclick = (e) => {
+          const chip = e.target.closest('.gs-chip');
+          if (!chip) return;
+          scope = chip.getAttribute('data-s');
+          paintHead(); paintMsg();
+        };
+      } else {
+        scope = 'all'; /* no difference to pick between — the row says so */
+        scopeHost.hidden = true;
+        scopeHost.innerHTML = '';
+      }
     }
     const paintMsg = () => {
-      $('giftMsg').innerHTML = esc(giftMessage(list.length, '')) +
+      $('giftMsg').innerHTML = esc(giftMessage(cur().length, '', scope)) +
         '<i>' + esc(GIFT_SHARE ? location.origin + '/s/?t=' + GIFT_SHARE.token : location.origin + '/s/?t=…') + '</i>';
       $('giftRevoke').hidden = !GIFT_SHARE; /* the promise in the fine print needs its button */
     };
+    paintHead();
     paintMsg();
     const copyBtn = $('giftCopy');
     copyBtn.disabled = false;
@@ -2348,20 +2486,20 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const photos = !!$('giftPhotos').checked;
       let live = await giftRow();
       if (live) {
-        const { error } = await sb.from('trip_shares').update({ note, photos }).eq('id', live.id);
+        const { error } = await sb.from('trip_shares').update({ note, photos, scope }).eq('id', live.id);
         if (error) { copyBtn.disabled = false; copyBtn.textContent = '⚠ didn’t save — retry'; return; }
-        live.note = note; live.photos = photos;
+        live.note = note; live.photos = photos; live.scope = scope;
       } else {
         const ins = await sb.from('trip_shares')
-          .insert({ trip_id: trip.id, token: shareSlug(), kind: 'list', note, photos }).select().single();
+          .insert({ trip_id: trip.id, token: shareSlug(), kind: 'list', note, photos, scope }).select().single();
         if (ins.error) { copyBtn.disabled = false; copyBtn.textContent = '⚠ didn’t save — retry'; return; }
         GIFT_SHARE = live = ins.data;
       }
-      const msg = giftMessage(list.length, location.origin + '/s/?t=' + live.token);
+      const msg = giftMessage(cur().length, location.origin + '/s/?t=' + live.token, scope);
       try { await navigator.clipboard.writeText(msg); copyBtn.textContent = '✓ copied — paste it anywhere'; }
       catch (_) { copyBtn.textContent = 'copy failed — long-press the message below'; }
       paintMsg();
-      track('share_created', { kind: 'list', n: list.length, photos: photos, via: via || 'door' });
+      track('share_created', { kind: 'list', n: cur().length, photos: photos, scope: scope, via: via || 'door' });
       copyBtn.disabled = false;
     };
     $('giftRevoke').onclick = async () => {
@@ -2382,7 +2520,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   function paintGiftDoor() {
     const door = $('giftDoor');
     if (!door) return;
-    const list = giftable();
+    const list = giftDefault();
     if (!list.length) { door.hidden = true; return; }
     const phN = giftPhotoCount(list);
     door.innerHTML =
@@ -2460,7 +2598,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     paintGiftDoor();
     if (CODA_DONE || document.querySelector('.gift-coda')) return;
     if (!GIFT_MILESTONES.has(SAVES.size)) return;
-    const list = giftable();
+    const list = giftDefault();
     if (list.length < 5) return;
     CODA_DONE = true;
     const chip = document.createElement('div');
@@ -3012,6 +3150,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
     CHECKINS.push(ckRow);
     CHECKINS.sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+    rebuildStamped();
+    if (placesApi && placesApi.refreshHome) placesApi.refreshHome();
     track('retro_stamp');
     if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places); /* sheet lives outside ppBody — it survives */
     ssEl.find.value = '';
@@ -3102,6 +3242,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const { error } = await sb.from('checkins').delete().eq('id', id);
       if (error) { console.error('[Prevoya] unstamp failed:', error.message); return; }
       CHECKINS = CHECKINS.filter((c) => String(c.id) !== String(id));
+      rebuildStamped();
+      if (placesApi && placesApi.refreshHome) placesApi.refreshHome();
       if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
       ssPaint();
       ssEl.find.focus();
@@ -3264,6 +3406,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           }).eq('id', ck.id);
           if (error) { b.disabled = false; b.textContent = '⚠ retry'; return; }
           ck.place_id = p.id; ck.place_name = p.name; ck.lat = p.lat; ck.lng = p.lng;
+          rebuildStamped(); /* a promoted stamp joins the collection too */
+          if (placesApi && placesApi.refreshHome) placesApi.refreshHome();
           try { window.pvTrack && window.pvTrack('stamp_promoted', {}); } catch (_) {}
           if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places, { ceremony: p.id });
         };
@@ -3278,6 +3422,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const { error } = await sb.from('checkins').delete().eq('id', id);
     if (error) { console.error('[Prevoya] stamp delete failed:', error.message); return; }
     CHECKINS = CHECKINS.filter((c) => String(c.id) !== String(id));
+    rebuildStamped();
+    if (placesApi && placesApi.refreshHome) placesApi.refreshHome();
     if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
   });
 
