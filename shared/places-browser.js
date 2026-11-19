@@ -96,7 +96,7 @@ const photoLead = (p, cat, own) => {
 };
 
 export function mountPlaces(cfg) {
-  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec, userPhotoOf, resolvePhotos, beenCounts, onMemory } = cfg;
+  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec, userPhotoOf, resolvePhotos, beenCounts, onMemory, memBusyOf } = cfg;
   /* ROUND 6 (Guy: B, 16 Nov) — the app mount passes `home`: the front door
      IS the collection. Home renders the saved places as full photo-led
      cards; the whole shelf stays one visible door down. Public mounts pass
@@ -378,9 +378,11 @@ export function mountPlaces(cfg) {
       if (onMemory && n) {
         const fig = el.querySelector('.lead-photo');
         const own = userPhotoOf ? userPhotoOf(id) : null;
+        const up = memBusyOf && memBusyOf(id); /* upload in flight — the card says so */
         if (fig && !fig.querySelector('.hb-ph')) fig.insertAdjacentHTML('beforeend',
-          '<button type="button" class="hb-ph' + (own ? ' has' : '') + '" data-mem="' + esc(id) + '">' +
-          (own ? '📷 your photo ↻' : '+ add your photo') + '</button>');
+          '<button type="button" class="hb-ph' + (up ? ' ms-busy' : own ? ' has' : '') +
+          '" data-mem="' + esc(id) + '">' +
+          (up ? '⟳ saving…' : own ? '📷 your photo ↻' : '+ add your photo') + '</button>');
       }
     });
   }

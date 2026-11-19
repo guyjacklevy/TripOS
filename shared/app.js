@@ -691,6 +691,7 @@ let RECS = new Set();      /* worth-it recs: curated_place_id — an opinion, no
    rebuildStamped() mutates in place so every surface holding them stays live. */
 const STAMPED = new Set();      /* place_id strings with ≥1 stamp */
 const BEEN_COUNTS = new Map();  /* place_id → stamp count (the ✓ been ×N chip) */
+const MEM_UP = new Set();       /* place_ids with a photo upload IN FLIGHT (the ⟳ saving chip) */
 function rebuildStamped() {
   STAMPED.clear(); BEEN_COUNTS.clear();
   (CHECKINS || []).forEach((c) => {
@@ -1792,9 +1793,30 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
          says so — iCloud download + shrink + upload can take seconds, and a
          silent wait reads as broken */
       if (opts && opts.onBusy) { try { opts.onBusy(); } catch (_) {} }
+      const path = ck.user_id + '/' + ck.id + '.jpg';
+      const prevPath = ck.photo_path || null;
+      /* INSTANT (Guy 19 Nov, round 2): the moment iOS hands us the file the
+         photo leads the card — object URL now, upload in the BACKGROUND.
+         The user is back in the app; the wait is ours, not theirs. */
+      let localUrl = null;
+      try { localUrl = URL.createObjectURL(f); } catch (_) {}
+      if (localUrl) {
+        ck.photo_path = path;
+        MEM_URLS.set(path, localUrl);
+        if (ck.place_id) MEM_UP.add(String(ck.place_id));
+        rebuildMemPlace();
+        if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+        if (placesApi && placesApi.repaint) placesApi.repaint();
+        if (opts && opts.onLocal) { try { opts.onLocal(localUrl); } catch (_) {} }
+      }
+      const settle = () => {
+        if (ck.place_id) MEM_UP.delete(String(ck.place_id));
+        rebuildMemPlace();
+        if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+        if (placesApi && placesApi.repaint) placesApi.repaint();
+      };
       try {
         const blob = await memShrink(f);
-        const path = ck.user_id + '/' + ck.id + '.jpg';
         const up = await sb.storage.from('memories')
           .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
         if (up.error) throw up.error;
@@ -1803,17 +1825,36 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         ck.photo_path = path;
         const s = await sb.storage.from('memories').createSignedUrl(path, 3600);
         if (s.data && s.data.signedUrl) MEM_URLS.set(path, s.data.signedUrl);
-        rebuildMemPlace();
+        settle();
         track('memory_photo', { via: via || 'ask' });
-        if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
-        if (placesApi && placesApi.repaint) placesApi.repaint();
         fin(true);
       } catch (err) {
         console.error('[Prevoya] memory photo failed:', err.message || err);
+        /* roll the optimistic paint back honestly */
+        ck.photo_path = prevPath;
+        if (!prevPath || prevPath === path) MEM_URLS.delete(path);
+        if (prevPath) {
+          const s2 = await sb.storage.from('memories').createSignedUrl(prevPath, 3600).catch(() => null);
+          if (s2 && s2.data && s2.data.signedUrl) MEM_URLS.set(prevPath, s2.data.signedUrl);
+        }
+        settle();
+        if (localUrl) memFailNote(ck.place_name || 'that place');
         fin(false);
       }
     };
     inp.click();
+  }
+
+  /* a background upload that fails says so — once, honestly, then gone */
+  function memFailNote(placeName) {
+    const old = document.querySelector('.mem-fail');
+    if (old) old.remove();
+    const n = document.createElement('div');
+    n.className = 'mem-fail';
+    n.textContent = '⚠ ' + placeName + ' — photo didn’t save. Tap the card to retry.';
+    document.body.appendChild(n);
+    requestAnimationFrame(() => n.classList.add('show'));
+    setTimeout(() => { n.classList.remove('show'); setTimeout(() => n.remove(), 450); }, 4200);
   }
 
   /* Guy's B + the hidden timer (9 Nov): one breath (~6s), camera optional,
@@ -1931,6 +1972,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         const label = b.textContent;
         b.textContent = act === 'lib' ? 'your library…' : 'camera…';
         memCapture(target, (ok) => {
+          if (!document.body.contains(sheet)) return; /* background path — card tells the story */
           if (ok) {
             /* the success beat — seen, then gone (never a silent close) */
             b.classList.remove('ms-busy');
@@ -1941,7 +1983,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         }, act === 'lib' ? 'retro-lib' : 'retro-cam', {
           library: act === 'lib',
           /* photo chosen → say so instantly, block double-taps */
-          onBusy: () => busyOn('⟳ adding your photo…')
+          onBusy: () => busyOn('⟳ adding your photo…'),
+          /* the file is in hand → the card paints NOW and the sheet leaves;
+             the upload finishes in the background (Guy 19 Nov) */
+          onLocal: () => close()
         });
       };
     });
@@ -2089,6 +2134,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       stampedIds: STAMPED,
       beenCounts: BEEN_COUNTS,
       onMemory: (p) => openMemorySheet(p),
+      memBusyOf: (pid) => MEM_UP.has(String(pid)),
       onSave: async (p, nowSaved) => {
         if (!user) return false;
         if (nowSaved) {

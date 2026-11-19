@@ -3808,3 +3808,13 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
   margin: 10px 0 0; text-align: center; font-family: var(--mono);
   font-size: 9px; letter-spacing: 0.08em; color: var(--dim); text-transform: uppercase;
 }
+
+/* the quiet failure note — a background upload that broke says so once */
+.mem-fail {
+  position: fixed; left: 14px; right: 14px; z-index: 92;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  background: rgba(20, 12, 14, 0.94); border: 1px solid rgba(255, 107, 107, 0.45);
+  border-radius: 12px; padding: 11px 14px; color: var(--tx); font-size: 13px;
+  opacity: 0; transform: translateY(8px); transition: opacity 0.3s, transform 0.3s;
+}
+.mem-fail.show { opacity: 1; transform: none; }
