@@ -3799,3 +3799,12 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
 }
 .gs-chip.on { border-color: rgba(61, 255, 208, 0.55); background: rgba(61, 255, 208, 0.06); }
 .gs-chip.on b { color: var(--teal); }
+
+/* THE FEEDBACK RULE (Guy 19 Nov): a working action pulses — never silent */
+.ms-busy { color: var(--teal) !important; animation: msPulse 1.1s ease-in-out infinite; }
+.ms-opt.ms-busy:disabled { opacity: 1; }
+@keyframes msPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+.gf-gcred {
+  margin: 10px 0 0; text-align: center; font-family: var(--mono);
+  font-size: 9px; letter-spacing: 0.08em; color: var(--dim); text-transform: uppercase;
+}

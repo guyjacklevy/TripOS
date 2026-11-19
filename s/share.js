@@ -98,6 +98,78 @@ const MARK = {
   saved: ['⚑ saved', 'var(--tx)']
 };
 
+/* ─── REAL PLACE PHOTOS (Guy, 19 Nov): the gift shows the place as it
+   looks — the sender's own photo first (consent-gated by the endpoint),
+   else the place's Google photo, resolved DISPLAY-TIME through our
+   places-search function (TOS: display, never store), with its required
+   author credit. Category art stays the honest floor. ── */
+const GUR = new Map(); /* google photo resource name → display uri (this visit) */
+async function resolveGPhotos(names) {
+  const need = [...new Set(names.filter((n) => n && !GUR.has(n)))].slice(0, 16);
+  if (!need.length || !cfg.url || !cfg.anonKey) return;
+  try {
+    const r = await fetch(cfg.url + '/functions/v1/places-search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: cfg.anonKey,
+        Authorization: 'Bearer ' + cfg.anonKey
+      },
+      body: JSON.stringify({ action: 'photos', names: need, maxw: 640 })
+    });
+    if (!r.ok) return;
+    const j = await r.json();
+    Object.entries((j && j.uris) || {}).forEach(([n, u]) => { if (u) GUR.set(n, u); });
+  } catch (_) {}
+}
+/* lazy loader for the gift rows — only photos that scroll into view resolve */
+function watchRowPhotos() {
+  const imgs = document.querySelectorAll('#gfRows img[data-pn]');
+  if (!imgs.length) return;
+  const apply = () => {
+    document.querySelectorAll('#gfRows img[data-pn]').forEach((img) => {
+      const n = img.getAttribute('data-pn');
+      if (n && GUR.has(n)) { img.src = GUR.get(n); img.removeAttribute('data-pn'); }
+    });
+  };
+  /* the first screen never waits for a scroll — resolve it straight away */
+  resolveGPhotos([...imgs].slice(0, 12).map((i) => i.getAttribute('data-pn'))).then(apply);
+  if (!('IntersectionObserver' in window)) return;
+  let pending = new Set();
+  let timer = null;
+  const flush = () => {
+    timer = null;
+    const batch = [...pending].slice(0, 16);
+    pending = new Set([...pending].filter((n) => batch.indexOf(n) === -1));
+    if (!batch.length) return;
+    resolveGPhotos(batch).then(() => {
+      apply();
+      if (pending.size && !timer) timer = setTimeout(flush, 200);
+    });
+  };
+  const io = new IntersectionObserver((ents) => {
+    ents.forEach((en) => {
+      if (!en.isIntersecting) return;
+      io.unobserve(en.target);
+      const n = en.target.getAttribute('data-pn');
+      if (n && GUR.has(n)) { en.target.src = GUR.get(n); en.target.removeAttribute('data-pn'); return; }
+      if (n) pending.add(n);
+    });
+    if (pending.size && !timer) timer = setTimeout(flush, 150);
+  }, { rootMargin: '300px' });
+  imgs.forEach((i) => io.observe(i));
+}
+/* one cascade order for prefetch + ceremony: any photo leads (own first,
+   then a real place photo), then been > worth > saved */
+function cerCascade(places) {
+  const rank = { been: 0, worth: 1, saved: 2 };
+  const ph = (p) => (p.photo ? 2 : (p.photo_name ? 1 : 0));
+  return places.slice().sort((a, b) =>
+    (ph(b) - ph(a)) ||
+    ((rank[a.mark] != null ? rank[a.mark] : 3) - (rank[b.mark] != null ? rank[b.mark] : 3))
+  ).slice(0, places.some((p) => p.photo || p.photo_name) ? 4 : 3);
+}
+
 /* ─── ROUND 8 (Guy, 17 Nov): THE RECEIVER'S CEREMONY — the gift opens
    playing. Beats: the address → the places (sender's own photos first,
    each wearing its mark) → the handwritten note → "It's yours." Live
@@ -112,26 +184,26 @@ function giftCeremony(data, token, replay, done) {
   const name = data.name || 'a traveler';
   const places = (data.places || []).slice();
   const n = (data.counts && data.counts.places) || places.length;
-  const rank = { been: 0, worth: 1, saved: 2 };
-  const cascade = places.sort((a, b) =>
-    ((b.photo ? 1 : 0) - (a.photo ? 1 : 0)) ||
-    ((rank[a.mark] != null ? rank[a.mark] : 3) - (rank[b.mark] != null ? rank[b.mark] : 3))
-  ).slice(0, places.some((p) => p.photo) ? 4 : 3);
+  const cascade = cerCascade(places);
   const MARKL = { been: '✓ been', worth: '♥ worth it', saved: '⚑ saved' };
   const beats = [];
   beats.push({ ms: 2300, html:
     '<div class="gfc-beat"><p class="gfc-t1">' + esc(name) + ' kept ' + n +
     ' place' + (n === 1 ? '' : 's') + ' in Bali.</p><p class="gfc-t2">for you</p></div>' });
   cascade.forEach((p) => {
+    /* the photo chain, honest at every rung: sender's own → the real place
+       photo (Google, display-time, credited) → category art */
+    const g = (!p.photo && p.photo_name) ? GUR.get(p.photo_name) : null;
     beats.push({ ms: 1700, html:
       '<div class="gfc-beat">' +
-        '<img class="gfc-photo" alt="" src="' + esc(p.photo || catSrc(p.category)) + '">' +
+        '<img class="gfc-photo" alt="" src="' + esc(p.photo || g || catSrc(p.category)) + '">' +
         '<div class="gfc-shade"></div>' +
         '<p class="gfc-t1">' + esc(p.name) + '</p>' +
         '<p class="gfc-mark" style="color:' + (MARK[p.mark] || MARK.saved)[1] + '">' +
           (MARKL[p.mark] || MARKL.saved) + '</p>' +
         '<p class="gfc-cap">' + esc(p.area || '') +
-          (p.photo ? ' · ' + esc(name) + '’s photo' : '') + '</p>' +
+          (p.photo ? ' · ' + esc(name) + '’s photo'
+            : (g ? ' · 📷 ' + esc(p.photo_author || 'Google') + ' · Google' : '')) + '</p>' +
       '</div>' });
   });
   if (data.note) beats.push({ ms: 2500, html:
@@ -200,16 +272,25 @@ function renderGift(data, token) {
     $('gfMosCap').hidden = false;
   }
 
-  /* the rows — every place with its provenance mark */
+  /* the rows — every place with its provenance mark; real place photos
+     resolve lazily as rows scroll into view (own photo already leads) */
   $('gfRows').innerHTML = places.map((p) => {
     const [mk, mc] = MARK[p.mark] || MARK.saved;
+    const pn = (!p.photo && p.photo_name) ? ' data-pn="' + esc(p.photo_name) + '"' : '';
+    const cred = (!p.photo && p.photo_name && p.photo_author)
+      ? ' title="photo: ' + esc(p.photo_author) + ' · Google"' : '';
     return '<div class="gf-row">' +
-      '<img alt="" loading="lazy" src="' + esc(p.photo || catSrc(p.category)) + '">' +
+      '<img alt="" loading="lazy"' + pn + cred + ' src="' + esc(p.photo || catSrc(p.category)) + '">' +
       '<div class="gf-row-main"><span class="gf-row-nm">' + esc(p.name) +
         (p.verified ? ' <span class="place-verified">✓</span>' : '') + '</span>' +
       '<span class="gf-row-sub">' + esc([p.category, p.area].filter(Boolean).join(' · ')) + '</span></div>' +
       '<span class="gf-mark" style="color:' + mc + '">' + mk + '</span></div>';
   }).join('');
+  if (places.some((p) => !p.photo && p.photo_name)) {
+    $('gfRows').insertAdjacentHTML('afterend',
+      '<p class="gf-gcred">place photos · their Google contributors</p>');
+    watchRowPhotos();
+  }
 
   /* provenance travels into sign-up — same seed the passport share plants */
   const seed = (place) => {
@@ -263,7 +344,14 @@ function renderGift(data, token) {
   let seen = false;
   try { seen = !!localStorage.getItem('pv_gcer_' + token); } catch (_) {}
   if (reduced || seen || !places.length) reveal();
-  else giftCeremony(data, token, false, reveal);
+  else {
+    /* prefetch the ceremony's real photos — start within ~a breath either way */
+    const names = cerCascade(places).filter((p) => !p.photo && p.photo_name).map((p) => p.photo_name);
+    const start = () => giftCeremony(data, token, false, reveal);
+    if (names.length) {
+      Promise.race([resolveGPhotos(names), new Promise((r) => setTimeout(r, 900))]).then(start);
+    } else start();
+  }
 }
 
 function stampHTML(s, count, viaName, hide) {

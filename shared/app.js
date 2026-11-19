@@ -1788,6 +1788,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     inp.onchange = async () => {
       const f = inp.files && inp.files[0];
       if (!f) return fin(null);
+      /* THE FEEDBACK RULE (Guy 19 Nov): the moment a photo is chosen the UI
+         says so — iCloud download + shrink + upload can take seconds, and a
+         silent wait reads as broken */
+      if (opts && opts.onBusy) { try { opts.onBusy(); } catch (_) {} }
       try {
         const blob = await memShrink(f);
         const path = ck.user_id + '/' + ck.id + '.jpg';
@@ -1840,6 +1844,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     host.querySelector('.mfr-cam').onclick = () => {
       clearTimeout(auto);
       memCapture(ck, (ok) => {
+        host.querySelector('.mfr-sub').classList.remove('ms-busy');
         if (ok) {
           host.querySelector('.mfr-h').textContent = '✓ Yours.';
           host.querySelector('.mfr-sub').textContent = 'on the stamp, on the card, in the film';
@@ -1848,7 +1853,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           host.querySelector('.mfr-sub').textContent = 'didn’t save — add it from your passport anytime';
           setTimeout(away, 2400);
         } else away(); /* camera closed without a shot */
-      });
+      }, 'ask', { onBusy: () => {
+        const sub = host.querySelector('.mfr-sub');
+        sub.textContent = '⟳ adding your photo…';
+        sub.classList.add('ms-busy');
+      } });
     };
   }
 
@@ -1891,11 +1900,22 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     sheet.querySelectorAll('.ms-opt').forEach((b) => {
       b.onclick = async () => {
         const act = b.getAttribute('data-act');
+        const opts = () => sheet.querySelectorAll('.ms-opt');
+        const busyOn = (text) => {
+          opts().forEach((x) => { x.disabled = true; });
+          b.classList.add('ms-busy');
+          b.textContent = text;
+        };
+        const busyOff = (text) => {
+          opts().forEach((x) => { x.disabled = false; });
+          b.classList.remove('ms-busy');
+          if (text) b.textContent = text;
+        };
         if (act === 'rm') {
-          b.disabled = true;
+          busyOn('⟳ removing…');
           const path = cur.photo_path;
           const { error } = await sb.from('checkins').update({ photo_path: null }).eq('id', cur.id);
-          if (error) { b.disabled = false; b.textContent = '⚠ didn’t remove — retry'; return; }
+          if (error) { busyOff('⚠ didn’t remove — retry'); return; }
           try { await sb.storage.from('memories').remove([path]); } catch (_) {}
           cur.photo_path = null;
           MEM_URLS.delete(path);
@@ -1903,16 +1923,26 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           track('memory_photo_removed', {});
           if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
           if (placesApi && placesApi.repaint) placesApi.repaint();
-          close();
+          b.classList.remove('ms-busy');
+          b.textContent = '✓ removed — the card fell back';
+          setTimeout(close, 900);
           return;
         }
         const label = b.textContent;
         b.textContent = act === 'lib' ? 'your library…' : 'camera…';
         memCapture(target, (ok) => {
-          if (ok) close();
-          else if (ok === false) b.textContent = '⚠ didn’t save — retry';
-          else b.textContent = label; /* picker closed, nothing chosen */
-        }, act === 'lib' ? 'retro-lib' : 'retro-cam', { library: act === 'lib' });
+          if (ok) {
+            /* the success beat — seen, then gone (never a silent close) */
+            b.classList.remove('ms-busy');
+            b.textContent = '✓ yours — it leads the card';
+            setTimeout(close, 900);
+          } else if (ok === false) busyOff('⚠ didn’t save — retry');
+          else busyOff(label); /* picker closed, nothing chosen */
+        }, act === 'lib' ? 'retro-lib' : 'retro-cam', {
+          library: act === 'lib',
+          /* photo chosen → say so instantly, block double-taps */
+          onBusy: () => busyOn('⟳ adding your photo…')
+        });
       };
     });
     track('memory_sheet', { has: cur ? 1 : 0 });
@@ -3337,7 +3367,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       ap.textContent = 'camera…';
       memCapture(ck, (ok) => {
         if (!ok) ap.textContent = '+ your photo'; /* success re-renders the passport */
-      }, 'backfill');
+      }, 'backfill', { onBusy: () => { ap.textContent = '⟳ adding…'; } });
       return;
     }
     /* the LIKE toggle — optimistic, same place_recs row the Places tab uses */
