@@ -2457,6 +2457,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (LAST_FIX && placesApi.setLive) placesApi.setLive(LAST_FIX);
     paintRouteDoor();
     paintImportDoor(); /* ROUND 10: the one-pass photo import door */
+    loadEcho();        /* ROUND 11: the sender's echo — once per session */
     tryLiveLine();
   }
 
@@ -2861,6 +2862,56 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     sheet.onclick = (e) => { if (e.target === sheet) sheet.hidden = true; };
     sheet.hidden = false;
   }
+  /* ─── ROUND 11 · THE SENDER'S ECHO (Guy's go + the GLOBAL rule, 19 Nov) ──
+     A gift should never land in silence. The door carries its real returns —
+     opened · played · taken — counts real or absent, and NEVER who: the gift
+     page is loginless, events carry no identity, gift-echo returns numbers
+     only. Copy derives from the trip's destination — nothing new says Bali. */
+  const destName = () => {
+    const t = (todayCtx && todayCtx.trip) || trip;
+    const d = t && t.destination ? String(t.destination) : '';
+    return d ? d.charAt(0).toUpperCase() + d.slice(1) : 'collection';
+  };
+  let ECHO = null; /* {opened, played, took} — fetched once per session */
+  let echoLoaded = false;
+  async function loadEcho() {
+    if (echoLoaded || !user) return;
+    echoLoaded = true;
+    try {
+      const { data } = await sb.functions.invoke('gift-echo');
+      if (data && !data.error) {
+        ECHO = { opened: +data.opened || 0, played: +data.played || 0, took: +data.took || 0 };
+        paintGiftDoor();
+        maybeEchoRise();
+      }
+    } catch (_) {}
+  }
+  function echoLine() {
+    if (!ECHO) return '';
+    const parts = [];
+    if (ECHO.opened) parts.push('OPENED ' + ECHO.opened + '×');
+    if (ECHO.played) parts.push('PLAYED ' + ECHO.played + '×');
+    if (ECHO.took) parts.push(ECHO.took + ' TRAVELER' + (ECHO.took === 1 ? '' : 'S') + ' TOOK IT');
+    return parts.length ? '<span class="gift-door-echo">' + parts.join(' · ') + '</span>' : '';
+  }
+  /* the first echo rises once, then lives quietly on the door (hidden timer) */
+  function maybeEchoRise() {
+    if (!ECHO || !ECHO.opened) return;
+    let seen = false;
+    try { seen = !!localStorage.getItem('pv_echo_risen'); } catch (_) {}
+    if (seen || document.querySelector('.echo-rise')) return;
+    try { localStorage.setItem('pv_echo_risen', '1'); } catch (_) {}
+    const card = document.createElement('div');
+    card.className = 'echo-rise';
+    card.innerHTML = '<b>Someone opened your ' + esc(destName()) + '.</b>' +
+      '<span>the ceremony played — the counts live on your gift door</span>';
+    document.body.appendChild(card);
+    requestAnimationFrame(() => card.classList.add('show'));
+    track('echo_rise', {});
+    const away = () => { card.classList.remove('show'); setTimeout(() => card.remove(), 450); };
+    const auto = setTimeout(away, 8000);
+    card.onclick = () => { clearTimeout(auto); away(); setTab('places'); };
+  }
   function paintGiftDoor() {
     const door = $('giftDoor');
     if (!door) return;
@@ -2868,9 +2919,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     if (!list.length) { door.hidden = true; return; }
     const phN = giftPhotoCount(list);
     door.innerHTML =
-      '<div class="gift-door-main"><span class="gift-door-nm">Your Bali</span>' +
+      '<div class="gift-door-main"><span class="gift-door-nm">Your ' + esc(destName()) + '</span>' +
       '<span class="gift-door-sub">' + list.length + ' PLACE' + (list.length === 1 ? '' : 'S') +
-      (phN ? ' · ' + phN + ' WITH YOUR PHOTOS' : '') + '</span></div>' +
+      (phN ? ' · ' + phN + ' WITH YOUR PHOTOS' : '') + '</span>' +
+      echoLine() + '</div>' +
       '<span class="gift-door-go">⤴ GIFT IT</span>';
     door.onclick = () => openGiftSheet('door');
     door.hidden = false;

@@ -3860,3 +3860,19 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
 .pi-out { color: var(--dim) !important; text-decoration-color: rgba(255, 255, 255, 0.2) !important; }
 .pi-row.on .pi-tog { border-color: rgba(61, 255, 208, 0.55); color: var(--teal); }
 #piGo { width: 100%; margin-top: 14px; }
+
+/* ═══ ROUND 11 · THE SENDER'S ECHO ═══════════════════════════════ */
+.gift-door-echo {
+  display: block; margin-top: 4px; color: var(--teal);
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em;
+}
+.echo-rise {
+  position: fixed; left: 14px; right: 14px; z-index: 92; cursor: pointer;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  background: rgba(8, 16, 15, 0.95); border: 1px solid rgba(61, 255, 208, 0.45);
+  border-radius: 13px; padding: 13px 15px;
+  opacity: 0; transform: translateY(8px); transition: opacity 0.35s, transform 0.35s;
+}
+.echo-rise.show { opacity: 1; transform: none; }
+.echo-rise b { display: block; font-size: 14.5px; color: var(--tx); }
+.echo-rise span { display: block; margin-top: 3px; color: var(--mut); font-size: 12px; }

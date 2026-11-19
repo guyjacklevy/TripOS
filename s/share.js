@@ -224,7 +224,7 @@ function giftCeremony(data, token, replay, done) {
     cer.classList.add('gfc-out');
     setTimeout(() => { cer.hidden = true; cer.classList.remove('gfc-out'); }, 440);
     done();
-    try { window.pvTrack && window.pvTrack('gift_ceremony', { end: how, n: n, replay: !!replay }); } catch (_) {}
+    try { window.pvTrack && window.pvTrack('gift_ceremony', { end: how, n: n, replay: !!replay, t: token }); } catch (_) {}
     if (how === 'take') {
       const btn = $('gfSaveAll');
       if (btn) { btn.click(); btn.scrollIntoView({ block: 'center' }); }
@@ -320,12 +320,14 @@ function renderGift(data, token) {
         if (!have.has(String(p.id))) anonToggle({ id: p.id, name: p.name, area: p.area, category: p.category });
       });
       seed(null);
-      try { window.pvTrack && window.pvTrack('share_save_tap', { kind: 'list', n: n }); } catch (_) {}
+      try { window.pvTrack && window.pvTrack('share_save_tap', { kind: 'list', n: n, t: token }); } catch (_) {}
       taken();
     };
   }
 
-  try { window.pvTrack && window.pvTrack('share_visit', { kind: 'list' }); } catch (_) {}
+  /* ROUND 11: the token rides along (a share slug, not PII) — it's what
+     lets the SENDER hear the echo as counts, never as identities */
+  try { window.pvTrack && window.pvTrack('share_visit', { kind: 'list', t: token }); } catch (_) {}
 
   /* ROUND 8: the gift opens playing — once per browser; ▶ replays. The
      list beneath is fully painted first, so skip always lands somewhere. */
