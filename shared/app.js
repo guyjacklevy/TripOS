@@ -12,6 +12,10 @@ import {
 } from './match.js';
 import { mountCheckin } from './checkin.js';
 import { mountPlaces, catPhoto } from './places-browser.js';
+/* ROUND 10 (Guy's go, 19 Nov): the batch photo import — EXIF read on
+   device, pure matching against the user's own stamps */
+import { exifMeta } from './exif-lite.js';
+import { buildMatches } from './photo-match.js';
 
 const cfg = window.TRIPOS_SUPABASE || {};
 /* launch analytics: DB tables stay the source of truth (checkins, optins,
@@ -1773,6 +1777,22 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     return MEM_URLS.size;
   }
 
+  /* the one true upload: shrink (strips all metadata) → storage → DB →
+     fresh signed URL. Shared by the single-photo doors and the batch queue. */
+  async function memUpload(ck, file) {
+    const path = ck.user_id + '/' + ck.id + '.jpg';
+    const blob = await memShrink(file);
+    const up = await sb.storage.from('memories')
+      .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+    if (up.error) throw up.error;
+    const { error } = await sb.from('checkins').update({ photo_path: path }).eq('id', ck.id);
+    if (error) throw error;
+    ck.photo_path = path;
+    const s = await sb.storage.from('memories').createSignedUrl(path, 3600);
+    if (s.data && s.data.signedUrl) MEM_URLS.set(path, s.data.signedUrl);
+    return path;
+  }
+
   /* one camera door for the frame, the passport backfill AND (Round 9) the
      retro library pick — opts.library skips `capture`, so the phone offers
      the photo library instead of jumping straight to the camera.
@@ -1814,17 +1834,10 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         rebuildMemPlace();
         if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
         if (placesApi && placesApi.repaint) placesApi.repaint();
+        paintImportDoor(); /* the quiet line keeps its numbers honest */
       };
       try {
-        const blob = await memShrink(f);
-        const up = await sb.storage.from('memories')
-          .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
-        if (up.error) throw up.error;
-        const { error } = await sb.from('checkins').update({ photo_path: path }).eq('id', ck.id);
-        if (error) throw error;
-        ck.photo_path = path;
-        const s = await sb.storage.from('memories').createSignedUrl(path, 3600);
-        if (s.data && s.data.signedUrl) MEM_URLS.set(path, s.data.signedUrl);
+        await memUpload(ck, f);
         settle();
         track('memory_photo', { via: via || 'ask' });
         fin(true);
@@ -1838,7 +1851,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           if (s2 && s2.data && s2.data.signedUrl) MEM_URLS.set(prevPath, s2.data.signedUrl);
         }
         settle();
-        if (localUrl) memFailNote(ck.place_name || 'that place');
+        if (localUrl) memFailNote('⚠ ' + (ck.place_name || 'that place') + ' — photo didn’t save. Tap the card to retry.');
         fin(false);
       }
     };
@@ -1846,12 +1859,12 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   }
 
   /* a background upload that fails says so — once, honestly, then gone */
-  function memFailNote(placeName) {
+  function memFailNote(msg) {
     const old = document.querySelector('.mem-fail');
     if (old) old.remove();
     const n = document.createElement('div');
     n.className = 'mem-fail';
-    n.textContent = '⚠ ' + placeName + ' — photo didn’t save. Tap the card to retry.';
+    n.textContent = msg;
     document.body.appendChild(n);
     requestAnimationFrame(() => n.classList.add('show'));
     setTimeout(() => { n.classList.remove('show'); setTimeout(() => n.remove(), 450); }, 4200);
@@ -1931,6 +1944,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         '<button type="button" class="ms-opt" data-act="cam">◉ ' +
           (cur ? 'retake one now' : 'take one now') + '</button>' +
         (cur ? '<button type="button" class="ms-opt ms-rm" data-act="rm">✕ remove — the card falls back honestly</button>' : '') +
+        '<button type="button" class="ms-opt ms-batch">⌲ add photos from your whole trip</button>' +
         '<p class="gift-priv">yours only — until you gift with photos ON · the ceremony picks it up by itself</p>' +
         '<div class="gift-acts"><button type="button" class="ck-reset ms-close">close</button></div>' +
       '</div>';
@@ -1938,7 +1952,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const close = () => sheet.remove();
     sheet.onclick = (e) => { if (e.target === sheet) close(); };
     sheet.querySelector('.ms-close').onclick = close;
-    sheet.querySelectorAll('.ms-opt').forEach((b) => {
+    const mb = sheet.querySelector('.ms-batch');
+    if (mb) mb.onclick = () => { close(); openPhotoImport('sheet'); };
+    sheet.querySelectorAll('.ms-opt[data-act]').forEach((b) => {
       b.onclick = async () => {
         const act = b.getAttribute('data-act');
         const opts = () => sheet.querySelectorAll('.ms-opt');
@@ -1991,6 +2007,243 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       };
     });
     track('memory_sheet', { has: cur ? 1 : 0 });
+  }
+
+  /* ─── ROUND 10 · THE PHOTO IMPORT (Guy: build it, my reads, 19 Nov) ──
+     One picker visit for the whole trip. Each photo finds its own place —
+     by where it was shot and when, against the user's real stamps (EXIF
+     read ON DEVICE; the location never leaves the phone; uploads stay
+     metadata-stripped through memShrink). Review strip: autos checked,
+     exceptions flagged. Everything uploads in the background. */
+  let IMPORT_RUNNING = false;
+  function paintImportDoor() {
+    const el = $('hbImport');
+    if (!el) return;
+    const beenN = STAMPED.size;
+    const phIds = new Set();
+    CHECKINS.forEach((c) => { if (c.photo_path && c.place_id) phIds.add(String(c.place_id)); });
+    const phN = phIds.size;
+    /* the quiet line earns its place only while been dwarfs photos */
+    if (IMPORT_RUNNING || !user || beenN < 10 || phN * 2 >= beenN) { el.hidden = true; return; }
+    el.innerHTML = beenN + ' been · ' + (phN ? 'only ' + phN : 'none') +
+      ' with your photos — <em>⌲ add photos from your trip</em>';
+    el.onclick = () => openPhotoImport('door');
+    el.hidden = false;
+  }
+  function paintProg(html) {
+    const el = $('hbProg');
+    if (!el) return;
+    if (html == null) { el.hidden = true; el.innerHTML = ''; return; }
+    el.innerHTML = html;
+    el.hidden = false;
+  }
+  function openPhotoImport(via) {
+    if (!user || IMPORT_RUNNING) return;
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'image/*';
+    inp.multiple = true;
+    inp.hidden = true;
+    document.body.appendChild(inp);
+    inp.oncancel = () => inp.remove();
+    inp.onchange = async () => {
+      const files = Array.from(inp.files || []).slice(0, 60);
+      inp.remove();
+      if (!files.length) return;
+      track('photo_import', { picked: files.length, via: via || 'door' });
+      /* the sheet opens on the FIRST breath — matching narrates itself */
+      const old = document.querySelector('.pi-sheet');
+      if (old) old.remove();
+      const sheet = document.createElement('div');
+      sheet.className = 'gift-sheet pi-sheet';
+      sheet.innerHTML = '<div class="gift-sheet-card">' +
+        '<h3 class="gift-sheet-h">Your trip’s photos</h3>' +
+        '<p class="gift-sheet-sub ms-busy" id="piSub">⟳ READING ' + files.length + ' PHOTO' + (files.length === 1 ? '' : 'S') + ' — MATCHING TO YOUR STAMPS…</p>' +
+        '<div id="piRows"></div>' +
+        '<button type="button" class="btn btn-primary" id="piGo" hidden></button>' +
+        '<p class="gift-priv">matched on your phone, by where + when each photo was taken ·<br>locations never leave the device — uploads carry no metadata</p>' +
+        '<div class="gift-acts"><button type="button" class="ck-reset" id="piClose">close</button></div>' +
+      '</div>';
+      document.body.appendChild(sheet);
+      const closeSheet = () => {
+        sheet.querySelectorAll('.pi-thumb').forEach((im) => {
+          if (im.dataset.keep !== '1') { try { URL.revokeObjectURL(im.src); } catch (_) {} }
+        });
+        sheet.remove();
+      };
+      sheet.onclick = (e) => { if (e.target === sheet) closeSheet(); };
+      sheet.querySelector('#piClose').onclick = closeSheet;
+
+      /* read EXIF on-device, then match */
+      const metas = [];
+      for (let i = 0; i < files.length; i++) {
+        const m = await exifMeta(files[i]);
+        metas.push({ i, lat: m.lat, lng: m.lng, time: m.time });
+      }
+      const pool = ((todayCtx && todayCtx.places) || []).filter((p) => STAMPED.has(String(p.id)));
+      const hasPhoto = new Set();
+      CHECKINS.forEach((c) => { if (c.photo_path && c.place_id) hasPhoto.add(String(c.place_id)); });
+      const rows = buildMatches({
+        photos: metas,
+        places: pool.filter((p) => typeof p.lat === 'number' && typeof p.lng === 'number'),
+        checkins: CHECKINS.filter((c) => c.id && c.place_id),
+        stampCounts: BEEN_COUNTS,
+        hasPhoto
+      });
+      rows.forEach((r) => {
+        r.file = files[r.i];
+        r.time = metas[r.i].time;
+        r.url = URL.createObjectURL(r.file);
+        r.on = r.status === 'auto';
+      });
+      const nameOf = (pid) => {
+        const p = pool.find((x) => String(x.id) === String(pid));
+        return p ? p.name : 'a place';
+      };
+      const selOpts = pool.slice()
+        .sort((a, b) => String(a.area).localeCompare(String(b.area)) || String(a.name).localeCompare(String(b.name)))
+        .map((p) => '<option value="' + esc(p.id) + '">' + esc(p.name) + ' · ' + esc(String(p.area).split('/')[0].trim()) + '</option>')
+        .join('');
+      const sub = sheet.querySelector('#piSub');
+      const go = sheet.querySelector('#piGo');
+      const host = sheet.querySelector('#piRows');
+      const paintSub = () => {
+        const matched = rows.filter((r) => r.placeId).length;
+        sub.classList.remove('ms-busy');
+        sub.textContent = rows.length + ' PHOTOS → ' +
+          new Set(rows.filter((r) => r.placeId).map((r) => r.placeId)).size +
+          ' PLACES MATCHED' + (matched < rows.length ? ' · ' + (rows.length - matched) + ' TO DECIDE' : '');
+      };
+      const paintGo = () => {
+        const n = rows.filter((r) => r.on && r.placeId).length;
+        go.textContent = n ? '✓ looks right — add ' + n + ' photo' + (n === 1 ? '' : 's') + ' →' : 'nothing selected';
+        go.disabled = !n;
+        go.hidden = false;
+      };
+      host.innerHTML = rows.map((r, idx) =>
+        '<div class="pi-row' + (r.on ? ' on' : '') + '" data-i="' + idx + '">' +
+          '<img class="pi-thumb" alt="" src="' + esc(r.url) + '">' +
+          '<div class="pi-main">' +
+            '<span class="pi-nm">' + (r.placeId ? esc(nameOf(r.placeId)) : 'no match') + '</span>' +
+            '<span class="pi-cap">' + esc(r.note) + ' · <u class="pi-change">' + (r.placeId ? 'change' : 'pick a place') + '</u></span>' +
+            '<select class="pi-sel" hidden><option value="">— pick a place —</option>' + selOpts + '</select>' +
+          '</div>' +
+          '<span class="pi-tog">' + (r.on ? '✓' : '＋') + '</span>' +
+        '</div>').join('');
+      paintSub();
+      paintGo();
+      host.onclick = (e) => {
+        const rowEl = e.target.closest('.pi-row');
+        if (!rowEl) return;
+        const r = rows[+rowEl.getAttribute('data-i')];
+        if (e.target.closest('.pi-change')) {
+          const sel = rowEl.querySelector('.pi-sel');
+          sel.hidden = false;
+          sel.onchange = () => {
+            if (!sel.value) return;
+            r.placeId = String(sel.value);
+            r.status = 'manual';
+            r.on = true;
+            rowEl.querySelector('.pi-nm').textContent = nameOf(r.placeId);
+            rowEl.querySelector('.pi-cap').innerHTML = 'your pick · <u class="pi-change">change</u>';
+            rowEl.classList.add('on');
+            rowEl.querySelector('.pi-tog').textContent = '✓';
+            sel.hidden = true;
+            paintSub(); paintGo();
+          };
+          try { sel.focus(); } catch (_) {}
+          return;
+        }
+        if (!r.placeId) return; /* nothing to toggle until it has a place */
+        r.on = !r.on;
+        rowEl.classList.toggle('on', r.on);
+        rowEl.querySelector('.pi-tog').textContent = r.on ? '✓' : '＋';
+        paintGo();
+      };
+      go.onclick = () => {
+        const jobs = rows.filter((r) => r.on && r.placeId);
+        if (!jobs.length) return;
+        jobs.forEach((r) => {
+          const im = host.querySelector('.pi-row[data-i="' + rows.indexOf(r) + '"] .pi-thumb');
+          if (im) im.dataset.keep = '1'; /* its object URL lives on, on the card */
+        });
+        closeSheet();
+        runImportQueue(jobs);
+      };
+    };
+    inp.click();
+  }
+  async function runImportQueue(jobs) {
+    IMPORT_RUNNING = true;
+    paintImportDoor();
+    /* allocate each photo its own stamp — nearest in time, never reused */
+    const used = new Set();
+    const real = [];
+    let skipped = 0;
+    jobs.forEach((j) => {
+      const free = CHECKINS.filter((c) => c.id && String(c.place_id) === String(j.placeId) && !used.has(c.id));
+      if (!free.length) { skipped++; return; }
+      let pick = null, bd = Infinity;
+      free.forEach((c) => {
+        const d = j.time ? Math.abs((new Date(c.created_at).getTime() + 8 * 3600e3) - j.time) : 0;
+        if (!pick || d < bd) { pick = c; bd = d; }
+      });
+      used.add(pick.id);
+      real.push({ file: j.file, url: j.url, ck: pick, placeId: String(j.placeId), prevPath: pick.photo_path || null });
+    });
+    /* every card lights up NOW — the upload is ours, in the background */
+    const pendingByPlace = new Map();
+    real.forEach((r) => {
+      r.ck.photo_path = r.ck.user_id + '/' + r.ck.id + '.jpg';
+      MEM_URLS.set(r.ck.photo_path, r.url);
+      MEM_UP.add(r.placeId);
+      pendingByPlace.set(r.placeId, (pendingByPlace.get(r.placeId) || 0) + 1);
+    });
+    rebuildMemPlace();
+    if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+    if (placesApi && placesApi.repaint) placesApi.repaint();
+    const N = real.length;
+    let ok = 0, fail = 0, done = 0;
+    const prog = () => paintProg('<span class="ms-busy">⟳ saving ' + N + ' photo' + (N === 1 ? '' : 's') +
+      ' — ' + done + ' done</span> · keep browsing');
+    prog();
+    const q = real.slice();
+    const worker = async () => {
+      while (q.length) {
+        const r = q.shift();
+        try {
+          await memUpload(r.ck, r.file);
+          ok++;
+        } catch (err) {
+          console.error('[Prevoya] import photo failed:', err.message || err);
+          fail++;
+          r.ck.photo_path = r.prevPath;
+          if (!r.prevPath) MEM_URLS.delete(r.ck.user_id + '/' + r.ck.id + '.jpg');
+        }
+        done++;
+        const left = (pendingByPlace.get(r.placeId) || 1) - 1;
+        pendingByPlace.set(r.placeId, left);
+        if (left <= 0) MEM_UP.delete(r.placeId);
+        if (done % 4 === 0 || !q.length) {
+          rebuildMemPlace();
+          if (placesApi && placesApi.repaint) placesApi.repaint();
+        }
+        prog();
+      }
+    };
+    await Promise.all([worker(), worker()]);
+    real.forEach((r) => MEM_UP.delete(r.placeId));
+    rebuildMemPlace();
+    if (todayCtx) renderPassport(todayCtx.trip, todayCtx.places);
+    if (placesApi && placesApi.repaint) placesApi.repaint();
+    IMPORT_RUNNING = false;
+    paintImportDoor();
+    paintProg('✓ ' + ok + ' photo' + (ok === 1 ? '' : 's') + ' added' +
+      (fail ? ' · ' + fail + ' didn’t save' : '') +
+      (skipped ? ' · ' + skipped + ' had no free stamp' : ''));
+    setTimeout(() => paintProg(null), 5000);
+    if (fail) memFailNote('⚠ ' + fail + ' photo' + (fail === 1 ? '' : 's') + ' didn’t save — tap those cards to retry.');
+    track('photo_import_done', { ok, fail, skipped });
   }
 
   async function checkinAt(p, btn) {
@@ -2189,6 +2442,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
        the live line (mid-trip + GPS already granted; never a boot-time ask) */
     if (LAST_FIX && placesApi.setLive) placesApi.setLive(LAST_FIX);
     paintRouteDoor();
+    paintImportDoor(); /* ROUND 10: the one-pass photo import door */
     tryLiveLine();
   }
 

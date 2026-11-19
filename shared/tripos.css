@@ -3818,3 +3818,44 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
   opacity: 0; transform: translateY(8px); transition: opacity 0.3s, transform 0.3s;
 }
 .mem-fail.show { opacity: 1; transform: none; }
+
+/* ═══ ROUND 10 · THE PHOTO IMPORT (Guy's go, 19 Nov) ═══════════════ */
+.hb-import {
+  display: block; width: 100%; cursor: pointer; text-align: left;
+  background: none; border: 1px dashed rgba(61, 255, 208, 0.35); border-radius: 12px;
+  padding: 11px 13px; margin: 10px 0 0;
+  color: var(--mut); font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+  text-transform: uppercase; -webkit-tap-highlight-color: transparent;
+}
+.hb-import em { color: var(--teal); font-style: normal; }
+.hb-prog {
+  margin: 10px 0 0; padding: 9px 2px 0; border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--mut); font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pi-sheet .gift-sheet-card { max-height: 92vh; }
+.pi-row {
+  display: flex; align-items: center; gap: 11px; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 12px; padding: 8px;
+  margin-top: 8px; -webkit-tap-highlight-color: transparent;
+}
+.pi-row.on { border-color: rgba(61, 255, 208, 0.45); background: rgba(61, 255, 208, 0.05); }
+.pi-thumb {
+  width: 52px; height: 52px; object-fit: cover; border-radius: 9px; flex: none;
+  background: #0d0d1a;
+}
+.pi-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pi-nm { font-size: 13.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pi-cap { font-size: 11px; color: var(--mut); line-height: 1.35; }
+.pi-cap u { color: var(--teal); text-decoration-color: rgba(61, 255, 208, 0.4); cursor: pointer; }
+.pi-sel {
+  margin-top: 5px; width: 100%; background: #0d0d1a; color: var(--tx);
+  border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; font-size: 13px;
+}
+.pi-tog {
+  flex: none; width: 30px; height: 30px; border-radius: 999px; display: flex;
+  align-items: center; justify-content: center; font-size: 14px;
+  border: 1px solid var(--line); color: var(--dim);
+}
+.pi-row.on .pi-tog { border-color: rgba(61, 255, 208, 0.55); color: var(--teal); }
+#piGo { width: 100%; margin-top: 14px; }
