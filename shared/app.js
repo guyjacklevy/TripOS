@@ -2108,14 +2108,15 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const go = sheet.querySelector('#piGo');
       const host = sheet.querySelector('#piRows');
       const paintSub = () => {
-        const matched = rows.filter((r) => r.placeId).length;
+        const live = rows.filter((r) => !r.out);
+        const matched = live.filter((r) => r.placeId).length;
         sub.classList.remove('ms-busy');
-        sub.textContent = rows.length + ' PHOTOS → ' +
-          new Set(rows.filter((r) => r.placeId).map((r) => r.placeId)).size +
-          ' PLACES MATCHED' + (matched < rows.length ? ' · ' + (rows.length - matched) + ' TO DECIDE' : '');
+        sub.textContent = live.length + ' PHOTO' + (live.length === 1 ? '' : 'S') + ' → ' +
+          new Set(live.filter((r) => r.placeId).map((r) => r.placeId)).size +
+          ' PLACES MATCHED' + (matched < live.length ? ' · ' + (live.length - matched) + ' TO DECIDE' : '');
       };
       const paintGo = () => {
-        const n = rows.filter((r) => r.on && r.placeId).length;
+        const n = rows.filter((r) => r.on && r.placeId && !r.out).length;
         go.textContent = n ? '✓ looks right — add ' + n + ' photo' + (n === 1 ? '' : 's') + ' →' : 'nothing selected';
         go.disabled = !n;
         go.hidden = false;
@@ -2125,43 +2126,56 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           '<img class="pi-thumb" alt="" src="' + esc(r.url) + '">' +
           '<div class="pi-main">' +
             '<span class="pi-nm">' + (r.placeId ? esc(nameOf(r.placeId)) : 'no match') + '</span>' +
-            '<span class="pi-cap">' + esc(r.note) + ' · <u class="pi-change">' + (r.placeId ? 'change' : 'pick a place') + '</u></span>' +
+            '<span class="pi-cap">' + esc(r.note) + ' · <u class="pi-change">' + (r.placeId ? 'change' : 'pick a place') + '</u>' +
+              ' · <u class="pi-out">leave out</u></span>' +
             '<select class="pi-sel" hidden><option value="">— pick a place —</option>' + selOpts + '</select>' +
           '</div>' +
-          '<span class="pi-tog">' + (r.on ? '✓' : '＋') + '</span>' +
+          /* the chip: ✓/＋ toggles a matched photo · ✕ leaves an unmatched one out */
+          '<span class="pi-tog" aria-label="' + (r.placeId ? 'include this photo' : 'leave this photo out') + '">' +
+            (r.placeId ? (r.on ? '✓' : '＋') : '✕') + '</span>' +
         '</div>').join('');
       paintSub();
       paintGo();
+      const leaveOut = (rowEl, r) => {
+        r.out = true;
+        r.on = false;
+        rowEl.style.display = 'none';
+        try { URL.revokeObjectURL(r.url); } catch (_) {}
+        paintSub(); paintGo();
+      };
+      const openSel = (rowEl, r) => {
+        const sel = rowEl.querySelector('.pi-sel');
+        sel.hidden = false;
+        sel.onchange = () => {
+          if (!sel.value) return;
+          r.placeId = String(sel.value);
+          r.status = 'manual';
+          r.on = true;
+          rowEl.querySelector('.pi-nm').textContent = nameOf(r.placeId);
+          rowEl.querySelector('.pi-cap').innerHTML =
+            'your pick · <u class="pi-change">change</u> · <u class="pi-out">leave out</u>';
+          rowEl.classList.add('on');
+          rowEl.querySelector('.pi-tog').textContent = '✓';
+          sel.hidden = true;
+          paintSub(); paintGo();
+        };
+        try { sel.focus(); } catch (_) {}
+      };
       host.onclick = (e) => {
         const rowEl = e.target.closest('.pi-row');
         if (!rowEl) return;
         const r = rows[+rowEl.getAttribute('data-i')];
-        if (e.target.closest('.pi-change')) {
-          const sel = rowEl.querySelector('.pi-sel');
-          sel.hidden = false;
-          sel.onchange = () => {
-            if (!sel.value) return;
-            r.placeId = String(sel.value);
-            r.status = 'manual';
-            r.on = true;
-            rowEl.querySelector('.pi-nm').textContent = nameOf(r.placeId);
-            rowEl.querySelector('.pi-cap').innerHTML = 'your pick · <u class="pi-change">change</u>';
-            rowEl.classList.add('on');
-            rowEl.querySelector('.pi-tog').textContent = '✓';
-            sel.hidden = true;
-            paintSub(); paintGo();
-          };
-          try { sel.focus(); } catch (_) {}
-          return;
-        }
-        if (!r.placeId) return; /* nothing to toggle until it has a place */
+        if (e.target.closest('.pi-out')) { leaveOut(rowEl, r); return; }
+        if (e.target.closest('.pi-change')) { openSel(rowEl, r); return; }
+        if (e.target.closest('.pi-tog') && !r.placeId) { leaveOut(rowEl, r); return; }
+        if (!r.placeId) { openSel(rowEl, r); return; } /* a dead surface is never dead */
         r.on = !r.on;
         rowEl.classList.toggle('on', r.on);
         rowEl.querySelector('.pi-tog').textContent = r.on ? '✓' : '＋';
         paintGo();
       };
       go.onclick = () => {
-        const jobs = rows.filter((r) => r.on && r.placeId);
+        const jobs = rows.filter((r) => r.on && r.placeId && !r.out);
         if (!jobs.length) return;
         jobs.forEach((r) => {
           const im = host.querySelector('.pi-row[data-i="' + rows.indexOf(r) + '"] .pi-thumb');

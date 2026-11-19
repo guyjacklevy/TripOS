@@ -3853,9 +3853,10 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
   border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; font-size: 13px;
 }
 .pi-tog {
-  flex: none; width: 30px; height: 30px; border-radius: 999px; display: flex;
-  align-items: center; justify-content: center; font-size: 14px;
+  flex: none; width: 44px; height: 44px; border-radius: 999px; display: flex;
+  align-items: center; justify-content: center; font-size: 16px; cursor: pointer;
   border: 1px solid var(--line); color: var(--dim);
 }
+.pi-out { color: var(--dim) !important; text-decoration-color: rgba(255, 255, 255, 0.2) !important; }
 .pi-row.on .pi-tog { border-color: rgba(61, 255, 208, 0.55); color: var(--teal); }
 #piGo { width: 100%; margin-top: 14px; }
