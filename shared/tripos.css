@@ -3898,3 +3898,16 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
 /* ═══ ROUND 12.5 · the receiver's door — a collection without a trip ═══ */
 .td-notrip { text-align: center; padding: 26px 12px 10px; }
 .td-plan-door { margin-top: 14px; text-align: center; }
+
+/* ═══ ROUND 13 · THE RELAY (Guy's go, 20 Nov) — the receiver's turn ═══
+   Beat cards ride the echo-rise grammar; the lineage line is one gold
+   breath on the gift door, one session, then gone. */
+.turn-rise span em {
+  font-style: normal; color: var(--teal); font-weight: 800;
+}
+.gift-door-lin {
+  display: block; margin-top: 5px;
+  font-family: var(--mono); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--gold, #ffb454);
+}

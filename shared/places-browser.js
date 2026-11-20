@@ -460,11 +460,19 @@ export function mountPlaces(cfg) {
     const beenN = stampedIds ? rows.filter((r) => stampedIds.has(String(r.p.id))).length : 0;
     const savedN = saves ? rows.filter((r) => saves.has(String(r.p.id))).length : 0;
     if (home.counts) {
+      /* ROUND 13: the honest split — a received gift never pads YOUR count */
+      let rideLine = '';
+      if (received && received.size) {
+        const givers = new Set([...received.values()].map((v) => v.name || 'a friend'));
+        rideLine = received.size + (givers.size === 1
+          ? ' ride with ' + [...givers][0] : ' given to you');
+      }
       home.counts.textContent = [
-        rows.length + ' place' + (rows.length === 1 ? '' : 's'),
+        rows.length + ' place' + (rows.length === 1 ? '' : 's') + (received && received.size ? ' yours' : ''),
         beenN ? beenN + ' been' : '',
         savedN ? savedN + ' saved' : '',
-        phN ? phN + ' with your photos' : ''
+        phN ? phN + ' with your photos' : '',
+        rideLine
       ].filter(Boolean).join(' · ');
       home.counts.hidden = false;
     }

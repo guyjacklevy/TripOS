@@ -2433,6 +2433,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         if (!user) return false;
         if (nowSaved) {
           const pid = String(p.id);
+          /* ROUND 13 beat 1: measured BEFORE the mutation — the browser
+             grows SAVES after we return true */
+          const wasEmpty = SAVES.size === 0;
           /* ROUND 12: ⚑ on a received place PROMOTES it — the row is already
              there; clearing its provenance makes it truly yours */
           if (RECEIVED.has(pid) && SAVE_ROWS.has(pid)) {
@@ -2441,6 +2444,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
             if (error) { console.warn('[Prevoya] promote failed:', error.message); return false; }
             RECEIVED.delete(pid);
             track('gift_place_promoted');
+            if (wasEmpty) maybeTurn1(p);
             maybeGiftCoda();
             if (placesApi && placesApi.refreshHome) placesApi.refreshHome();
             return true;
@@ -2452,6 +2456,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
           if (error) { console.warn('[Prevoya] save failed:', error.message); return false; }
           SAVE_ROWS.set(String(p.id), row.id);
           track('place_saved');
+          if (wasEmpty) maybeTurn1(p);
           maybeGiftCoda();
           return true;
         }
@@ -2800,9 +2805,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   }
   let GIFT_SHARE = null; /* the live kind='list' row, fetched once per session */
   async function giftRow() {
+    /* ROUND 13: the gift belongs to the USER — a collection-only receiver
+       (no trip) mints and finds their link the same way a trip owner does */
     if (GIFT_SHARE) return GIFT_SHARE;
     const { data: rows } = await sb.from('trip_shares').select('*')
-      .eq('trip_id', trip.id).eq('kind', 'list').is('revoked_at', null).limit(1);
+      .eq('user_id', user.id).eq('kind', 'list').is('revoked_at', null).limit(1);
     GIFT_SHARE = (rows && rows[0]) || null;
     return GIFT_SHARE;
   }
@@ -2881,7 +2888,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         live.note = note; live.photos = photos; live.scope = scope;
       } else {
         const ins = await sb.from('trip_shares')
-          .insert({ trip_id: trip.id, token: shareSlug(), kind: 'list', note, photos, scope }).select().single();
+          .insert({ user_id: user.id, trip_id: trip ? trip.id : null, token: shareSlug(), kind: 'list', note, photos, scope }).select().single();
         if (ins.error) { copyBtn.disabled = false; copyBtn.textContent = '⚠ didn’t save — retry'; return; }
         GIFT_SHARE = live = ins.data;
       }
@@ -2889,7 +2896,11 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       try { await navigator.clipboard.writeText(msg); copyBtn.textContent = '✓ copied — paste it anywhere'; }
       catch (_) { copyBtn.textContent = 'copy failed — long-press the message below'; }
       paintMsg();
-      track('share_created', { kind: 'list', n: cur().length, photos: photos, scope: scope, via: via || 'door' });
+      /* ROUND 13: generation-2 K — a send by someone who ARRIVED via a gift
+         carries its origin token; the Monday readout can show CHAINS */
+      const pay = { kind: 'list', n: cur().length, photos: photos, scope: scope, via: via || 'door' };
+      if (profile && profile.via_token) pay.origin = profile.via_token;
+      track('share_created', pay);
       copyBtn.disabled = false;
     };
     $('giftRevoke').onclick = async () => {
@@ -2957,20 +2968,86 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const auto = setTimeout(away, 8000);
     card.onclick = () => { clearTimeout(auto); away(); setTab('places'); };
   }
+  /* ─── ROUND 13 · THE RELAY (Guy's go, 20 Nov) — the receiver's turn ───
+     Three one-time beats that turn a receiver into a sender. Each rises
+     once and fades (the hidden timer); no meters, no progress bars — the
+     taste lock. Names derive from the lane / profile, never hard-coded. */
+  const lineage = () => {
+    if (RECEIVED.size) { const v = RECEIVED.values().next().value; return { name: v.name || null }; }
+    if (profile && profile.via_token) return { name: profile.via_name || null };
+    return null;
+  };
+  function riseCard(html, onTap) {
+    const card = document.createElement('div');
+    card.className = 'echo-rise turn-rise';
+    card.innerHTML = html;
+    document.body.appendChild(card);
+    requestAnimationFrame(() => card.classList.add('show'));
+    const away = () => { card.classList.remove('show'); setTimeout(() => card.remove(), 450); };
+    const auto = setTimeout(away, 9000);
+    card.onclick = () => { clearTimeout(auto); away(); if (onTap) onTap(); };
+  }
+  /* beat 1 — the first keep: their own collection goes 0 → 1 (first ⚑
+     promote from the lane, or first own save), named once */
+  function maybeTurn1(p) {
+    let seen = false;
+    try { seen = !!localStorage.getItem('pv_turn1'); } catch (_) {}
+    if (seen || document.querySelector('.turn-rise, .gift-coda, .echo-rise')) return;
+    try { localStorage.setItem('pv_turn1', '1'); } catch (_) {}
+    const lin = lineage();
+    riseCard('<b>Yours begins.</b><span>' + esc(p.name) +
+      ' is the first place that’s truly yours. Keep what you love — when you’ve lived a few, you’ll have a gift of your own to send.' +
+      (RECEIVED.size && lin && lin.name
+        ? ' ' + RECEIVED.size + ' still ride with ' + esc(lin.name) + ' until you choose them.' : '') +
+      '</span>', () => setTab('places'));
+    track('receiver_turn', { beat: 1 });
+  }
+  /* beat 3 — the pass-it-on: 3 keepers + zero sends, receivers only */
+  async function maybeTurn3() {
+    if (!user || !lineage()) return;
+    let seen = false;
+    try { seen = !!localStorage.getItem('pv_turn3'); } catch (_) {}
+    if (seen || giftable('keepers').length < 3) return;
+    if (await giftRow()) return; /* already a sender — the turn happened on its own */
+    if (document.querySelector('.turn-rise, .gift-coda, .echo-rise')) return;
+    try { localStorage.setItem('pv_turn3', '1'); } catch (_) {}
+    riseCard('<b>Three keepers — that’s a gift.</b><span>whoever last asked you “where should I go?” — ' +
+      'your three travel well. small gifts move first. <em>⤴ gift it</em></span>',
+      () => openGiftSheet('rise3'));
+    track('receiver_turn', { beat: 3 });
+  }
+  let LIN_SHOW = null; /* beat 2 shows through one whole session, then never */
   function paintGiftDoor() {
     const door = $('giftDoor');
     if (!door) return;
     const list = giftDefault();
     if (!list.length) { door.hidden = true; return; }
     const phN = giftPhotoCount(list);
+    /* beat 2 — the door remembers its lineage: the first session the door
+       lights for someone who was GIVEN a collection, one gold line */
+    const lin = lineage();
+    if (lin && LIN_SHOW === null) {
+      let seen = false;
+      try { seen = !!localStorage.getItem('pv_lineage'); } catch (_) {}
+      LIN_SHOW = !seen;
+      if (!seen) {
+        try { localStorage.setItem('pv_lineage', '1'); } catch (_) {}
+        track('receiver_turn', { beat: 2 });
+      }
+    }
     door.innerHTML =
       '<div class="gift-door-main"><span class="gift-door-nm">Your ' + esc(destName()) + '</span>' +
       '<span class="gift-door-sub">' + list.length + ' PLACE' + (list.length === 1 ? '' : 'S') +
       (phN ? ' · ' + phN + ' WITH YOUR PHOTOS' : '') + '</span>' +
-      echoLine() + '</div>' +
+      echoLine() +
+      (lin && LIN_SHOW
+        ? '<span class="gift-door-lin">began as ' + esc(lin.name || 'a friend') + '’s gift — now yours to pass on</span>'
+        : '') +
+      '</div>' +
       '<span class="gift-door-go">⤴ GIFT IT</span>';
     door.onclick = () => openGiftSheet('door');
     door.hidden = false;
+    maybeTurn3(); /* fire-and-forget; self-guarded, once ever */
   }
 
   /* ─── ROUND 6 (Guy: B) · the home's trip instruments ───
@@ -3720,7 +3797,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       .eq('trip_id', trip.id).eq('kind', 'trip').is('revoked_at', null).limit(1);
     let share = rows && rows[0];
     if (!share) {
-      const ins = await sb.from('trip_shares').insert({ trip_id: trip.id, token: shareSlug(), kind: 'trip' }).select().single();
+      const ins = await sb.from('trip_shares').insert({ user_id: user.id, trip_id: trip.id, token: shareSlug(), kind: 'trip' }).select().single();
       if (ins.error) { sheet.innerHTML = '<p class="pulse-note">couldn’t create the link — tap SHARE to retry</p>'; return; }
       share = ins.data;
     }
@@ -5372,7 +5449,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       .eq('trip_id', trip.id).eq('kind', 'route').is('revoked_at', null).limit(1);
     let share = rows && rows[0];
     if (!share) {
-      const ins = await sb.from('trip_shares').insert({ trip_id: trip.id, token: shareSlug(), kind: 'route' }).select().single();
+      const ins = await sb.from('trip_shares').insert({ user_id: user.id, trip_id: trip.id, token: shareSlug(), kind: 'route' }).select().single();
       if (ins.error) { console.warn('[Prevoya] route share failed:', ins.error.message); return null; }
       share = ins.data;
     }
