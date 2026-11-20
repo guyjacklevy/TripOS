@@ -687,8 +687,11 @@ function renderRoute(trip, legs, now, opts) {
    terrain tints. Real only; NO spend amounts anywhere in here.
    Banned by spec: completion %, streaks, gamification. */
 let CHECKINS = [];        /* the user's check-in rows, chronological */
-let SAVES = new Map();    /* saved places: curated_place_id → save-time ms (R2 recency) */
-let SAVE_ROWS = new Map(); /* curated_place_id → places-table row id, for unsave */
+let SAVES = new Map();    /* YOUR saved places: curated_place_id → save-time ms (R2 recency) */
+let SAVE_ROWS = new Map(); /* curated_place_id → places-table row id, for unsave/promote */
+/* ROUND 12 (Guy's go, 20 Nov): what a gift brought is NOT yours yet — it
+   lives in its own lane, with the giver's name, until you ⚑ promote it. */
+let RECEIVED = new Map();  /* curated_place_id → {name, token} — gifted, unpromoted */
 let RECS = new Set();      /* worth-it recs: curated_place_id — an opinion, not presence */
 /* ROUND 9 (18 Nov): the lived collection — stamped places are MEMBERS of
    Your Bali, not just passport history. Same objects for the app's life;
@@ -2402,9 +2405,34 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       beenCounts: BEEN_COUNTS,
       onMemory: (p) => openMemorySheet(p),
       memBusyOf: (pid) => MEM_UP.has(String(pid)),
+      /* ROUND 12: the received lanes — a gift stays the giver's until ⚑ */
+      received: RECEIVED,
+      onDismissVia: async (token) => {
+        const ids = [...RECEIVED.entries()].filter(([, v]) => v.token === token).map(([k]) => k);
+        const rowIds = ids.map((k) => SAVE_ROWS.get(k)).filter(Boolean);
+        if (!rowIds.length) return true;
+        const { error } = await sb.from('places').delete().in('id', rowIds);
+        if (error) { console.warn('[Prevoya] lane dismiss failed:', error.message); return false; }
+        ids.forEach((k) => { RECEIVED.delete(k); SAVE_ROWS.delete(k); });
+        track('gift_lane_dismissed', { n: ids.length });
+        return true;
+      },
       onSave: async (p, nowSaved) => {
         if (!user) return false;
         if (nowSaved) {
+          const pid = String(p.id);
+          /* ROUND 12: ⚑ on a received place PROMOTES it — the row is already
+             there; clearing its provenance makes it truly yours */
+          if (RECEIVED.has(pid) && SAVE_ROWS.has(pid)) {
+            const { error } = await sb.from('places')
+              .update({ via_token: null, via_name: null }).eq('id', SAVE_ROWS.get(pid));
+            if (error) { console.warn('[Prevoya] promote failed:', error.message); return false; }
+            RECEIVED.delete(pid);
+            track('gift_place_promoted');
+            maybeGiftCoda();
+            if (placesApi && placesApi.refreshHome) placesApi.refreshHome();
+            return true;
+          }
           const { data: row, error } = await sb.from('places').insert({
             user_id: user.id, curated_place_id: p.id,
             name: p.name, area: p.area, category: p.category, curated: true
@@ -2697,13 +2725,18 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     let claimed = 0;
     for (const s of buf) {
       const id = String(s.id || '');
-      if (!id || SAVES.has(id)) continue;
+      if (!id || SAVES.has(id) || RECEIVED.has(id)) continue;
+      /* ROUND 12: provenance survives the claim — a gifted place lands in
+         the giver's lane, not in the receiver's own collection */
+      const via = (s.via && s.via.t) ? { token: String(s.via.t).slice(0, 64), name: String(s.via.name || 'a friend').slice(0, 40) } : null;
       const { data: row, error } = await sb.from('places').insert({
         user_id: user.id, curated_place_id: s.id,
-        name: s.name, area: s.area, category: s.category || null, curated: true
+        name: s.name, area: s.area, category: s.category || null, curated: true,
+        via_token: via ? via.token : null, via_name: via ? via.name : null
       }).select('id').single();
       if (error) { console.warn('[Prevoya] save claim failed:', error.message); continue; }
-      SAVES.set(id, s.ts || Date.now());
+      if (via) RECEIVED.set(id, { name: via.name, token: via.token });
+      else SAVES.set(id, s.ts || Date.now());
       SAVE_ROWS.set(id, row.id);
       claimed++;
     }
@@ -6272,9 +6305,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     placesCount = (places || []).length || placesCount;
     /* the shortlist loads with the shelf (R2) */
     const { data: savedRows } = await sb.from('places')
-      .select('id, curated_place_id, created_at')
+      .select('id, curated_place_id, created_at, via_token, via_name')
       .eq('user_id', user.id).not('curated_place_id', 'is', null);
-    SAVES = new Map((savedRows || []).map((r) => [String(r.curated_place_id), new Date(r.created_at).getTime()]));
+    /* ROUND 12: yours vs given-to-you — SAVES carries only YOUR keeps */
+    SAVES = new Map((savedRows || []).filter((r) => !r.via_token)
+      .map((r) => [String(r.curated_place_id), new Date(r.created_at).getTime()]));
+    RECEIVED = new Map((savedRows || []).filter((r) => r.via_token)
+      .map((r) => [String(r.curated_place_id), { name: r.via_name || 'a friend', token: r.via_token }]));
     SAVE_ROWS = new Map((savedRows || []).map((r) => [String(r.curated_place_id), r.id]));
     /* saves made before the account claim themselves now (save-first pivot) */
     const claimedN = await claimAnonSaves();

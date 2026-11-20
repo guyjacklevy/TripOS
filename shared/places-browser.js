@@ -96,7 +96,7 @@ const photoLead = (p, cat, own) => {
 };
 
 export function mountPlaces(cfg) {
-  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec, userPhotoOf, resolvePhotos, beenCounts, onMemory, memBusyOf } = cfg;
+  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec, userPhotoOf, resolvePhotos, beenCounts, onMemory, memBusyOf, received, onDismissVia } = cfg;
   /* ROUND 6 (Guy: B, 16 Nov) — the app mount passes `home`: the front door
      IS the collection. Home renders the saved places as full photo-led
      cards; the whole shelf stays one visible door down. Public mounts pass
@@ -384,7 +384,42 @@ export function mountPlaces(cfg) {
           '" data-mem="' + esc(id) + '">' +
           (up ? '⟳ saving…' : own ? '📷 your photo ↻' : '+ add your photo') + '</button>');
       }
+      /* ROUND 12: a received card wears its provenance, visibly */
+      if (received && received.has(id) && t && !el.querySelector('.hb-via'))
+        t.insertAdjacentHTML('beforeend',
+          ' <span class="hb-via">⤵ via ' + esc((received.get(id) || {}).name || 'a friend') + '</span>');
     });
+  }
+  /* ROUND 12 — THE RECEIVED LANES: what a gift brought lives under the
+     giver's name, collapsed, never mixed into YOUR areas. ⚑ promotes a
+     place into your own collection; "let this list go" releases the rest. */
+  function receivedLanes() {
+    if (!received || !received.size) return '';
+    const byGiver = new Map();
+    received.forEach((v, pid) => {
+      const p = allPlaces.find((x) => String(x.id) === String(pid));
+      if (!p) return;
+      if (!byGiver.has(v.token)) byGiver.set(v.token, { name: v.name || 'a friend', token: v.token, rows: [] });
+      byGiver.get(v.token).rows.push(p);
+    });
+    return [...byGiver.values()].map((g) => {
+      const key = 'from:' + g.token;
+      const open = hbOpen === key;
+      return '<section class="hb-group hb-from' + (open ? ' open' : '') + '" data-area="' + esc(key) + '">' +
+        '<button type="button" class="hb-area" aria-expanded="' + (open ? 'true' : 'false') + '">' +
+          '<span class="hb-area-nm">FROM ' + esc(String(g.name).toUpperCase()) + '</span>' +
+          '<span class="hb-area-n">' + g.rows.length + ' · a gift</span>' +
+          '<span class="hb-area-car">' + (open ? '▾' : '▸') + '</span>' +
+        '</button>' +
+        '<div class="hb-gbody"' + (open ? '' : ' hidden') + '>' +
+          (open
+            ? '<p class="hb-from-note">' + esc(g.name) + '’s places — not yours yet. tap ⚑ on any to make it yours.</p>' +
+              g.rows.map((p) => card(p, matchedMap.get(p) || null)).join('') +
+              '<button type="button" class="hb-from-x" data-vt="' + esc(g.token) + '">✕ let this list go</button>'
+            : '') +
+        '</div>' +
+      '</section>';
+    }).join('');
   }
   let hbOpen; /* the one open area group — the first, until a tap moves it */
   const HB_GROUP_MIN = 9; /* small collections read better flat */
@@ -392,6 +427,18 @@ export function mountPlaces(cfg) {
     if (!home) return;
     const rows = savedList();
     if (!rows.length) {
+      /* ROUND 12: nothing of your own YET, but a gift waits — the lane
+         shows; the empty poem waits for a truly empty home */
+      if (received && received.size) {
+        if (home.counts) home.counts.hidden = true;
+        if (home.empty) home.empty.hidden = true;
+        home.grid.classList.add('hb-grouped');
+        home.grid.innerHTML = receivedLanes();
+        annotateHome(rows);
+        if (home.browse) home.browse.hidden = false;
+        watchPhotos(home.grid);
+        return;
+      }
       /* day zero: one sentence, one door (the decided mock) */
       if (home.counts) home.counts.hidden = true;
       home.grid.innerHTML = '';
@@ -427,8 +474,10 @@ export function mountPlaces(cfg) {
         const ix = AREA_ORDER.indexOf(x), iy = AREA_ORDER.indexOf(y);
         return (ix === -1 ? 99 : ix) - (iy === -1 ? 99 : iy);
       });
-      /* undefined = first open by default · '' = user closed them all */
-      if (hbOpen === undefined || (hbOpen !== '' && !byA.has(hbOpen))) hbOpen = names[0];
+      /* undefined = first open by default · '' = user closed them all ·
+         'from:*' = a received lane is open, the areas stay closed */
+      if (hbOpen === undefined ||
+          (hbOpen !== '' && !String(hbOpen).startsWith('from:') && !byA.has(hbOpen))) hbOpen = names[0];
       home.grid.classList.add('hb-grouped');
       home.grid.innerHTML = names.map((nm) => {
         const g = byA.get(nm);
@@ -444,11 +493,12 @@ export function mountPlaces(cfg) {
             (open ? g.map((r) => card(r.p, matchedMap.get(r.p) || null)).join('') : '') +
           '</div>' +
         '</section>';
-      }).join('');
+      }).join('') + receivedLanes();
       annotateHome(rows);
     } else {
       home.grid.classList.remove('hb-grouped');
-      home.grid.innerHTML = rows.map((r) => card(r.p, matchedMap.get(r.p) || null)).join('');
+      home.grid.innerHTML = rows.map((r) => card(r.p, matchedMap.get(r.p) || null)).join('') +
+        receivedLanes();
       annotateHome(rows);
     }
     if (home.browse) home.browse.hidden = false;
@@ -768,6 +818,24 @@ export function mountPlaces(cfg) {
      ROUND 6: the home grid shares it — same cards, same verbs. */
   const gridClick = (e) => {
     if (e.target.closest('a')) return;
+    /* ROUND 12: "let this list go" — one honest second thought, then gone */
+    const fx = e.target.closest('.hb-from-x');
+    if (fx) {
+      e.stopPropagation();
+      if (fx.dataset.sure !== '1') {
+        fx.dataset.sure = '1';
+        fx.textContent = '✕ sure? tap again — the gift link keeps working';
+        return;
+      }
+      const vt = fx.getAttribute('data-vt');
+      fx.disabled = true;
+      fx.textContent = '⟳ letting it go…';
+      Promise.resolve(onDismissVia && onDismissVia(vt)).then((ok) => {
+        if (ok === false) { fx.disabled = false; fx.dataset.sure = ''; fx.textContent = '⚠ didn’t work — retry'; return; }
+        renderHome();
+      });
+      return;
+    }
     /* ROUND 9: an area group header toggles — one open at a time (accordion
        keeps a 150-card collection honest; the open group renders its cards) */
     const ga = e.target.closest('.hb-area');

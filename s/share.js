@@ -317,7 +317,10 @@ function renderGift(data, token) {
     btn.onclick = () => {
       const have = anonMap();
       places.forEach((p) => {
-        if (!have.has(String(p.id))) anonToggle({ id: p.id, name: p.name, area: p.area, category: p.category });
+        if (!have.has(String(p.id))) anonToggle({
+          id: p.id, name: p.name, area: p.area, category: p.category,
+          via: { t: token, name: name } /* ROUND 12: the gift stays the giver's until promoted */
+        });
       });
       seed(null);
       try { window.pvTrack && window.pvTrack('share_save_tap', { kind: 'list', n: n, t: token }); } catch (_) {}

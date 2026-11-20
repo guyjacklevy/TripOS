@@ -31,7 +31,10 @@ export function anonToggle(p) {
   const id = String(p.id);
   const i = list.findIndex((s) => String(s.id) === id);
   if (i !== -1) { list.splice(i, 1); write(list); return false; }
-  list.push({ id, name: p.name, area: p.area, category: p.category || null, ts: Date.now() });
+  /* ROUND 12: a save that rode in on a gift carries its provenance —
+     {t: share token, name: giver's first name} — so the claim can keep
+     the receiver's own Bali separate from what was given to them */
+  list.push({ id, name: p.name, area: p.area, category: p.category || null, via: p.via || null, ts: Date.now() });
   write(list);
   return true;
 }

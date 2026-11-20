@@ -3876,3 +3876,21 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
 .echo-rise.show { opacity: 1; transform: none; }
 .echo-rise b { display: block; font-size: 14.5px; color: var(--tx); }
 .echo-rise span { display: block; margin-top: 3px; color: var(--mut); font-size: 12px; }
+
+/* ═══ ROUND 12 · THE RECEIVED COLLECTION (Guy's go, 20 Nov) ═══════════
+   A gift lives under its giver's name — gold, apart, never mixed into
+   YOUR areas — until ⚑ makes a place truly yours. */
+.hb-from .hb-area-nm { color: var(--gold, #ffb454); }
+.hb-from .hb-area-car { color: var(--gold, #ffb454); }
+.hb-via { color: var(--gold, #ffb454); white-space: nowrap; }
+.hb-from-note {
+  margin: 2px 0 10px; color: var(--mut); font-size: 12.5px; line-height: 1.45;
+}
+.hb-from-x {
+  display: block; width: 100%; cursor: pointer; text-align: center;
+  background: none; border: 1px dashed var(--line); border-radius: 11px;
+  padding: 11px 12px; margin: 6px 0 14px; color: var(--dim);
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  -webkit-tap-highlight-color: transparent;
+}
+.hb-from-x:disabled { opacity: 0.6; }
