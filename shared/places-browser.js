@@ -430,6 +430,12 @@ export function mountPlaces(cfg) {
       /* ROUND 12: nothing of your own YET, but a gift waits — the lane
          shows; the empty poem waits for a truly empty home */
       if (received && received.size) {
+        /* a home that IS the gift greets with the lane open — the receiver's
+           first look answers "what is this?" without a tap (20 Nov) */
+        if (hbOpen === undefined) {
+          const first = received.values().next().value;
+          if (first) hbOpen = 'from:' + first.token;
+        }
         if (home.counts) home.counts.hidden = true;
         if (home.empty) home.empty.hidden = true;
         home.grid.classList.add('hb-grouped');

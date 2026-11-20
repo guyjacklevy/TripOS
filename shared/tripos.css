@@ -3894,3 +3894,7 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
   -webkit-tap-highlight-color: transparent;
 }
 .hb-from-x:disabled { opacity: 0.6; }
+
+/* ═══ ROUND 12.5 · the receiver's door — a collection without a trip ═══ */
+.td-notrip { text-align: center; padding: 26px 12px 10px; }
+.td-plan-door { margin-top: 14px; text-align: center; }

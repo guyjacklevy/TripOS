@@ -1222,6 +1222,18 @@ function windowsTimelineHtml(windows, places, plan, pool, now) {
 function renderToday(trip, firstName, places, dateOpt) {
   const now = dateOpt || baliNow();
   updateStrip(trip, firstName, now);
+  /* THE RECEIVER'S DOOR: a collection without a trip — Today is an open
+     invitation, never a forced corridor (Guy's lost arrival, 20 Nov) */
+  if (!trip) {
+    const cxF = $('cxForm');
+    if (cxF) cxF.hidden = true;
+    const tl = $('timeline');
+    if (tl) tl.innerHTML = '<div class="pre-brief td-notrip">' +
+      '<p class="offer-label">no trip yet — your collection stands on its own</p>' +
+      '<a class="btn btn-primary td-plan-door" href="/bali/plan/">✈ plan a trip around it — 30 seconds</a>' +
+      '</div>';
+    return;
+  }
   if (!places || !places.length) return;
   const plan = planFromTrip(trip);
   const s = dayState(now);
@@ -2721,8 +2733,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   async function claimAnonSaves() {
     let buf = [];
     try { buf = JSON.parse(localStorage.getItem('prevoya_saves_anon') || '[]'); } catch (_) {}
-    if (!Array.isArray(buf) || !buf.length || !user) return 0;
-    let claimed = 0;
+    if (!Array.isArray(buf) || !buf.length || !user) return { n: 0, giftN: 0, giftFrom: null };
+    let claimed = 0, giftN = 0, giftFrom = null;
     for (const s of buf) {
       const id = String(s.id || '');
       if (!id || SAVES.has(id) || RECEIVED.has(id)) continue;
@@ -2735,7 +2747,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         via_token: via ? via.token : null, via_name: via ? via.name : null
       }).select('id').single();
       if (error) { console.warn('[Prevoya] save claim failed:', error.message); continue; }
-      if (via) RECEIVED.set(id, { name: via.name, token: via.token });
+      if (via) { RECEIVED.set(id, { name: via.name, token: via.token }); giftN++; giftFrom = via.name; }
       else SAVES.set(id, s.ts || Date.now());
       SAVE_ROWS.set(id, row.id);
       claimed++;
@@ -2749,7 +2761,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       if (!viaTok && profile && profile.via_token) viaTok = profile.via_token;
       track('anon_saves_claimed', viaTok ? { n: claimed, via: viaTok } : { n: claimed });
     }
-    return claimed;
+    return { n: claimed, giftN, giftFrom };
   }
 
   /* ─── THE GIFT (Week 3): the collection, given person to person ───────
@@ -6124,7 +6136,20 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     return ok;
   }
 
+  /* does this account hold a collection — rows already claimed, or a gift /
+     shelf buffer waiting to claim? one cheap probe, only on the no-brief path */
+  async function hasCollection() {
+    try {
+      const buf = JSON.parse(localStorage.getItem('prevoya_saves_anon') || '[]');
+      if (Array.isArray(buf) && buf.length) return true;
+    } catch (_) {}
+    const { data } = await sb.from('places').select('id')
+      .eq('user_id', user.id).not('curated_place_id', 'is', null).limit(1);
+    return !!(data && data.length);
+  }
+
   async function loadShell() {
+    let collectionOnly = false; /* places but no trip — the receiver's door */
     $('acctEmail').textContent = (user.email || '—');
 
     const { data: trips } = await sb.from('trips').select('*')
@@ -6147,6 +6172,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const freshLocal = !!(local && local.ts && Date.now() - local.ts < 86400e3);
       if (local && (freshLocal || !firstOpen)) {
         trip = await saveBrief(local);
+      } else if (await hasCollection()) {
+        /* THE RECEIVER'S DOOR (Guy's lost arrival, 20 Nov): places waiting —
+           a gift, shelf saves — but no brief. The collection is a complete
+           first surface; the planner is a door on Today, never a wall.
+           Before this gate, every tripless open bounced to the chat and a
+           gift receiver had to PLAN A TRIP to see their gift. */
+        collectionOnly = true;
       } else if (!firstOpen) {
         /* signed in, no brief anywhere — chat-first: the conversation owns
            brief-gathering (the in-app questionnaire survives only for
@@ -6171,10 +6203,20 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
        interstitial covers never-routed, never-revealed briefs. */
     let corridorRan = false, ceremonyFired = false;
     if (firstOpen) {
-      corridorRan = true;
-      ceremonyFired = await runCorridor();
-      if (!trip) return; /* runCorridor already redirected to the conversation */
-    } else if (TRIP_LEGS.length < 2 && !trip.route_generated_at && !trip.route_revealed_at) {
+      if (collectionOnly) {
+        /* no brief → no ceremony to play; mark the open so day-2 unlocks
+           anchor and later opens never re-enter the corridor */
+        const ts0 = new Date().toISOString();
+        profile = Object.assign({}, profile, { first_open_done_at: ts0 });
+        sb.from('profiles').update({ first_open_done_at: ts0 }).eq('id', user.id)
+          .then(({ error }) => { if (error) console.warn('[Prevoya] first-open mark failed:', error.message); });
+        track('open_collection_first');
+      } else {
+        corridorRan = true;
+        ceremonyFired = await runCorridor();
+        if (!trip) return; /* runCorridor already redirected to the conversation */
+      }
+    } else if (trip && TRIP_LEGS.length < 2 && !trip.route_generated_at && !trip.route_revealed_at) {
       await routeInterstitial();
     }
     show('shell');
@@ -6182,7 +6224,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     installNudgeMaybe(); /* R5: the app confesses it's an app — quietly, post-auth */
     dailyK = (trip && trip.budget_daily_k) || TIER_IDR[trip && trip.budget_tier] || 700;
     renderRoute(trip, TRIP_LEGS, baliNow(), { onReplan: replanRoute, onOverride: setOverride, onShare: shareRoute });
-    if (TRIP_LEGS.length < 2 && !trip.route_generated_at) {
+    if (trip && TRIP_LEGS.length < 2 && !trip.route_generated_at) {
       /* already-revealed brief that lost its route (rare) → quiet background gen */
       genRoute().then((ok) => {
         if (ok) {
@@ -6202,6 +6244,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
        so a save re-runs the shell and everything re-numbers honestly */
     const bpDatesEl = $('bpDates');
     if (bpDatesEl) bpDatesEl.onclick = () => {
+      if (!trip) return; /* no brief → no dates cell to anchor (collection-only) */
       const old = $('bpArriveRow');
       if (old) { old.remove(); return; }
       const row = document.createElement('div');
@@ -6256,7 +6299,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
        corridor's own first day). */
     const inTrip = tdNow != null && tdNow >= 1;
     LAYERS.today = day2 || preTrip || inTrip;
-    LAYERS.places = day2 || preTrip || inTrip || CHECKINS.length > 0;
+    /* collection-only accounts get the FULL shelf — the collection IS the
+       app for them; layer-1 "matched rows only" needs a plan to match */
+    LAYERS.places = day2 || preTrip || inTrip || CHECKINS.length > 0 || !trip;
     const packOn = tdNow != null && tdNow >= -6; /* T−7 and closer */
     /* readiness is ALWAYS on (Guy 2026-09-13, third strike of this bug: a
        day-1 account with no future arrive was neither day2 nor preTrip, so
@@ -6314,10 +6359,16 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       .map((r) => [String(r.curated_place_id), { name: r.via_name || 'a friend', token: r.via_token }]));
     SAVE_ROWS = new Map((savedRows || []).map((r) => [String(r.curated_place_id), r.id]));
     /* saves made before the account claim themselves now (save-first pivot) */
-    const claimedN = await claimAnonSaves();
-    if (claimedN) {
-      $('arriveText').innerHTML = '⚑ <strong>' + claimedN + ' place' + (claimedN === 1 ? '' : 's') + '</strong> from your list ' +
-        (claimedN === 1 ? 'is' : 'are') + ' in your account now — find them in Places.';
+    const claimRes = await claimAnonSaves();
+    if (claimRes.n) {
+      /* a claimed GIFT says who it's from and where it sits — the receiver
+         must never think someone else's list became theirs (Guy, 19 Nov) */
+      const gf = claimRes.giftFrom || 'a friend';
+      $('arriveText').innerHTML = claimRes.giftN
+        ? '🎁 <strong>' + claimRes.giftN + ' places from ' + esc(gf) + '</strong> are in — they stay in ' +
+          esc(gf) + '’s lane below until you ⚑ the ones you want to keep.'
+        : '⚑ <strong>' + claimRes.n + ' place' + (claimRes.n === 1 ? '' : 's') + '</strong> from your list ' +
+          (claimRes.n === 1 ? 'is' : 'are') + ' in your account now — find them in Places.';
       $('arriveBanner').hidden = false;
     }
     const { data: recRows } = await sb.from('place_recs').select('place_id').eq('user_id', user.id);
@@ -6331,7 +6382,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     todayCtx = { trip, name: greetName(), places: places || [] };
     renderToday(trip, greetName(), places || []);
 
-    const { data: dpAll } = await sb.from('day_plans').select('leg_seq, day_in_leg, slots').eq('trip_id', trip.id);
+    const { data: dpAll } = trip
+      ? await sb.from('day_plans').select('leg_seq, day_in_leg, slots').eq('trip_id', trip.id)
+      : { data: [] };
     TRIP_DAY_PLANS = dpAll || [];
     renderItinerary(); /* day plans arrived after the render — fill the rows in place */
     renderPassport(trip, places || []);
@@ -6346,12 +6399,16 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     loadReadiness();
 
     if (freshLogin) {
-      const line = passengerLine(profile && profile.title, profile && profile.full_name);
-      /* Guy 2026-09-13 #4: the first breath inside ORIENTS — say what the
-         three tabs are, in one line, instead of assuming the map is known */
-      $('arriveText').innerHTML = '✓ You’re in' + (line ? ', <strong>' + esc(line) + '</strong>' : '') +
-        '. <strong>Your Bali</strong> holds what you keep · <strong>Today</strong> plans your day · <strong>You</strong> is your pass + passport.';
-      $('arriveBanner').hidden = false;
+      /* the claim banner outranks orientation — a gift arrival must not be
+         overwritten by the tab tour (the receiver's door, 20 Nov) */
+      if ($('arriveBanner').hidden) {
+        const line = passengerLine(profile && profile.title, profile && profile.full_name);
+        /* Guy 2026-09-13 #4: the first breath inside ORIENTS — say what the
+           three tabs are, in one line, instead of assuming the map is known */
+        $('arriveText').innerHTML = '✓ You’re in' + (line ? ', <strong>' + esc(line) + '</strong>' : '') +
+          '. <strong>Your Bali</strong> holds what you keep · <strong>Today</strong> plans your day · <strong>You</strong> is your pass + passport.';
+        $('arriveBanner').hidden = false;
+      }
       freshLogin = false;
     }
     /* ROUND 6 (Guy: B, 16 Nov): the app opens on YOUR BALI — the collection
@@ -6365,7 +6422,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
        ran: the ceremony IS the reveal, and dumping a first-timer mid-scroll
        on You right after it was Guy's "sticky place, no idea what's going
        on" (2026-09-13 #4). */
-    if (!trip.route_revealed_at && TRIP_LEGS.length >= 2) {
+    if (trip && !trip.route_revealed_at && TRIP_LEGS.length >= 2) {
       trip.route_revealed_at = new Date().toISOString();
       sb.from('trips').update({ route_revealed_at: trip.route_revealed_at }).eq('id', trip.id)
         .then(({ error }) => { if (error) console.warn('[Prevoya] reveal mark failed:', error.message); });
