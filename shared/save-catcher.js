@@ -164,7 +164,7 @@ function googleLinkIn(raw) {
     /* 1 · our pool first — context beats a raw pin */
     const { data: hits } = await sb.from('curated_places')
       .select('id, name, area, category, verified, why')
-      .eq('destination', 'bali').ilike('name', '%' + q.replace(/[%_]/g, '') + '%').limit(6);
+      .ilike('name', '%' + q.replace(/[%_]/g, '') + '%').limit(6);
     lastCurated = hits || [];
     let html = lastCurated.map((p) => rowHtml(p)).join('');
     /* 2 · the live door */
@@ -199,7 +199,7 @@ function googleLinkIn(raw) {
       f.querySelector('use').setAttribute('href', '#icon-' + (on ? 'saved' : 'save'));
       paintBar();
       /* the quiet fill — curated rows are a dense list, so one line only */
-      if (on) $('svStatus').textContent = 'Kept · in your Bali';
+      if (on) $('svStatus').textContent = 'Kept · in your collection';
       return;
     }
     const g = e.target.closest('.sv-gadd');

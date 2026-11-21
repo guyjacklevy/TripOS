@@ -480,7 +480,10 @@ export function mountPlaces(cfg) {
       /* area groups — the collection reads like the route, not a wall */
       const byA = new Map();
       rows.forEach((r) => {
-        const a = region(r.p.area) || 'Bali';
+        /* 14a: a place with no area groups under its own destination, never
+           under an assumed island */
+        const a = region(r.p.area) ||
+          (r.p.destination ? String(r.p.destination).charAt(0).toUpperCase() + String(r.p.destination).slice(1) : 'places');
         if (!byA.has(a)) byA.set(a, []);
         byA.get(a).push(r);
       });
@@ -734,7 +737,7 @@ export function mountPlaces(cfg) {
     out.innerHTML = cands.map((c, i) =>
       '<div class="disc-card" data-i="' + i + '">' +
         '<div><div class="place-name">' + esc(c.name) + '</div>' +
-          '<div class="poi-type">' + esc(c.area || 'Bali') + ' · ' + esc(c.category) +
+          '<div class="poi-type">' + esc(c.area || '—') + ' · ' + esc(c.category) +
             (c.rating ? ' · ★ ' + c.rating : '') + '</div></div>' +
         (c.already
           ? '<span class="disc-have">already in Prevoya</span>'

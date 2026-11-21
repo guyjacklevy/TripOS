@@ -1166,7 +1166,7 @@ function windowCardHtml(w, p, lead, winIdx) {
     '<div class="win-foot">' +
       (p ? '<button type="button" class="wf-chip wf-primary win-info" data-place="' + esc(p.id) + '">ⓘ place info</button>' : '') +
       (p ? '<a class="wf-chip" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' +
-        encodeURIComponent(p.maps_query || (p.name + ', Bali')) + '">maps ↗</a>' : '') +
+        encodeURIComponent(p.maps_query || (p.name + (p.destination ? ', ' + p.destination : ''))) + '">maps ↗</a>' : '') +
       (winIdx != null ? '<button type="button" class="wf-chip win-swap" data-swap-win="' + winIdx + '">↻ swap</button>' : '') +
     '</div>' +
   '</div>';
@@ -2815,8 +2815,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   }
   const giftMessage = (n, link, scope) =>
     (scope === 'all'
-      ? 'My whole Bali — ' + n + ' place' + (n === 1 ? '' : 's') + ' I’ve been to or kept. '
-      : 'I made you a list of my Bali places — ' + n + ' spot' + (n === 1 ? '' : 's') + ' I vouch for. ') + link;
+      ? 'My whole ' + destName() + ' — ' + n + ' place' + (n === 1 ? '' : 's') + ' I’ve been to or kept. '
+      : 'I made you a list of my ' + destName() + ' places — ' + n + ' spot' + (n === 1 ? '' : 's') + ' I vouch for. ') + link;
   async function openGiftSheet(via) {
     const sheet = $('giftSheet');
     if (!sheet) return;
@@ -2834,13 +2834,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const paintHead = () => {
       const list = cur();
       const phN = giftPhotoCount(list);
-      $('giftH').textContent = 'Gift your Bali — ' + list.length + ' place' + (list.length === 1 ? '' : 's');
+      $('giftH').textContent = 'Gift your ' + destName() + ' — ' + list.length + ' place' + (list.length === 1 ? '' : 's');
       const phBox = $('giftPhotos');
       if (phN) {
         $('giftPhotosLbl').textContent = 'include my photos (' + phN + ' place' + (phN === 1 ? '' : 's') + ') — they travel only with this gift';
         phBox.disabled = false;
       } else {
-        $('giftPhotosLbl').textContent = 'no photos of yours yet — add one to any been place from Your Bali';
+        $('giftPhotosLbl').textContent = 'no photos of yours yet — add one to any been place in your collection';
         phBox.checked = false;
         phBox.disabled = true;
       }
@@ -2924,10 +2924,35 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
      page is loginless, events carry no identity, gift-echo returns numbers
      only. Copy derives from the trip's destination — nothing new says Bali. */
   const destName = () => {
-    const t = (todayCtx && todayCtx.trip) || trip;
-    const d = t && t.destination ? String(t.destination) : '';
-    return d ? d.charAt(0).toUpperCase() + d.slice(1) : 'collection';
+    /* ROUND 14a GLOBAL: the collection names itself — the dominant
+       destination among the places you keep; the trip only as fallback;
+       'collection' when truly empty. Nothing assumes Bali. */
+    const pool = (todayCtx && todayCtx.places) || [];
+    const tally = new Map();
+    pool.forEach((p) => {
+      const id = String(p.id);
+      if (!SAVES.has(id) && !STAMPED.has(id)) return;
+      const d = String(p.destination || '').trim();
+      if (d) tally.set(d, (tally.get(d) || 0) + 1);
+    });
+    let best = '', bn = 0;
+    tally.forEach((n, d) => { if (n > bn) { bn = n; best = d; } });
+    if (!best) {
+      const t = (todayCtx && todayCtx.trip) || trip;
+      best = t && t.destination ? String(t.destination) : '';
+    }
+    return best ? best.charAt(0).toUpperCase() + best.slice(1) : 'collection';
   };
+  /* the home's chrome follows the collection — title + tab label */
+  function paintDestChrome() {
+    const nm = destName();
+    const label = nm === 'collection' ? 'Your places' : 'Your ' + nm;
+    const t = document.querySelector('#homeBali .hb-title');
+    if (t) t.textContent = label;
+    const tb = document.querySelector('.tab-slot[data-tab="places"] span');
+    if (tb) tb.textContent = label.toUpperCase();
+    if (nm !== 'collection') document.title = 'Prevoya — your ' + nm;
+  }
   let ECHO = null; /* {opened, played, took} — fetched once per session */
   let echoLoaded = false;
   async function loadEcho() {
@@ -3018,6 +3043,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   }
   let LIN_SHOW = null; /* beat 2 shows through one whole session, then never */
   function paintGiftDoor() {
+    paintDestChrome(); /* 14a: the home is named by the collection, every repaint */
     const door = $('giftDoor');
     if (!door) return;
     const list = giftDefault();
@@ -3121,7 +3147,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     CODA_DONE = true;
     const chip = document.createElement('div');
     chip.className = 'gift-coda';
-    chip.innerHTML = '<span><em>⤴</em> ' + list.length + ' places — someone going to Bali? <em>gift them your list</em></span>';
+    chip.innerHTML = '<span><em>⤴</em> ' + list.length + ' places — ' +
+      (destName() === 'collection' ? 'someone traveling?' : 'someone going to ' + esc(destName()) + '?') +
+      ' <em>gift them your list</em></span>';
     document.body.appendChild(chip);
     requestAnimationFrame(() => chip.classList.add('show'));
     track('gift_coda', { n: list.length });
@@ -3719,7 +3747,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         ssCands = cands.slice(0, 5);
         ssEl.suggest.innerHTML = ssCands.map((c, i) =>
           '<button type="button" class="ssg-cand" data-ci="' + i + '">' + esc(c.name) +
-          '<span class="ssg-area">' + esc(c.area || 'Bali') + ' · ' + esc(c.category || 'place') +
+          '<span class="ssg-area">' + esc(c.area || 'somewhere') + ' · ' + esc(c.category || 'place') +
           (c.already ? ' · already in Prevoya' : '') + '</span></button>').join('');
         return;
       }
@@ -4753,7 +4781,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       /* discovery may have grown the dataset mid-call (same as leg plans) */
       if (todayCtx && (Array.isArray(DAY_PLAN) ? DAY_PLAN : (DAY_PLAN.windows || [])).some((sl) =>
             !todayCtx.places.find((x) => String(x.id) === String(sl.place_id)))) {
-        const { data: allP } = await sb.from('curated_places').select('*').eq('destination', 'bali');
+        const { data: allP } = await sb.from('curated_places').select('*');
         if (allP && allP.length) { todayCtx.places = allP; mountPlacesTab(allP); }
       }
       if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
@@ -4799,7 +4827,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
            slots resolve (and the Places tab shows the new ◔ discovered rows) */
         if (todayCtx && (Array.isArray(DAY_PLAN) ? DAY_PLAN : ((DAY_PLAN && DAY_PLAN.windows) || [])).some((sl) =>
               !todayCtx.places.find((x) => String(x.id) === String(sl.place_id)))) {
-          const { data: allP } = await sb.from('curated_places').select('*').eq('destination', 'bali');
+          const { data: allP } = await sb.from('curated_places').select('*');
           if (allP && allP.length) { todayCtx.places = allP; mountPlacesTab(allP); }
         }
         if (todayCtx) renderToday(todayCtx.trip, todayCtx.name, todayCtx.places);
@@ -6422,7 +6450,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
 
     const places = corridorPool && corridorPool.length
       ? corridorPool /* the corridor already fetched the pool — reuse, no double trip */
-      : (await sb.from('curated_places').select('*').eq('destination', 'bali')).data;
+      : (await sb.from('curated_places').select('*')).data;
     corridorPool = null;
     placesCount = (places || []).length || placesCount;
     /* the shortlist loads with the shelf (R2) */
@@ -6483,7 +6511,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         /* Guy 2026-09-13 #4: the first breath inside ORIENTS — say what the
            three tabs are, in one line, instead of assuming the map is known */
         $('arriveText').innerHTML = '✓ You’re in' + (line ? ', <strong>' + esc(line) + '</strong>' : '') +
-          '. <strong>Your Bali</strong> holds what you keep · <strong>Today</strong> plans your day · <strong>You</strong> is your pass + passport.';
+          '. <strong>Your ' + esc(destName()) + '</strong> holds what you keep · <strong>Today</strong> plans your day · <strong>You</strong> is your pass + passport.';
         $('arriveBanner').hidden = false;
       }
       freshLogin = false;

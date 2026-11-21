@@ -178,6 +178,7 @@ function cerCascade(places) {
    skip · reduced motion = straight to the list · plays once per
    browser per token, ▶ replays. */
 function giftCeremony(data, token, replay, done) {
+  const DEST = data.destination || 'Bali'; /* 14a: the payload names the place */
   const cer = $('gfCer');
   const stage = $('gfcStage');
   if (!cer || !stage) { done(); return; }
@@ -189,7 +190,7 @@ function giftCeremony(data, token, replay, done) {
   const beats = [];
   beats.push({ ms: 2300, html:
     '<div class="gfc-beat"><p class="gfc-t1">' + esc(name) + ' kept ' + n +
-    ' place' + (n === 1 ? '' : 's') + ' in Bali.</p><p class="gfc-t2">for you</p></div>' });
+    ' place' + (n === 1 ? '' : 's') + ' in ' + esc(DEST) + '.</p><p class="gfc-t2">for you</p></div>' });
   cascade.forEach((p) => {
     /* the photo chain, honest at every rung: sender's own → the real place
        photo (Google, display-time, credited) → category art */
@@ -251,12 +252,13 @@ function giftCeremony(data, token, replay, done) {
 }
 
 function renderGift(data, token) {
+  const DEST = data.destination || 'Bali'; /* 14a: the payload names the place */
   const name = data.name || 'a traveler';
   const places = data.places || [];
   const n = (data.counts && data.counts.places) || places.length;
-  document.title = name + '’s Bali — a gift · Prevoya';
+  document.title = name + '’s ' + DEST + ' — a gift · Prevoya';
   $('gfEyebrow').textContent = 'A GIFT FROM ' + name.toUpperCase() + ' · PREVOYA';
-  $('gfTitle').textContent = name + '’s Bali — ' + n + ' place' + (n === 1 ? '' : 's') + ' saved for you';
+  $('gfTitle').textContent = name + '’s ' + DEST + ' — ' + n + ' place' + (n === 1 ? '' : 's') + ' saved for you';
   const withPh = (data.counts && data.counts.withPhotos) || 0;
   $('gfCounts').innerHTML = '<em>' + n + '</em> PLACES · <em>' + ((data.counts && data.counts.areas) || 1) + '</em> AREAS' +
     (withPh ? ' · <em>' + withPh + '</em> WITH ' + name.toUpperCase() + '’S PHOTOS' : '');
@@ -404,8 +406,8 @@ function stampHTML(s, count, viaName, hide) {
   const monthWord = data.month ? MONTH_FULL[+data.month.split('-')[1] - 1] : null;
   $('shCounts').innerHTML = (monthWord ? esc(monthWord.toUpperCase()) + ' · ' : '') +
     '<em>' + data.counts.places + '</em> PLACES · <em>' + data.counts.areas + '</em> AREAS · <em>' + data.counts.stamps + '</em> STAMPS';
-  $('shCtaLine').textContent = 'Plan your Bali from ' + name + '’s ' + (monthWord || 'trip') + '.';
-  $('shFootCta').textContent = 'plan your own Bali like ' + name + '’s →';
+  $('shCtaLine').textContent = 'Plan your ' + (data.destination || 'Bali') + ' from ' + name + '’s ' + (monthWord || 'trip') + '.';
+  $('shFootCta').textContent = 'plan your own ' + (data.destination || 'Bali') + ' like ' + name + '’s →';
 
   /* provenance travels with the new user into sign-up (S4 seed) — every
    * exit from this page carries it, not only the stamp mini-card */
