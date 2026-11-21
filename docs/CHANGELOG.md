@@ -3,6 +3,17 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 21 Nov 2026 — Round 14a: global, the collection layer
+Guy's ruling made real: nothing in the collection layer assumes Bali.
+Search carries your words verbatim anywhere on earth; an added place gets
+its real destination (a Lisbon cafe files under "lisboa", area Lisboa; Bali
+stays Bali with its area model). Gifts ship places from any destination
+and name themselves from their own contents. The app's home calls itself
+"Your Bali" / "Your Lisboa" / "Your places" by what you actually keep —
+title, tab, composer, message, all derived. Brand residue swept ("Prevoya
+Concierge" off the landing and the pass). The planner remains a Bali
+product for now — that's content (and Round 14b), not architecture.
+
 ## 21 Nov 2026 — The weekly K readout, automated
 A cloud routine runs every Monday 09:00 (Israel) and reports the funnel —
 sends, opens, plays, takes, sign-ups, relay beats, chains — from real
