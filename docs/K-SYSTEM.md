@@ -11,6 +11,12 @@ estimates, no extrapolation, no carrying last week forward. Counts started
 19 Nov 2026 (when gift events began carrying their token) — anything
 earlier is honestly uncountable.
 
+## Two layers
+
+- **Activity** — raw usage, before any virality: saves, stamps, active
+  accounts, new users. (Guy, 21 Nov: measurement is not only K.)
+- **The funnel** — the gift's journey from send to chain, below.
+
 ## The funnel, step by step
 
 Each step of the loop leaves one honest trace:

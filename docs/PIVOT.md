@@ -27,6 +27,13 @@ move behind a door.
    and the relay turns them into the next giver (three one-time moments:
    "Yours begins", the lineage line, "Three keepers — that's a gift").
 
+**The roles are not exclusive (Guy, 21 Nov).** Every user is both sender
+and receiver. You can receive from several people at once — each gift
+lives in its own giver's lane, so you always see *who was where* — and you
+choose, place by place, what crosses from any received collection into
+your own. Your own collection is what you give; theirs stay theirs until
+you take from them.
+
 ## Departments (the cohesive view)
 
 The pivot touches every department. Development is Alex's (this agent's);
@@ -37,24 +44,32 @@ the rest are Guy's to drive, with analysis fed from here.
 | **Development** | The loop's machinery: save, gift, receive, relay, measurement | Built (Rounds 6–13, see CHANGELOG.md) |
 | **Product look & flow** | The app must read as KEEP / GIVE / PASS ON, not as a planner with extras | Partially — planner surfaces (Today, route, You) still lead for trip owners; see FLOW.md |
 | **Content** | What fills the shelf and the gift: curated places, real photos, credibility signals | Bali only (400+ curated); photos live on gifts since 19 Nov |
-| **Strategy / positioning** | Who the first senders are, what we say Prevoya is, when to go beyond Bali | Landing copy pivoted; "Concierge" residue remains; global parked until first chains move (Guy's ruling) |
+| **Strategy / positioning** | Who the first senders are, what we say Prevoya is | Target set (travelers/influencers, collections-as-highlights); landing copy pivoted, "Concierge" residue remains; GLOBAL ruled in (21 Nov) |
 | **Distribution** | Person-to-person sends first; no blasts. K decides when to scale | Waiting on the first three sends (Guy's motion) |
 
-## Open strategic questions (Guy's calls, not dev's)
+## Rulings (Guy, 21 Nov 2026)
 
-- **How much planner do we show?** A collection-only user now never sees the
-  planner uninvited (Round 12.5). The deeper question: does a trip owner's
-  app lead with the collection too, with Today/route as trip-time tools?
-- **When does global unlock?** Ruling stands: when the first real gift
-  chains move. The code is ready to derive copy from `trips.destination`.
-- **What is the organic front door worth?** The pivot bets on receiving a
-  gift as the main way in. The public shelf stays as substrate, not engine.
+- **The planner is a tool, not the face.** The collection leads for
+  everyone; the flow must be simple enough to need no teaching
+  (KEEP / GIVE / PASS ON). Planner surfaces serve the trip, behind doors.
+- **GLOBAL FROM THE FIRST MOMENT.** Don't think Bali — think anyone on any
+  trip, especially travelers and influencers who want their places kept
+  like Instagram highlights, but *their own collections*: wherever they
+  go, they save, and each collection has its own link to send. This
+  supersedes the earlier "parked until chains move" ruling. In build
+  terms: the *collection layer* (save, stamp, import, gift) works
+  anywhere on earth; the *curated layer* (the vetted shelf with prices
+  and areas) grows destination by destination, Bali first — content, not
+  architecture.
+- **Organic stays substrate.** The gift is the engine; the public shelf
+  gives receivers and savers depth, it doesn't carry growth.
 
 ## Measurement
 
-K — does one user bring the next — is the pivot's only score. The system
-that measures it is explained in [K-SYSTEM.md](K-SYSTEM.md). The readout
-runs automatically every Monday.
+Two layers, both in the Monday readout ([K-SYSTEM.md](K-SYSTEM.md)):
+
+- **Activity** — is the product being used: saves, stamps, sends.
+- **K** — does one user bring the next: the funnel from send to chain.
 
 ## The record
 
