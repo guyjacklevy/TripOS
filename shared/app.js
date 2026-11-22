@@ -15,7 +15,7 @@ import { mountPlaces, catPhoto } from './places-browser.js';
 /* ROUND 10 (Guy's go, 19 Nov): the batch photo import — EXIF read on
    device, pure matching against the user's own stamps */
 import { exifMeta } from './exif-lite.js';
-import { buildMatches } from './photo-match.js';
+import { buildMatches, clusterPhotos, matchClustersToPlaces } from './photo-match.js';
 
 const cfg = window.TRIPOS_SUPABASE || {};
 /* launch analytics: DB tables stay the source of truth (checkins, optins,
@@ -2038,11 +2038,16 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     const phIds = new Set();
     CHECKINS.forEach((c) => { if (c.photo_path && c.place_id) phIds.add(String(c.place_id)); });
     const phN = phIds.size;
-    /* the quiet line earns its place only while been dwarfs photos */
-    if (IMPORT_RUNNING || !user || beenN < 10 || phN * 2 >= beenN) { el.hidden = true; return; }
-    el.innerHTML = beenN + ' been · ' + (phN ? 'only ' + phN : 'none') +
-      ' with your photos — <em>⌲ add photos from your trip</em>';
-    el.onclick = () => openPhotoImport('door');
+    /* 14c: the day-zero door — a fresh account's camera roll IS a
+       collection; otherwise the quiet line earns its place only while
+       been dwarfs photos (Round 10) */
+    const fresh = user && beenN === 0;
+    if (IMPORT_RUNNING || !user || (!fresh && (beenN < 10 || phN * 2 >= beenN))) { el.hidden = true; return; }
+    el.innerHTML = fresh
+      ? '⌲ just back from a trip? <em>your camera roll is already a collection</em>'
+      : beenN + ' been · ' + (phN ? 'only ' + phN : 'none') +
+        ' with your photos — <em>⌲ add photos from your trip</em>';
+    el.onclick = () => openPhotoImport(fresh ? 'zero' : 'door');
     el.hidden = false;
   }
   function paintProg(html) {
@@ -2073,7 +2078,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       sheet.className = 'gift-sheet pi-sheet';
       sheet.innerHTML = '<div class="gift-sheet-card">' +
         '<h3 class="gift-sheet-h">Your trip’s photos</h3>' +
-        '<p class="gift-sheet-sub ms-busy" id="piSub">⟳ READING ' + files.length + ' PHOTO' + (files.length === 1 ? '' : 'S') + ' — MATCHING TO YOUR STAMPS…</p>' +
+        '<p class="gift-sheet-sub ms-busy" id="piSub">⟳ READING ' + files.length + ' PHOTO' + (files.length === 1 ? '' : 'S') + ' — FINDING WHERE THEY WERE TAKEN…</p>' +
         '<div id="piRows"></div>' +
         '<button type="button" class="btn btn-primary" id="piGo" hidden></button>' +
         '<p class="gift-priv">matched on your phone, by where + when each photo was taken ·<br>locations never leave the device — uploads carry no metadata</p>' +
@@ -2095,6 +2100,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
         const m = await exifMeta(files[i]);
         metas.push({ i, lat: m.lat, lng: m.lng, time: m.time });
       }
+      /* 14c: with few stamps there is nothing to match AGAINST — the photos
+         find their PLACES instead (atlas first, capped live lookups) */
+      if (STAMPED.size < 10) { importFirstFlow(sheet, closeSheet, files, metas, via); return; }
       const pool = ((todayCtx && todayCtx.places) || []).filter((p) => STAMPED.has(String(p.id)));
       const hasPhoto = new Set();
       CHECKINS.forEach((c) => { if (c.photo_path && c.place_id) hasPhoto.add(String(c.place_id)); });
@@ -2273,6 +2281,213 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     setTimeout(() => paintProg(null), 5000);
     if (fail) memFailNote('⚠ ' + fail + ' photo' + (fail === 1 ? '' : 's') + ' didn’t save — tap those cards to retry.');
     track('photo_import_done', { ok, fail, skipped });
+  }
+
+  /* ─── ROUND 14c · IMPORT-FIRST (Guy's go, 22 Nov) — photos FIND places ──
+     Zero (or few) stamps → nothing to match against, so GPS leads: photos
+     cluster by where they were taken; a cluster matches the atlas first
+     (free); an uncovered spot gets ONE live lookup, hard-capped per import
+     (the tracker carries the SKU). Review keeps Round 10's grammar — the
+     user rules every row; nothing imports silently. */
+  const IMPORT_LOOKUP_CAP = 20;
+  async function importFirstFlow(sheet, closeSheet, files, metas, via) {
+    const wasFresh = STAMPED.size === 0;
+    const sub = sheet.querySelector('#piSub');
+    const go = sheet.querySelector('#piGo');
+    const host = sheet.querySelector('#piRows');
+    sub.textContent = '⟳ FINDING THE PLACES YOUR ' + files.length + ' PHOTO' + (files.length === 1 ? '' : 'S') + ' WERE TAKEN…';
+
+    const pool = ((todayCtx && todayCtx.places) || []).filter((p) => typeof p.lat === 'number' && typeof p.lng === 'number');
+    const { clusters, loose } = clusterPhotos(metas);
+    const matchedC = matchClustersToPlaces(clusters, pool);
+
+    /* one row per CLUSTER (a visit), plus one per no-location photo */
+    const rows = matchedC.map((m) => ({
+      kind: 'cluster', cluster: m.cluster, place: m.place, g: null, cands: null,
+      status: m.status, note: m.note, on: m.status === 'atlas', out: false,
+      file: files[m.cluster.photos[0].i], n: m.cluster.photos.length
+    }));
+    loose.forEach((meta) => rows.push({
+      kind: 'loose', cluster: { photos: [meta] }, place: null, g: null, cands: null,
+      status: 'none', note: 'no location in this photo', on: false, out: false,
+      file: files[meta.i], n: 1
+    }));
+    rows.forEach((r) => { r.url = URL.createObjectURL(r.file); });
+
+    const selOpts = pool.slice()
+      .sort((a, b) => String(a.area).localeCompare(String(b.area)) || String(a.name).localeCompare(String(b.name)))
+      .map((p) => '<option value="' + esc(p.id) + '">' + esc(p.name) + ' · ' + esc(String(p.area).split('/')[0].trim()) + '</option>')
+      .join('');
+    const rowName = (r) => r.place ? r.place.name : (r.g ? r.g.name : null);
+    const capLabel = (r) => {
+      const ph = r.n + ' photo' + (r.n === 1 ? '' : 's');
+      if (r.status === 'atlas') return ph + ' · ' + r.note;
+      if (r.status === 'found') return ph + ' · found live from your photos’ GPS';
+      if (r.status === 'looking') return ph + ' · ⟳ asking what’s here…';
+      if (r.status === 'manual') return ph + ' · your pick';
+      return ph + ' · ' + r.note;
+    };
+    const paintRow = (idx) => {
+      const r = rows[idx];
+      const el = host.querySelector('.pi-row[data-i="' + idx + '"]');
+      if (!el) return;
+      el.classList.toggle('on', r.on);
+      el.querySelector('.pi-nm').textContent = rowName(r) || 'no place yet';
+      const cap = el.querySelector('.pi-cap');
+      cap.innerHTML = esc(capLabel(r)) +
+        ' · <u class="pi-change">' + (rowName(r) ? 'change' : 'pick a place') + '</u> · <u class="pi-out">leave out</u>';
+      cap.classList.toggle('pi-live', r.status === 'found');
+      el.querySelector('.pi-tog').textContent = rowName(r) ? (r.on ? '✓' : '＋') : '✕';
+    };
+    const liveRows = () => rows.filter((r) => !r.out);
+    const keyOf = (r) => (r.place ? 'a' + r.place.id : 'g' + r.g.google_place_id);
+    const paintSub = () => {
+      const live = liveRows();
+      const placed = new Set(live.filter(rowName).map(keyOf));
+      const looking = live.filter((r) => r.status === 'looking').length;
+      const open = live.filter((r) => !rowName(r) && r.status !== 'looking').length;
+      sub.classList.toggle('ms-busy', !!looking);
+      sub.textContent = files.length + ' PHOTOS → ' + placed.size + ' PLACE' + (placed.size === 1 ? '' : 'S') +
+        (looking ? ' · ⟳ ' + looking + ' STILL ASKING' : '') +
+        (open ? ' · ' + open + ' TO DECIDE' : '');
+    };
+    const paintGo = () => {
+      const live = liveRows().filter((r) => r.on && rowName(r));
+      const nPl = new Set(live.map(keyOf)).size;
+      go.textContent = nPl ? '✓ looks right — build my collection: ' + nPl + ' place' + (nPl === 1 ? '' : 's') + ' →' : 'nothing selected';
+      go.disabled = !nPl;
+      go.hidden = false;
+    };
+    host.innerHTML = rows.map((r, idx) =>
+      '<div class="pi-row" data-i="' + idx + '">' +
+        '<img class="pi-thumb" alt="" src="' + esc(r.url) + '">' +
+        '<div class="pi-main"><span class="pi-nm"></span><span class="pi-cap"></span>' +
+        '<select class="pi-sel" hidden></select></div>' +
+        '<span class="pi-tog"></span>' +
+      '</div>').join('');
+    rows.forEach((_, i) => paintRow(i));
+    paintSub(); paintGo();
+
+    /* the capped live lookups — one per uncovered cluster, two at a time */
+    const lookups = rows.filter((r) => r.status === 'lookup').slice(0, IMPORT_LOOKUP_CAP);
+    rows.forEach((r) => {
+      if (r.status === 'lookup' && !lookups.includes(r)) { r.status = 'none'; r.note = 'lookup cap reached — pick by hand'; }
+    });
+    let lookupsUsed = 0;
+    lookups.forEach((r) => { r.status = 'looking'; paintRow(rows.indexOf(r)); });
+    const lq = lookups.slice();
+    const lworker = async () => {
+      while (lq.length) {
+        const r = lq.shift();
+        try {
+          const { data } = await sb.functions.invoke('places-search',
+            { body: { action: 'nearby', lat: r.cluster.lat, lng: r.cluster.lng } });
+          lookupsUsed++;
+          const cands = (data && data.candidates) || [];
+          if (cands.length) { r.cands = cands; r.g = cands[0]; r.status = 'found'; r.on = true; }
+          else { r.status = 'none'; r.note = 'nothing known here'; }
+        } catch (_) {
+          r.status = 'none'; r.note = 'couldn’t ask right now';
+        }
+        paintRow(rows.indexOf(r)); paintSub(); paintGo();
+      }
+    };
+    await Promise.all([lworker(), lworker()]);
+    paintSub(); paintGo();
+
+    const openSel = (rowEl, r) => {
+      const sel = rowEl.querySelector('.pi-sel');
+      sel.innerHTML = '<option value="">— pick a place —</option>' +
+        (r.cands ? r.cands.map((c, i) =>
+          '<option value="g:' + i + '">' + esc(c.name) + ' · ' + esc(c.area || 'found live') + '</option>').join('') : '') +
+        selOpts;
+      sel.hidden = false;
+      sel.onchange = () => {
+        if (!sel.value) return;
+        if (sel.value.indexOf('g:') === 0) { r.g = r.cands[+sel.value.slice(2)]; r.place = null; r.status = 'found'; }
+        else { r.place = pool.find((p) => String(p.id) === sel.value) || null; r.g = null; r.status = 'manual'; }
+        r.on = true; sel.hidden = true;
+        paintRow(rows.indexOf(r)); paintSub(); paintGo();
+      };
+      try { sel.focus(); } catch (_) {}
+    };
+    const leaveOut = (rowEl, r) => {
+      r.out = true; r.on = false;
+      rowEl.style.display = 'none';
+      try { URL.revokeObjectURL(r.url); } catch (_) {}
+      paintSub(); paintGo();
+    };
+    host.onclick = (e) => {
+      const rowEl = e.target.closest('.pi-row');
+      if (!rowEl) return;
+      const r = rows[+rowEl.getAttribute('data-i')];
+      if (e.target.closest('.pi-out')) { leaveOut(rowEl, r); return; }
+      if (e.target.closest('.pi-change')) { openSel(rowEl, r); return; }
+      if (e.target.closest('.pi-tog') && !rowName(r)) { leaveOut(rowEl, r); return; }
+      if (!rowName(r)) { openSel(rowEl, r); return; } /* a dead surface is never dead */
+      r.on = !r.on;
+      paintRow(rows.indexOf(r)); paintGo();
+    };
+
+    go.onclick = async () => {
+      const live = liveRows().filter((r) => r.on && rowName(r));
+      if (!live.length) return;
+      go.disabled = true;
+      go.textContent = '⟳ building your collection…';
+      /* 1 · found-live candidates become REAL places (deduped server-side) */
+      for (const r of live) {
+        if (r.place || !r.g) continue;
+        const place = await googleAdd(r.g);
+        if (place) {
+          r.place = place;
+          if (todayCtx && !todayCtx.places.find((p) => String(p.id) === String(place.id))) todayCtx.places.push(place);
+        }
+      }
+      const ready = live.filter((r) => r.place);
+      if (!ready.length) { go.disabled = false; go.textContent = '⚠ couldn’t add those places — retry'; return; }
+      /* 2 · one stamp per place per local day — the day's EARLIEST photo
+         rides the stamp (one photo per stamp, as ever) */
+      const ckJobs = [];
+      ready.forEach((r) => {
+        const byDay = new Map();
+        r.cluster.photos.forEach((m) => {
+          const t = m.time || Date.now();
+          const k = Math.floor(t / 86400000);
+          const cur = byDay.get(k);
+          if (!cur || t < (cur.time || Infinity)) byDay.set(k, m);
+        });
+        byDay.forEach((m) => ckJobs.push({ r, m }));
+      });
+      const { data: inserted, error } = await sb.from('checkins').insert(ckJobs.map(({ r, m }) => ({
+        user_id: user.id, place_id: r.place.id, place_name: r.place.name,
+        lat: r.place.lat, lng: r.place.lng,
+        created_at: new Date((m.time || Date.now()) - 8 * 3600e3).toISOString()
+      }))).select();
+      if (error) {
+        console.error('[Prevoya] import stamps failed:', error.message);
+        go.disabled = false; go.textContent = '⚠ didn’t save — retry';
+        return;
+      }
+      (inserted || []).forEach((row) => CHECKINS.push(row));
+      rebuildStamped();
+      /* 3 · the photos ride their stamps through the Round 10 queue */
+      const jobs = ckJobs.map(({ r, m }) => ({
+        placeId: String(r.place.id), file: files[m.i],
+        url: URL.createObjectURL(files[m.i]), time: m.time
+      }));
+      const nPlaces = new Set(ready.map((r) => String(r.place.id))).size;
+      track('photo_import_build', { via: via || 'zero', lookups: lookupsUsed, places: nPlaces, stamps: ckJobs.length });
+      closeSheet();
+      mountPlacesTab((todayCtx && todayCtx.places) || []); /* new places join home + shelf */
+      await runImportQueue(jobs);
+      paintGiftDoor();
+      if (wasFresh && !document.querySelector('.turn-rise, .gift-coda, .echo-rise')) {
+        riseCard('<b>Three minutes ago this was a camera roll.</b><span>' +
+          nPlaces + ' place' + (nPlaces === 1 ? '' : 's') + ', lived and photographed — whoever asks ' +
+          '“where should I go?”, you now have the answer as a link. <em>⤴ gift it</em></span>',
+          () => openGiftSheet('import'));
+      }
+    };
   }
 
   async function checkinAt(p, btn) {

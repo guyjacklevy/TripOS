@@ -3942,3 +3942,6 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
   padding: 10px 2px; min-height: 44px; text-align: left;
 }
 .hb-back:hover { color: var(--tx); }
+
+/* ═══ ROUND 14c · IMPORT-FIRST (Guy's go, 22 Nov) ═══════════════════════ */
+.pi-cap.pi-live { color: var(--gold, #ffb454); }

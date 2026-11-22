@@ -67,3 +67,50 @@ export function buildMatches({ photos, places, checkins, stampCounts, hasPhoto }
   });
   return rows;
 }
+
+/* ─── ROUND 14c (Guy's go, 22 Nov) · IMPORT-FIRST — photos FIND places ──
+ * A zero-stamp traveler has nothing to match against: GPS leads instead.
+ * Photos cluster by where they were taken; a cluster matches the atlas
+ * first (free), and an uncovered spot earns ONE live lookup (the caller
+ * owns the cap). Pure — no DOM, no network, node-testable. */
+
+/* greedy centroid clustering — photos within radiusKm share one cluster */
+export function clusterPhotos(photos, opt) {
+  const radius = (opt && opt.radiusKm) || 0.15;
+  const clusters = [];
+  const loose = [];
+  photos.forEach((p) => {
+    if (typeof p.lat !== 'number' || typeof p.lng !== 'number') { loose.push(p); return; }
+    let best = null, bd = Infinity;
+    clusters.forEach((c) => {
+      const d = havKm(c.lat, c.lng, p.lat, p.lng);
+      if (d < bd) { bd = d; best = c; }
+    });
+    if (best && bd <= radius) {
+      best.photos.push(p);
+      best.lat = best.photos.reduce((s, x) => s + x.lat, 0) / best.photos.length;
+      best.lng = best.photos.reduce((s, x) => s + x.lng, 0) / best.photos.length;
+    } else {
+      clusters.push({ lat: p.lat, lng: p.lng, photos: [p] });
+    }
+  });
+  clusters.sort((a, b) => b.photos.length - a.photos.length);
+  return { clusters, loose };
+}
+
+/* each cluster against the atlas: ≤autoKm → matched; else it needs a lookup */
+export function matchClustersToPlaces(clusters, places, opt) {
+  const autoKm = (opt && opt.autoKm) || 0.25;
+  return clusters.map((c) => {
+    let best = null, bd = Infinity;
+    places.forEach((p) => {
+      if (typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
+      const d = havKm(c.lat, c.lng, p.lat, p.lng);
+      if (d < bd) { bd = d; best = p; }
+    });
+    if (best && bd <= autoKm) {
+      return { cluster: c, place: best, km: bd, status: 'atlas', note: mLabel(bd) + ' from ' + best.name };
+    }
+    return { cluster: c, place: null, km: null, status: 'lookup', note: 'not in the atlas yet' };
+  });
+}
