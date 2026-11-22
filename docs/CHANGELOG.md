@@ -3,6 +3,16 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 22 Nov 2026 — Round 14b: collections like highlights
+From the second destination on, your places read as collections — YOUR
+BALI, YOUR TEL AVIV — each a card with real counts and its own gift
+status; tap in for the familiar area view scoped to that destination, with
+its own gift door. Every collection carries its own standing link (a Bali
+gift never drags your Tel Aviv along), and each link's echo shows on its
+own card. One-destination travelers see exactly the app as before; links
+already sent keep their meaning forever. Received gifts stay their givers'
+gold lanes.
+
 ## 22 Nov 2026 — Adding a found place now keeps it, and says where
 Guy added a Tel Aviv coffee shop from the shelf's Google search and had no
 idea where it went. It had landed in the shelf's catalog — added, but not
