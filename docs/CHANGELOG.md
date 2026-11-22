@@ -3,6 +3,16 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 22 Nov 2026 — Round 14c: the camera roll is already a collection
+A brand-new account's empty home now carries a second door: "just back
+from a trip? your camera roll is already a collection." With few stamps,
+photos find their places instead of matching stamps: they cluster by where
+they were taken, known places match free, and uncovered spots get one live
+lookup each (capped at 20 per import). You rule every row — change it,
+leave it out, nothing imports silently. One pass builds places, stamps
+(dated to the photos) and photos; the gift door lights immediately. A
+trip's worth of collecting now takes about three minutes, anywhere.
+
 ## 22 Nov 2026 — Round 14b: collections like highlights
 From the second destination on, your places read as collections — YOUR
 BALI, YOUR TEL AVIV — each a card with real counts and its own gift
