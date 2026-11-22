@@ -3,6 +3,15 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 22 Nov 2026 — Adding a found place now keeps it, and says where
+Guy added a Tel Aviv coffee shop from the shelf's Google search and had no
+idea where it went. It had landed in the shelf's catalog — added, but not
+his. Now the ＋ Add tap saves it to your collection in the same gesture
+(the same promise as the paste box), the button answers "⚑ saved to your
+places", a line says where it lives ("under Tel Aviv-Yafo"), the shelf
+scrolls to the new card already flagged, and the collection shows it
+immediately.
+
 ## 22 Nov 2026 — Search types smoothly
 Guy's phone caught the shelf search freezing on every keystroke. Two
 causes, both fixed: filtering while typing re-triggered an entry animation

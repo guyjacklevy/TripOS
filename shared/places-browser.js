@@ -756,8 +756,22 @@ export function mountPlaces(cfg) {
         let place = null;
         try { place = await onGoogleAdd(c); } catch (_) { place = null; }
         if (!place) { b.disabled = false; b.textContent = '⚠ retry'; return; }
-        b.outerHTML = '<span class="disc-have">✓ added</span>';
-        injectPlace(place);
+        /* 14a.2 (Guy's lost Tel Aviv cafe, 22 Nov): found-it-tapped-it means
+           KEPT — the add saves to your collection in the same gesture, like
+           the /app/save catcher always did, and SAYS where it now lives. */
+        let kept = false;
+        if (onSave) { try { kept = !!(await onSave(place, true)); } catch (_) { kept = false; } }
+        if (kept && saves) saves.set(String(place.id), Date.now());
+        const home = region(place.area) ||
+          (place.destination ? String(place.destination).charAt(0).toUpperCase() + String(place.destination).slice(1) : '');
+        b.outerHTML = '<span class="disc-have">' + (kept ? '⚑ saved to your places' : '✓ added') + '</span>';
+        out.insertAdjacentHTML('beforeend',
+          '<p class="places-status">✓ ' + esc(place.name) +
+          (kept ? ' is in your collection' : ' is on the shelf') +
+          (home ? ' — under ' + esc(home) : '') + '.</p>');
+        injectPlace(place);     /* the shelf scrolls you to the card, flagged… */
+        if (kept) renderHome(); /* …and the collection already shows it (AFTER
+                                   injectPlace — that's what adds it to the catalog) */
       };
     });
   }
