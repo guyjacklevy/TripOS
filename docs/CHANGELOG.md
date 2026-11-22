@@ -3,6 +3,15 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 22 Nov 2026 — Search types smoothly
+Guy's phone caught the shelf search freezing on every keystroke. Two
+causes, both fixed: filtering while typing re-triggered an entry animation
+across every visible card (hundreds of forced layouts per pause — now
+typing never animates, and taps animate only the first screenful), and the
+first character ran a full-shelf render in the same instant as the
+keystroke (now it waits for the typing pause). Measured after: the worst
+stall while typing is a single ~44 ms blip.
+
 ## 21 Nov 2026 — Round 14a: global, the collection layer
 Guy's ruling made real: nothing in the collection layer assumes Bali.
 Search carries your words verbatim anywhere on earth; an added place gets

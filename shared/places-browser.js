@@ -273,9 +273,14 @@ export function mountPlaces(cfg) {
 
   function dropIn(cards) {
     if (REDUCED) return;
-    cards.forEach((el, i) => {
-      el.classList.remove('poi-drop');
-      void el.offsetWidth;
+    /* 14a.1 (Guy's stuck search, 22 Nov): ONE reflow for the whole batch —
+       never one per card — and only the first screenful animates; the rest
+       simply appear. The old loop forced ~450 synchronous layouts and
+       restarted a 13-second card rain on every keystroke pause. */
+    const batch = cards.slice(0, 24);
+    batch.forEach((el) => el.classList.remove('poi-drop'));
+    void els.grid.offsetWidth;
+    batch.forEach((el, i) => {
       el.style.animationDelay = (i * 30) + 'ms';
       el.classList.add('poi-drop');
     });
@@ -987,13 +992,18 @@ export function mountPlaces(cfg) {
     let t = null;
     els.search.oninput = () => {
       clearTimeout(t);
-      /* typing IS asking — the first keystroke unlocks the full shelf, or a
-         day-1 search would silently miss every unrendered place (§F carve-out) */
-      if (!shelfUnlocked && els.search.value.trim()) {
-        shelfUnlocked = true;
-        if (state.view === 'rows') renderRows();
-      }
-      t = setTimeout(() => { state.q = els.search.value; applyFilters(true); }, 180);
+      t = setTimeout(() => {
+        /* typing IS asking — the first keystroke unlocks the full shelf, or a
+           day-1 search would silently miss every unrendered place (§F
+           carve-out). INSIDE the debounce since 14a.1: the big render must
+           never fight the keyboard's own frame (Guy's phone, 22 Nov). */
+        if (!shelfUnlocked && els.search.value.trim()) {
+          shelfUnlocked = true;
+          if (state.view === 'rows') renderRows();
+        }
+        state.q = els.search.value;
+        applyFilters(false); /* filtering WHILE TYPING never animates */
+      }, 150);
     };
   }
 
