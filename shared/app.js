@@ -6523,18 +6523,6 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     return ok;
   }
 
-  /* does this account hold a collection — rows already claimed, or a gift /
-     shelf buffer waiting to claim? one cheap probe, only on the no-brief path */
-  async function hasCollection() {
-    try {
-      const buf = JSON.parse(localStorage.getItem('prevoya_saves_anon') || '[]');
-      if (Array.isArray(buf) && buf.length) return true;
-    } catch (_) {}
-    const { data } = await sb.from('places').select('id')
-      .eq('user_id', user.id).not('curated_place_id', 'is', null).limit(1);
-    return !!(data && data.length);
-  }
-
   async function loadShell() {
     let collectionOnly = false; /* places but no trip — the receiver's door */
     $('acctEmail').textContent = (user.email || '—');
@@ -6559,21 +6547,15 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       const freshLocal = !!(local && local.ts && Date.now() - local.ts < 86400e3);
       if (local && (freshLocal || !firstOpen)) {
         trip = await saveBrief(local);
-      } else if (await hasCollection()) {
-        /* THE RECEIVER'S DOOR (Guy's lost arrival, 20 Nov): places waiting —
-           a gift, shelf saves — but no brief. The collection is a complete
-           first surface; the planner is a door on Today, never a wall.
-           Before this gate, every tripless open bounced to the chat and a
-           gift receiver had to PLAN A TRIP to see their gift. */
+      } else {
+        /* 14c FINAL CUT (Guy's refresh-to-chat, 22 Nov): a signed-in account
+           ALWAYS lands in the app — empty, gifted, or full. The day-zero
+           home (the poem, the import door, the shelf) is a complete first
+           surface; the planner is a door on Today, never a redirect. The
+           last of the chat-first bounce (12.5 only spared accounts that
+           already HELD places) is gone. */
         collectionOnly = true;
-      } else if (!firstOpen) {
-        /* signed in, no brief anywhere — chat-first: the conversation owns
-           brief-gathering (the in-app questionnaire survives only for
-           "change my brief" on existing trips) */
-        location.replace('/bali/plan/');
-        return;
       }
-      /* first open with no (fresh) brief → the corridor owns it (§A → 3 questions) */
     }
 
     /* AI-1a: the route rides with the trip. First-ever load of a brief that has

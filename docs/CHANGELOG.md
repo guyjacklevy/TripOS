@@ -3,6 +3,13 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 22 Nov 2026 — Signed in always means inside the app
+The last of the old chat-first boot is gone: an empty account used to be
+redirected to the planning chat on every open (Guy hit it refreshing the
+reset test user). Now every signed-in account lands in the app — empty,
+gifted, or full. The empty home is a complete first surface (the poem, the
+camera-roll door, the shelf), and planning stays a door on Today.
+
 ## 22 Nov 2026 — Round 14c: the camera roll is already a collection
 A brand-new account's empty home now carries a second door: "just back
 from a trip? your camera roll is already a collection." With few stamps,
