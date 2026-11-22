@@ -2417,6 +2417,16 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       beenCounts: BEEN_COUNTS,
       onMemory: (p) => openMemorySheet(p),
       memBusyOf: (pid) => MEM_UP.has(String(pid)),
+      /* ROUND 14b: the shelf of collections — the browser opens/closes a
+         collection; the app's door, chrome and composer follow it */
+      onCollectionChange: (slug) => { COLLECTION = slug || null; paintGiftDoor(); },
+      giftLineOf: (slug) => {
+        const r = giftRowSync(slug);
+        if (!r) return '';
+        const e = (ECHO && ECHO.tokens && ECHO.tokens[r.token]) || null;
+        if (!e || (!e.opened && !e.took)) return '⤴ gifted — the link is standing';
+        return '⤴ gifted — OPENED ' + e.opened + '×' + (e.took ? ' · ' + e.took + ' TOOK IT' : '');
+      },
       /* ROUND 12: the received lanes — a gift stays the giver's until ⚑ */
       received: RECEIVED,
       onDismissVia: async (token) => {
@@ -2778,13 +2788,41 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
      vouched-for core, the default) · 'all' = everything. Legacy links (no
      scope on the row) stay saves-only server-side — a sent link never
      changes under its receiver. */
-  function giftable(scope) {
+  /* ─── ROUND 14b · COLLECTIONS (the highlights model, Guy's go 22 Nov) ──
+     A collection IS a destination — derived from where your places are,
+     never managed. The shelf of collections exists only from the SECOND
+     destination; one-destination users see exactly the app as it was. */
+  let COLLECTION = null; /* the open collection's slug, set by the browser */
+  const capDest = (s) => String(s || '').replace(/(^|[\s-])[a-z]/g, (c) => c.toUpperCase());
+  function destTally() {
+    const pool = (todayCtx && todayCtx.places) || [];
+    const tally = new Map();
+    pool.forEach((p) => {
+      const id = String(p.id);
+      if (!SAVES.has(id) && !STAMPED.has(id)) return;
+      const d = String(p.destination || '').trim().toLowerCase();
+      if (d) tally.set(d, (tally.get(d) || 0) + 1);
+    });
+    return tally;
+  }
+  const multiDest = () => destTally().size >= 2;
+  function dominantDest() {
+    let best = '', bn = 0;
+    destTally().forEach((n, d) => { if (n > bn) { bn = n; best = d; } });
+    return best || null;
+  }
+  /* the collection a gift would ship right now: the open one, or the only one */
+  const activeDest = () => COLLECTION || (multiDest() ? null : dominantDest());
+
+  function giftable(scope, destSlug) {
     const pool = (todayCtx && todayCtx.places) || [];
     const ph = new Set();
     CHECKINS.forEach((c) => { if (c.photo_path && c.place_id) ph.add(String(c.place_id)); });
     return pool.filter((p) => {
       const id = String(p.id);
       if (!SAVES.has(id) && !STAMPED.has(id)) return false;
+      /* 14b: a destination-scoped gift carries ONLY that collection */
+      if (destSlug && String(p.destination || '').toLowerCase() !== destSlug) return false;
       const cats = (Array.isArray(p.categories) && p.categories.length) ? p.categories : [p.category];
       if (cats.every((c) => GIFT_QUIET.has(String(c)))) return false; /* same sanitizer as the endpoint */
       if (scope === 'keepers') return SAVES.has(id) || RECS.has(id) || ph.has(id);
@@ -2793,9 +2831,9 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   }
   /* the default gift: the keepers — falling back to everything when the
      keepers set is empty (a traveler with stamps but no marks yet) */
-  function giftDefault() {
-    const keep = giftable('keepers');
-    return keep.length ? keep : giftable('all');
+  function giftDefault(destSlug) {
+    const keep = giftable('keepers', destSlug);
+    return keep.length ? keep : giftable('all', destSlug);
   }
   function giftPhotoCount(list) {
     const ids = new Set(list.map((p) => String(p.id)));
@@ -2803,15 +2841,29 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     CHECKINS.forEach((c) => { if (c.photo_path && c.place_id && ids.has(String(c.place_id))) seen.add(String(c.place_id)); });
     return seen.size;
   }
-  let GIFT_SHARE = null; /* the live kind='list' row, fetched once per session */
-  async function giftRow() {
-    /* ROUND 13: the gift belongs to the USER — a collection-only receiver
-       (no trip) mints and finds their link the same way a trip owner does */
-    if (GIFT_SHARE) return GIFT_SHARE;
+  /* ROUND 14b: ONE standing link PER COLLECTION. Keyed by destination slug;
+     '' = the legacy unscoped link, which keeps its meaning forever and
+     serves as the DOMINANT collection's link (it was minted when that was
+     everything). ROUND 13 still holds: the gift belongs to the USER. */
+  let GIFT_SHARES = null; /* Map destSlug|'' -> live kind='list' row */
+  async function giftRows() {
+    if (GIFT_SHARES) return GIFT_SHARES;
     const { data: rows } = await sb.from('trip_shares').select('*')
-      .eq('user_id', user.id).eq('kind', 'list').is('revoked_at', null).limit(1);
-    GIFT_SHARE = (rows && rows[0]) || null;
-    return GIFT_SHARE;
+      .eq('user_id', user.id).eq('kind', 'list').is('revoked_at', null);
+    GIFT_SHARES = new Map();
+    (rows || []).forEach((r) => GIFT_SHARES.set(String(r.destination || '').toLowerCase(), r));
+    return GIFT_SHARES;
+  }
+  function giftRowSync(destSlug) {
+    if (!GIFT_SHARES) return null;
+    const d = String(destSlug || '').toLowerCase();
+    return GIFT_SHARES.get(d) ||
+      (d && d === dominantDest() ? GIFT_SHARES.get('') : null) ||
+      (!d ? GIFT_SHARES.get('') : null) || null;
+  }
+  async function giftRow(destSlug) {
+    await giftRows();
+    return giftRowSync(destSlug);
   }
   const giftMessage = (n, link, scope) =>
     (scope === 'all'
@@ -2820,10 +2872,16 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   async function openGiftSheet(via) {
     const sheet = $('giftSheet');
     if (!sheet) return;
-    const all = giftable('all');
-    const keep = giftable('keepers');
+    /* 14b: the composer gifts the ACTIVE collection. A legacy (unscoped)
+       link keeps its unscoped meaning — its counts stay unscoped too, so
+       the sheet never promises something the page won't ship. */
+    const dest = activeDest();
+    let live = await giftRow(dest);
+    const scopeD = (live && !live.destination) ? null : (dest || null);
+    const all = giftable('all', scopeD);
+    const keep = giftable('keepers', scopeD);
     if (!all.length) return;
-    const row = await giftRow();
+    const row = live;
     /* ROUND 9: one light pick — keepers by default; a live row keeps its pick */
     let scope = (row && (row.scope === 'all' || row.scope === 'keepers'))
       ? row.scope : (keep.length ? 'keepers' : 'all');
@@ -2869,8 +2927,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
     const paintMsg = () => {
       $('giftMsg').innerHTML = esc(giftMessage(cur().length, '', scope)) +
-        '<i>' + esc(GIFT_SHARE ? location.origin + '/s/?t=' + GIFT_SHARE.token : location.origin + '/s/?t=…') + '</i>';
-      $('giftRevoke').hidden = !GIFT_SHARE; /* the promise in the fine print needs its button */
+        '<i>' + esc(live ? location.origin + '/s/?t=' + live.token : location.origin + '/s/?t=…') + '</i>';
+      $('giftRevoke').hidden = !live; /* the promise in the fine print needs its button */
     };
     paintHead();
     paintMsg();
@@ -2881,16 +2939,18 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       copyBtn.disabled = true;
       const note = $('giftNote').value.trim().slice(0, 280) || null;
       const photos = !!$('giftPhotos').checked;
-      let live = await giftRow();
       if (live) {
         const { error } = await sb.from('trip_shares').update({ note, photos, scope }).eq('id', live.id);
         if (error) { copyBtn.disabled = false; copyBtn.textContent = '⚠ didn’t save — retry'; return; }
         live.note = note; live.photos = photos; live.scope = scope;
       } else {
+        /* 14b: a fresh link is BORN scoped to its collection */
         const ins = await sb.from('trip_shares')
-          .insert({ user_id: user.id, trip_id: trip ? trip.id : null, token: shareSlug(), kind: 'list', note, photos, scope }).select().single();
+          .insert({ user_id: user.id, trip_id: trip ? trip.id : null, token: shareSlug(), kind: 'list', note, photos, scope, destination: dest || null }).select().single();
         if (ins.error) { copyBtn.disabled = false; copyBtn.textContent = '⚠ didn’t save — retry'; return; }
-        GIFT_SHARE = live = ins.data;
+        live = ins.data;
+        if (GIFT_SHARES) GIFT_SHARES.set(String(live.destination || '').toLowerCase(), live);
+        paintGiftDoor(); /* the door (and the shelf's gift lines) learn the new link */
       }
       const msg = giftMessage(cur().length, location.origin + '/s/?t=' + live.token, scope);
       try { await navigator.clipboard.writeText(msg); copyBtn.textContent = '✓ copied — paste it anywhere'; }
@@ -2899,20 +2959,22 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       /* ROUND 13: generation-2 K — a send by someone who ARRIVED via a gift
          carries its origin token; the Monday readout can show CHAINS */
       const pay = { kind: 'list', n: cur().length, photos: photos, scope: scope, via: via || 'door' };
+      if (scopeD) pay.dest = scopeD;
       if (profile && profile.via_token) pay.origin = profile.via_token;
       track('share_created', pay);
       copyBtn.disabled = false;
     };
     $('giftRevoke').onclick = async () => {
-      const live = await giftRow();
       if (!live) return;
       const { error } = await sb.from('trip_shares')
         .update({ revoked_at: new Date().toISOString() }).eq('id', live.id);
       if (error) { $('giftRevoke').textContent = '⚠ couldn’t revoke — retry'; return; }
-      GIFT_SHARE = null;
+      if (GIFT_SHARES) GIFT_SHARES.delete(String(live.destination || '').toLowerCase());
+      live = null;
       $('giftRevoke').textContent = 'revoke the link';
       copyBtn.textContent = 'copy message + link'; /* the next copy mints a fresh link */
       paintMsg();
+      paintGiftDoor();
     };
     $('giftClose').onclick = () => { sheet.hidden = true; };
     sheet.onclick = (e) => { if (e.target === sheet) sheet.hidden = true; };
@@ -2924,36 +2986,30 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
      page is loginless, events carry no identity, gift-echo returns numbers
      only. Copy derives from the trip's destination — nothing new says Bali. */
   const destName = () => {
-    /* ROUND 14a GLOBAL: the collection names itself — the dominant
-       destination among the places you keep; the trip only as fallback;
-       'collection' when truly empty. Nothing assumes Bali. */
-    const pool = (todayCtx && todayCtx.places) || [];
-    const tally = new Map();
-    pool.forEach((p) => {
-      const id = String(p.id);
-      if (!SAVES.has(id) && !STAMPED.has(id)) return;
-      const d = String(p.destination || '').trim();
-      if (d) tally.set(d, (tally.get(d) || 0) + 1);
-    });
-    let best = '', bn = 0;
-    tally.forEach((n, d) => { if (n > bn) { bn = n; best = d; } });
+    /* ROUND 14a GLOBAL + 14b: the open collection names itself; otherwise
+       the dominant destination among kept places; the trip only as
+       fallback; 'collection' when truly empty. Nothing assumes Bali. */
+    if (COLLECTION) return capDest(COLLECTION);
+    let best = dominantDest();
     if (!best) {
       const t = (todayCtx && todayCtx.trip) || trip;
       best = t && t.destination ? String(t.destination) : '';
     }
-    return best ? best.charAt(0).toUpperCase() + best.slice(1) : 'collection';
+    return best ? capDest(best) : 'collection';
   };
   /* the home's chrome follows the collection — title + tab label */
   function paintDestChrome() {
+    /* 14b: at the shelf of collections the home is plural — 'Your places' */
+    const shelf = multiDest() && !COLLECTION;
     const nm = destName();
-    const label = nm === 'collection' ? 'Your places' : 'Your ' + nm;
+    const label = (shelf || nm === 'collection') ? 'Your places' : 'Your ' + nm;
     const t = document.querySelector('#homeBali .hb-title');
     if (t) t.textContent = label;
     const tb = document.querySelector('.tab-slot[data-tab="places"] span');
     if (tb) tb.textContent = label.toUpperCase();
-    if (nm !== 'collection') document.title = 'Prevoya — your ' + nm;
+    document.title = label === 'Your places' ? 'Prevoya — your places' : 'Prevoya — your ' + nm;
   }
-  let ECHO = null; /* {opened, played, took} — fetched once per session */
+  let ECHO = null; /* {opened, played, took, tokens:{tok:{...}}} — once per session */
   let echoLoaded = false;
   async function loadEcho() {
     if (echoLoaded || !user) return;
@@ -2961,18 +3017,23 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     try {
       const { data } = await sb.functions.invoke('gift-echo');
       if (data && !data.error) {
-        ECHO = { opened: +data.opened || 0, played: +data.played || 0, took: +data.took || 0 };
+        ECHO = { opened: +data.opened || 0, played: +data.played || 0, took: +data.took || 0,
+          tokens: (data.tokens && typeof data.tokens === 'object') ? data.tokens : {} };
         paintGiftDoor();
         maybeEchoRise();
       }
     } catch (_) {}
   }
-  function echoLine() {
-    if (!ECHO) return '';
+  /* 14b: a door hears ITS link's echo; no row or no counts → silence (real
+     or absent). Totals survive for the first-echo rise. */
+  function echoLine(row) {
+    if (!ECHO || !row) return '';
+    const e = (ECHO.tokens && ECHO.tokens[row.token]) || null;
+    if (!e) return '';
     const parts = [];
-    if (ECHO.opened) parts.push('OPENED ' + ECHO.opened + '×');
-    if (ECHO.played) parts.push('PLAYED ' + ECHO.played + '×');
-    if (ECHO.took) parts.push(ECHO.took + ' TRAVELER' + (ECHO.took === 1 ? '' : 'S') + ' TOOK IT');
+    if (e.opened) parts.push('OPENED ' + e.opened + '×');
+    if (e.played) parts.push('PLAYED ' + e.played + '×');
+    if (e.took) parts.push(e.took + ' TRAVELER' + (e.took === 1 ? '' : 'S') + ' TOOK IT');
     return parts.length ? '<span class="gift-door-echo">' + parts.join(' · ') + '</span>' : '';
   }
   /* the first echo rises once, then lives quietly on the door (hidden timer) */
@@ -3033,7 +3094,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     let seen = false;
     try { seen = !!localStorage.getItem('pv_turn3'); } catch (_) {}
     if (seen || giftable('keepers').length < 3) return;
-    if (await giftRow()) return; /* already a sender — the turn happened on its own */
+    if (await giftRow(activeDest())) return; /* already a sender — the turn happened on its own */
     if (document.querySelector('.turn-rise, .gift-coda, .echo-rise')) return;
     try { localStorage.setItem('pv_turn3', '1'); } catch (_) {}
     riseCard('<b>Three keepers — that’s a gift.</b><span>whoever last asked you “where should I go?” — ' +
@@ -3046,7 +3107,13 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     paintDestChrome(); /* 14a: the home is named by the collection, every repaint */
     const door = $('giftDoor');
     if (!door) return;
-    const list = giftDefault();
+    /* 14b: at the shelf of collections the door steps back — each card
+       carries its own gift line; doors live INSIDE collections */
+    if (multiDest() && !COLLECTION) { door.hidden = true; return; }
+    const dest = activeDest();
+    const drow = giftRowSync(dest);
+    const scopeD = (drow && !drow.destination) ? null : (dest || null);
+    const list = giftDefault(scopeD);
     if (!list.length) { door.hidden = true; return; }
     const phN = giftPhotoCount(list);
     /* beat 2 — the door remembers its lineage: the first session the door
@@ -3065,7 +3132,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
       '<div class="gift-door-main"><span class="gift-door-nm">Your ' + esc(destName()) + '</span>' +
       '<span class="gift-door-sub">' + list.length + ' PLACE' + (list.length === 1 ? '' : 'S') +
       (phN ? ' · ' + phN + ' WITH YOUR PHOTOS' : '') + '</span>' +
-      echoLine() +
+      echoLine(drow) +
       (lin && LIN_SHOW
         ? '<span class="gift-door-lin">began as ' + esc(lin.name || 'a friend') + '’s gift — now yours to pass on</span>'
         : '') +
@@ -6478,6 +6545,7 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
     }
     const { data: recRows } = await sb.from('place_recs').select('place_id').eq('user_id', user.id);
     RECS = new Set((recRows || []).map((r) => String(r.place_id)));
+    await giftRows(); /* 14b: doors and collection cards need the link cache */
     mountPlacesTab(places || []);
     /* todayCtx BEFORE the first render: the itinerary requires it, and the
        loadDayPlan().then re-render is guarded on it — when day plans already

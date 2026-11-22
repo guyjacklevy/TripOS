@@ -96,7 +96,7 @@ const photoLead = (p, cat, own) => {
 };
 
 export function mountPlaces(cfg) {
-  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec, userPhotoOf, resolvePhotos, beenCounts, onMemory, memBusyOf, received, onDismissVia } = cfg;
+  const { els, places, plan, onCheckin, onGoogleSearch, onGoogleAdd, saves, stampedIds, onSave, recs, onRec, userPhotoOf, resolvePhotos, beenCounts, onMemory, memBusyOf, received, onDismissVia, onCollectionChange, giftLineOf } = cfg;
   /* ROUND 6 (Guy: B, 16 Nov) — the app mount passes `home`: the front door
      IS the collection. Home renders the saved places as full photo-led
      cards; the whole shelf stays one visible door down. Public mounts pass
@@ -346,7 +346,9 @@ export function mountPlaces(cfg) {
       const id = String(p.id);
       return (saves && saves.has(id)) || (stampedIds && stampedIds.has(id));
     };
-    const rows = allPlaces.filter(member);
+    /* 14b: inside a collection, the home is that destination only */
+    let rows = allPlaces.filter(member);
+    if (hbColl) rows = rows.filter((p) => destSlugOf(p) === hbColl);
     if (LIVE) {
       return rows.map((p) => ({
         p,
@@ -427,9 +429,59 @@ export function mountPlaces(cfg) {
     }).join('');
   }
   let hbOpen; /* the one open area group — the first, until a tap moves it */
+  let hbColl = null; /* 14b: the open COLLECTION (destination slug), shelf when null */
+  const destSlugOf = (p) => String(p.destination || '').trim().toLowerCase();
+  const capD = (s) => String(s || '').replace(/(^|[\s-])[a-z]/g, (c) => c.toUpperCase());
   const HB_GROUP_MIN = 9; /* small collections read better flat */
+  /* ─── 14b · the shelf of collections — born at the SECOND destination ─── */
+  function collectionShelf(tallyD) {
+    if (home.counts) {
+      const totPl = [...tallyD.values()].reduce((a, n) => a + n, 0);
+      home.counts.textContent = tallyD.size + ' collections · ' + totPl + ' place' + (totPl === 1 ? '' : 's');
+      home.counts.hidden = false;
+    }
+    if (home.empty) home.empty.hidden = true;
+    home.grid.classList.add('hb-grouped');
+    const entries = [...tallyD.entries()].sort((a, b) => b[1] - a[1]);
+    home.grid.innerHTML = entries.map(([d, n]) => {
+      let been = 0, ph = 0;
+      allPlaces.forEach((p) => {
+        if (destSlugOf(p) !== d) return;
+        const id = String(p.id);
+        if (!((saves && saves.has(id)) || (stampedIds && stampedIds.has(id)))) return;
+        if (stampedIds && stampedIds.has(id)) been++;
+        if (userPhotoOf && userPhotoOf(p.id)) ph++;
+      });
+      const gl = giftLineOf ? giftLineOf(d) : '';
+      return '<button type="button" class="hb-coll" data-coll="' + esc(d) + '">' +
+        '<span class="hb-coll-nm">YOUR ' + esc(capD(d).toUpperCase()) + '</span>' +
+        '<span class="hb-coll-n">' + n + ' place' + (n === 1 ? '' : 's') +
+          (been ? ' · ' + been + ' been' : '') + (ph ? ' · ' + ph + ' photos' : '') + '</span>' +
+        (gl ? '<span class="hb-coll-gift">' + esc(gl) + '</span>' : '') +
+        '<span class="hb-coll-car">▸</span></button>';
+    }).join('') + receivedLanes();
+    annotateHome([]);
+    if (home.browse) home.browse.hidden = false;
+    watchPhotos(home.grid);
+  }
+  const collBackRow = () => hbColl
+    ? '<button type="button" class="hb-back" data-collback="1">‹ all collections</button>' : '';
   function renderHome() {
     if (!home) return;
+    /* 14b: two or more destinations and no open collection → the shelf.
+       One destination (almost everyone) → exactly the app as it was. */
+    const tallyD = new Map();
+    allPlaces.forEach((p) => {
+      const id = String(p.id);
+      if (!((saves && saves.has(id)) || (stampedIds && stampedIds.has(id)))) return;
+      const d = destSlugOf(p);
+      if (d) tallyD.set(d, (tallyD.get(d) || 0) + 1);
+    });
+    if (hbColl && !tallyD.has(hbColl)) { /* the open collection emptied */
+      hbColl = null;
+      if (onCollectionChange) onCollectionChange(null);
+    }
+    if (tallyD.size >= 2 && !hbColl) { collectionShelf(tallyD); return; }
     const rows = savedList();
     if (!rows.length) {
       /* ROUND 12: nothing of your own YET, but a gift waits — the lane
@@ -467,7 +519,7 @@ export function mountPlaces(cfg) {
     if (home.counts) {
       /* ROUND 13: the honest split — a received gift never pads YOUR count */
       let rideLine = '';
-      if (received && received.size) {
+      if (!hbColl && received && received.size) {
         const givers = new Set([...received.values()].map((v) => v.name || 'a friend'));
         rideLine = received.size + (givers.size === 1
           ? ' ride with ' + [...givers][0] : ' given to you');
@@ -501,7 +553,7 @@ export function mountPlaces(cfg) {
       if (hbOpen === undefined ||
           (hbOpen !== '' && !String(hbOpen).startsWith('from:') && !byA.has(hbOpen))) hbOpen = names[0];
       home.grid.classList.add('hb-grouped');
-      home.grid.innerHTML = names.map((nm) => {
+      home.grid.innerHTML = collBackRow() + names.map((nm) => {
         const g = byA.get(nm);
         const open = nm === hbOpen;
         const gPh = userPhotoOf ? g.filter((r) => userPhotoOf(r.p.id)).length : 0;
@@ -515,12 +567,14 @@ export function mountPlaces(cfg) {
             (open ? g.map((r) => card(r.p, matchedMap.get(r.p) || null)).join('') : '') +
           '</div>' +
         '</section>';
-      }).join('') + receivedLanes();
+      }).join('') + (hbColl ? '' : receivedLanes());
       annotateHome(rows);
     } else {
-      home.grid.classList.remove('hb-grouped');
-      home.grid.innerHTML = rows.map((r) => card(r.p, matchedMap.get(r.p) || null)).join('') +
-        receivedLanes();
+      if (hbColl) home.grid.classList.add('hb-grouped'); /* the back row needs the grouped gutter */
+      else home.grid.classList.remove('hb-grouped');
+      home.grid.innerHTML = collBackRow() +
+        rows.map((r) => card(r.p, matchedMap.get(r.p) || null)).join('') +
+        (hbColl ? '' : receivedLanes());
       annotateHome(rows);
     }
     if (home.browse) home.browse.hidden = false;
@@ -854,6 +908,24 @@ export function mountPlaces(cfg) {
      ROUND 6: the home grid shares it — same cards, same verbs. */
   const gridClick = (e) => {
     if (e.target.closest('a')) return;
+    /* 14b: the shelf of collections — one tap in, one tap back */
+    const cc = e.target.closest('.hb-coll');
+    if (cc) {
+      hbColl = cc.getAttribute('data-coll') || null;
+      hbOpen = undefined; /* the collection opens fresh — first area open */
+      if (onCollectionChange) onCollectionChange(hbColl);
+      renderHome();
+      window.scrollTo(0, 0);
+      return;
+    }
+    if (e.target.closest('.hb-back')) {
+      hbColl = null;
+      hbOpen = undefined;
+      if (onCollectionChange) onCollectionChange(null);
+      renderHome();
+      window.scrollTo(0, 0);
+      return;
+    }
     /* ROUND 12: "let this list go" — one honest second thought, then gone */
     const fx = e.target.closest('.hb-from-x');
     if (fx) {
