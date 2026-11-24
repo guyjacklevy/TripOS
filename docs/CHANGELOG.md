@@ -3,6 +3,14 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 24 Nov 2026 — Round 15-D·B: the scroll story in daylight
+Guy loved the scroll story and called for it in direction B's world. Live at
+prevoya.app/x/15db/ — same four beats and the same engine, reskinned as
+postcard daylight: sand-paper canvas, ink text, sea-green accent, the photos
+as white-bordered prints, the chat bubble in daylight green, the CTA in ink.
+Both skins now stand side by side (/x/15d/ night, /x/15db/ daylight) so the
+visual-world call is made on the same moving story. Flick test passed 4/4.
+
 ## 24 Nov 2026 — Round 15-D: the scroll story, a working demo
 Live at prevoya.app/x/15d/ (unlinked, noindex). After studying the
 "$10K websites" technique (scroll-scrubbed hero video), we adapted it for a
