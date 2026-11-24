@@ -39,6 +39,14 @@ But the product a stranger meets has **not fully pivoted**:
 No design work starts before the audit is read. First sends wait until the
 face matches the product.
 
+**Update, 24 Nov (evening):** the audit ran, the repairs shipped, and Guy
+ruled the visual world — **direction B, postcard daylight, with the
+scroll-story hero** (the "$10K websites" technique adapted: real photos and
+DOM motion instead of AI video, so phones get the full effect). **The new
+landing is LIVE on prevoya.app.** Remaining face work is Round 16: the app
+shell (KEEP / GIVE / PASS ON), the gift page, and the shelf follow into the
+daylight world — examples first, as always.
+
 ## What Prevoya is now
 
 **The fastest way to keep the places you discover — and give them to the

@@ -3,6 +3,21 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 24 Nov 2026 — Round 15 SHIPPED: the new landing — postcard daylight
+Guy ruled: B wins. prevoya.app's front page is now the daylight world built
+around the scroll-story hero: scattered real discoveries gather into YOUR
+BALI, condense into one link, open as the gift, and the page settles on
+"Never lose a place you discover" with the ink CTA. Below the fold, the
+page the audit asked for: collections-like-highlights (replacing the
+"In research" destinations board), the camera-roll import in three plain
+steps, the Bali shelf as a strength ("no account needed"), and the honesty
+strip (free · no password · save first). Gone for good: the flight board,
+the boarding-pass section, and "FOR SLOWMADS". The old auth modal left the
+landing — Log in and Open app both go to the app, which owns sign-in.
+Land analytics kept. Flick test 4/4, console clean, reduced-motion and
+no-JS get the settled page. Next: Round 16 — app shell, gift page, and
+shelf follow into the daylight world, examples first.
+
 ## 24 Nov 2026 — Round 15-D·B: the scroll story in daylight
 Guy loved the scroll story and called for it in direction B's world. Live at
 prevoya.app/x/15db/ — same four beats and the same engine, reskinned as
