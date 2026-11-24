@@ -247,6 +247,15 @@ html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
 .prevc .pt b{display:block;font-size:.62rem}
 .prevc .pt i{font-style:normal;font-family:var(--mono);font-size:.46rem;color:var(--green)}
 .mlab{font-family:var(--mono);font-size:.52rem;letter-spacing:.12em;color:var(--soft);margin:28px 0 0}
+/* ── your highlights, but usable (S1) ── */
+.hlrow{display:flex;gap:20px;justify-content:center;margin-top:26px}
+.hl{text-align:center}
+.hl .ring{width:64px;height:64px;border-radius:50%;padding:2.5px;background:linear-gradient(45deg,#f0c06a,#e2766a)}
+.hl .ring img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:2.5px solid var(--paper);display:block}
+.hl span{display:block;font-family:var(--mono);font-size:.5rem;letter-spacing:.08em;color:var(--soft);margin-top:7px}
+.hlturn{font-family:var(--mono);font-size:.56rem;letter-spacing:.05em;color:var(--soft);text-align:center;margin:18px 0 14px}
+.bioc{max-width:300px;margin:0 auto}
+.bioc .prevc{box-shadow:0 10px 26px rgba(40,30,10,.08)}
 .place.sm{max-width:300px;margin-top:12px}
 .place.sm>img{aspect-ratio:16/7}
 
@@ -420,6 +429,26 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
 </section>
 
 <section class="secw">
+<div class="sec" style="text-align:center">
+  <span class="kick an">WHERE YOUR TRIPS ALREADY LIVE</span>
+  <h2 class="an" style="--d:.07s">You already keep highlights.</h2>
+  <p class="an" style="--d:.14s;margin-left:auto;margin-right:auto">Yours should be places people can actually use.</p>
+  <div class="hlrow an" style="--d:.2s" aria-hidden="true">
+    <div class="hl"><div class="ring"><img src="/x/15d/assets/padang.jpg" alt=""></div><span>BALI</span></div>
+    <div class="hl"><div class="ring"><img src="/x/15d/assets/ulufish.jpg" alt=""></div><span>FOOD</span></div>
+    <div class="hl"><div class="ring"><img src="/x/15d/assets/sayan.jpg" alt=""></div><span>VIEWS</span></div>
+  </div>
+  <div class="hlturn an" style="--d:.28s">HIGHLIGHTS ARE SCREENSHOTS&nbsp;&nbsp;↓&nbsp;&nbsp;COLLECTIONS ARE PLACES</div>
+  <div class="bioc an" style="--d:.36s">
+    <span class="prevc"><span class="pstrip"><img src="/x/15d/assets/padang.jpg" alt=""><img src="/x/15d/assets/ulufish.jpg" alt=""><img src="/x/15d/assets/sayan.jpg" alt=""></span>
+    <span class="pt"><b>Your Bali — 51 places, ✓ been to 49</b><i>one link in bio · prevoya.app/s/…</i></span></span>
+  </div>
+  <p class="quiet an" style="--d:.44s">Same places — now with areas, prices and “✓ been” proof.
+  And every “where was this?” DM is answered by the same link, forever.</p>
+</div>
+</section>
+
+<section class="secw alt">
 <div class="sec">
   <span class="kick an">SEND IT LIKE A GIFT</span>
   <h2 class="an" style="--d:.07s">It opens like a premiere.</h2>
@@ -448,7 +477,7 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
 </div>
 </section>
 
-<section class="secw alt">
+<section class="secw">
 <div class="sec">
   <span class="kick an">JUST BACK FROM A TRIP?</span>
   <h2 class="an" style="--d:.07s">Pick the photos. We find the places.</h2>
@@ -471,7 +500,7 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
 </div>
 </section>
 
-<section class="secw">
+<section class="secw alt">
 <div class="sec">
   <span class="kick an">ALREADY KEPT, AROUND THE WORLD</span>
   <h2 class="an" style="--d:.07s">Real places, really saved.</h2>
