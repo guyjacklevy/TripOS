@@ -3,6 +3,20 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 24 Nov 2026 — The landing shows, not tells (Guy's phone notes)
+Guy phone-proved the new landing but ruled the below-fold read "like a photo
+album app" — the magic ease, the context, and the social loop weren't
+demonstrated. Four real-element demos now carry them, all honest: **the
+save** — a shared Maps link visibly becomes a full place card (Saltwood
+Bingin with its real category, area, price range, review-sourced
+one-liner, tags, and Maps button) flagged "saved to Your Bali"; **the
+collections** — real cards (Your Bali 51 places · 8 areas with its live
+link line; Your Tel Aviv just started); **the echo** — the sender's view
+with the real counts (13 opened · 3 played · 4 kept) and a friend's
+return: "Amok Sunset · from your gift, two weeks later · ✓ been ♥ worth
+it"; **the import** — three photos visibly becoming found, stamped
+places above the steps. Counts-never-who stays stated under the echo.
+
 ## 24 Nov 2026 — Round 15 SHIPPED: the new landing — postcard daylight
 Guy ruled: B wins. prevoya.app's front page is now the daylight world built
 around the scroll-story hero: scattered real discoveries gather into YOUR

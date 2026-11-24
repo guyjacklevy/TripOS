@@ -175,6 +175,56 @@ footer{position:relative;z-index:1;text-align:center;color:var(--soft);font-size
   padding:56px 20px calc(34px + env(safe-area-inset-bottom,0px));line-height:2}
 footer a{color:var(--dim)}
 
+/* ── show, don't tell: the product's real elements below the fold ── */
+.demo{margin-top:20px}
+.dstack{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+@media (min-width:640px){.dstack{flex-direction:row;align-items:center;gap:16px}}
+.scrap{display:inline-block;background:#eceade;border:1px dashed #c9c2ae;border-radius:12px;
+  padding:10px 14px;font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+.scrap .src{display:block;font-size:.46rem;letter-spacing:.1em;color:var(--soft);margin-top:4px}
+.arrow{font-family:var(--mono);color:var(--green);font-size:.78rem;letter-spacing:.08em}
+.place{max-width:330px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;box-shadow:0 10px 30px rgba(40,30,10,.14);position:relative}
+.place>img{width:100%;aspect-ratio:16/8.5;object-fit:cover;display:block}
+.place .flag{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.92);color:var(--green);
+  border:1px solid var(--green);border-radius:9px;width:28px;height:28px;display:grid;place-items:center;font-size:.72rem}
+.place .pd{padding:11px 13px 12px}
+.place .pn{font-weight:900;font-size:.95rem}
+.place .pm{font-family:var(--mono);font-size:.56rem;letter-spacing:.06em;color:var(--soft);margin-top:3px}
+.place .pw{font-size:.76rem;color:var(--dim);line-height:1.5;margin:7px 0 0}
+.place .pt{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.place .pt span{font-family:var(--mono);font-size:.5rem;color:var(--green);border:1px solid rgba(13,122,94,.35);border-radius:999px;padding:3px 8px}
+.place .pf{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:.66rem;font-weight:800}
+.place .pf .mp{color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.place .pf .sv{font-family:var(--mono);font-size:.54rem;color:var(--green)}
+.cols{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.colc{flex:1;min-width:198px;max-width:260px;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:10px;box-shadow:0 8px 24px rgba(40,30,10,.12)}
+.colc .strip{display:flex;gap:4px}
+.colc .strip img{aspect-ratio:1;object-fit:cover;border-radius:7px;flex:1;min-width:0;width:33%}
+.colc .cn{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;color:var(--green);margin-top:9px}
+.colc .cs{font-size:.66rem;color:var(--dim);margin-top:3px}
+.colc .cg{font-family:var(--mono);font-size:.52rem;color:var(--soft);margin-top:8px;border-top:1px solid var(--line);padding-top:8px;line-height:1.6}
+.colc .cg b{color:var(--green);font-weight:500}
+.echo{max-width:340px;background:var(--card);border:1.5px solid var(--green);border-radius:14px;
+  padding:12px 14px;box-shadow:0 10px 30px rgba(13,122,94,.14)}
+.echo .el{font-family:var(--mono);font-size:.64rem;color:var(--green)}
+.echo .en{display:flex;gap:18px;margin-top:9px;font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--soft)}
+.echo .en b{color:var(--ink);font-weight:800;font-size:.92rem;display:block;font-family:var(--body)}
+.ret{display:flex;align-items:center;gap:10px;max-width:340px;margin-top:12px;background:var(--card);
+  border:1px solid var(--line);border-radius:12px;padding:8px 10px;box-shadow:0 6px 18px rgba(40,30,10,.1)}
+.ret img{width:44px;height:44px;border-radius:9px;object-fit:cover;flex:none}
+.ret .rn{font-size:.74rem;font-weight:800;min-width:0;line-height:1.25}
+.ret .rn span{display:block;font-family:var(--mono);font-weight:500;font-size:.48rem;letter-spacing:.06em;color:var(--soft);margin-top:3px}
+.ret .rb{margin-left:auto;flex:none;font-family:var(--mono);font-size:.56rem;color:var(--green);text-align:right;line-height:1.7}
+.imp{display:flex;align-items:center;gap:10px;margin-top:18px;max-width:380px}
+.imp .ph{display:flex;gap:4px;flex:1.1;min-width:0}
+.imp .ph img{aspect-ratio:1;object-fit:cover;border-radius:8px;border:2px solid #fff;box-shadow:0 2px 8px rgba(40,30,10,.16);flex:1;min-width:0;width:33%}
+.imp .fx{font-family:var(--mono);color:var(--green);flex:none;font-size:.86rem}
+.imp .fnd{flex:1;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px;min-width:0}
+.imp .fnd .fn{font-size:.7rem;font-weight:800}
+.imp .fnd span{display:block;font-family:var(--mono);font-size:.46rem;letter-spacing:.06em;color:var(--green);margin-top:3px}
+
 /* ── gates: no JS, or reduced motion → the settled page ── */
 html:not(.js) .band,html:not(.js) .pc,html:not(.js) .chip,html:not(.js) .coll,
 html:not(.js) .link,html:not(.js) .gift,html:not(.js) .cue{display:none}
@@ -249,17 +299,74 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
 </section>
 
 <section class="sec">
+  <span class="kick">SAVE IN ONE SHARE</span>
+  <h2>From any app — kept with its context.</h2>
+  <p>Share a spot to Prevoya, or paste any link. It lands as a real place, not a bookmark:</p>
+  <div class="demo dstack">
+    <div class="scrap">maps.app.goo.gl/sWd8kQ…<span class="src">SHARED FROM MAPS</span></div>
+    <div class="arrow">→ BECOMES</div>
+    <div class="place">
+      <img src="/x/15d/assets/saltwood.jpg" alt="">
+      <div class="flag">⚑</div>
+      <div class="pd">
+        <div class="pn">Saltwood Bingin</div>
+        <div class="pm">CAFE · ULUWATU / BINGIN · $$</div>
+        <p class="pw">“Cliff-edge setting, natural-material design that blends into the landscape.”</p>
+        <div class="pt"><span>cliff-view</span><span>sunset-spot</span><span>ocean-view</span></div>
+        <div class="pf"><span class="mp">⟶ Maps</span><span class="sv">⚑ SAVED TO YOUR BALI</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="quiet">The area. The price range. What it’s actually like. One tap to Maps.</p>
+</section>
+
+<section class="sec">
   <span class="kick">COLLECTIONS, LIKE HIGHLIGHTS</span>
   <h2>One collection per destination — each with its own link.</h2>
-  <p>Wherever you go, your places file themselves under where they belong. A Bali gift never
-  drags your Lisbon along: every collection carries its own standing link, and you see when
-  it’s opened, played, and kept — counts only, never who.</p>
-  <div class="chips"><span class="on">YOUR BALI</span><span>YOUR LISBON</span><span>YOUR TEL AVIV</span><span>YOUR ANYWHERE</span></div>
+  <p>Wherever you go, your places file themselves under where they belong. A Bali gift
+  never drags your Tel Aviv along.</p>
+  <div class="cols">
+    <div class="colc">
+      <div class="strip"><img src="/x/15d/assets/padang.jpg" alt=""><img src="/x/15d/assets/bingin.jpg" alt=""><img src="/x/15d/assets/amok.jpg" alt=""></div>
+      <div class="cn">⚑ YOUR BALI</div>
+      <div class="cs">51 places · 8 areas</div>
+      <div class="cg"><b>⌲ link live</b> · opened 13 · kept 4</div>
+    </div>
+    <div class="colc">
+      <div class="cn">⚑ YOUR TEL AVIV</div>
+      <div class="cs">6 places · just started</div>
+      <div class="cg">⌲ its own link — ready when a friend asks</div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <span class="kick">SEND IT LIKE A GIFT</span>
+  <h2>You see it land.</h2>
+  <p>Your link opens as a short film of your places. Friends keep what they love, go,
+  and mark what was worth it — and the echo comes back to you:</p>
+  <div class="demo">
+    <div class="echo">
+      <div class="el">⌲ your Bali link</div>
+      <div class="en"><span><b>13</b>OPENED</span><span><b>3</b>PLAYED</span><span><b>4</b>KEPT</span></div>
+    </div>
+    <div class="ret">
+      <img src="/x/15d/assets/amok.jpg" alt="">
+      <div class="rn">Amok Sunset<span>FROM YOUR GIFT · TWO WEEKS LATER</span></div>
+      <div class="rb">✓ been<br>♥ worth it</div>
+    </div>
+  </div>
+  <p class="quiet">Counts, never who — the gift page stays anonymous.</p>
 </section>
 
 <section class="sec">
   <span class="kick">JUST BACK FROM A TRIP?</span>
   <h2>Your camera roll is already a collection.</h2>
+  <div class="imp" aria-hidden="true">
+    <div class="ph"><img src="/x/15d/assets/ulufish.jpg" alt=""><img src="/x/15d/assets/sayan.jpg" alt=""><img src="/x/15d/assets/borabora.jpg" alt=""></div>
+    <div class="fx">→</div>
+    <div class="fnd"><div class="fn">3 places found</div><span>STAMPED TO THEIR DAYS</span></div>
+  </div>
   <ul class="steps">
     <li><div>Pick your trip photos.<small>Up to 60, straight from the roll.</small></div></li>
     <li><div>They find their places.<small>Photos cluster by where they were taken — you approve every row.</small></div></li>
