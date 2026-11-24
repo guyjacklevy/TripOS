@@ -3,6 +3,20 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 24 Nov 2026 — Round 15-D: the scroll story, a working demo
+Live at prevoya.app/x/15d/ (unlinked, noindex). After studying the
+"$10K websites" technique (scroll-scrubbed hero video), we adapted it for a
+phone-first product: no AI video — the story is real photos and plain DOM
+animation, so phones get the full effect (the original technique serves
+phones a static image). Four beats scrubbed by scroll, forward and backward:
+scattered discoveries (camera roll, screenshots, a Maps star, the 2 AM group
+chat) gather into YOUR BALI, condense into one glowing link, and the link
+opens as the gift — then the page settles on "Never lose a place you
+discover" and the CTA. Passed the flick test (every beat fully readable even
+at aggressive 360px double-flicks), rests when idle, reduced-motion and
+no-JS get the settled page directly. A decision artifact for Round 15, not
+yet the landing.
+
 ## 24 Nov 2026 — Audit repairs (track A): five fixes from the anonymous visit
 An anonymous zero-context visitor walked the site (report on record) and the
 five broken behaviors they hit are fixed. **The tour reveals on time** —
