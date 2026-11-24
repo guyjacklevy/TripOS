@@ -2948,7 +2948,7 @@ footer a { color: var(--mut); text-decoration: none; }
 footer a:hover { color: var(--teal); }
 
 /* ─── reveal on scroll (hidden only when JS is running — page never blanks) ─── */
-html.js .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+html.js .reveal { opacity: 0; transform: translateY(12px); transition: opacity 0.4s ease, transform 0.4s ease; }
 html.js .reveal.in { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
@@ -3702,15 +3702,16 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
 .gfc-beat {
   position: absolute; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center; text-align: center;
-  padding: 28px 24px; opacity: 0; transition: opacity 0.45s ease; pointer-events: none;
+  padding: 28px 24px; opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
 }
 .gfc-beat.on { opacity: 1; pointer-events: auto; }
 .gfc-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
-.gfc-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 10, 20, 0.2), rgba(10, 10, 20, 0.84) 80%); }
+.gfc-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 10, 20, 0.32), rgba(10, 10, 20, 0.9) 78%); }
 .gfc-t1 {
   position: relative; margin: 0; color: var(--tx);
   font-size: clamp(27px, 7vw, 40px); font-weight: 800; line-height: 1.22;
   letter-spacing: -0.01em; max-width: 16ch; text-wrap: balance;
+  text-shadow: 0 1px 14px rgba(10, 10, 20, 0.6);
 }
 .gfc-t2 {
   position: relative; margin: 14px 0 0; color: var(--teal); font-family: var(--mono);

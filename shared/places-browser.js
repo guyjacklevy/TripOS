@@ -124,7 +124,14 @@ export function mountPlaces(cfg) {
     const n = fig.getAttribute('data-pn');
     if (!n || !PHOTO_CACHE.has(n)) return false;
     const img = fig.querySelector('img');
-    if (img) img.src = PHOTO_CACHE.get(n);
+    if (img) {
+      /* swap only once decoded — the category art holds until the real
+         photo is ready, never a blank or dark box (audit 24 Nov) */
+      const uri = PHOTO_CACHE.get(n);
+      const im = new Image();
+      im.onload = () => { img.src = uri; };
+      im.src = uri;
+    }
     const author = fig.getAttribute('data-pa');
     if (author && !fig.querySelector('.ph-credit')) {
       const c = document.createElement('figcaption');
@@ -1066,7 +1073,7 @@ export function mountPlaces(cfg) {
     b.innerHTML = 'matching switches on after your brief · ';
     const chip = document.createElement(cfg.onBrief ? 'button' : 'a');
     chip.className = 'ck-reset';
-    chip.textContent = 'answer 3 questions →';
+    chip.textContent = 'answer a few questions →';
     if (cfg.onBrief) { chip.type = 'button'; chip.onclick = () => cfg.onBrief(); }
     else chip.href = '/bali/plan/';
     b.appendChild(chip);

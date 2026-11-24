@@ -3,6 +3,26 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 24 Nov 2026 — Audit repairs (track A): five fixes from the anonymous visit
+An anonymous zero-context visitor walked the site (report on record) and the
+five broken behaviors they hit are fixed. **The tour reveals on time** —
+sections start appearing before they enter the screen and settle in 0.4s,
+instead of staying near-black at normal scroll speed. **The gift shows real
+photos everywhere** — every row's real Google photo now loads in the
+background right after the page opens (the visitor saw the same stock satay
+on a dozen restaurants); photos swap in only once loaded, never a blank or
+broken box, and the server now caches photo links for ~a day so a widely
+opened gift doesn't re-bill Google per viewer (cold 2.1s → cached 0.24s).
+**The ceremony text is readable** — darker shade, faster cross-fade, text
+shadow. **The copy stopped overpromising** — "answer 3 questions" became
+"answer a few questions" everywhere (the concierge actually asks five).
+**A mixed gift stops claiming one destination** — Guy's legacy link carried
+a Tel Aviv cafe inside "Guy's Bali"; an unscoped link spanning destinations
+is now titled "Guy's places" (contents unchanged — a sent link never changes
+under its receiver; per-destination links keep their names).
+During the server deploy the gift endpoint returned 401 for ~10 minutes
+(a deploy default flipped its public flag); caught and restored.
+
 ## 22 Nov 2026 — Signed in always means inside the app
 The last of the old chat-first boot is gone: an empty account used to be
 redirected to the planning chat on every open (Guy hit it refreshing the

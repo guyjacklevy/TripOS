@@ -159,7 +159,7 @@ document.addEventListener('click', (e) => {
 
 function renderBrief(trip) {
   if (!trip || !trip.vibe) {
-    $('briefLine').innerHTML = 'No brief yet — answer three questions and everything personalizes.';
+    $('briefLine').innerHTML = 'No brief yet — answer a few questions and everything personalizes.';
     $('briefGrid').innerHTML = '';
     $('briefEdit').textContent = '✈ do the check-in — 30 seconds';
     return;

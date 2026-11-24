@@ -12,7 +12,7 @@
           io.unobserve(e.target);
         }
       });
-    }, { threshold: 0.12 });
+    }, { threshold: 0, rootMargin: '0px 0px 20% 0px' });
     els.forEach(function (el) { io.observe(el); });
     /* catch-up: a fast scroll can jump an element clean through the viewport
        between observer frames (isIntersecting never fires) — anything whose
@@ -20,7 +20,7 @@
     var catchUp = function () {
       var vh = window.innerHeight;
       els.forEach(function (el) {
-        if (!el.classList.contains('in') && el.getBoundingClientRect().top < vh * 0.95) {
+        if (!el.classList.contains('in') && el.getBoundingClientRect().top < vh * 1.2) {
           el.classList.add('in');
           io.unobserve(el);
         }

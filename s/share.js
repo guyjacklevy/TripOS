@@ -126,14 +126,30 @@ async function resolveGPhotos(names) {
 function watchRowPhotos() {
   const imgs = document.querySelectorAll('#gfRows img[data-pn]');
   if (!imgs.length) return;
+  /* swap only once the real photo has decoded — the category art stays
+     up until the very frame it's replaced, never a blank or broken box */
+  const swapIn = (img, uri) => {
+    const im = new Image();
+    im.onload = () => { img.src = uri; };
+    im.src = uri;
+  };
   const apply = () => {
     document.querySelectorAll('#gfRows img[data-pn]').forEach((img) => {
       const n = img.getAttribute('data-pn');
-      if (n && GUR.has(n)) { img.src = GUR.get(n); img.removeAttribute('data-pn'); }
+      if (n && GUR.has(n)) { swapIn(img, GUR.get(n)); img.removeAttribute('data-pn'); }
     });
   };
-  /* the first screen never waits for a scroll — resolve it straight away */
-  resolveGPhotos([...imgs].slice(0, 12).map((i) => i.getAttribute('data-pn'))).then(apply);
+  /* the first screen never waits for a scroll; the rest trickle in behind
+     it (audit 24 Nov: a scrolled list showed a wall of category art) */
+  const all = [...imgs].map((i) => i.getAttribute('data-pn')).filter(Boolean);
+  const trickle = (i) => {
+    if (i >= all.length) return;
+    resolveGPhotos(all.slice(i, i + 16)).then(() => {
+      apply();
+      setTimeout(() => trickle(i + 16), 150);
+    });
+  };
+  resolveGPhotos(all.slice(0, 12)).then(() => { apply(); trickle(12); });
   if (!('IntersectionObserver' in window)) return;
   let pending = new Set();
   let timer = null;
@@ -152,7 +168,7 @@ function watchRowPhotos() {
       if (!en.isIntersecting) return;
       io.unobserve(en.target);
       const n = en.target.getAttribute('data-pn');
-      if (n && GUR.has(n)) { en.target.src = GUR.get(n); en.target.removeAttribute('data-pn'); return; }
+      if (n && GUR.has(n)) { swapIn(en.target, GUR.get(n)); en.target.removeAttribute('data-pn'); return; }
       if (n) pending.add(n);
     });
     if (pending.size && !timer) timer = setTimeout(flush, 150);
@@ -178,7 +194,7 @@ function cerCascade(places) {
    skip · reduced motion = straight to the list · plays once per
    browser per token, ▶ replays. */
 function giftCeremony(data, token, replay, done) {
-  const DEST = data.destination || 'Bali'; /* 14a: the payload names the place */
+  const DEST = data.destination || null; /* v15: null = places span destinations */
   const cer = $('gfCer');
   const stage = $('gfcStage');
   if (!cer || !stage) { done(); return; }
@@ -190,7 +206,7 @@ function giftCeremony(data, token, replay, done) {
   const beats = [];
   beats.push({ ms: 2300, html:
     '<div class="gfc-beat"><p class="gfc-t1">' + esc(name) + ' kept ' + n +
-    ' place' + (n === 1 ? '' : 's') + ' in ' + esc(DEST) + '.</p><p class="gfc-t2">for you</p></div>' });
+    ' place' + (n === 1 ? '' : 's') + (DEST ? ' in ' + esc(DEST) : '') + '.</p><p class="gfc-t2">for you</p></div>' });
   cascade.forEach((p) => {
     /* the photo chain, honest at every rung: sender's own → the real place
        photo (Google, display-time, credited) → category art */
@@ -252,13 +268,14 @@ function giftCeremony(data, token, replay, done) {
 }
 
 function renderGift(data, token) {
-  const DEST = data.destination || 'Bali'; /* 14a: the payload names the place */
+  const DEST = data.destination || null; /* v15: null = places span destinations */
   const name = data.name || 'a traveler';
   const places = data.places || [];
   const n = (data.counts && data.counts.places) || places.length;
-  document.title = name + '’s ' + DEST + ' — a gift · Prevoya';
+  const COLL = name + '’s ' + (DEST || 'places'); /* named honestly, never a destination the list outgrows */
+  document.title = COLL + ' — a gift · Prevoya';
   $('gfEyebrow').textContent = 'A GIFT FROM ' + name.toUpperCase() + ' · PREVOYA';
-  $('gfTitle').textContent = name + '’s ' + DEST + ' — ' + n + ' place' + (n === 1 ? '' : 's') + ' saved for you';
+  $('gfTitle').textContent = COLL + ' — ' + n + ' place' + (n === 1 ? '' : 's') + ' saved for you';
   const withPh = (data.counts && data.counts.withPhotos) || 0;
   $('gfCounts').innerHTML = '<em>' + n + '</em> PLACES · <em>' + ((data.counts && data.counts.areas) || 1) + '</em> AREAS' +
     (withPh ? ' · <em>' + withPh + '</em> WITH ' + name.toUpperCase() + '’S PHOTOS' : '');

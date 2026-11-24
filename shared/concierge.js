@@ -111,8 +111,8 @@ export function mountConcierge(els) {
       });
       const n = parseInt(String(r.headers.get('content-range') || '').split('/')[1], 10);
       els.proof.textContent = (Number.isFinite(n) && n > 0 ? n + ' verified places · ' : '') +
-        'three questions from a route you can argue with';
-    } catch (_) { els.proof.textContent = 'three questions from a route you can argue with'; }
+        'a few questions from a route you can argue with';
+    } catch (_) { els.proof.textContent = 'a few questions from a route you can argue with'; }
   })();
 
   /* ── the reveal (full-screen), then the route-mini in-thread (R3) ── */
