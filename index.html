@@ -144,14 +144,14 @@ html.js .cue{opacity:.9}
 .sec{position:relative;z-index:1;max-width:620px;margin:0 auto;
   padding:58px max(20px,env(safe-area-inset-left,0px)) 0 max(20px,env(safe-area-inset-right,0px))}
 .kick{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;color:var(--green);font-weight:500}
-.sec h2{margin:8px 0 0;font-size:clamp(1.3rem,5.4vw,1.8rem);font-weight:900;line-height:1.2;
+.sec h2{margin:10px 0 0;font-size:clamp(1.3rem,5.4vw,1.8rem);font-weight:900;line-height:1.2;
   letter-spacing:-.01em;text-wrap:balance}
-.sec>p{margin:10px 0 0;color:var(--dim);font-size:.94rem;line-height:1.6;max-width:52ch}
-.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px}
+.sec>p{margin:14px 0 0;color:var(--dim);font-size:.94rem;line-height:1.6;max-width:52ch}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:20px}
 .chips span{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;border:1px solid var(--line);
   color:var(--soft);border-radius:999px;padding:6px 12px;background:var(--card)}
 .chips span.on{color:var(--green);border-color:var(--green)}
-.steps{margin:16px 0 0;padding:0;list-style:none;counter-reset:st}
+.steps{margin:24px 0 0;padding:0;list-style:none;counter-reset:st}
 .steps li{counter-increment:st;display:flex;gap:12px;align-items:baseline;padding:9px 0;
   border-top:1px solid var(--line);font-size:.9rem;color:var(--ink)}
 .steps li:first-child{border-top:0}
@@ -166,7 +166,7 @@ html.js .cue{opacity:.9}
   padding:0 24px;border-radius:999px;background:var(--card);border:1.5px solid var(--green);
   color:var(--green);font-weight:800;font-size:.92rem;text-decoration:none}
 .btn2:focus-visible,.door:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
-.quiet{font-size:.76rem;color:var(--soft);margin-top:10px}
+.quiet{font-size:.76rem;color:var(--soft);margin-top:16px}
 .quiet a{color:inherit}
 .honest{display:flex;gap:8px 18px;flex-wrap:wrap;justify-content:center;margin-top:14px;
   font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;color:var(--soft)}
@@ -176,7 +176,7 @@ footer{position:relative;z-index:1;text-align:center;color:var(--soft);font-size
 footer a{color:var(--dim)}
 
 /* ── show, don't tell: the product's real elements below the fold ── */
-.demo{margin-top:20px}
+.demo{margin-top:28px}
 .dstack{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
 @media (min-width:640px){.dstack{flex-direction:row;align-items:center;gap:16px}}
 .scrap{display:inline-block;background:#eceade;border:1px dashed #c9c2ae;border-radius:12px;
@@ -197,33 +197,12 @@ footer a{color:var(--dim)}
 .place .pf{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:.66rem;font-weight:800}
 .place .pf .mp{color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
 .place .pf .sv{font-family:var(--mono);font-size:.54rem;color:var(--green)}
-.cols{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
-.colc{flex:1;min-width:198px;max-width:260px;background:var(--card);border:1px solid var(--line);
-  border-radius:14px;padding:10px;box-shadow:0 8px 24px rgba(40,30,10,.12)}
-.colc .strip{display:flex;gap:4px}
-.colc .strip img{aspect-ratio:1;object-fit:cover;border-radius:7px;flex:1;min-width:0;width:33%}
-.colc .cn{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;color:var(--green);margin-top:9px}
-.colc .cs{font-size:.66rem;color:var(--dim);margin-top:3px}
-.colc .cg{font-family:var(--mono);font-size:.52rem;color:var(--soft);margin-top:8px;border-top:1px solid var(--line);padding-top:8px;line-height:1.6}
-.colc .cg b{color:var(--green);font-weight:500}
-.echo{max-width:340px;background:var(--card);border:1.5px solid var(--green);border-radius:14px;
-  padding:12px 14px;box-shadow:0 10px 30px rgba(13,122,94,.14)}
-.echo .el{font-family:var(--mono);font-size:.64rem;color:var(--green)}
-.echo .en{display:flex;gap:18px;margin-top:9px;font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--soft)}
-.echo .en b{color:var(--ink);font-weight:800;font-size:.92rem;display:block;font-family:var(--body)}
 .ret{display:flex;align-items:center;gap:10px;max-width:340px;margin-top:12px;background:var(--card);
   border:1px solid var(--line);border-radius:12px;padding:8px 10px;box-shadow:0 6px 18px rgba(40,30,10,.1)}
 .ret img{width:44px;height:44px;border-radius:9px;object-fit:cover;flex:none}
 .ret .rn{font-size:.74rem;font-weight:800;min-width:0;line-height:1.25}
 .ret .rn span{display:block;font-family:var(--mono);font-weight:500;font-size:.48rem;letter-spacing:.06em;color:var(--soft);margin-top:3px}
 .ret .rb{margin-left:auto;flex:none;font-family:var(--mono);font-size:.56rem;color:var(--green);text-align:right;line-height:1.7}
-.imp{display:flex;align-items:center;gap:10px;margin-top:18px;max-width:380px}
-.imp .ph{display:flex;gap:4px;flex:1.1;min-width:0}
-.imp .ph img{aspect-ratio:1;object-fit:cover;border-radius:8px;border:2px solid #fff;box-shadow:0 2px 8px rgba(40,30,10,.16);flex:1;min-width:0;width:33%}
-.imp .fx{font-family:var(--mono);color:var(--green);flex:none;font-size:.86rem}
-.imp .fnd{flex:1;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px;min-width:0}
-.imp .fnd .fn{font-size:.7rem;font-weight:800}
-.imp .fnd span{display:block;font-family:var(--mono);font-size:.46rem;letter-spacing:.06em;color:var(--green);margin-top:3px}
 
 /* ── life: sections arrive as choreography; bands separate the flow ── */
 .secw{position:relative;z-index:1}
@@ -251,6 +230,60 @@ html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
 .tcard .tn span{display:block;font-family:var(--mono);font-weight:500;font-size:.48rem;letter-spacing:.08em;color:var(--soft);margin-top:3px}
 .tcard .tn .kp{color:var(--green);font-weight:500}
 
+
+/* ── the chat comparison (1A) and the ask-vignette (2A) ── */
+.cmp{display:flex;gap:14px;flex-wrap:wrap}
+.chatf{flex:1;min-width:236px;background:#efe9dc;border-radius:14px;padding:12px 10px;min-height:150px}
+.chatf .ttl{font-family:var(--mono);font-size:.5rem;letter-spacing:.1em;color:var(--soft);text-align:center;margin-bottom:8px}
+.bub{display:block;max-width:88%;border-radius:12px;padding:8px 10px;font-size:.68rem;line-height:1.45;margin-top:7px;box-shadow:0 1px 2px rgba(40,30,10,.12);color:var(--ink)}
+.bub.me{background:#dcf5e3;margin-left:auto;border-bottom-right-radius:4px}
+.bub.them{background:#fff;border-bottom-left-radius:4px;margin-right:auto}
+.bub .lnk{color:var(--green);font-family:var(--mono);font-size:.6rem;word-break:break-all}
+.bub .tm{display:block;text-align:right;font-family:var(--mono);font-size:.44rem;letter-spacing:.04em;color:var(--soft);margin-top:4px}
+.prevc{display:block;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:6px}
+.prevc .pstrip{display:flex;gap:2px}
+.prevc .pstrip img{aspect-ratio:1;object-fit:cover;flex:1;min-width:0;width:33%}
+.prevc .pt{display:block;padding:7px 9px 8px}
+.prevc .pt b{display:block;font-size:.62rem}
+.prevc .pt i{font-style:normal;font-family:var(--mono);font-size:.46rem;color:var(--green)}
+.mlab{font-family:var(--mono);font-size:.52rem;letter-spacing:.12em;color:var(--soft);margin:28px 0 0}
+.place.sm{max-width:300px;margin-top:12px}
+.place.sm>img{aspect-ratio:16/7}
+
+/* ── the premiere (3A) + the journey rail (3B) ── */
+.film{position:relative;height:172px;max-width:340px}
+.film img{position:absolute;top:8px;width:40%;aspect-ratio:9/13;object-fit:cover;border-radius:11px;border:3px solid #fff;box-shadow:0 7px 18px rgba(40,30,10,.26)}
+.film .f1{left:4%;transform:rotate(-7deg)}
+.film .f2{left:30%;top:0;z-index:2;box-shadow:0 10px 24px rgba(40,30,10,.32)}
+.film .f3{right:4%;transform:rotate(7deg)}
+.film .fcap{position:absolute;left:50%;transform:translateX(-50%);bottom:0;z-index:3;white-space:nowrap;
+  font-weight:900;font-size:.72rem;background:rgba(250,246,238,.85);backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:999px;padding:5px 13px}
+.eline{font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;color:var(--green);margin-top:22px}
+.eline .lv{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);margin:0 2px;animation:lv 2.4s ease-in-out infinite}
+@keyframes lv{0%,100%{opacity:1}50%{opacity:.35}}
+.rail{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:12px}
+.rail .st{font-family:var(--mono);font-size:.5rem;letter-spacing:.05em;color:var(--soft);border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:var(--card);white-space:nowrap}
+.rail .st b{font-family:var(--body);font-weight:800;font-size:.78rem;color:var(--ink);margin-right:2px}
+.rail .st.g{border-color:rgba(13,122,94,.45);color:var(--green)}
+.rail .st.a{border-color:rgba(176,108,10,.5);color:var(--amber)}
+.rail .rx{font-family:var(--mono);color:var(--soft);font-size:.6rem}
+
+/* ── the living sort (4A opening, 4B rows): photos dock onto their places ── */
+.sortst{position:relative;height:238px;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:28px}
+.sp{position:absolute;z-index:2;width:44px;height:44px;border-radius:8px;object-fit:cover;border:2px solid #fff;
+  box-shadow:0 2px 6px rgba(40,30,10,.2);left:var(--x0);top:var(--y0);transform:rotate(var(--r0));
+  animation:spDock 12s ease-in-out infinite alternate}
+@keyframes spDock{
+  0%,30%{left:var(--x0);top:var(--y0);transform:rotate(var(--r0));border-color:#fff;box-shadow:0 2px 6px rgba(40,30,10,.2)}
+  58%,100%{left:var(--x1);top:var(--y1);transform:rotate(var(--r1,0deg));border-color:var(--green);box-shadow:0 0 0 2px rgba(13,122,94,.3),0 2px 6px rgba(40,30,10,.2)}
+}
+.srow{position:absolute;z-index:1;left:12px;right:12px;background:var(--paper);border:1px solid var(--line);border-radius:10px;
+  padding:8px 10px 8px 76px;font-size:.68rem;font-weight:800;color:var(--ink);opacity:0;min-height:48px;
+  animation:srowIn 12s ease-in-out infinite alternate}
+.srow span{display:block;font-family:var(--mono);font-weight:500;font-size:.46rem;letter-spacing:.06em;color:var(--green);margin-top:3px}
+@keyframes srowIn{0%,40%{opacity:0}62%,100%{opacity:1}}
+
 /* ── gates: no JS, or reduced motion → the settled page ── */
 html:not(.js) .band,html:not(.js) .pc,html:not(.js) .chip,html:not(.js) .coll,
 html:not(.js) .link,html:not(.js) .gift,html:not(.js) .cue{display:none}
@@ -263,6 +296,9 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   .sky::before,.cue i{animation:none}
   html.js .an,html.js .place .flag{opacity:1;transform:none;transition:none}
   .mtrack{animation:none}
+  .sp{animation:none;left:var(--x1);top:var(--y1);transform:rotate(var(--r1,0deg));border-color:var(--green)}
+  .srow{animation:none;opacity:1}
+  .eline .lv{animation:none}
   .marw{overflow-x:auto;mask-image:none;-webkit-mask-image:none}
 }
 </style>
@@ -330,85 +366,108 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
 <section class="secw">
 <div class="sec">
   <span class="kick an">SAVE IN ONE SHARE</span>
-  <h2 class="an" style="--d:.07s">From any app — kept with its context.</h2>
-  <p class="an" style="--d:.14s">Share a spot to Prevoya, or paste any link. It lands as a real place, not a bookmark:</p>
-  <div class="demo dstack">
-    <div class="scrap an" style="--d:.2s">maps.app.goo.gl/sWd8kQ…<span class="src">SHARED FROM MAPS</span></div>
-    <div class="arrow an" style="--d:.32s">→ BECOMES</div>
-    <div class="place an" style="--d:.44s">
-      <img src="/x/15d/assets/saltwood.jpg" alt="">
-      <div class="flag">⚑</div>
-      <div class="pd">
-        <div class="pn">Saltwood Bingin</div>
-        <div class="pm">CAFE · ULUWATU / BINGIN · $$</div>
-        <p class="pw">“Cliff-edge setting, natural-material design that blends into the landscape.”</p>
-        <div class="pt"><span>cliff-view</span><span>sunset-spot</span><span>ocean-view</span></div>
-        <div class="pf"><span class="mp">⟶ Maps</span><span class="sv">⚑ SAVED TO YOUR BALI</span></div>
+  <h2 class="an" style="--d:.07s">You know this conversation.</h2>
+  <p class="an" style="--d:.14s">A place you loved deserves better than a naked link:</p>
+  <div class="demo cmp">
+    <div class="chatf an" style="--d:.2s"><div class="ttl">WHAT YOU SEND TODAY</div>
+      <div class="bub me"><span class="lnk">maps.app.goo.gl/xK92f…</span><span class="tm">21:38</span></div>
+      <div class="bub them">which one is this?? 😅<span class="tm">21:41</span></div>
+      <div class="bub them">is it the one near the cliff or…<span class="tm">21:41</span></div>
+    </div>
+    <div class="chatf an" style="--d:.32s"><div class="ttl">WITH PREVOYA</div>
+      <div class="bub me">
+        <span class="prevc"><span class="pstrip"><img src="/x/15d/assets/padang.jpg" alt=""><img src="/x/15d/assets/bingin.jpg" alt=""><img src="/x/15d/assets/amok.jpg" alt=""></span>
+        <span class="pt"><b>Guy’s Bali — 51 places saved for you</b><i>prevoya.app/s/guys-bali</i></span></span>
+        here 🤍<span class="tm">21:38</span>
       </div>
+      <div class="bub them">omg. booked for January 🙌<span class="tm">21:40</span></div>
     </div>
   </div>
-  <p class="quiet an" style="--d:.5s">The area. The price range. What it’s actually like. One tap to Maps.</p>
+  <p class="mlab an" style="--d:.4s">AND EVERY PLACE INSIDE CARRIES ITS CONTEXT:</p>
+  <div class="place sm an" style="--d:.46s">
+    <img src="/x/15d/assets/saltwood.jpg" alt="">
+    <div class="flag">⚑</div>
+    <div class="pd">
+      <div class="pn">Saltwood Bingin</div>
+      <div class="pm">CAFE · ULUWATU / BINGIN · $$</div>
+      <p class="pw">“Cliff-edge setting, natural-material design that blends into the landscape.”</p>
+      <div class="pf"><span class="mp">⟶ Maps</span><span class="sv">⚑ SAVED TO YOUR BALI</span></div>
+    </div>
+  </div>
+  <p class="quiet an" style="--d:.52s">The area. The price range. What it’s actually like. One tap to Maps.</p>
 </div>
 </section>
 
 <section class="secw alt">
 <div class="sec">
-  <span class="kick an">COLLECTIONS, LIKE HIGHLIGHTS</span>
-  <h2 class="an" style="--d:.07s">One collection per destination — each with its own link.</h2>
-  <p class="an" style="--d:.14s">Wherever you go, your places file themselves under where they belong. A Bali gift
-  never drags your Tel Aviv along.</p>
-  <div class="cols">
-    <div class="colc an" style="--d:.22s">
-      <div class="strip"><img src="/x/15d/assets/padang.jpg" alt=""><img src="/x/15d/assets/bingin.jpg" alt=""><img src="/x/15d/assets/amok.jpg" alt=""></div>
-      <div class="cn">⚑ YOUR BALI</div>
-      <div class="cs">51 places · 8 areas</div>
-      <div class="cg"><b>⌲ link live</b> · opened 13 · kept 4</div>
-    </div>
-    <div class="colc an" style="--d:.34s">
-      <div class="cn">⚑ YOUR TEL AVIV</div>
-      <div class="cs">6 places · just started</div>
-      <div class="cg">⌲ its own link — ready when a friend asks</div>
+  <span class="kick an">FOR THE ONE WHO GETS ASKED</span>
+  <h2 class="an" style="--d:.07s">“Where should we eat? Any gyms?” — answered in a minute.</h2>
+  <div class="demo">
+    <div class="chatf an" style="--d:.16s;max-width:360px">
+      <div class="bub them">hey!! going to Bali in Jan 🌴 where should we EAT? and any gyms?<span class="tm">09:12</span></div>
+      <div class="bub me">
+        <span class="prevc"><span class="pstrip"><img src="/x/15d/assets/ulufish.jpg" alt=""><img src="/x/15d/assets/sayan.jpg" alt=""><img src="/x/15d/assets/borabora.jpg" alt=""></span>
+        <span class="pt"><b>Your Bali — ✓ been to 49 of 51</b><i>prevoya.app/s/…</i></span></span>
+        <span class="tm">09:13 · ONE MINUTE LATER</span>
+      </div>
     </div>
   </div>
+  <div class="chips an" style="--d:.26s"><span class="on">ALL 51</span><span>FOOD 22</span><span>NIGHTLIFE 16</span><span>CAFE 3</span><span>SURF 3</span><span>BEACH 2</span><span>GYM 1</span></div>
+  <p class="an" style="--d:.34s">One collection per destination, organized by what they ask for — and
+  “✓ been” on almost every row is the proof you actually went. A Bali gift never drags your
+  Tel Aviv along.</p>
 </div>
 </section>
 
 <section class="secw">
 <div class="sec">
   <span class="kick an">SEND IT LIKE A GIFT</span>
-  <h2 class="an" style="--d:.07s">You see it land.</h2>
-  <p class="an" style="--d:.14s">Your link opens as a short film of your places. Friends keep what they love, go,
-  and mark what was worth it — and the echo comes back to you:</p>
+  <h2 class="an" style="--d:.07s">It opens like a premiere.</h2>
+  <p class="an" style="--d:.14s">Your link plays a short film of your places — then the list, ready to keep.</p>
   <div class="demo">
-    <div class="echo an" style="--d:.22s">
-      <div class="el">⌲ your Bali link</div>
-      <div class="en"><span><b data-n="13">13</b>OPENED</span><span><b data-n="3">3</b>PLAYED</span><span><b data-n="4">4</b>KEPT</span></div>
+    <div class="film an" style="--d:.2s" aria-hidden="true">
+      <img src="/x/15d/assets/amok.jpg" alt="" class="f1">
+      <img src="/x/15d/assets/saltwood.jpg" alt="" class="f2">
+      <img src="/x/15d/assets/padang.jpg" alt="" class="f3">
+      <div class="fcap">▶ Saltwood Bingin · ✓ been</div>
     </div>
-    <div class="ret an" style="--d:.4s">
+    <div class="eline an" style="--d:.3s">⌲ YOUR BALI LINK <i class="lv"></i> LIVE</div>
+    <div class="rail an" style="--d:.36s">
+      <span class="st">SENT</span><span class="rx">→</span>
+      <span class="st g"><b data-n="13">13</b> OPENED</span><span class="rx">→</span>
+      <span class="st g"><b data-n="3">3</b> PLAYED THE FILM</span><span class="rx">→</span>
+      <span class="st g"><b data-n="4">4</b> KEPT</span><span class="rx">→</span>
+      <span class="st a">✓ WENT · ♥ WORTH IT</span>
+    </div>
+    <div class="ret an" style="--d:.46s">
       <img src="/x/15d/assets/amok.jpg" alt="">
       <div class="rn">Amok Sunset<span>FROM YOUR GIFT · TWO WEEKS LATER</span></div>
       <div class="rb">✓ been<br>♥ worth it</div>
     </div>
   </div>
-  <p class="quiet an" style="--d:.5s">Counts, never who — the gift page stays anonymous.</p>
 </div>
 </section>
 
 <section class="secw alt">
 <div class="sec">
   <span class="kick an">JUST BACK FROM A TRIP?</span>
-  <h2 class="an" style="--d:.07s">Your camera roll is already a collection.</h2>
-  <div class="imp an" style="--d:.16s" aria-hidden="true">
-    <div class="ph"><img src="/x/15d/assets/ulufish.jpg" alt=""><img src="/x/15d/assets/sayan.jpg" alt=""><img src="/x/15d/assets/borabora.jpg" alt=""></div>
-    <div class="fx">→</div>
-    <div class="fnd"><div class="fn">3 places found</div><span>STAMPED TO THEIR DAYS</span></div>
+  <h2 class="an" style="--d:.07s">Pick the photos. We find the places.</h2>
+  <div class="sortst an" style="--d:.16s" aria-hidden="true">
+    <img class="sp" src="/x/15d/assets/bingin.jpg" alt="" style="--x0:16%;--y0:14px;--r0:-11deg;--x1:14px;--y1:118px;--r1:-5deg">
+    <img class="sp" src="/x/15d/assets/padang.jpg" alt="" style="--x0:62%;--y0:8px;--r0:8deg;--x1:24px;--y1:114px;--r1:4deg;animation-delay:.35s">
+    <img class="sp" src="/x/15d/assets/ulufish.jpg" alt="" style="--x0:40%;--y0:46px;--r0:-5deg;--x1:14px;--y1:172px;--r1:-4deg;animation-delay:.7s">
+    <img class="sp" src="/x/15d/assets/sayan.jpg" alt="" style="--x0:78%;--y0:52px;--r0:13deg;--x1:24px;--y1:168px;--r1:5deg;animation-delay:1.05s">
+    <div class="srow" style="top:112px">Bingin Beach<span>FOUND · STAMPED AUG 15</span></div>
+    <div class="srow" style="top:166px">Ulu Fishmarket<span>FOUND · STAMPED AUG 14</span></div>
   </div>
+  <p class="quiet an" style="--d:.24s">No typing — the GPS in your photos does the rest. Each photo lands
+  on the place it was taken.</p>
   <ul class="steps">
-    <li class="an" style="--d:.24s"><div>Pick your trip photos.<small>Up to 60, straight from the roll.</small></div></li>
-    <li class="an" style="--d:.32s"><div>They find their places.<small>Photos cluster by where they were taken — you approve every row.</small></div></li>
-    <li class="an" style="--d:.4s"><div>Giftable in about 3 minutes.<small>Places, dates, and photos — ready to send as one link.</small></div></li>
+    <li class="an" style="--d:.3s"><div>Pick your trip photos.<small>Up to 60, straight from the roll.</small></div></li>
+    <li class="an" style="--d:.38s"><div>They find their places.<small>Photos cluster by where they were taken — you approve every row.</small></div></li>
+    <li class="an" style="--d:.46s"><div>Giftable in about 3 minutes.<small>Places, dates, and photos — ready to send as one link.</small></div></li>
   </ul>
-  <a class="door an" style="--d:.48s" href="app/">⌲ Import your trip — free</a>
+  <a class="door an" style="--d:.54s" href="app/">⌲ Import your trip — free</a>
 </div>
 </section>
 

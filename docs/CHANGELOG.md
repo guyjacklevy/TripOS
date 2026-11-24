@@ -3,6 +3,23 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 24 Nov 2026 — Round 15.1: the sections, rebuilt to Guy's picks
+From the storyboard: **1A** — the save section is now the chat comparison
+("maps.app.goo.gl/… / which one is this??" against the Prevoya preview card
+and "booked for January"), with the context card beneath. **2A** — the
+collections section opens on the question the ICP actually gets ("where
+should we EAT? any gyms?") answered one minute later with the real proof
+line "✓ been to 49 of 51" and real category chips (FOOD 22 · NIGHTLIFE 16
+· CAFE 3 · SURF 3 · BEACH 2 · GYM 1). **3A+B** — "It opens like a
+premiere": fanned film frames of the ceremony, the live link line, and the
+journey rail SENT → 13 OPENED → 3 PLAYED THE FILM → 4 KEPT → ✓ WENT ·
+♥ WORTH IT with counting numbers; "counts, never who" removed. **4A+B** —
+"Pick the photos. We find the places.": scattered photos continuously dock
+onto their found-place rows (Bingin Beach, Ulu Fishmarket — FOUND ·
+STAMPED), each photo landing with a green highlight frame on the place it
+belongs to. Craft pass shipped with it: one section rhythm
+(clamp 64–96px top), normalized inner margins, dead CSS removed.
+
 ## 24 Nov 2026 — The landing comes alive (Guy: "give it a life")
 Below the fold, motion and flow: every section's elements now arrive as a
 small choreography when it enters the screen (kicker, headline, demo pieces
