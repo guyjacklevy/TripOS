@@ -225,6 +225,32 @@ footer a{color:var(--dim)}
 .imp .fnd .fn{font-size:.7rem;font-weight:800}
 .imp .fnd span{display:block;font-family:var(--mono);font-size:.46rem;letter-spacing:.06em;color:var(--green);margin-top:3px}
 
+/* ── life: sections arrive as choreography; bands separate the flow ── */
+.secw{position:relative;z-index:1}
+.secw.alt{background:linear-gradient(180deg,#fffdf7 0%,rgba(13,122,94,.05) 100%);
+  border-top:1px solid rgba(13,122,94,.1);border-bottom:1px solid rgba(13,122,94,.1)}
+html.js .an{opacity:0;transform:translateY(16px);transition:opacity .55s ease,transform .55s ease;transition-delay:var(--d,0s)}
+html.js .secw.in .an{opacity:1;transform:none}
+html.js .place .flag{opacity:0;transform:scale(.4);transition:opacity .4s ease .9s,transform .5s cubic-bezier(.3,1.6,.6,1) .9s}
+html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
+
+/* the carousel: real saves drifting by (pauses on hover, off-screen, hidden tabs) */
+.marw{margin-top:22px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+.mtrack{display:flex;width:max-content;padding:4px 0 12px;animation:mar 55s linear infinite}
+.marw:hover .mtrack,.marw.off .mtrack,body.hid .mtrack{animation-play-state:paused}
+@keyframes mar{to{transform:translateX(-50%)}}
+.tcard{width:216px;flex:none;margin-right:12px;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;overflow:hidden;box-shadow:0 8px 22px rgba(40,30,10,.12)}
+.tcard .tp{aspect-ratio:16/9;background:linear-gradient(135deg,#efe9db,#e7e0cf);position:relative}
+.tcard .tp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s ease}
+.tcard .tp img.ld{opacity:1}
+.tcard .tq{font-size:.66rem;color:var(--dim);line-height:1.5;padding:9px 11px 0;margin:0;min-height:50px}
+.tcard .tn{padding:8px 11px 11px;font-size:.72rem;font-weight:800}
+.tcard .tn span{display:block;font-family:var(--mono);font-weight:500;font-size:.48rem;letter-spacing:.08em;color:var(--soft);margin-top:3px}
+.tcard .tn .kp{color:var(--green);font-weight:500}
+
 /* ── gates: no JS, or reduced motion → the settled page ── */
 html:not(.js) .band,html:not(.js) .pc,html:not(.js) .chip,html:not(.js) .coll,
 html:not(.js) .link,html:not(.js) .gift,html:not(.js) .cue{display:none}
@@ -235,6 +261,9 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   .band,.pc,.chip,.coll,.link,.gift,.cue{display:none!important}
   .settle{position:static;transform:none;margin:0 auto}
   .sky::before,.cue i{animation:none}
+  html.js .an,html.js .place .flag{opacity:1;transform:none;transition:none}
+  .mtrack{animation:none}
+  .marw{overflow-x:auto;mask-image:none;-webkit-mask-image:none}
 }
 </style>
 </head>
@@ -298,14 +327,15 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   </div>
 </section>
 
-<section class="sec">
-  <span class="kick">SAVE IN ONE SHARE</span>
-  <h2>From any app — kept with its context.</h2>
-  <p>Share a spot to Prevoya, or paste any link. It lands as a real place, not a bookmark:</p>
+<section class="secw">
+<div class="sec">
+  <span class="kick an">SAVE IN ONE SHARE</span>
+  <h2 class="an" style="--d:.07s">From any app — kept with its context.</h2>
+  <p class="an" style="--d:.14s">Share a spot to Prevoya, or paste any link. It lands as a real place, not a bookmark:</p>
   <div class="demo dstack">
-    <div class="scrap">maps.app.goo.gl/sWd8kQ…<span class="src">SHARED FROM MAPS</span></div>
-    <div class="arrow">→ BECOMES</div>
-    <div class="place">
+    <div class="scrap an" style="--d:.2s">maps.app.goo.gl/sWd8kQ…<span class="src">SHARED FROM MAPS</span></div>
+    <div class="arrow an" style="--d:.32s">→ BECOMES</div>
+    <div class="place an" style="--d:.44s">
       <img src="/x/15d/assets/saltwood.jpg" alt="">
       <div class="flag">⚑</div>
       <div class="pd">
@@ -317,76 +347,105 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
       </div>
     </div>
   </div>
-  <p class="quiet">The area. The price range. What it’s actually like. One tap to Maps.</p>
+  <p class="quiet an" style="--d:.5s">The area. The price range. What it’s actually like. One tap to Maps.</p>
+</div>
 </section>
 
-<section class="sec">
-  <span class="kick">COLLECTIONS, LIKE HIGHLIGHTS</span>
-  <h2>One collection per destination — each with its own link.</h2>
-  <p>Wherever you go, your places file themselves under where they belong. A Bali gift
+<section class="secw alt">
+<div class="sec">
+  <span class="kick an">COLLECTIONS, LIKE HIGHLIGHTS</span>
+  <h2 class="an" style="--d:.07s">One collection per destination — each with its own link.</h2>
+  <p class="an" style="--d:.14s">Wherever you go, your places file themselves under where they belong. A Bali gift
   never drags your Tel Aviv along.</p>
   <div class="cols">
-    <div class="colc">
+    <div class="colc an" style="--d:.22s">
       <div class="strip"><img src="/x/15d/assets/padang.jpg" alt=""><img src="/x/15d/assets/bingin.jpg" alt=""><img src="/x/15d/assets/amok.jpg" alt=""></div>
       <div class="cn">⚑ YOUR BALI</div>
       <div class="cs">51 places · 8 areas</div>
       <div class="cg"><b>⌲ link live</b> · opened 13 · kept 4</div>
     </div>
-    <div class="colc">
+    <div class="colc an" style="--d:.34s">
       <div class="cn">⚑ YOUR TEL AVIV</div>
       <div class="cs">6 places · just started</div>
       <div class="cg">⌲ its own link — ready when a friend asks</div>
     </div>
   </div>
+</div>
 </section>
 
-<section class="sec">
-  <span class="kick">SEND IT LIKE A GIFT</span>
-  <h2>You see it land.</h2>
-  <p>Your link opens as a short film of your places. Friends keep what they love, go,
+<section class="secw">
+<div class="sec">
+  <span class="kick an">SEND IT LIKE A GIFT</span>
+  <h2 class="an" style="--d:.07s">You see it land.</h2>
+  <p class="an" style="--d:.14s">Your link opens as a short film of your places. Friends keep what they love, go,
   and mark what was worth it — and the echo comes back to you:</p>
   <div class="demo">
-    <div class="echo">
+    <div class="echo an" style="--d:.22s">
       <div class="el">⌲ your Bali link</div>
-      <div class="en"><span><b>13</b>OPENED</span><span><b>3</b>PLAYED</span><span><b>4</b>KEPT</span></div>
+      <div class="en"><span><b data-n="13">13</b>OPENED</span><span><b data-n="3">3</b>PLAYED</span><span><b data-n="4">4</b>KEPT</span></div>
     </div>
-    <div class="ret">
+    <div class="ret an" style="--d:.4s">
       <img src="/x/15d/assets/amok.jpg" alt="">
       <div class="rn">Amok Sunset<span>FROM YOUR GIFT · TWO WEEKS LATER</span></div>
       <div class="rb">✓ been<br>♥ worth it</div>
     </div>
   </div>
-  <p class="quiet">Counts, never who — the gift page stays anonymous.</p>
+  <p class="quiet an" style="--d:.5s">Counts, never who — the gift page stays anonymous.</p>
+</div>
 </section>
 
-<section class="sec">
-  <span class="kick">JUST BACK FROM A TRIP?</span>
-  <h2>Your camera roll is already a collection.</h2>
-  <div class="imp" aria-hidden="true">
+<section class="secw alt">
+<div class="sec">
+  <span class="kick an">JUST BACK FROM A TRIP?</span>
+  <h2 class="an" style="--d:.07s">Your camera roll is already a collection.</h2>
+  <div class="imp an" style="--d:.16s" aria-hidden="true">
     <div class="ph"><img src="/x/15d/assets/ulufish.jpg" alt=""><img src="/x/15d/assets/sayan.jpg" alt=""><img src="/x/15d/assets/borabora.jpg" alt=""></div>
     <div class="fx">→</div>
     <div class="fnd"><div class="fn">3 places found</div><span>STAMPED TO THEIR DAYS</span></div>
   </div>
   <ul class="steps">
-    <li><div>Pick your trip photos.<small>Up to 60, straight from the roll.</small></div></li>
-    <li><div>They find their places.<small>Photos cluster by where they were taken — you approve every row.</small></div></li>
-    <li><div>Giftable in about 3 minutes.<small>Places, dates, and photos — ready to send as one link.</small></div></li>
+    <li class="an" style="--d:.24s"><div>Pick your trip photos.<small>Up to 60, straight from the roll.</small></div></li>
+    <li class="an" style="--d:.32s"><div>They find their places.<small>Photos cluster by where they were taken — you approve every row.</small></div></li>
+    <li class="an" style="--d:.4s"><div>Giftable in about 3 minutes.<small>Places, dates, and photos — ready to send as one link.</small></div></li>
   </ul>
-  <a class="door" href="app/">⌲ Import your trip — free</a>
+  <a class="door an" style="--d:.48s" href="app/">⌲ Import your trip — free</a>
+</div>
 </section>
 
-<section class="sec">
-  <span class="kick">GOING TO BALI?</span>
-  <h2>Start full: 400+ places, scouted and priced.</h2>
-  <p>Our deepest shelf — real places with areas, honest prices, and what it’s actually like.
+<section class="secw">
+<div class="sec">
+  <span class="kick an">ALREADY KEPT, AROUND THE WORLD</span>
+  <h2 class="an" style="--d:.07s">Real places, really saved.</h2>
+  <p class="an" style="--d:.14s">Every card is a real save with its context — from Uluwatu warungs to Dizengoff coffee.</p>
+</div>
+<div class="marw an" style="--d:.22s" aria-label="Places already saved on Prevoya">
+  <div class="mtrack" id="mtrack">
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJq95xT4I30i0RaU3j93Diq8o/photos/AV-0GLd4ZP6GiaXJPXwJ6wwfKvGUWCL1sbbndRfYDne6RL3B_3Y3n4f9QD0F1hFl8pv2VwEvEknQhClwh4MKCEvR4PBllzguPVZam9G4YIYJiKWikc9FkPi7rW4yVGZ4hOjcNDa6iA_vVIZR1O5nbma9NVn4CjyRqMdSTikugc1MHplFY60F1h-Z1t2akIbVn18ddShGJa-4hMLQ40CxA93fTVTsYdFgfnDyTx3WCGWln3jh1v7BVnLPlQTF2mSgcMa7s8THIf7Omq5QxjQqvwN2sjswC8ij4nL0Z0nctykqNgEwO4yqFa0NLbUh3YTFyRSOayG21tXaRJ-EN2FILBK7CY9o7j4AMHoarxuLlFpyrn8qKm-JgDdlhO52rczrcZEO-mG9qM9T1N4Og0if8KBfsNwT3uUhMZk"></div><p class="tq">“An iconic sea temple on a rocky outcrop — one of Bali’s best sunsets.”</p><div class="tn">Tanah Lot<span>EXPLORE · CANGGU · BALI · <b class="kp">⚑ KEPT</b></span></div></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJJYRZSz9b0i0RSQvJFHlr0zk/photos/AV-0GLcLTs-FfzSgAldkiJdzoVLWwAH382H5Ib2LvHqdBkKVuKFSuKY8dtmCY_u8Ae_3DUf_x2Asxf1elKmDrpq6g2Lu7_xxFqeLn55Ax3UbJVktgxW6frS2shj_iIdPgTUGWtMAEiOjBpJgH_Il7rBs5l_S4vJz1j4r9aENfK69paUAuo1UfJZk7ep8sBlUJErZ2YruBEyBbhGExOk3bHj5ey2ojAlk3ry9B2A_vnAgIDagrRcta_lja8FASu0UEtt76jvLBWPK1hrXEhBLc9APB-y4gYiP6SV76moyKHJCA90QKkPPuIO0hVt89seIOSYWqL5y008blAqC0cD6gumQieT-7vFSUiv0Kh9s6ueR6FZi_jA16we9_Wwwoa5MVjhzdUQAt1np58FCNbpEwrX-pbOORaYWNb98kikE9-qWTt88OQ"></div><p class="tq">“A family-run warung reviewers call a hidden gem.”</p><div class="tn">Warung Sunny<span>FOOD · ULUWATU · BALI · <b class="kp">⚑ KEPT</b></span></div></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJt-3lqYBLHRURN_cghNWVlz0/photos/AV-0GLdvB7c8YGaRJLU216bWIVhunu8N2AxqEXH---JVr147gZvKB51DDamMRmtvTknR7ezSQ_1l-bNVIDirp_ShaDCEf2vwWDNB5hQ35imA_ijuPa3jxTnvvcknb2B7VyHCmIhJf8NeWXnpakBXO6JqvXFjp9hH4mBrgTQrExQ0zLetnAbxWiD_iF5siBvyoZfOOXXA3UeFNilON39WxmFcWLOSG6BUeLzHM7UTpDFtf4CbBkEBP6jlH1L_YLjW3w4n32mi_-YG26VEcV6qOslNrVmw8r43vK3Y7mbu95Z7_rDl6asKqxdZA6c-a5uZWdNLI5BTxohSiAulCSphMYnhAf4d7wRBicgx1HInKz55HdIRdveaNtWVWJ6h98Uz7aZD4MndPDzBQ_WWfC4-5LD39IQV-E8iDiw"></div><p class="tq">Saved in one share from Maps — Dizengoff St.</p><div class="tn">La Shuk<span>FOOD · TEL AVIV · <b class="kp">⚑ KEPT</b></span></div></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJWeNPF_1H0i0REnyftKqXcK8/photos/AV-0GLcOopjhdcPgDa2tuyI8HnjR_-dvDddCzD-ne69wcyTuCygq-NUYRGtrgVSBCVbcYCViNRAq1VvYqMSzgG-4EzBNLq57vxv9RfxgaZRSFHv3Uqb3y4vUUnOFt8tkhRE5YvV9Jkcf5cLHXjAo50evYU6QXeyLSqcbC1jZxgp0HmK4uAdL-98ayLsunBcck51NLzbgR7LnNTHUUJRtSZnt9wLomrroAvq-W-sSKc7THZjYBkrm6fXpWTIknFRTQ1TDNTjuBtlnGAKR_ADieIKV_ecTLdriwuHyycdgpwEUkoPWQ8zp3ReY99_6SllgvIONlweTc4ceA12pP-_NoHrzTaem9hzIr3Dr-mG4-32cQFlVHExOnVb32N2TTb6wQmTT4AN2Qxs1i4z_leVk-Yp6XrVOi0QtSs3ZPC_JedloBpgExg"></div><p class="tq">“Sunset views and a calm, spacious atmosphere.”</p><div class="tn">Secana Rooftop<span>NIGHTLIFE · CANGGU · BALI · <b class="kp">⚑ KEPT</b></span></div></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJq0z9jYFB0i0RZbF2b_6MEvQ/photos/AV-0GLdgMODN-Ziy6UegMpEctUWuQmDBd566A6ipPQYcF9AR32JBQWVAAbJNfmcDU5iA65w31lFAStabfMjNz4mgrhHfXr1eu6HetN9xv3Vnph3ayaWNUmRiYcPDTwwx-immjT9x74ddoMB5Ic2Cku6wa6amqdVDZc7fdSl6xKieW9ptRj7vBmwIKmPKR6ZevsloW6_xBXLSCuMLSgJGQ0i4LYR-lKdbv8SDOcO4Lr3Z6uuYoR1M2jo4gTeEVf9yZIajQo0YZqiBTa2Bj4N468ahd40eciULMMEUSGMtxXbO89eKWJX7PK_pnsaXpRXeDBRwjcRse1xT7Wf1xl0KUaWGoVK8FOHjyXniAl-gHgATvEbfQtqMs6gmCFEAhC1Dm5Yl1jm0afrrNHO4TzOD26sP_bznmJwVy9s"></div><p class="tq">“Specialty V60 coffee to fresh smoothie bowls.”</p><div class="tn">Canvas Cafe<span>CAFE · SANUR · BALI · <b class="kp">⚑ KEPT</b></span></div></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJk1eBx8950i0R9egCRvj5YiA/photos/AV-0GLeE8WEHx5N0wvj3qohE082lyk592SFDWyCENVAmnFn7fw9TahcJ8x4NawT98_2W2AdgdPXIdUUsB3_5SOqBfQMVldab4g7OeekZ4SUiqzD2h5SnEWBaxY1n82yb79-tP7vGUiujjtaro1Oo8JuNepFfUkYZgF6tZjcSNK8e-V313a7CGQG0oJChRUOx8hk2FcYdbUJs6ErlFQExGCXtDFWJg-RTDCgn2l3KoCAzXNrlDfDxa_78iC1ayDBKF3dRQhjtErljmdSWI9s9sF8Hg4l7oGetj68s6aO5krHH35FfthxlqsFEHfCHV-J7kdiJYrL1mhaVTr7cQAFa02KzJQrNW_NPK0rKiIwfUn_iDiHWksrsO0tGu3j4vsrDVBPd6xyRhSR3F4MPMrgMyUad0PZTDSXqt20"></div><p class="tq">“A raw beach under the Teletubbies hills.”</p><div class="tn">Suwehan Beach<span>BEACH · NUSA PENIDA · <b class="kp">⚑ KEPT</b></span></div></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJw0VkU7UBzS0RJ8Z9DxG2Yy4/photos/AV-0GLf1MzcL6_9wMwjtGj7lhu11JROA9mkHQBrbI-m0adLduvTnO9rl1XSRXHBlmhVIW_0ro7jI2bLqGAMM7o2blGJnMyxtmB9Sc-3UAMljOTW_o9LHLZm61Z31Cz3UBsw0MQh4KteI3jgEeAei_0X2MT-wSQHbc6MyxyXU8amynxgltQczVU0BCuJU8_d8rkrOwAGuVj3khicOZmvm-CLvLCE2iRii1cZFi4vz_25i0vuPENyTkns7mKrU1A2JzTlS-hDfe5Nns_Qudj9jTmcbHvaEgjVdac1Iz1ZPRI1_UV5rlmUgvYqbCW7R1zVtgJXSxkxaZd25TmrPIdNUklOjsqSYUW9kOPiiolHJiZK8CIke9PwYKP69EXq1kHuUd8LfQpCp9HAgABIdE6pwi85xXltyhLd-m3w"></div><p class="tq">“A surf-boat hub — waves for every level.”</p><div class="tn">Gerupuk Beach<span>SURF · LOMBOK · <b class="kp">⚑ KEPT</b></span></div></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJnb3plqJLHRURfloP1Dn5eUo/photos/AV-0GLfEDGA4heIMZc1F0-kiWzkrWknZq1eGuIzWwKT82NT887WLPZ90ZWb_U_NDSiCy-LAgCU6tDiZqYfg1kmdBIS8yu4OjbKAvmrDDxpjxKKlOPzhQwJWYW7D12fiqvZjXZ0MUm1YwhF-ohqNMW1ryAWhM84zeicJ4ggyImOkb12TeYjaKitfo--0gZMtaoWU3JMtq1Sl-IYEIJ-XP1UiASoq9p9FUPna0XzRfSIsSD5xp8F9ONhVedXDQoFq8rxfSA02aFTNf-X5hN1VgZxOz-xr-zABQUzq8tb_VFEQo8DfNq66HfndcE-jTfhfrJ1KmTWeiReW7L9f1hzBPetgmdWoxpSXHVfw0QhtZB21nHjMcDRC5_bHSUw3CYOCFEkqYFWcxh_XKh0md6QGqFlnm42G2cwrNEhg"></div><p class="tq">Saved in one share — Dizengoff Square.</p><div class="tn">Buti &amp; Co.<span>CAFE · TEL AVIV · <b class="kp">⚑ KEPT</b></span></div></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJE4-AAwVQ0i0RJI17Kb5qMjQ/photos/AV-0GLdvQYiwGRFDEcTpwc-UiAPf-eK2FpSZr9PQeM1J7F1l4gqLtOJMz_6XXImF4ObXG975LuXhWexJluO7vepaqTZYNiObiJfBb7xtxWYvCrhBecTKyk1pMrXBmJgD323VcW9scrKXE5gAJEfqBelG3xSDys6edJi0pQowAqqzfwj7PSfhnS9cDibxlibC8t-NAZEzmyiKTWd0cskDVxJwpR6lOESISHwLqj2Dmnub51sl6N72nH-6WzKAlfNBY5noc9EBm_7PMULS6tPMhueheshvSKCY3f-SJZ1b9_alAltUFSYhiJoGK0QMEEkalc1L_pfNBvviAMkEn6gvJdu46n0ghKDHSaDqx8aRyUv6a2Lp2Pjd8p65RCVvEAb0OiX1jA6XEJQYSPyxEdxe14r8wgXeOnA"></div><p class="tq">“Ancient trance ritual with fire, on the clifftop at sunset.”</p><div class="tn">Kecak Uluwatu<span>EXPLORE · ULUWATU · BALI · <b class="kp">⚑ KEPT</b></span></div></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJexylZAAX0i0Rdn72sDJWyeg/photos/AV-0GLeMcndug0frAr45-ktbOHboeTVTFj62Pe07n_Y5w8UaEzT1z9FsP3nKodxnqa3ifb_sr7tK1OosA58GIxL-1fUQPWpYO1evKY_uTLaVajCceID7tQyrEWlNngGMlJHCpLZ2kpD1-CKTuUO02gZZmdms6qPEjm0raZejr-_dGU3A7Y2UIKrFexw9GtWTHQZm1Nt6_kDKBA1PC7FtCU5nyFXwWgwokVMjRdJ7ER9uTXtL9DdRCT5GnX-RyAEHElyVZslg7PcJKQkD94hCyl7ked9jeW3sdie9VXLE2feQ5crkrOBNMYYjhXKsKDfUUCfm4uPu2oLtf7q0zApIsVrNMJqJig3QyXhF41T-eAQUhVYVfU9TQR_L6-AOQ-bWgE3Ck7KPjJ-AHYeMfWZWiSRbUI9ag_hR5-g1O4WOE2KirDnNjA"></div><p class="tq">“A waterfall with a cafe by the pools.”</p><div class="tn">Poh Gading Waterfall<span>EXPLORE · UBUD · BALI · <b class="kp">⚑ KEPT</b></span></div></div>
+  </div>
+</div>
+<div class="sec" style="padding-top:8px">
+  <p class="an" style="--d:.1s;margin-top:18px;font-weight:900;font-size:1.05rem;color:var(--ink)">Going to Bali? Start full.</p>
+  <p class="an" style="--d:.16s">Our deepest shelf — 400+ places with areas, honest prices, and what it’s actually like.
   Flag what you want and it’s saved instantly.</p>
-  <a class="btn2" href="bali/places">Browse the Bali shelf — no account needed</a>
-  <p class="quiet">Everywhere else works today too — your collection layer is global; curated
+  <a class="btn2 an" style="--d:.22s" href="bali/places">Browse the Bali shelf — no account needed</a>
+  <p class="quiet an" style="--d:.28s">Everywhere else works today too — your collection layer is global; curated
   shelves grow one destination at a time.</p>
+</div>
 </section>
 
-<section class="sec" style="text-align:center">
+<section class="secw">
+<div class="sec" style="text-align:center;padding-top:26px">
   <div class="honest"><b>FREE</b><span>·</span><b>NO PASSWORD, EVER</b><span>·</span><span>SAVE FIRST, SIGN IN WHEN YOU’RE READY</span></div>
+</div>
 </section>
 
 <footer>
@@ -541,8 +600,103 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   if (!reduced.matches) frame(0);
 })();
 </script>
+<script>
+/* sections arrive as they enter; the echo counts up; the carousel rests off-screen */
+(function(){
+  'use strict';
+  var rm = matchMedia('(prefers-reduced-motion: reduce)');
+  var secs = [].slice.call(document.querySelectorAll('.secw'));
+  function counts(sec){
+    [].slice.call(sec.querySelectorAll('[data-n]')).forEach(function(el){
+      var n = +el.getAttribute('data-n');
+      var t0 = null;
+      function step(ts){
+        if (!t0) t0 = ts;
+        var p = Math.min(1, (ts - t0) / 900);
+        el.textContent = Math.round(n * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+  }
+  function fire(s){
+    if (s.classList.contains('in')) return;
+    s.classList.add('in');
+    counts(s);
+  }
+  if (rm.matches || !('IntersectionObserver' in window)){
+    secs.forEach(function(s){ s.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return;
+        io.unobserve(e.target);
+        fire(e.target);
+      });
+    }, { threshold: 0.14, rootMargin: '0px 0px -4% 0px' });
+    secs.forEach(function(s){ io.observe(s); });
+    /* catch-up: a fast scroll or jump can carry a section clean past the
+       observer — anything at or above the viewport reveals, always */
+    var catchUp = function(){
+      var vh = innerHeight;
+      secs.forEach(function(s){
+        if (!s.classList.contains('in') && s.getBoundingClientRect().top < vh * 1.05){
+          io.unobserve(s);
+          fire(s);
+        }
+      });
+    };
+    addEventListener('scroll', catchUp, { passive: true });
+  }
+  document.addEventListener('visibilitychange', function(){
+    document.body.classList.toggle('hid', document.hidden);
+  });
+  var mar = document.querySelector('.marw');
+  if (mar && 'IntersectionObserver' in window){
+    new IntersectionObserver(function(es){
+      es.forEach(function(e){ mar.classList.toggle('off', !e.isIntersecting); });
+    }).observe(mar);
+  }
+})();
+</script>
 <script src="shared/supabase-config.js"></script>
 <script src="shared/track.js"></script>
+<script>
+/* the carousel's real photos resolve display-time (server-cached ~a day) */
+(function(){
+  'use strict';
+  var cfg = window.TRIPOS_SUPABASE || {};
+  /* the loop needs two identical halves to drift seamlessly (-50%);
+     reduced motion keeps a single, scrollable row instead */
+  var tr = document.getElementById('mtrack');
+  if (tr && !tr.dataset.dup && !matchMedia('(prefers-reduced-motion: reduce)').matches){
+    tr.dataset.dup = '1';
+    tr.innerHTML += tr.innerHTML;
+    [].slice.call(tr.children).slice(tr.children.length / 2).forEach(function(c){ c.setAttribute('aria-hidden', 'true'); });
+  }
+  var imgs = [].slice.call(document.querySelectorAll('.tcard img[data-pn]'));
+  if (!imgs.length || !cfg.url || !cfg.anonKey) return;
+  var names = [], seen = {};
+  imgs.forEach(function(i){
+    var n = i.getAttribute('data-pn');
+    if (n && !seen[n]){ seen[n] = 1; names.push(n); }
+  });
+  fetch(cfg.url + '/functions/v1/places-search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: cfg.anonKey, Authorization: 'Bearer ' + cfg.anonKey },
+    body: JSON.stringify({ action: 'photos', names: names.slice(0, 16), maxw: 480 })
+  }).then(function(r){ return r.json(); }).then(function(j){
+    var u = (j && j.uris) || {};
+    imgs.forEach(function(img){
+      var uri = u[img.getAttribute('data-pn')];
+      if (!uri) return;
+      var im = new Image();
+      im.onload = function(){ img.src = uri; img.classList.add('ld'); };
+      im.src = uri;
+    });
+  }).catch(function(){});
+})();
+</script>
 <script>
 /* one honest 'land' per public page view (prod only) */
 (function(){

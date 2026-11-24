@@ -3,6 +3,20 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 24 Nov 2026 — The landing comes alive (Guy: "give it a life")
+Below the fold, motion and flow: every section's elements now arrive as a
+small choreography when it enters the screen (kicker, headline, demo pieces
+in sequence; the save card's flag pops last) — with a catch-up guard so a
+fast scroll can never leave a section blank. The echo's real counts (13 ·
+3 · 4) count up when seen. Alternating soft green-paper bands separate the
+sections. And the "Going to Bali" block became the testimonial moment Guy
+asked for: "Real places, really saved" — a slow drifting carousel of ten
+real saved places from the shelf, each with its real photo (display-time,
+server-cached), its review-sourced line, and its area — Tanah Lot and
+Warung Sunny beside La Shuk and Buti & Co. from Dizengoff, ⚑ KEPT. It
+pauses on hover, off-screen, and on hidden tabs; reduced-motion gets a
+still, scrollable row. The Bali shelf CTA now closes that section.
+
 ## 24 Nov 2026 — The landing shows, not tells (Guy's phone notes)
 Guy phone-proved the new landing but ruled the below-fold read "like a photo
 album app" — the magic ease, the context, and the social loop weren't
