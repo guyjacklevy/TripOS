@@ -3,6 +3,21 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 24 Nov 2026 — Round 15.2 S1: "You already keep highlights."
+Guy picked **S1** off the social storyboard (where the ICP actually lives).
+A slim centered band now sits between Collections and The Send: three
+story-highlight circles in the IG gradient ring (BALI · FOOD · VIEWS),
+the line "HIGHLIGHTS ARE SCREENSHOTS ↓ COLLECTIONS ARE PLACES", and the
+collection card with the real numbers — "Your Bali — 51 places, ✓ been
+to 49 · one link in bio". S2's creator pain is folded into the closing
+line ("every 'where was this?' DM is answered by the same link, forever").
+Band tints re-alternated so every section keeps its own ground (The Send
+→ green, camera roll → paper, carousel → green). The third highlight is
+VIEWS, not SUNSETS — no sunset photo exists in our real asset set and we
+don't fake one. **S3** (story-ready 9:16 place cards) goes on the product
+board as a Round 16+ feature, not a landing claim. LinkedIn stays a
+distribution channel, not a page element.
+
 ## 24 Nov 2026 — Round 15.1: the sections, rebuilt to Guy's picks
 From the storyboard: **1A** — the save section is now the chat comparison
 ("maps.app.goo.gl/… / which one is this??" against the Prevoya preview card

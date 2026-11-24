@@ -47,6 +47,17 @@ landing is LIVE on prevoya.app.** Remaining face work is Round 16: the app
 shell (KEEP / GIVE / PASS ON), the gift page, and the shelf follow into the
 daylight world — examples first, as always.
 
+**Round 16+ product board** (features decided, not yet built):
+- **Story-ready place cards (S3, Guy 24 Nov):** Prevoya generates a 9:16
+  story card for any saved place — photo, name, "⚑ get the place — link in
+  bio". The influencer's content machine feeds the loop; this is the
+  spread mechanic for the IG audience. Ship it in-app before the landing
+  claims it.
+- **Per-category share links:** share a collection scoped by category
+  (like `trip_shares.destination` scopes by destination) so "FOOD only"
+  is a sendable link, not just an in-shelf filter. Wire before the
+  landing's filter claims get stronger.
+
 ## What Prevoya is now
 
 **The fastest way to keep the places you discover — and give them to the
