@@ -3,6 +3,17 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 24 Nov 2026 — Phone repairs: the premiere gets room, the dock wakes up
+From Guy's phone test: the fanned film frames were piling onto the
+live-link line and the rail (the stage had a fixed height shorter than
+its frames — now it sizes by ratio, 8/5), and the photo-dock loop looked
+static on arrival (a 12s cycle that started at page load — it now starts
+only when the section scrolls into view and runs a 7s cycle with shorter
+holds, so the scatter→dock plays within a second of getting there).
+His bigger note — motion everywhere, text almost nowhere — went to the
+decision board as Round 15.3 with three live animated options, per the
+storyboard-first methodology.
+
 ## 24 Nov 2026 — Round 15.2 S1: "You already keep highlights."
 Guy picked **S1** off the social storyboard (where the ICP actually lives).
 A slim centered band now sits between Collections and The Send: three
