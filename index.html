@@ -260,7 +260,7 @@ html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
 .place.sm>img{aspect-ratio:16/7}
 
 /* ── the premiere (3A) + the journey rail (3B) ── */
-.film{position:relative;height:172px;max-width:340px}
+.film{position:relative;max-width:340px;aspect-ratio:8/5}
 .film img{position:absolute;top:8px;width:40%;aspect-ratio:9/13;object-fit:cover;border-radius:11px;border:3px solid #fff;box-shadow:0 7px 18px rgba(40,30,10,.26)}
 .film .f1{left:4%;transform:rotate(-7deg)}
 .film .f2{left:30%;top:0;z-index:2;box-shadow:0 10px 24px rgba(40,30,10,.32)}
@@ -281,17 +281,19 @@ html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
 /* ── the living sort (4A opening, 4B rows): photos dock onto their places ── */
 .sortst{position:relative;height:238px;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:28px}
 .sp{position:absolute;z-index:2;width:44px;height:44px;border-radius:8px;object-fit:cover;border:2px solid #fff;
-  box-shadow:0 2px 6px rgba(40,30,10,.2);left:var(--x0);top:var(--y0);transform:rotate(var(--r0));
-  animation:spDock 12s ease-in-out infinite alternate}
+  box-shadow:0 2px 6px rgba(40,30,10,.2);left:var(--x0);top:var(--y0);transform:rotate(var(--r0))}
+html.js .secw.in .sp{animation:spDock 7s ease-in-out infinite alternate}
+html:not(.js) .sp{left:var(--x1);top:var(--y1);transform:rotate(var(--r1,0deg));border-color:var(--green)}
 @keyframes spDock{
-  0%,30%{left:var(--x0);top:var(--y0);transform:rotate(var(--r0));border-color:#fff;box-shadow:0 2px 6px rgba(40,30,10,.2)}
-  58%,100%{left:var(--x1);top:var(--y1);transform:rotate(var(--r1,0deg));border-color:var(--green);box-shadow:0 0 0 2px rgba(13,122,94,.3),0 2px 6px rgba(40,30,10,.2)}
+  0%,14%{left:var(--x0);top:var(--y0);transform:rotate(var(--r0));border-color:#fff;box-shadow:0 2px 6px rgba(40,30,10,.2)}
+  46%,100%{left:var(--x1);top:var(--y1);transform:rotate(var(--r1,0deg));border-color:var(--green);box-shadow:0 0 0 2px rgba(13,122,94,.3),0 2px 6px rgba(40,30,10,.2)}
 }
 .srow{position:absolute;z-index:1;left:12px;right:12px;background:var(--paper);border:1px solid var(--line);border-radius:10px;
-  padding:8px 10px 8px 76px;font-size:.68rem;font-weight:800;color:var(--ink);opacity:0;min-height:48px;
-  animation:srowIn 12s ease-in-out infinite alternate}
+  padding:8px 10px 8px 76px;font-size:.68rem;font-weight:800;color:var(--ink);opacity:0;min-height:48px}
+html.js .secw.in .srow{animation:srowIn 7s ease-in-out infinite alternate}
+html:not(.js) .srow{opacity:1}
 .srow span{display:block;font-family:var(--mono);font-weight:500;font-size:.46rem;letter-spacing:.06em;color:var(--green);margin-top:3px}
-@keyframes srowIn{0%,40%{opacity:0}62%,100%{opacity:1}}
+@keyframes srowIn{0%,24%{opacity:0}46%,100%{opacity:1}}
 
 /* ── gates: no JS, or reduced motion → the settled page ── */
 html:not(.js) .band,html:not(.js) .pc,html:not(.js) .chip,html:not(.js) .coll,
@@ -305,8 +307,8 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   .sky::before,.cue i{animation:none}
   html.js .an,html.js .place .flag{opacity:1;transform:none;transition:none}
   .mtrack{animation:none}
-  .sp{animation:none;left:var(--x1);top:var(--y1);transform:rotate(var(--r1,0deg));border-color:var(--green)}
-  .srow{animation:none;opacity:1}
+  .sp{animation:none!important;left:var(--x1);top:var(--y1);transform:rotate(var(--r1,0deg));border-color:var(--green)}
+  .srow{animation:none!important;opacity:1}
   .eline .lv{animation:none}
   .marw{overflow-x:auto;mask-image:none;-webkit-mask-image:none}
 }
