@@ -3,6 +3,23 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 25 Nov 2026 — Round 15.8: personas instead of Guy, the passport shelf, the busy rail
+New standing rule from Guy: the landing never refers to Guy by name —
+real data can back the demos, but the people shown are varied ICP
+personas. Hero gift is now from Noa, §1's sender is Tom (friend Dana),
+§2 is Ben asking Ella, the premiere plays Daniel's Bali. The social
+passport becomes Maya — and /g/maya is a REAL page (new public_profiles
+row; the profile function now titles collections by the profile's own
+display name, v5). Her card grew into the shelf Guy described:
+Bali (the real 51/49 collection, AUG '26) + Lisbon, Tokyo and Tel Aviv
+rows with letter-tile covers and trip dates — collections accumulating
+through time, arriving one by one. The premiere rail got his exact
+choreography: a third counter on WENT · WORTH IT, and a scripted window
+where almost every beat one station pops +1 (opens cluster, keeps
+follow, worth-its trail, ~13s), then the numbers roll back to the live
+base and loop. The base stays real (live counts of the real link, still
+re-fetched every 45s); the caption no longer claims the pops are live.
+
 ## 25 Nov 2026 — Round 15.7: one spacing rhythm for the whole landing
 Guy's phone note: margins between sections, text and components aren't
 equivalent — the page reads unorganized. Audit found the cause: sections

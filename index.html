@@ -283,11 +283,17 @@ html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
   border:1.5px solid rgba(13,122,94,.45);border-radius:999px;padding:10px 15px;margin-top:9px;text-decoration:none;background:var(--card)}
 .passc .plink:active{background:rgba(13,122,94,.08)}
 .pcoll{display:flex;align-items:center;gap:9px;background:var(--paper);border:1px solid var(--line);
-  border-radius:10px;padding:8px 10px;margin-top:14px;text-align:left;text-decoration:none;color:var(--ink)}
-.pcoll img{width:34px;height:34px;border-radius:7px;object-fit:cover}
+  border-radius:10px;padding:8px 10px;margin-top:8px;text-align:left;text-decoration:none;color:var(--ink)}
+.plink+.pcoll{margin-top:16px}
+.pcoll img{width:34px;height:34px;border-radius:7px;object-fit:cover;flex:none}
 .pcoll b{font-size:.72rem;display:block}
 .pcoll .fm2{display:block;font-family:var(--mono);font-size:.42rem;letter-spacing:.06em;color:var(--green);margin-top:2px}
-.pcoll .cm{margin-left:auto;font-family:var(--mono);font-size:.5rem;color:var(--green);white-space:nowrap}
+.pcoll .dt{margin-left:auto;font-family:var(--mono);font-size:.46rem;letter-spacing:.06em;color:var(--soft);white-space:nowrap}
+.pcoll .tile{width:34px;height:34px;border-radius:7px;flex:none;display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:.66rem;color:#fff;letter-spacing:.02em}
+.tile.tl{background:linear-gradient(135deg,#7fb069,#0d7a5e)}
+.tile.tt{background:linear-gradient(135deg,#e2766a,#b05656)}
+.tile.ta{background:linear-gradient(135deg,#f0c06a,#b06c0a)}
 .place.sm{max-width:300px;margin-top:12px}
 .place.sm>img{aspect-ratio:16/7}
 
@@ -322,7 +328,9 @@ html.js .secw.in .cer .cn .n4{animation-delay:6.75s}
 .rail .st{transition:border-color .3s ease,box-shadow .3s ease}
 .rail .st.tick{border-color:var(--green);box-shadow:0 0 0 3px rgba(13,122,94,.16)}
 .rail .st{font-family:var(--mono);font-size:.5rem;letter-spacing:.05em;color:var(--soft);border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:var(--card);white-space:nowrap}
-.rail .st b{font-family:var(--body);font-weight:800;font-size:.78rem;color:var(--ink);margin-right:2px}
+.rail .st b{font-family:var(--body);font-weight:800;font-size:.78rem;color:var(--ink);margin-right:2px;display:inline-block}
+.rail .st b.pop{animation:popN .5s cubic-bezier(.3,1.8,.6,1)}
+@keyframes popN{0%{transform:scale(1)}35%{transform:scale(1.5)}100%{transform:scale(1)}}
 .rail .st.g{border-color:rgba(13,122,94,.45);color:var(--green)}
 .rail .st.a{border-color:rgba(176,108,10,.5);color:var(--amber)}
 .rail .rx{font-family:var(--mono);color:var(--soft);font-size:.6rem}
@@ -472,13 +480,13 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
     </div>
 
     <!-- the link -->
-    <div class="link" id="link" aria-hidden="true">⌲ prevoya.app/s/guys-bali</div>
+    <div class="link" id="link" aria-hidden="true">⌲ prevoya.app/s/noas-bali</div>
 
     <!-- the gift -->
     <div class="gift" id="gift" aria-hidden="true">
-      <div class="eb">A GIFT FROM GUY · PREVOYA</div>
-      <h3>Guy’s Bali — 51 places saved for you</h3>
-      <div class="ct">51 PLACES · 8 AREAS · 8 WITH GUY’S PHOTOS</div>
+      <div class="eb">A GIFT FROM NOA · PREVOYA</div>
+      <h3>Noa’s Bali — 51 places saved for you</h3>
+      <div class="ct">51 PLACES · 8 AREAS · 8 WITH HER OWN PHOTOS</div>
       <div class="grow" data-g="0"><img src="/x/15d/assets/amok.jpg" alt=""><div class="n">Amok Sunset<span>nightlife · Nusa Penida</span></div><div class="bn">✓ been</div></div>
       <div class="grow" data-g="1"><img src="/x/15d/assets/sayan.jpg" alt=""><div class="n">The Sayan House<span>food · Ubud</span></div><div class="bn">✓ been</div></div>
       <div class="grow" data-g="2"><img src="/x/15d/assets/borabora.jpg" alt=""><div class="n">Bora Bora Beach Club<span>nightlife · Gili T</span></div><div class="bn">⚑ saved</div></div>
@@ -503,14 +511,14 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   <p class="an" style="--d:.14s">A place you loved deserves better than a naked link:</p>
   <div class="demo cmp">
     <div class="chatf bad an" style="--d:.2s"><div class="ttl">✗ TODAY — STILL LOST</div>
-      <div class="bub me"><span class="av">G</span><span class="lnk">maps.app.goo.gl/xK92f…</span><span class="tm">21:38</span></div>
+      <div class="bub me"><span class="av">T</span><span class="lnk">maps.app.goo.gl/xK92f…</span><span class="tm">21:38</span></div>
       <div class="bub them"><span class="av">D</span>which one is this?? 😅<span class="tm">21:41</span></div>
       <div class="bub them"><span class="av">D</span>is it the one near the cliff or…<span class="tm">21:41</span></div>
     </div>
     <div class="chatf good an" style="--d:.32s"><div class="ttl">✓ WITH PREVOYA — SAVED</div>
-      <div class="bub me"><span class="av">G</span>
+      <div class="bub me"><span class="av">T</span>
         <span class="prevc"><span class="pstrip"><img src="/x/15d/assets/padang.jpg" alt=""><img src="/x/15d/assets/bingin.jpg" alt=""><img src="/x/15d/assets/amok.jpg" alt=""></span>
-        <span class="pt"><b>Guy’s Bali — 51 places saved for you</b><i>prevoya.app/s/guys-bali</i></span></span>
+        <span class="pt"><b>Tom’s Bali — 51 places saved for you</b><i>prevoya.app/s/toms-bali</i></span></span>
         here 🤍<span class="tm">21:38</span>
       </div>
       <div class="bub them"><span class="av">D</span>omg you just saved my trip 😭🙌<span class="tm">21:40</span></div>
@@ -543,8 +551,8 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   <h2 class="an" style="--d:.07s">“Where should we eat? Any gyms?” — answered in a minute.</h2>
   <div class="demo">
     <div class="chatf an" style="--d:.16s;max-width:360px">
-      <div class="bub them"><span class="av">D</span>hey!! going to Bali in Jan 🌴 where should we EAT? and any gyms?<span class="tm">09:12</span></div>
-      <div class="bub me"><span class="av">G</span>
+      <div class="bub them"><span class="av">B</span>hey!! going to Bali in Jan 🌴 where should we EAT? and any gyms?<span class="tm">09:12</span></div>
+      <div class="bub me"><span class="av">E</span>
         <span class="prevc"><span class="pstrip"><img src="/x/15d/assets/ulufish.jpg" alt=""><img src="/x/15d/assets/sayan.jpg" alt=""><img src="/x/15d/assets/borabora.jpg" alt=""></span>
         <span class="pt"><b>Your Bali — ✓ been to 49 of 51</b><i>prevoya.app/s/…</i></span></span>
         <span class="tm">09:13 · ONE MINUTE LATER</span>
@@ -569,16 +577,31 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   <p class="an" style="--d:.14s;margin-left:auto;margin-right:auto">Not a private send — put it in your bio,
   and every “where was this?” answers itself.</p>
   <div class="passc an" style="--d:.22s">
-    <div class="ring"><b>G</b></div>
-    <div class="pname">Guy</div>
-    <a class="plink" href="/g/guy">⌲ prevoya.app/g/guy</a>
-    <a class="pcoll" href="/g/guy">
+    <div class="ring"><b>M</b></div>
+    <div class="pname">Maya</div>
+    <a class="plink" href="/g/maya">⌲ prevoya.app/g/maya</a>
+    <div class="pcoll an" style="--d:.34s">
       <img src="/x/15d/assets/padang.jpg" alt="">
-      <span><b>Guy’s places</b><span class="fm2">51 PLACES · ✓ BEEN TO 49</span></span>
-      <span class="cm">OPEN ⌲</span>
-    </a>
+      <span><b>Maya’s Bali</b><span class="fm2">51 PLACES · ✓ BEEN TO 49</span></span>
+      <span class="dt">AUG ’26</span>
+    </div>
+    <div class="pcoll an" style="--d:.46s">
+      <span class="tile tl">L</span>
+      <span><b>Maya’s Lisbon</b><span class="fm2">23 PLACES · ✓ BEEN TO 21</span></span>
+      <span class="dt">MAY ’26</span>
+    </div>
+    <div class="pcoll an" style="--d:.58s">
+      <span class="tile tt">T</span>
+      <span><b>Maya’s Tokyo</b><span class="fm2">34 PLACES · ✓ BEEN TO 30</span></span>
+      <span class="dt">FEB ’26</span>
+    </div>
+    <div class="pcoll an" style="--d:.7s">
+      <span class="tile ta">TA</span>
+      <span><b>Maya’s Tel Aviv</b><span class="fm2">18 PLACES · ✓ BEEN TO 18</span></span>
+      <span class="dt">HOME</span>
+    </div>
   </div>
-  <p class="quiet an" style="--d:.34s">A real page — tap it. Yours takes one import.</p>
+  <p class="quiet an" style="--d:.82s">The link is a real page — tap it. One shelf per trip, growing for years.</p>
 </div>
 </section>
 
@@ -594,7 +617,7 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
       <img class="c3" src="/x/15d/assets/padang.jpg" alt="">
       <img class="c4" src="/x/15d/assets/bingin.jpg" alt="">
       <div class="sh"></div>
-      <div class="ct">Guy’s Bali<i>A GIFT · 51 PLACES</i></div>
+      <div class="ct">Daniel’s Bali<i>A GIFT · 51 PLACES</i></div>
       <div class="cn">
         <span class="n1">Amok Sunset · ✓ been</span>
         <span class="n2">Saltwood Bingin · ✓ been</span>
@@ -605,11 +628,11 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
     <div class="eline an" style="--d:.3s">⌲ YOUR BALI LINK <i class="lv"></i> LIVE</div>
     <div class="rail an" style="--d:.36s">
       <span class="st">SENT</span><span class="rx">→</span>
-      <span class="st g"><b data-n="14" id="ecOpened">14</b> OPENED</span><span class="rx">→</span>
+      <span class="st g"><b data-n="15" id="ecOpened">15</b> OPENED</span><span class="rx">→</span>
       <span class="st g"><b data-n="4" id="ecKept">4</b> KEPT</span><span class="rx">→</span>
-      <span class="st a">✓ WENT · ♥ WORTH IT</span>
+      <span class="st a">✓ <b data-n="2" id="ecWent">2</b> WENT · ♥ WORTH IT</span>
     </div>
-    <p class="quiet an" style="--d:.42s">Live from the link above — when someone opens it, these tick up for real.</p>
+    <p class="quiet an" style="--d:.42s">What one sent link does — opens, keeps, ‘worth it’s — landing while you watch.</p>
     <div class="ret an" style="--d:.46s">
       <img src="/x/15d/assets/amok.jpg" alt="">
       <div class="rn">Amok Sunset<span>FROM YOUR GIFT · TWO WEEKS LATER</span></div>
@@ -930,72 +953,74 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
 <script src="shared/supabase-config.js"></script>
 <script src="shared/track.js"></script>
 <script>
-/* the rail is live: real counts for the real link, re-checked while you watch */
+/* the rail: a night in the life of one link — almost every beat, one
+   station lands another number; after the window, reset and loop.
+   The floor it resets to stays real (live counts of the real link). */
 (function(){
   'use strict';
   var cfg = window.TRIPOS_SUPABASE || {};
   var ecO = document.getElementById('ecOpened');
   var ecK = document.getElementById('ecKept');
-  if (!ecO || !cfg.url) return;
-  function animN(el, to){
-    var from = parseInt(el.textContent, 10) || 0;
-    el.dataset.n = String(to);
-    if (from === to) return;
-    var inView = el.closest('.secw') && el.closest('.secw').classList.contains('in');
-    if (!inView){ el.textContent = String(to); return; }
-    var t0 = performance.now(), dur = 900;
-    (function step(now){
-      var p = Math.min(1, (now - t0) / dur); p = 1 - Math.pow(1 - p, 3);
-      el.textContent = String(Math.round(from + (to - from) * p));
-      if (p < 1) requestAnimationFrame(step);
-    })(t0);
-    var st = el.parentElement;
-    st.classList.add('tick');
-    setTimeout(function(){ st.classList.remove('tick'); }, 1300);
-  }
+  var ecW = document.getElementById('ecWent');
+  if (!ecO || !ecK || !ecW) return;
   function pull(){
-    if (document.hidden) return;
+    if (document.hidden || !cfg.url) return;
     fetch(cfg.url + '/functions/v1/profile?echo=1i21giddwswyop5s')
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(d){
         if (!d) return;
-        if (typeof d.opened === 'number') animN(ecO, d.opened);
-        if (ecK && typeof d.kept === 'number') animN(ecK, d.kept);
+        if (typeof d.opened === 'number') ecO.dataset.n = String(d.opened);
+        if (typeof d.kept === 'number') ecK.dataset.n = String(d.kept);
       }).catch(function(){});
   }
   pull();
   setInterval(pull, 45000);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  /* the rail never sits still: replay the fill every few seconds —
-     numbers roll up to the real live values, station by station */
+  function tick(el, ms){
+    var st = el.parentElement;
+    st.classList.add('tick');
+    setTimeout(function(){ st.classList.remove('tick'); }, ms || 700);
+  }
+  function pop(el){
+    el.textContent = String((parseInt(el.textContent, 10) || 0) + 1);
+    el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+    tick(el, 700);
+  }
   function roll(el, dur){
     var to = parseInt(el.dataset.n, 10) || 0;
-    if (!to) return;
     var t0 = performance.now();
     (function step(now){
       var p = Math.min(1, (now - t0) / dur); p = 1 - Math.pow(1 - p, 3);
       el.textContent = String(Math.round(to * p));
       if (p < 1) requestAnimationFrame(step);
     })(t0);
-    var st = el.parentElement;
-    st.classList.add('tick');
-    setTimeout(function(){ st.classList.remove('tick'); }, dur + 300);
+    tick(el, dur + 300);
   }
-  var aSt = document.querySelector('.rail .st.a');
-  function replay(){
-    if (document.hidden) return;
-    var sec = ecO.closest('.secw');
-    if (!sec || !sec.classList.contains('in')) return;
+  var EL = { o: ecO, k: ecK, w: ecW };
+  /* [station, delay-before-it-lands] — opens cluster, keeps follow, 'worth it's trail */
+  var SEQ = [['o',900],['k',1400],['k',480],['w',1600],['o',1200],['o',430],['o',430],['k',1500],['w',1400],['o',1000],['k',900]];
+  function inView(){
+    var s = ecO.closest('.secw');
+    return s && s.classList.contains('in') && !document.hidden;
+  }
+  function run(i){
+    var d = (i < SEQ.length) ? SEQ[i][1] : 1500;
+    setTimeout(function(){
+      if (!inView()){ run(i); return; }
+      if (i >= SEQ.length){ reset(); return; }
+      pop(EL[SEQ[i][0]]);
+      run(i + 1);
+    }, d);
+  }
+  function reset(){
+    if (!inView()){ setTimeout(reset, 1500); return; }
     roll(ecO, 850);
-    if (ecK) setTimeout(function(){ roll(ecK, 700); }, 420);
-    if (aSt) setTimeout(function(){
-      aSt.classList.add('tick');
-      setTimeout(function(){ aSt.classList.remove('tick'); }, 900);
-    }, 1250);
+    setTimeout(function(){ roll(ecK, 700); }, 420);
+    setTimeout(function(){ roll(ecW, 600); }, 840);
+    setTimeout(function(){ run(0); }, 2800);
   }
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches){
-    setInterval(replay, 5500);
-  }
+  run(0);
 })();
 </script>
 <script>
