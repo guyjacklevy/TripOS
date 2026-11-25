@@ -3,6 +3,20 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 25 Nov 2026 — Round 15.8b: the demo path is persona-clean end to end
+Round 15.8 left one seam: tapping into Maya's Bali collection from
+/g/maya opened the original share page, which still greeted as Guy.
+Fixed without touching the real gift: trip_shares grew a nullable
+profile_slug (→ public_profiles). A share tagged to a persona greets as
+that profile's display_name (shared-trip v16) and /g/<slug> lists
+exactly its tagged shares, falling back to the old user-wide listing
+for untagged profiles like /g/guy (profile v6). Maya got her own
+Bali-scoped token over the same real data — her gift page now says
+"A GIFT FROM MAYA", 50 places (the Bali scope drops the one Tel Aviv
+cafe), and the landing shelf row was corrected 51→50 to match. The
+real link sent to real people is byte-for-byte unchanged, and the
+premiere rail still counts only that real link.
+
 ## 25 Nov 2026 — Round 15.8: personas instead of Guy, the passport shelf, the busy rail
 New standing rule from Guy: the landing never refers to Guy by name —
 real data can back the demos, but the people shown are varied ICP
