@@ -3,6 +3,23 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 25 Nov 2026 — Round 15.5: Guy's section notes, same day
+From his phone pass on 15.4: **§1** every chat bubble gets its sender's
+avatar circle (G/D, like any group chat), the verdict titles are bigger,
+and the copy is save-language — "WITH PREVOYA — SAVED", "omg you just
+saved my trip 😭🙌". **Premiere rail**: "PLAYED THE FILM" removed (not
+a KPI), one line always, and OPENED / KEPT are now genuinely LIVE —
+the page fetches the real counts of the real link (profile function's
+new public ?echo mode over the events table; already 14 opens, grown
+from 13 on its own) and re-checks every 45s, so a real open ticks the
+number up on screen with a pulse. No invented growth — the caption
+says exactly what it is: "Live from the link above." **Camera roll**:
+found rows now carry ✕ / ✓ approve buttons; the animation taps the ✓
+and the row flips from "FOUND · STAMPED — YOURS?" to "⚑ SAVED TO YOUR
+BALI" — the approval step made visible. **Bug**: prevoya.app/g/guy
+showed "nothing here yet" — the page only read ?u= while the rewrite
+carries the slug in the path; fixed to read the path too.
+
 ## 25 Nov 2026 — Round 15.4: the five picks shipped, and the passport page is real
 Guy's picks off the six-note storyboard, all live:
 **1A** — the before/after reads as a verdict: TODAY gray and washed with
