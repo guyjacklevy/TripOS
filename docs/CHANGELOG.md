@@ -3,6 +3,22 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 25 Nov 2026 — Round 15.6: one language, the carousel promoted, a restless rail
+Guy's next pass: the ask-vignette chat gets the same sender avatars as
+the comparison (one brand language in every conversation). The
+real-saves carousel moves up under the before/after, replacing the
+static Saltwood card — and gets the context it was missing: real price
+levels from curated_places and a real "⟶ MAPS" link per card (built
+from each place's Google place id); the MAPS chip pins to the card
+bottom; clone-track links leave the tab order. The old bottom section
+slims to the Bali-shelf door. The premiere rail now replays its
+count-up every ~5.5 seconds — numbers roll station by station to the
+real live values (which grew again to 15 opens on their own), so it's
+in constant motion without inventing a single count. The camera roll
+closes its loop: "⚑ YOUR BALI — THE COLLECTION" pill under the found
+rows receives each approved place — thumbnail pop + a floating +1 at
+every ✓ tap.
+
 ## 25 Nov 2026 — Round 15.5: Guy's section notes, same day
 From his phone pass on 15.4: **§1** every chat bubble gets its sender's
 avatar circle (G/D, like any group chat), the verdict titles are bigger,
