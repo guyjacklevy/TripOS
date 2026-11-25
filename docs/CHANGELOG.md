@@ -3,6 +3,26 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 25 Nov 2026 — Round 15.4: the five picks shipped, and the passport page is real
+Guy's picks off the six-note storyboard, all live:
+**1A** — the before/after reads as a verdict: TODAY gray and washed with
+✗, WITH PREVOYA in full color with ✓ and its photo card kept. **2A** —
+the category chips are real buttons on one always-single scrolling
+line: tap FOOD / NIGHTLIFE / CAFE and two real places from the real
+gift swap in (every one honestly "✓ been"); the paragraph is gone.
+**3A** — the social passport exists before the landing claims it:
+**prevoya.app/g/guy** is a live public page (new `public_profiles`
+table, new `profile` edge function that reuses shared-trip's own
+payload so counts always match, vercel rewrite `/g/:slug`) showing
+"Guy's places — 51 · ✓ been to 49"; the landing section is now "Your
+social passport — One link. Everyone." and links to the real page.
+**4A** — the premiere is the ceremony itself: dark stage, "Guy's Bali ·
+a gift · 51 places", four real photos crossfading ~2s apart with their
+names. **5A** — the camera-roll stage is the gallery: photo grid
+(+53), ticks landing one by one, a scanning line with "READING THE GPS
+IN YOUR PICKS…", then green-framed found rows that rotate between the
+places. Steps play one by one; arrivals are clearer page-wide.
+
 ## 24 Nov 2026 — Phone repairs: the premiere gets room, the dock wakes up
 From Guy's phone test: the fanned film frames were piling onto the
 live-link line and the rail (the stage had a fixed height shorter than
