@@ -238,6 +238,9 @@ html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
 .tcard .tn{padding:8px 11px 11px;font-size:.72rem;font-weight:800}
 .tcard .tn span{display:block;font-family:var(--mono);font-weight:500;font-size:.48rem;letter-spacing:.08em;color:var(--soft);margin-top:3px}
 .tcard .tn .kp{color:var(--green);font-weight:500}
+.tcard{display:flex;flex-direction:column}
+.tcard .tmap{display:inline-block;align-self:flex-start;margin:auto 11px 11px;font-family:var(--mono);font-size:.5rem;
+  letter-spacing:.05em;color:var(--green);border:1px solid rgba(13,122,94,.35);border-radius:999px;padding:5px 10px;text-decoration:none}
 
 
 /* ── the chat comparison (1A) and the ask-vignette (2A) ── */
@@ -249,13 +252,13 @@ html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
 .chatf.good{box-shadow:0 0 0 1.5px rgba(13,122,94,.5),0 10px 26px rgba(13,122,94,.12)}
 .chatf.good .ttl{color:var(--green)}
 .cmp .ttl{font-size:.68rem;font-weight:900;letter-spacing:.08em;margin-bottom:11px}
-.cmp .bub{position:relative}
-.cmp .bub.them{margin-left:30px}
-.cmp .bub.me{margin-right:30px}
-.cmp .bub .av{position:absolute;top:1px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;
+.chatf .bub{position:relative}
+.chatf .bub.them{margin-left:30px}
+.chatf .bub.me{margin-right:30px}
+.chatf .bub .av{position:absolute;top:1px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;
   justify-content:center;color:#fff;font-weight:800;font-size:.56rem;font-family:var(--body)}
-.cmp .bub.them .av{left:-30px;background:#c98a4b}
-.cmp .bub.me .av{right:-30px;background:var(--green)}
+.chatf .bub.them .av{left:-30px;background:#c98a4b}
+.chatf .bub.me .av{right:-30px;background:var(--green)}
 .bub{display:block;max-width:88%;border-radius:12px;padding:8px 10px;font-size:.68rem;line-height:1.45;margin-top:7px;box-shadow:0 1px 2px rgba(40,30,10,.12);color:var(--ink)}
 .bub.me{background:#dcf5e3;margin-left:auto;border-bottom-right-radius:4px}
 .bub.them{background:#fff;border-bottom-left-radius:4px;margin-right:auto}
@@ -381,11 +384,31 @@ html.js .secw.in .fb .tp{animation:galTpB 16s infinite}
 @keyframes galTpB{72%{opacity:1;transform:scale(.6)}75%{opacity:0;transform:scale(1.5)}0%,71%,76%,100%{opacity:0;transform:scale(.5)}}
 @keyframes galFa{36%,56%{opacity:1;transform:none}0%,33%,60%,100%{opacity:0}33%,60%{transform:translateY(8px)}}
 @keyframes galFb{64%,88%{opacity:1;transform:none}0%,61%,92%,100%{opacity:0}61%,92%{transform:translateY(8px)}}
+.gcoll{display:flex;align-items:center;gap:8px;max-width:340px;margin-top:12px;background:var(--card);
+  border:1.5px solid rgba(13,122,94,.45);border-radius:999px;padding:7px 12px;position:relative}
+.gcoll .gf{font-family:var(--mono);font-size:.5rem;letter-spacing:.08em;color:var(--green);font-weight:700}
+.gcoll .plus{position:absolute;right:12px;top:-15px;font-family:var(--mono);font-size:.58rem;font-weight:700;color:var(--green);opacity:0}
+.gcoll .gthumbs{display:flex;gap:4px;margin-left:auto}
+.gcoll .gthumbs img{width:22px;height:22px;border-radius:5px;object-fit:cover;border:1.5px solid var(--green);opacity:0;transform:scale(.3)}
+html.js .secw.in .gcoll .g1{animation:gcT1 16s infinite}
+html.js .secw.in .gcoll .g2{animation:gcT2 16s infinite}
+html.js .secw.in .gcoll .g3{animation:gcT3 16s infinite}
+html.js .secw.in .gcoll .g4{animation:gcT4 16s infinite}
+html.js .secw.in .gcoll .plus{animation:gcP 16s infinite}
+@keyframes gcT1{0%,47%{opacity:0;transform:scale(.3)}49%,92%{opacity:1;transform:scale(1)}96%,100%{opacity:0;transform:scale(.3)}}
+@keyframes gcT2{0%,50%{opacity:0;transform:scale(.3)}52%,92%{opacity:1;transform:scale(1)}96%,100%{opacity:0;transform:scale(.3)}}
+@keyframes gcT3{0%,75%{opacity:0;transform:scale(.3)}77%,92%{opacity:1;transform:scale(1)}96%,100%{opacity:0;transform:scale(.3)}}
+@keyframes gcT4{0%,78%{opacity:0;transform:scale(.3)}80%,92%{opacity:1;transform:scale(1)}96%,100%{opacity:0;transform:scale(.3)}}
+@keyframes gcP{0%,46%{opacity:0;transform:none}48%{opacity:1;transform:translateY(-2px)}50%{opacity:0;transform:translateY(-10px)}
+  51%{opacity:1;transform:translateY(-2px)}53%{opacity:0;transform:translateY(-10px)}
+  75%{opacity:0;transform:none}76%{opacity:1;transform:translateY(-2px)}78%{opacity:0;transform:translateY(-10px)}
+  79%{opacity:1;transform:translateY(-2px)}81%,100%{opacity:0;transform:translateY(-10px)}}
 html:not(.js) .gal .tk{opacity:1;transform:scale(1)}
 html:not(.js) .galst .s2{opacity:1}
 html:not(.js) .frow .fa{opacity:1;transform:none}
 html:not(.js) .fa .fm2{opacity:1}
 html:not(.js) .fa .ok{background:#0d7a5e;color:#fff}
+html:not(.js) .gcoll .gthumbs img{opacity:1;transform:scale(1)}
 
 /* ── gates: no JS, or reduced motion → the settled page ── */
 html:not(.js) .band,html:not(.js) .pc,html:not(.js) .chip,html:not(.js) .coll,
@@ -399,12 +422,14 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   .sky::before,.cue i{animation:none}
   html.js .an,html.js .place .flag{opacity:1;transform:none;transition:none}
   .mtrack{animation:none}
-  .cer img,.cer .cn span,.gal .tk,.scan,.galst span,.frow .fi,.frow .fm,.frow .ok,.frow .tp{animation:none!important}
+  .cer img,.cer .cn span,.gal .tk,.scan,.galst span,.frow .fi,.frow .fm,.frow .ok,.frow .tp,
+  .gcoll .gthumbs img,.gcoll .plus{animation:none!important}
   .gal .tk{opacity:1;transform:scale(1)}
   .galst .s2{opacity:1}
   .frow .fa{opacity:1;transform:none}
   .fa .fm2{opacity:1}
   .fa .ok{background:#0d7a5e;color:#fff}
+  .gcoll .gthumbs img{opacity:1;transform:scale(1)}
   .eline .lv{animation:none}
   .marw{overflow-x:auto;mask-image:none;-webkit-mask-image:none}
 }
@@ -490,18 +515,24 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
       <div class="bub them"><span class="av">D</span>omg you just saved my trip 😭🙌<span class="tm">21:40</span></div>
     </div>
   </div>
-  <p class="mlab an" style="--d:.4s">AND EVERY PLACE INSIDE CARRIES ITS CONTEXT:</p>
-  <div class="place sm an" style="--d:.46s">
-    <img src="/x/15d/assets/saltwood.jpg" alt="">
-    <div class="flag">⚑</div>
-    <div class="pd">
-      <div class="pn">Saltwood Bingin</div>
-      <div class="pm">CAFE · ULUWATU / BINGIN · $$</div>
-      <p class="pw">“Cliff-edge setting, natural-material design that blends into the landscape.”</p>
-      <div class="pf"><span class="mp">⟶ Maps</span><span class="sv">⚑ SAVED TO YOUR BALI</span></div>
-    </div>
+  <p class="mlab an" style="--d:.4s">AND EVERY PLACE INSIDE CARRIES ITS CONTEXT — REAL SAVES, DRIFTING BY:</p>
+</div>
+<div class="marw an" style="--d:.22s" aria-label="Places already saved on Prevoya">
+  <div class="mtrack" id="mtrack">
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJq95xT4I30i0RaU3j93Diq8o/photos/AV-0GLd4ZP6GiaXJPXwJ6wwfKvGUWCL1sbbndRfYDne6RL3B_3Y3n4f9QD0F1hFl8pv2VwEvEknQhClwh4MKCEvR4PBllzguPVZam9G4YIYJiKWikc9FkPi7rW4yVGZ4hOjcNDa6iA_vVIZR1O5nbma9NVn4CjyRqMdSTikugc1MHplFY60F1h-Z1t2akIbVn18ddShGJa-4hMLQ40CxA93fTVTsYdFgfnDyTx3WCGWln3jh1v7BVnLPlQTF2mSgcMa7s8THIf7Omq5QxjQqvwN2sjswC8ij4nL0Z0nctykqNgEwO4yqFa0NLbUh3YTFyRSOayG21tXaRJ-EN2FILBK7CY9o7j4AMHoarxuLlFpyrn8qKm-JgDdlhO52rczrcZEO-mG9qM9T1N4Og0if8KBfsNwT3uUhMZk"></div><p class="tq">“An iconic sea temple on a rocky outcrop — one of Bali’s best sunsets.”</p><div class="tn">Tanah Lot<span>EXPLORE · CANGGU · BALI · $$ · <b class="kp">⚑ KEPT</b></span></div><a class="tmap" href="https://www.google.com/maps/place/?q=place_id:ChIJq95xT4I30i0RaU3j93Diq8o" target="_blank" rel="noopener">⟶ MAPS</a></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJJYRZSz9b0i0RSQvJFHlr0zk/photos/AV-0GLcLTs-FfzSgAldkiJdzoVLWwAH382H5Ib2LvHqdBkKVuKFSuKY8dtmCY_u8Ae_3DUf_x2Asxf1elKmDrpq6g2Lu7_xxFqeLn55Ax3UbJVktgxW6frS2shj_iIdPgTUGWtMAEiOjBpJgH_Il7rBs5l_S4vJz1j4r9aENfK69paUAuo1UfJZk7ep8sBlUJErZ2YruBEyBbhGExOk3bHj5ey2ojAlk3ry9B2A_vnAgIDagrRcta_lja8FASu0UEtt76jvLBWPK1hrXEhBLc9APB-y4gYiP6SV76moyKHJCA90QKkPPuIO0hVt89seIOSYWqL5y008blAqC0cD6gumQieT-7vFSUiv0Kh9s6ueR6FZi_jA16we9_Wwwoa5MVjhzdUQAt1np58FCNbpEwrX-pbOORaYWNb98kikE9-qWTt88OQ"></div><p class="tq">“A family-run warung reviewers call a hidden gem.”</p><div class="tn">Warung Sunny<span>FOOD · ULUWATU · BALI · $$ · <b class="kp">⚑ KEPT</b></span></div><a class="tmap" href="https://www.google.com/maps/place/?q=place_id:ChIJJYRZSz9b0i0RSQvJFHlr0zk" target="_blank" rel="noopener">⟶ MAPS</a></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJt-3lqYBLHRURN_cghNWVlz0/photos/AV-0GLdvB7c8YGaRJLU216bWIVhunu8N2AxqEXH---JVr147gZvKB51DDamMRmtvTknR7ezSQ_1l-bNVIDirp_ShaDCEf2vwWDNB5hQ35imA_ijuPa3jxTnvvcknb2B7VyHCmIhJf8NeWXnpakBXO6JqvXFjp9hH4mBrgTQrExQ0zLetnAbxWiD_iF5siBvyoZfOOXXA3UeFNilON39WxmFcWLOSG6BUeLzHM7UTpDFtf4CbBkEBP6jlH1L_YLjW3w4n32mi_-YG26VEcV6qOslNrVmw8r43vK3Y7mbu95Z7_rDl6asKqxdZA6c-a5uZWdNLI5BTxohSiAulCSphMYnhAf4d7wRBicgx1HInKz55HdIRdveaNtWVWJ6h98Uz7aZD4MndPDzBQ_WWfC4-5LD39IQV-E8iDiw"></div><p class="tq">Saved in one share from Maps — Dizengoff St.</p><div class="tn">La Shuk<span>FOOD · TEL AVIV · $$ · <b class="kp">⚑ KEPT</b></span></div><a class="tmap" href="https://www.google.com/maps/place/?q=place_id:ChIJt-3lqYBLHRURN_cghNWVlz0" target="_blank" rel="noopener">⟶ MAPS</a></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJWeNPF_1H0i0REnyftKqXcK8/photos/AV-0GLcOopjhdcPgDa2tuyI8HnjR_-dvDddCzD-ne69wcyTuCygq-NUYRGtrgVSBCVbcYCViNRAq1VvYqMSzgG-4EzBNLq57vxv9RfxgaZRSFHv3Uqb3y4vUUnOFt8tkhRE5YvV9Jkcf5cLHXjAo50evYU6QXeyLSqcbC1jZxgp0HmK4uAdL-98ayLsunBcck51NLzbgR7LnNTHUUJRtSZnt9wLomrroAvq-W-sSKc7THZjYBkrm6fXpWTIknFRTQ1TDNTjuBtlnGAKR_ADieIKV_ecTLdriwuHyycdgpwEUkoPWQ8zp3ReY99_6SllgvIONlweTc4ceA12pP-_NoHrzTaem9hzIr3Dr-mG4-32cQFlVHExOnVb32N2TTb6wQmTT4AN2Qxs1i4z_leVk-Yp6XrVOi0QtSs3ZPC_JedloBpgExg"></div><p class="tq">“Sunset views and a calm, spacious atmosphere.”</p><div class="tn">Secana Rooftop<span>NIGHTLIFE · CANGGU · BALI · $$$$ · <b class="kp">⚑ KEPT</b></span></div><a class="tmap" href="https://www.google.com/maps/place/?q=place_id:ChIJWeNPF_1H0i0REnyftKqXcK8" target="_blank" rel="noopener">⟶ MAPS</a></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJq0z9jYFB0i0RZbF2b_6MEvQ/photos/AV-0GLdgMODN-Ziy6UegMpEctUWuQmDBd566A6ipPQYcF9AR32JBQWVAAbJNfmcDU5iA65w31lFAStabfMjNz4mgrhHfXr1eu6HetN9xv3Vnph3ayaWNUmRiYcPDTwwx-immjT9x74ddoMB5Ic2Cku6wa6amqdVDZc7fdSl6xKieW9ptRj7vBmwIKmPKR6ZevsloW6_xBXLSCuMLSgJGQ0i4LYR-lKdbv8SDOcO4Lr3Z6uuYoR1M2jo4gTeEVf9yZIajQo0YZqiBTa2Bj4N468ahd40eciULMMEUSGMtxXbO89eKWJX7PK_pnsaXpRXeDBRwjcRse1xT7Wf1xl0KUaWGoVK8FOHjyXniAl-gHgATvEbfQtqMs6gmCFEAhC1Dm5Yl1jm0afrrNHO4TzOD26sP_bznmJwVy9s"></div><p class="tq">“Specialty V60 coffee to fresh smoothie bowls.”</p><div class="tn">Canvas Cafe<span>CAFE · SANUR · BALI · $$ · <b class="kp">⚑ KEPT</b></span></div><a class="tmap" href="https://www.google.com/maps/place/?q=place_id:ChIJq0z9jYFB0i0RZbF2b_6MEvQ" target="_blank" rel="noopener">⟶ MAPS</a></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJk1eBx8950i0R9egCRvj5YiA/photos/AV-0GLeE8WEHx5N0wvj3qohE082lyk592SFDWyCENVAmnFn7fw9TahcJ8x4NawT98_2W2AdgdPXIdUUsB3_5SOqBfQMVldab4g7OeekZ4SUiqzD2h5SnEWBaxY1n82yb79-tP7vGUiujjtaro1Oo8JuNepFfUkYZgF6tZjcSNK8e-V313a7CGQG0oJChRUOx8hk2FcYdbUJs6ErlFQExGCXtDFWJg-RTDCgn2l3KoCAzXNrlDfDxa_78iC1ayDBKF3dRQhjtErljmdSWI9s9sF8Hg4l7oGetj68s6aO5krHH35FfthxlqsFEHfCHV-J7kdiJYrL1mhaVTr7cQAFa02KzJQrNW_NPK0rKiIwfUn_iDiHWksrsO0tGu3j4vsrDVBPd6xyRhSR3F4MPMrgMyUad0PZTDSXqt20"></div><p class="tq">“A raw beach under the Teletubbies hills.”</p><div class="tn">Suwehan Beach<span>BEACH · NUSA PENIDA · <b class="kp">⚑ KEPT</b></span></div><a class="tmap" href="https://www.google.com/maps/place/?q=place_id:ChIJk1eBx8950i0R9egCRvj5YiA" target="_blank" rel="noopener">⟶ MAPS</a></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJw0VkU7UBzS0RJ8Z9DxG2Yy4/photos/AV-0GLf1MzcL6_9wMwjtGj7lhu11JROA9mkHQBrbI-m0adLduvTnO9rl1XSRXHBlmhVIW_0ro7jI2bLqGAMM7o2blGJnMyxtmB9Sc-3UAMljOTW_o9LHLZm61Z31Cz3UBsw0MQh4KteI3jgEeAei_0X2MT-wSQHbc6MyxyXU8amynxgltQczVU0BCuJU8_d8rkrOwAGuVj3khicOZmvm-CLvLCE2iRii1cZFi4vz_25i0vuPENyTkns7mKrU1A2JzTlS-hDfe5Nns_Qudj9jTmcbHvaEgjVdac1Iz1ZPRI1_UV5rlmUgvYqbCW7R1zVtgJXSxkxaZd25TmrPIdNUklOjsqSYUW9kOPiiolHJiZK8CIke9PwYKP69EXq1kHuUd8LfQpCp9HAgABIdE6pwi85xXltyhLd-m3w"></div><p class="tq">“A surf-boat hub — waves for every level.”</p><div class="tn">Gerupuk Beach<span>SURF · LOMBOK · <b class="kp">⚑ KEPT</b></span></div><a class="tmap" href="https://www.google.com/maps/place/?q=place_id:ChIJw0VkU7UBzS0RJ8Z9DxG2Yy4" target="_blank" rel="noopener">⟶ MAPS</a></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJnb3plqJLHRURfloP1Dn5eUo/photos/AV-0GLfEDGA4heIMZc1F0-kiWzkrWknZq1eGuIzWwKT82NT887WLPZ90ZWb_U_NDSiCy-LAgCU6tDiZqYfg1kmdBIS8yu4OjbKAvmrDDxpjxKKlOPzhQwJWYW7D12fiqvZjXZ0MUm1YwhF-ohqNMW1ryAWhM84zeicJ4ggyImOkb12TeYjaKitfo--0gZMtaoWU3JMtq1Sl-IYEIJ-XP1UiASoq9p9FUPna0XzRfSIsSD5xp8F9ONhVedXDQoFq8rxfSA02aFTNf-X5hN1VgZxOz-xr-zABQUzq8tb_VFEQo8DfNq66HfndcE-jTfhfrJ1KmTWeiReW7L9f1hzBPetgmdWoxpSXHVfw0QhtZB21nHjMcDRC5_bHSUw3CYOCFEkqYFWcxh_XKh0md6QGqFlnm42G2cwrNEhg"></div><p class="tq">Saved in one share — Dizengoff Square.</p><div class="tn">Buti &amp; Co.<span>CAFE · TEL AVIV · $ · <b class="kp">⚑ KEPT</b></span></div><a class="tmap" href="https://www.google.com/maps/place/?q=place_id:ChIJnb3plqJLHRURfloP1Dn5eUo" target="_blank" rel="noopener">⟶ MAPS</a></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJE4-AAwVQ0i0RJI17Kb5qMjQ/photos/AV-0GLdvQYiwGRFDEcTpwc-UiAPf-eK2FpSZr9PQeM1J7F1l4gqLtOJMz_6XXImF4ObXG975LuXhWexJluO7vepaqTZYNiObiJfBb7xtxWYvCrhBecTKyk1pMrXBmJgD323VcW9scrKXE5gAJEfqBelG3xSDys6edJi0pQowAqqzfwj7PSfhnS9cDibxlibC8t-NAZEzmyiKTWd0cskDVxJwpR6lOESISHwLqj2Dmnub51sl6N72nH-6WzKAlfNBY5noc9EBm_7PMULS6tPMhueheshvSKCY3f-SJZ1b9_alAltUFSYhiJoGK0QMEEkalc1L_pfNBvviAMkEn6gvJdu46n0ghKDHSaDqx8aRyUv6a2Lp2Pjd8p65RCVvEAb0OiX1jA6XEJQYSPyxEdxe14r8wgXeOnA"></div><p class="tq">“Ancient trance ritual with fire, on the clifftop at sunset.”</p><div class="tn">Kecak Uluwatu<span>EXPLORE · ULUWATU · BALI · $$ · <b class="kp">⚑ KEPT</b></span></div><a class="tmap" href="https://www.google.com/maps/place/?q=place_id:ChIJE4-AAwVQ0i0RJI17Kb5qMjQ" target="_blank" rel="noopener">⟶ MAPS</a></div>
+    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJexylZAAX0i0Rdn72sDJWyeg/photos/AV-0GLeMcndug0frAr45-ktbOHboeTVTFj62Pe07n_Y5w8UaEzT1z9FsP3nKodxnqa3ifb_sr7tK1OosA58GIxL-1fUQPWpYO1evKY_uTLaVajCceID7tQyrEWlNngGMlJHCpLZ2kpD1-CKTuUO02gZZmdms6qPEjm0raZejr-_dGU3A7Y2UIKrFexw9GtWTHQZm1Nt6_kDKBA1PC7FtCU5nyFXwWgwokVMjRdJ7ER9uTXtL9DdRCT5GnX-RyAEHElyVZslg7PcJKQkD94hCyl7ked9jeW3sdie9VXLE2feQ5crkrOBNMYYjhXKsKDfUUCfm4uPu2oLtf7q0zApIsVrNMJqJig3QyXhF41T-eAQUhVYVfU9TQR_L6-AOQ-bWgE3Ck7KPjJ-AHYeMfWZWiSRbUI9ag_hR5-g1O4WOE2KirDnNjA"></div><p class="tq">“A waterfall with a cafe by the pools.”</p><div class="tn">Poh Gading Waterfall<span>EXPLORE · UBUD · BALI · $$ · <b class="kp">⚑ KEPT</b></span></div><a class="tmap" href="https://www.google.com/maps/place/?q=place_id:ChIJexylZAAX0i0Rdn72sDJWyeg" target="_blank" rel="noopener">⟶ MAPS</a></div>
   </div>
-  <p class="quiet an" style="--d:.52s">The area. The price range. What it’s actually like. One tap to Maps.</p>
+</div>
+<div class="sec" style="padding-top:8px">
+  <p class="quiet an" style="--d:.1s">The area. The price. What it’s actually like. One tap to Maps — on every card.</p>
 </div>
 </section>
 
@@ -511,8 +542,8 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   <h2 class="an" style="--d:.07s">“Where should we eat? Any gyms?” — answered in a minute.</h2>
   <div class="demo">
     <div class="chatf an" style="--d:.16s;max-width:360px">
-      <div class="bub them">hey!! going to Bali in Jan 🌴 where should we EAT? and any gyms?<span class="tm">09:12</span></div>
-      <div class="bub me">
+      <div class="bub them"><span class="av">D</span>hey!! going to Bali in Jan 🌴 where should we EAT? and any gyms?<span class="tm">09:12</span></div>
+      <div class="bub me"><span class="av">G</span>
         <span class="prevc"><span class="pstrip"><img src="/x/15d/assets/ulufish.jpg" alt=""><img src="/x/15d/assets/sayan.jpg" alt=""><img src="/x/15d/assets/borabora.jpg" alt=""></span>
         <span class="pt"><b>Your Bali — ✓ been to 49 of 51</b><i>prevoya.app/s/…</i></span></span>
         <span class="tm">09:13 · ONE MINUTE LATER</span>
@@ -617,6 +648,16 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
         <div class="fi fb" style="animation-delay:.45s"><img src="/x/15d/assets/padang.jpg" alt=""><span><b>Padang Padang Beach</b><span class="fms"><span class="fm fm1">FOUND FROM YOUR PHOTO — YOURS?</span><span class="fm fm2">⚑ SAVED TO YOUR BALI</span></span></span><span class="acts"><span class="no">✕</span><span class="ok">✓</span><span class="tp"></span></span></div>
       </div>
     </div>
+    <div class="gcoll">
+      <span class="gf">⚑ YOUR BALI — THE COLLECTION</span>
+      <span class="plus">+1</span>
+      <span class="gthumbs">
+        <img class="g1" src="/x/15d/assets/bingin.jpg" alt="">
+        <img class="g2" src="/x/15d/assets/ulufish.jpg" alt="">
+        <img class="g3" src="/x/15d/assets/amok.jpg" alt="">
+        <img class="g4" src="/x/15d/assets/padang.jpg" alt="">
+      </span>
+    </div>
   </div>
   <p class="quiet an" style="--d:.24s">No typing — the GPS in your photos does the rest.</p>
   <ul class="steps">
@@ -630,30 +671,12 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
 
 <section class="secw alt">
 <div class="sec">
-  <span class="kick an">ALREADY KEPT, AROUND THE WORLD</span>
-  <h2 class="an" style="--d:.07s">Real places, really saved.</h2>
-  <p class="an" style="--d:.14s">Every card is a real save with its context — from Uluwatu warungs to Dizengoff coffee.</p>
-</div>
-<div class="marw an" style="--d:.22s" aria-label="Places already saved on Prevoya">
-  <div class="mtrack" id="mtrack">
-    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJq95xT4I30i0RaU3j93Diq8o/photos/AV-0GLd4ZP6GiaXJPXwJ6wwfKvGUWCL1sbbndRfYDne6RL3B_3Y3n4f9QD0F1hFl8pv2VwEvEknQhClwh4MKCEvR4PBllzguPVZam9G4YIYJiKWikc9FkPi7rW4yVGZ4hOjcNDa6iA_vVIZR1O5nbma9NVn4CjyRqMdSTikugc1MHplFY60F1h-Z1t2akIbVn18ddShGJa-4hMLQ40CxA93fTVTsYdFgfnDyTx3WCGWln3jh1v7BVnLPlQTF2mSgcMa7s8THIf7Omq5QxjQqvwN2sjswC8ij4nL0Z0nctykqNgEwO4yqFa0NLbUh3YTFyRSOayG21tXaRJ-EN2FILBK7CY9o7j4AMHoarxuLlFpyrn8qKm-JgDdlhO52rczrcZEO-mG9qM9T1N4Og0if8KBfsNwT3uUhMZk"></div><p class="tq">“An iconic sea temple on a rocky outcrop — one of Bali’s best sunsets.”</p><div class="tn">Tanah Lot<span>EXPLORE · CANGGU · BALI · <b class="kp">⚑ KEPT</b></span></div></div>
-    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJJYRZSz9b0i0RSQvJFHlr0zk/photos/AV-0GLcLTs-FfzSgAldkiJdzoVLWwAH382H5Ib2LvHqdBkKVuKFSuKY8dtmCY_u8Ae_3DUf_x2Asxf1elKmDrpq6g2Lu7_xxFqeLn55Ax3UbJVktgxW6frS2shj_iIdPgTUGWtMAEiOjBpJgH_Il7rBs5l_S4vJz1j4r9aENfK69paUAuo1UfJZk7ep8sBlUJErZ2YruBEyBbhGExOk3bHj5ey2ojAlk3ry9B2A_vnAgIDagrRcta_lja8FASu0UEtt76jvLBWPK1hrXEhBLc9APB-y4gYiP6SV76moyKHJCA90QKkPPuIO0hVt89seIOSYWqL5y008blAqC0cD6gumQieT-7vFSUiv0Kh9s6ueR6FZi_jA16we9_Wwwoa5MVjhzdUQAt1np58FCNbpEwrX-pbOORaYWNb98kikE9-qWTt88OQ"></div><p class="tq">“A family-run warung reviewers call a hidden gem.”</p><div class="tn">Warung Sunny<span>FOOD · ULUWATU · BALI · <b class="kp">⚑ KEPT</b></span></div></div>
-    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJt-3lqYBLHRURN_cghNWVlz0/photos/AV-0GLdvB7c8YGaRJLU216bWIVhunu8N2AxqEXH---JVr147gZvKB51DDamMRmtvTknR7ezSQ_1l-bNVIDirp_ShaDCEf2vwWDNB5hQ35imA_ijuPa3jxTnvvcknb2B7VyHCmIhJf8NeWXnpakBXO6JqvXFjp9hH4mBrgTQrExQ0zLetnAbxWiD_iF5siBvyoZfOOXXA3UeFNilON39WxmFcWLOSG6BUeLzHM7UTpDFtf4CbBkEBP6jlH1L_YLjW3w4n32mi_-YG26VEcV6qOslNrVmw8r43vK3Y7mbu95Z7_rDl6asKqxdZA6c-a5uZWdNLI5BTxohSiAulCSphMYnhAf4d7wRBicgx1HInKz55HdIRdveaNtWVWJ6h98Uz7aZD4MndPDzBQ_WWfC4-5LD39IQV-E8iDiw"></div><p class="tq">Saved in one share from Maps — Dizengoff St.</p><div class="tn">La Shuk<span>FOOD · TEL AVIV · <b class="kp">⚑ KEPT</b></span></div></div>
-    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJWeNPF_1H0i0REnyftKqXcK8/photos/AV-0GLcOopjhdcPgDa2tuyI8HnjR_-dvDddCzD-ne69wcyTuCygq-NUYRGtrgVSBCVbcYCViNRAq1VvYqMSzgG-4EzBNLq57vxv9RfxgaZRSFHv3Uqb3y4vUUnOFt8tkhRE5YvV9Jkcf5cLHXjAo50evYU6QXeyLSqcbC1jZxgp0HmK4uAdL-98ayLsunBcck51NLzbgR7LnNTHUUJRtSZnt9wLomrroAvq-W-sSKc7THZjYBkrm6fXpWTIknFRTQ1TDNTjuBtlnGAKR_ADieIKV_ecTLdriwuHyycdgpwEUkoPWQ8zp3ReY99_6SllgvIONlweTc4ceA12pP-_NoHrzTaem9hzIr3Dr-mG4-32cQFlVHExOnVb32N2TTb6wQmTT4AN2Qxs1i4z_leVk-Yp6XrVOi0QtSs3ZPC_JedloBpgExg"></div><p class="tq">“Sunset views and a calm, spacious atmosphere.”</p><div class="tn">Secana Rooftop<span>NIGHTLIFE · CANGGU · BALI · <b class="kp">⚑ KEPT</b></span></div></div>
-    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJq0z9jYFB0i0RZbF2b_6MEvQ/photos/AV-0GLdgMODN-Ziy6UegMpEctUWuQmDBd566A6ipPQYcF9AR32JBQWVAAbJNfmcDU5iA65w31lFAStabfMjNz4mgrhHfXr1eu6HetN9xv3Vnph3ayaWNUmRiYcPDTwwx-immjT9x74ddoMB5Ic2Cku6wa6amqdVDZc7fdSl6xKieW9ptRj7vBmwIKmPKR6ZevsloW6_xBXLSCuMLSgJGQ0i4LYR-lKdbv8SDOcO4Lr3Z6uuYoR1M2jo4gTeEVf9yZIajQo0YZqiBTa2Bj4N468ahd40eciULMMEUSGMtxXbO89eKWJX7PK_pnsaXpRXeDBRwjcRse1xT7Wf1xl0KUaWGoVK8FOHjyXniAl-gHgATvEbfQtqMs6gmCFEAhC1Dm5Yl1jm0afrrNHO4TzOD26sP_bznmJwVy9s"></div><p class="tq">“Specialty V60 coffee to fresh smoothie bowls.”</p><div class="tn">Canvas Cafe<span>CAFE · SANUR · BALI · <b class="kp">⚑ KEPT</b></span></div></div>
-    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJk1eBx8950i0R9egCRvj5YiA/photos/AV-0GLeE8WEHx5N0wvj3qohE082lyk592SFDWyCENVAmnFn7fw9TahcJ8x4NawT98_2W2AdgdPXIdUUsB3_5SOqBfQMVldab4g7OeekZ4SUiqzD2h5SnEWBaxY1n82yb79-tP7vGUiujjtaro1Oo8JuNepFfUkYZgF6tZjcSNK8e-V313a7CGQG0oJChRUOx8hk2FcYdbUJs6ErlFQExGCXtDFWJg-RTDCgn2l3KoCAzXNrlDfDxa_78iC1ayDBKF3dRQhjtErljmdSWI9s9sF8Hg4l7oGetj68s6aO5krHH35FfthxlqsFEHfCHV-J7kdiJYrL1mhaVTr7cQAFa02KzJQrNW_NPK0rKiIwfUn_iDiHWksrsO0tGu3j4vsrDVBPd6xyRhSR3F4MPMrgMyUad0PZTDSXqt20"></div><p class="tq">“A raw beach under the Teletubbies hills.”</p><div class="tn">Suwehan Beach<span>BEACH · NUSA PENIDA · <b class="kp">⚑ KEPT</b></span></div></div>
-    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJw0VkU7UBzS0RJ8Z9DxG2Yy4/photos/AV-0GLf1MzcL6_9wMwjtGj7lhu11JROA9mkHQBrbI-m0adLduvTnO9rl1XSRXHBlmhVIW_0ro7jI2bLqGAMM7o2blGJnMyxtmB9Sc-3UAMljOTW_o9LHLZm61Z31Cz3UBsw0MQh4KteI3jgEeAei_0X2MT-wSQHbc6MyxyXU8amynxgltQczVU0BCuJU8_d8rkrOwAGuVj3khicOZmvm-CLvLCE2iRii1cZFi4vz_25i0vuPENyTkns7mKrU1A2JzTlS-hDfe5Nns_Qudj9jTmcbHvaEgjVdac1Iz1ZPRI1_UV5rlmUgvYqbCW7R1zVtgJXSxkxaZd25TmrPIdNUklOjsqSYUW9kOPiiolHJiZK8CIke9PwYKP69EXq1kHuUd8LfQpCp9HAgABIdE6pwi85xXltyhLd-m3w"></div><p class="tq">“A surf-boat hub — waves for every level.”</p><div class="tn">Gerupuk Beach<span>SURF · LOMBOK · <b class="kp">⚑ KEPT</b></span></div></div>
-    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJnb3plqJLHRURfloP1Dn5eUo/photos/AV-0GLfEDGA4heIMZc1F0-kiWzkrWknZq1eGuIzWwKT82NT887WLPZ90ZWb_U_NDSiCy-LAgCU6tDiZqYfg1kmdBIS8yu4OjbKAvmrDDxpjxKKlOPzhQwJWYW7D12fiqvZjXZ0MUm1YwhF-ohqNMW1ryAWhM84zeicJ4ggyImOkb12TeYjaKitfo--0gZMtaoWU3JMtq1Sl-IYEIJ-XP1UiASoq9p9FUPna0XzRfSIsSD5xp8F9ONhVedXDQoFq8rxfSA02aFTNf-X5hN1VgZxOz-xr-zABQUzq8tb_VFEQo8DfNq66HfndcE-jTfhfrJ1KmTWeiReW7L9f1hzBPetgmdWoxpSXHVfw0QhtZB21nHjMcDRC5_bHSUw3CYOCFEkqYFWcxh_XKh0md6QGqFlnm42G2cwrNEhg"></div><p class="tq">Saved in one share — Dizengoff Square.</p><div class="tn">Buti &amp; Co.<span>CAFE · TEL AVIV · <b class="kp">⚑ KEPT</b></span></div></div>
-    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJE4-AAwVQ0i0RJI17Kb5qMjQ/photos/AV-0GLdvQYiwGRFDEcTpwc-UiAPf-eK2FpSZr9PQeM1J7F1l4gqLtOJMz_6XXImF4ObXG975LuXhWexJluO7vepaqTZYNiObiJfBb7xtxWYvCrhBecTKyk1pMrXBmJgD323VcW9scrKXE5gAJEfqBelG3xSDys6edJi0pQowAqqzfwj7PSfhnS9cDibxlibC8t-NAZEzmyiKTWd0cskDVxJwpR6lOESISHwLqj2Dmnub51sl6N72nH-6WzKAlfNBY5noc9EBm_7PMULS6tPMhueheshvSKCY3f-SJZ1b9_alAltUFSYhiJoGK0QMEEkalc1L_pfNBvviAMkEn6gvJdu46n0ghKDHSaDqx8aRyUv6a2Lp2Pjd8p65RCVvEAb0OiX1jA6XEJQYSPyxEdxe14r8wgXeOnA"></div><p class="tq">“Ancient trance ritual with fire, on the clifftop at sunset.”</p><div class="tn">Kecak Uluwatu<span>EXPLORE · ULUWATU · BALI · <b class="kp">⚑ KEPT</b></span></div></div>
-    <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJexylZAAX0i0Rdn72sDJWyeg/photos/AV-0GLeMcndug0frAr45-ktbOHboeTVTFj62Pe07n_Y5w8UaEzT1z9FsP3nKodxnqa3ifb_sr7tK1OosA58GIxL-1fUQPWpYO1evKY_uTLaVajCceID7tQyrEWlNngGMlJHCpLZ2kpD1-CKTuUO02gZZmdms6qPEjm0raZejr-_dGU3A7Y2UIKrFexw9GtWTHQZm1Nt6_kDKBA1PC7FtCU5nyFXwWgwokVMjRdJ7ER9uTXtL9DdRCT5GnX-RyAEHElyVZslg7PcJKQkD94hCyl7ked9jeW3sdie9VXLE2feQ5crkrOBNMYYjhXKsKDfUUCfm4uPu2oLtf7q0zApIsVrNMJqJig3QyXhF41T-eAQUhVYVfU9TQR_L6-AOQ-bWgE3Ck7KPjJ-AHYeMfWZWiSRbUI9ag_hR5-g1O4WOE2KirDnNjA"></div><p class="tq">“A waterfall with a cafe by the pools.”</p><div class="tn">Poh Gading Waterfall<span>EXPLORE · UBUD · BALI · <b class="kp">⚑ KEPT</b></span></div></div>
-  </div>
-</div>
-<div class="sec" style="padding-top:8px">
-  <p class="an" style="--d:.1s;margin-top:18px;font-weight:900;font-size:1.05rem;color:var(--ink)">Going to Bali? Start full.</p>
-  <p class="an" style="--d:.16s">Our deepest shelf — 400+ places with areas, honest prices, and what it’s actually like.
+  <span class="kick an">GOING SOMEWHERE?</span>
+  <h2 class="an" style="--d:.07s">Going to Bali? Start full.</h2>
+  <p class="an" style="--d:.14s">Our deepest shelf — 400+ places with areas, honest prices, and what it’s actually like.
   Flag what you want and it’s saved instantly.</p>
-  <a class="btn2 an" style="--d:.22s" href="bali/places">Browse the Bali shelf — no account needed</a>
-  <p class="quiet an" style="--d:.28s">Everywhere else works today too — your collection layer is global; curated
+  <a class="btn2 an" style="--d:.2s" href="bali/places">Browse the Bali shelf — no account needed</a>
+  <p class="quiet an" style="--d:.26s">Everywhere else works today too — your collection layer is global; curated
   shelves grow one destination at a time.</p>
 </div>
 </section>
@@ -941,6 +964,37 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   }
   pull();
   setInterval(pull, 45000);
+
+  /* the rail never sits still: replay the fill every few seconds —
+     numbers roll up to the real live values, station by station */
+  function roll(el, dur){
+    var to = parseInt(el.dataset.n, 10) || 0;
+    if (!to) return;
+    var t0 = performance.now();
+    (function step(now){
+      var p = Math.min(1, (now - t0) / dur); p = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(to * p));
+      if (p < 1) requestAnimationFrame(step);
+    })(t0);
+    var st = el.parentElement;
+    st.classList.add('tick');
+    setTimeout(function(){ st.classList.remove('tick'); }, dur + 300);
+  }
+  var aSt = document.querySelector('.rail .st.a');
+  function replay(){
+    if (document.hidden) return;
+    var sec = ecO.closest('.secw');
+    if (!sec || !sec.classList.contains('in')) return;
+    roll(ecO, 850);
+    if (ecK) setTimeout(function(){ roll(ecK, 700); }, 420);
+    if (aSt) setTimeout(function(){
+      aSt.classList.add('tick');
+      setTimeout(function(){ aSt.classList.remove('tick'); }, 900);
+    }, 1250);
+  }
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches){
+    setInterval(replay, 5500);
+  }
 })();
 </script>
 <script>
@@ -954,7 +1008,10 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   if (tr && !tr.dataset.dup && !matchMedia('(prefers-reduced-motion: reduce)').matches){
     tr.dataset.dup = '1';
     tr.innerHTML += tr.innerHTML;
-    [].slice.call(tr.children).slice(tr.children.length / 2).forEach(function(c){ c.setAttribute('aria-hidden', 'true'); });
+    [].slice.call(tr.children).slice(tr.children.length / 2).forEach(function(c){
+      c.setAttribute('aria-hidden', 'true');
+      [].slice.call(c.querySelectorAll('a')).forEach(function(a){ a.tabIndex = -1; });
+    });
   }
   var imgs = [].slice.call(document.querySelectorAll('.tcard img[data-pn]'));
   if (!imgs.length || !cfg.url || !cfg.anonKey) return;
