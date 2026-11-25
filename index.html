@@ -245,9 +245,17 @@ html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
 .chatf{flex:1;min-width:236px;background:#efe9dc;border-radius:14px;padding:12px 10px;min-height:150px}
 .chatf .ttl{font-family:var(--mono);font-size:.5rem;letter-spacing:.1em;color:var(--soft);text-align:center;margin-bottom:8px}
 .chatf.bad{filter:grayscale(.85);opacity:.78}
-.chatf.bad .ttl{color:#b05656;font-weight:700}
+.chatf.bad .ttl{color:#b05656}
 .chatf.good{box-shadow:0 0 0 1.5px rgba(13,122,94,.5),0 10px 26px rgba(13,122,94,.12)}
-.chatf.good .ttl{color:var(--green);font-weight:700}
+.chatf.good .ttl{color:var(--green)}
+.cmp .ttl{font-size:.68rem;font-weight:900;letter-spacing:.08em;margin-bottom:11px}
+.cmp .bub{position:relative}
+.cmp .bub.them{margin-left:30px}
+.cmp .bub.me{margin-right:30px}
+.cmp .bub .av{position:absolute;top:1px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;color:#fff;font-weight:800;font-size:.56rem;font-family:var(--body)}
+.cmp .bub.them .av{left:-30px;background:#c98a4b}
+.cmp .bub.me .av{right:-30px;background:var(--green)}
 .bub{display:block;max-width:88%;border-radius:12px;padding:8px 10px;font-size:.68rem;line-height:1.45;margin-top:7px;box-shadow:0 1px 2px rgba(40,30,10,.12);color:var(--ink)}
 .bub.me{background:#dcf5e3;margin-left:auto;border-bottom-right-radius:4px}
 .bub.them{background:#fff;border-bottom-left-radius:4px;margin-right:auto}
@@ -304,7 +312,11 @@ html.js .secw.in .cer .cn .n4{animation-delay:6.75s}
 .eline{font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;color:var(--green);margin-top:22px}
 .eline .lv{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);margin:0 2px;animation:lv 2.4s ease-in-out infinite}
 @keyframes lv{0%,100%{opacity:1}50%{opacity:.35}}
-.rail{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:12px}
+.rail{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow-x:auto;margin-top:12px;
+  padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail .st{transition:border-color .3s ease,box-shadow .3s ease}
+.rail .st.tick{border-color:var(--green);box-shadow:0 0 0 3px rgba(13,122,94,.16)}
 .rail .st{font-family:var(--mono);font-size:.5rem;letter-spacing:.05em;color:var(--soft);border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:var(--card);white-space:nowrap}
 .rail .st b{font-family:var(--body);font-weight:800;font-size:.78rem;color:var(--ink);margin-right:2px}
 .rail .st.g{border-color:rgba(13,122,94,.45);color:var(--green)}
@@ -341,14 +353,39 @@ html.js .secw.in .galst .s2{animation:galS2 16s infinite}
   border:1px solid var(--line);border-radius:10px;padding:7px 10px;opacity:0;transform:translateY(8px)}
 .frow img{width:34px;height:34px;border-radius:7px;object-fit:cover;border:2px solid var(--green);box-shadow:0 0 0 2px rgba(13,122,94,.25)}
 .frow b{font-size:.72rem;display:block}
-.frow .fm{display:block;font-family:var(--mono);font-weight:500;font-size:.44rem;letter-spacing:.06em;color:var(--green);margin-top:2px}
+.frow .fms{position:relative;display:block;height:1.1em;margin-top:2px;min-width:170px}
+.frow .fm{position:absolute;left:0;top:0;display:block;font-family:var(--mono);font-weight:500;font-size:.44rem;letter-spacing:.06em;color:var(--green);white-space:nowrap;opacity:0}
+.frow .acts{margin-left:auto;display:flex;gap:6px;align-items:center;position:relative;flex:none}
+.frow .no,.frow .ok{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex:none}
+.frow .no{border:1.5px solid var(--line);color:var(--soft);background:var(--card)}
+.frow .ok{border:1.5px solid var(--green);color:var(--green);background:var(--card)}
+.frow .tp{position:absolute;right:3px;top:50%;margin-top:-11px;width:22px;height:22px;border-radius:50%;
+  background:rgba(13,122,94,.3);border:1.5px solid var(--green);opacity:0;transform:scale(.5)}
 html.js .secw.in .frow .fa{animation:galFa 16s infinite}
 html.js .secw.in .frow .fb{animation:galFb 16s infinite}
+html.js .secw.in .fa .fm1{animation:galM1A 16s infinite}
+html.js .secw.in .fa .fm2{animation:galM2A 16s infinite}
+html.js .secw.in .fa .ok{animation:galOkA 16s infinite}
+html.js .secw.in .fa .tp{animation:galTpA 16s infinite}
+html.js .secw.in .fb .fm1{animation:galM1B 16s infinite}
+html.js .secw.in .fb .fm2{animation:galM2B 16s infinite}
+html.js .secw.in .fb .ok{animation:galOkB 16s infinite}
+html.js .secw.in .fb .tp{animation:galTpB 16s infinite}
+@keyframes galM1A{36%,45%{opacity:1}0%,34%,48%,100%{opacity:0}}
+@keyframes galM2A{48%,56%{opacity:1}0%,45%,60%,100%{opacity:0}}
+@keyframes galOkA{46%,58%{background:#0d7a5e;color:#fff}0%,45%,60%,100%{background:var(--card);color:var(--green)}}
+@keyframes galTpA{44%{opacity:1;transform:scale(.6)}47%{opacity:0;transform:scale(1.5)}0%,43%,48%,100%{opacity:0;transform:scale(.5)}}
+@keyframes galM1B{64%,73%{opacity:1}0%,62%,76%,100%{opacity:0}}
+@keyframes galM2B{76%,86%{opacity:1}0%,73%,90%,100%{opacity:0}}
+@keyframes galOkB{74%,88%{background:#0d7a5e;color:#fff}0%,73%,90%,100%{background:var(--card);color:var(--green)}}
+@keyframes galTpB{72%{opacity:1;transform:scale(.6)}75%{opacity:0;transform:scale(1.5)}0%,71%,76%,100%{opacity:0;transform:scale(.5)}}
 @keyframes galFa{36%,56%{opacity:1;transform:none}0%,33%,60%,100%{opacity:0}33%,60%{transform:translateY(8px)}}
 @keyframes galFb{64%,88%{opacity:1;transform:none}0%,61%,92%,100%{opacity:0}61%,92%{transform:translateY(8px)}}
 html:not(.js) .gal .tk{opacity:1;transform:scale(1)}
 html:not(.js) .galst .s2{opacity:1}
 html:not(.js) .frow .fa{opacity:1;transform:none}
+html:not(.js) .fa .fm2{opacity:1}
+html:not(.js) .fa .ok{background:#0d7a5e;color:#fff}
 
 /* ── gates: no JS, or reduced motion → the settled page ── */
 html:not(.js) .band,html:not(.js) .pc,html:not(.js) .chip,html:not(.js) .coll,
@@ -362,10 +399,12 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   .sky::before,.cue i{animation:none}
   html.js .an,html.js .place .flag{opacity:1;transform:none;transition:none}
   .mtrack{animation:none}
-  .cer img,.cer .cn span,.gal .tk,.scan,.galst span,.frow .fi{animation:none!important}
+  .cer img,.cer .cn span,.gal .tk,.scan,.galst span,.frow .fi,.frow .fm,.frow .ok,.frow .tp{animation:none!important}
   .gal .tk{opacity:1;transform:scale(1)}
   .galst .s2{opacity:1}
   .frow .fa{opacity:1;transform:none}
+  .fa .fm2{opacity:1}
+  .fa .ok{background:#0d7a5e;color:#fff}
   .eline .lv{animation:none}
   .marw{overflow-x:auto;mask-image:none;-webkit-mask-image:none}
 }
@@ -438,17 +477,17 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   <p class="an" style="--d:.14s">A place you loved deserves better than a naked link:</p>
   <div class="demo cmp">
     <div class="chatf bad an" style="--d:.2s"><div class="ttl">✗ TODAY — STILL LOST</div>
-      <div class="bub me"><span class="lnk">maps.app.goo.gl/xK92f…</span><span class="tm">21:38</span></div>
-      <div class="bub them">which one is this?? 😅<span class="tm">21:41</span></div>
-      <div class="bub them">is it the one near the cliff or…<span class="tm">21:41</span></div>
+      <div class="bub me"><span class="av">G</span><span class="lnk">maps.app.goo.gl/xK92f…</span><span class="tm">21:38</span></div>
+      <div class="bub them"><span class="av">D</span>which one is this?? 😅<span class="tm">21:41</span></div>
+      <div class="bub them"><span class="av">D</span>is it the one near the cliff or…<span class="tm">21:41</span></div>
     </div>
-    <div class="chatf good an" style="--d:.32s"><div class="ttl">✓ WITH PREVOYA — BOOKED</div>
-      <div class="bub me">
+    <div class="chatf good an" style="--d:.32s"><div class="ttl">✓ WITH PREVOYA — SAVED</div>
+      <div class="bub me"><span class="av">G</span>
         <span class="prevc"><span class="pstrip"><img src="/x/15d/assets/padang.jpg" alt=""><img src="/x/15d/assets/bingin.jpg" alt=""><img src="/x/15d/assets/amok.jpg" alt=""></span>
         <span class="pt"><b>Guy’s Bali — 51 places saved for you</b><i>prevoya.app/s/guys-bali</i></span></span>
         here 🤍<span class="tm">21:38</span>
       </div>
-      <div class="bub them">omg. booked for January 🙌<span class="tm">21:40</span></div>
+      <div class="bub them"><span class="av">D</span>omg you just saved my trip 😭🙌<span class="tm">21:40</span></div>
     </div>
   </div>
   <p class="mlab an" style="--d:.4s">AND EVERY PLACE INSIDE CARRIES ITS CONTEXT:</p>
@@ -534,11 +573,11 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
     <div class="eline an" style="--d:.3s">⌲ YOUR BALI LINK <i class="lv"></i> LIVE</div>
     <div class="rail an" style="--d:.36s">
       <span class="st">SENT</span><span class="rx">→</span>
-      <span class="st g"><b data-n="13">13</b> OPENED</span><span class="rx">→</span>
-      <span class="st g"><b data-n="3">3</b> PLAYED THE FILM</span><span class="rx">→</span>
-      <span class="st g"><b data-n="4">4</b> KEPT</span><span class="rx">→</span>
+      <span class="st g"><b data-n="14" id="ecOpened">14</b> OPENED</span><span class="rx">→</span>
+      <span class="st g"><b data-n="4" id="ecKept">4</b> KEPT</span><span class="rx">→</span>
       <span class="st a">✓ WENT · ♥ WORTH IT</span>
     </div>
+    <p class="quiet an" style="--d:.42s">Live from the link above — when someone opens it, these tick up for real.</p>
     <div class="ret an" style="--d:.46s">
       <img src="/x/15d/assets/amok.jpg" alt="">
       <div class="rn">Amok Sunset<span>FROM YOUR GIFT · TWO WEEKS LATER</span></div>
@@ -570,12 +609,12 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
     </div>
     <div class="frows">
       <div class="frow">
-        <div class="fi fa"><img src="/x/15d/assets/bingin.jpg" alt=""><span><b>Bingin Beach</b><span class="fm">FOUND · STAMPED AUG 15</span></span></div>
-        <div class="fi fb"><img src="/x/15d/assets/amok.jpg" alt=""><span><b>Amok Sunset</b><span class="fm">FOUND FROM YOUR PHOTO · ✓ BEEN</span></span></div>
+        <div class="fi fa"><img src="/x/15d/assets/bingin.jpg" alt=""><span><b>Bingin Beach</b><span class="fms"><span class="fm fm1">FOUND · STAMPED AUG 15 — YOURS?</span><span class="fm fm2">⚑ SAVED TO YOUR BALI</span></span></span><span class="acts"><span class="no">✕</span><span class="ok">✓</span><span class="tp"></span></span></div>
+        <div class="fi fb"><img src="/x/15d/assets/amok.jpg" alt=""><span><b>Amok Sunset</b><span class="fms"><span class="fm fm1">FOUND FROM YOUR PHOTO — YOURS?</span><span class="fm fm2">⚑ SAVED TO YOUR BALI</span></span></span><span class="acts"><span class="no">✕</span><span class="ok">✓</span><span class="tp"></span></span></div>
       </div>
       <div class="frow">
-        <div class="fi fa" style="animation-delay:.45s"><img src="/x/15d/assets/ulufish.jpg" alt=""><span><b>Ulu Fishmarket</b><span class="fm">FOUND · STAMPED AUG 14</span></span></div>
-        <div class="fi fb" style="animation-delay:.45s"><img src="/x/15d/assets/padang.jpg" alt=""><span><b>Padang Padang Beach</b><span class="fm">FOUND FROM YOUR PHOTO · ✓ BEEN</span></span></div>
+        <div class="fi fa" style="animation-delay:.45s"><img src="/x/15d/assets/ulufish.jpg" alt=""><span><b>Ulu Fishmarket</b><span class="fms"><span class="fm fm1">FOUND · STAMPED AUG 14 — YOURS?</span><span class="fm fm2">⚑ SAVED TO YOUR BALI</span></span></span><span class="acts"><span class="no">✕</span><span class="ok">✓</span><span class="tp"></span></span></div>
+        <div class="fi fb" style="animation-delay:.45s"><img src="/x/15d/assets/padang.jpg" alt=""><span><b>Padang Padang Beach</b><span class="fms"><span class="fm fm1">FOUND FROM YOUR PHOTO — YOURS?</span><span class="fm fm2">⚑ SAVED TO YOUR BALI</span></span></span><span class="acts"><span class="no">✕</span><span class="ok">✓</span><span class="tp"></span></span></div>
       </div>
     </div>
   </div>
@@ -866,6 +905,44 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
 </script>
 <script src="shared/supabase-config.js"></script>
 <script src="shared/track.js"></script>
+<script>
+/* the rail is live: real counts for the real link, re-checked while you watch */
+(function(){
+  'use strict';
+  var cfg = window.TRIPOS_SUPABASE || {};
+  var ecO = document.getElementById('ecOpened');
+  var ecK = document.getElementById('ecKept');
+  if (!ecO || !cfg.url) return;
+  function animN(el, to){
+    var from = parseInt(el.textContent, 10) || 0;
+    el.dataset.n = String(to);
+    if (from === to) return;
+    var inView = el.closest('.secw') && el.closest('.secw').classList.contains('in');
+    if (!inView){ el.textContent = String(to); return; }
+    var t0 = performance.now(), dur = 900;
+    (function step(now){
+      var p = Math.min(1, (now - t0) / dur); p = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(from + (to - from) * p));
+      if (p < 1) requestAnimationFrame(step);
+    })(t0);
+    var st = el.parentElement;
+    st.classList.add('tick');
+    setTimeout(function(){ st.classList.remove('tick'); }, 1300);
+  }
+  function pull(){
+    if (document.hidden) return;
+    fetch(cfg.url + '/functions/v1/profile?echo=1i21giddwswyop5s')
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if (!d) return;
+        if (typeof d.opened === 'number') animN(ecO, d.opened);
+        if (ecK && typeof d.kept === 'number') animN(ecK, d.kept);
+      }).catch(function(){});
+  }
+  pull();
+  setInterval(pull, 45000);
+})();
+</script>
 <script>
 /* the carousel's real photos resolve display-time (server-cached ~a day) */
 (function(){

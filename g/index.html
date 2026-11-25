@@ -68,7 +68,9 @@ footer a{color:var(--soft)}
 (function(){
   'use strict';
   var cfg = (window.TRIPOS_SUPABASE || {});
-  var slug = (new URLSearchParams(location.search).get('u') || '').toLowerCase().replace(/[^a-z0-9-]/g,'');
+  var slug = (new URLSearchParams(location.search).get('u') ||
+              (location.pathname.match(/^\/g\/([a-zA-Z0-9-]+)/) || [])[1] ||
+              '').toLowerCase().replace(/[^a-z0-9-]/g,'');
   var $ = function(id){ return document.getElementById(id); };
   function esc(s){ var d=document.createElement('div'); d.textContent=String(s==null?'':s); return d.innerHTML; }
 
