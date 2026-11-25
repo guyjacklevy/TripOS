@@ -141,13 +141,14 @@ html.js .cue{opacity:.9}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
 
 /* ── the page below the hero ── */
+/* spacing scale: 12 tight · 16 caption · 24 component · 56 section (symmetric) */
 .sec{position:relative;z-index:1;max-width:620px;margin:0 auto;
-  padding:58px max(20px,env(safe-area-inset-left,0px)) 0 max(20px,env(safe-area-inset-right,0px))}
+  padding:56px max(20px,env(safe-area-inset-left,0px)) 56px max(20px,env(safe-area-inset-right,0px))}
 .kick{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;color:var(--green);font-weight:500}
 .sec h2{margin:10px 0 0;font-size:clamp(1.3rem,5.4vw,1.8rem);font-weight:900;line-height:1.2;
   letter-spacing:-.01em;text-wrap:balance}
 .sec>p{margin:14px 0 0;color:var(--dim);font-size:.94rem;line-height:1.6;max-width:52ch}
-.chips{display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;margin-top:20px;padding-bottom:4px;
+.chips{display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;margin-top:24px;padding-bottom:4px;
   -webkit-overflow-scrolling:touch;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chips button{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;border:1px solid var(--line);
@@ -168,24 +169,24 @@ html.js .cue{opacity:.9}
   background:var(--card);border:1px solid var(--green);color:var(--green);font-family:var(--mono);
   font-size:.62rem;display:inline-flex;align-items:center;justify-content:center;transform:translateY(3px)}
 .steps li small{display:block;color:var(--dim);font-size:.78rem;margin-top:2px}
-.door{display:inline-flex;align-items:center;gap:8px;margin-top:18px;border:1px solid rgba(13,122,94,.4);
+.door{display:inline-flex;align-items:center;gap:8px;margin-top:24px;border:1px solid rgba(13,122,94,.4);
   background:rgba(13,122,94,.06);border-radius:12px;padding:12px 16px;font-size:.82rem;font-weight:800;
   color:var(--green);text-decoration:none;min-height:44px}
-.btn2{display:inline-flex;align-items:center;justify-content:center;min-height:48px;margin-top:18px;
+.btn2{display:inline-flex;align-items:center;justify-content:center;min-height:48px;margin-top:24px;
   padding:0 24px;border-radius:999px;background:var(--card);border:1.5px solid var(--green);
   color:var(--green);font-weight:800;font-size:.92rem;text-decoration:none}
 .btn2:focus-visible,.door:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 .quiet{font-size:.76rem;color:var(--soft);margin-top:16px}
 .quiet a{color:inherit}
-.honest{display:flex;gap:8px 18px;flex-wrap:wrap;justify-content:center;margin-top:14px;
+.honest{display:flex;gap:8px 18px;flex-wrap:wrap;justify-content:center;
   font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;color:var(--soft)}
 .honest b{color:var(--green);font-weight:500}
 footer{position:relative;z-index:1;text-align:center;color:var(--soft);font-size:.74rem;
-  padding:56px 20px calc(34px + env(safe-area-inset-bottom,0px));line-height:2}
+  padding:0 20px calc(40px + env(safe-area-inset-bottom,0px));line-height:2}
 footer a{color:var(--dim)}
 
 /* ── show, don't tell: the product's real elements below the fold ── */
-.demo{margin-top:28px}
+.demo{margin-top:24px}
 .dstack{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
 @media (min-width:640px){.dstack{flex-direction:row;align-items:center;gap:16px}}
 .scrap{display:inline-block;background:#eceade;border:1px dashed #c9c2ae;border-radius:12px;
@@ -206,7 +207,7 @@ footer a{color:var(--dim)}
 .place .pf{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:.66rem;font-weight:800}
 .place .pf .mp{color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
 .place .pf .sv{font-family:var(--mono);font-size:.54rem;color:var(--green)}
-.ret{display:flex;align-items:center;gap:10px;max-width:340px;margin-top:12px;background:var(--card);
+.ret{display:flex;align-items:center;gap:10px;max-width:340px;margin-top:24px;background:var(--card);
   border:1px solid var(--line);border-radius:12px;padding:8px 10px;box-shadow:0 6px 18px rgba(40,30,10,.1)}
 .ret img{width:44px;height:44px;border-radius:9px;object-fit:cover;flex:none}
 .ret .rn{font-size:.74rem;font-weight:800;min-width:0;line-height:1.25}
@@ -223,7 +224,7 @@ html.js .place .flag{opacity:0;transform:scale(.4);transition:opacity .4s ease .
 html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
 
 /* the carousel: real saves drifting by (pauses on hover, off-screen, hidden tabs) */
-.marw{margin-top:22px;overflow:hidden;
+.marw{margin-top:12px;overflow:hidden;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);
   mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
 .mtrack{display:flex;width:max-content;padding:4px 0 12px;animation:mar 55s linear infinite}
@@ -270,7 +271,7 @@ html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
 .prevc .pt{display:block;padding:7px 9px 8px}
 .prevc .pt b{display:block;font-size:.62rem}
 .prevc .pt i{font-style:normal;font-family:var(--mono);font-size:.46rem;color:var(--green)}
-.mlab{font-family:var(--mono);font-size:.52rem;letter-spacing:.12em;color:var(--soft);margin:28px 0 0}
+.mlab{font-family:var(--mono);font-size:.52rem;letter-spacing:.12em;color:var(--soft);margin:24px 0 0}
 /* ── the social passport (3A): one public link, every collection ── */
 .passc{max-width:330px;margin:24px auto 0;background:var(--card);border:1px solid var(--line);
   border-radius:18px;padding:18px 16px;box-shadow:0 12px 30px rgba(40,30,10,.1)}
@@ -312,7 +313,7 @@ html.js .secw.in .cer .cn span{animation:cerW 9s infinite}
 html.js .secw.in .cer .cn .n2{animation-delay:2.25s}
 html.js .secw.in .cer .cn .n3{animation-delay:4.5s}
 html.js .secw.in .cer .cn .n4{animation-delay:6.75s}
-.eline{font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;color:var(--green);margin-top:22px}
+.eline{font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;color:var(--green);margin-top:24px}
 .eline .lv{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);margin:0 2px;animation:lv 2.4s ease-in-out infinite}
 @keyframes lv{0%,100%{opacity:1}50%{opacity:.35}}
 .rail{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow-x:auto;margin-top:12px;
@@ -327,7 +328,7 @@ html.js .secw.in .cer .cn .n4{animation-delay:6.75s}
 .rail .rx{font-family:var(--mono);color:var(--soft);font-size:.6rem}
 
 /* ── the gallery pick (5A): your roll → picks → analyzed → found places ── */
-.galw{max-width:340px;margin-top:26px}
+.galw{max-width:340px;margin-top:24px}
 .gal{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--card);
   border:1px solid var(--line);border-radius:14px;padding:8px;overflow:hidden}
 .gal .g{position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden}
@@ -496,7 +497,7 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
 </section>
 
 <section class="secw">
-<div class="sec">
+<div class="sec" style="padding-bottom:0">
   <span class="kick an">SAVE IN ONE SHARE</span>
   <h2 class="an" style="--d:.07s">You know this conversation.</h2>
   <p class="an" style="--d:.14s">A place you loved deserves better than a naked link:</p>
@@ -531,7 +532,7 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
     <div class="tcard"><div class="tp"><img alt="" data-pn="places/ChIJexylZAAX0i0Rdn72sDJWyeg/photos/AV-0GLeMcndug0frAr45-ktbOHboeTVTFj62Pe07n_Y5w8UaEzT1z9FsP3nKodxnqa3ifb_sr7tK1OosA58GIxL-1fUQPWpYO1evKY_uTLaVajCceID7tQyrEWlNngGMlJHCpLZ2kpD1-CKTuUO02gZZmdms6qPEjm0raZejr-_dGU3A7Y2UIKrFexw9GtWTHQZm1Nt6_kDKBA1PC7FtCU5nyFXwWgwokVMjRdJ7ER9uTXtL9DdRCT5GnX-RyAEHElyVZslg7PcJKQkD94hCyl7ked9jeW3sdie9VXLE2feQ5crkrOBNMYYjhXKsKDfUUCfm4uPu2oLtf7q0zApIsVrNMJqJig3QyXhF41T-eAQUhVYVfU9TQR_L6-AOQ-bWgE3Ck7KPjJ-AHYeMfWZWiSRbUI9ag_hR5-g1O4WOE2KirDnNjA"></div><p class="tq">“A waterfall with a cafe by the pools.”</p><div class="tn">Poh Gading Waterfall<span>EXPLORE · UBUD · BALI · $$ · <b class="kp">⚑ KEPT</b></span></div><a class="tmap" href="https://www.google.com/maps/place/?q=place_id:ChIJexylZAAX0i0Rdn72sDJWyeg" target="_blank" rel="noopener">⟶ MAPS</a></div>
   </div>
 </div>
-<div class="sec" style="padding-top:8px">
+<div class="sec" style="padding-top:0">
   <p class="quiet an" style="--d:.1s">The area. The price. What it’s actually like. One tap to Maps — on every card.</p>
 </div>
 </section>
@@ -682,7 +683,7 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
 </section>
 
 <section class="secw">
-<div class="sec" style="text-align:center;padding-top:26px">
+<div class="sec" style="text-align:center">
   <div class="honest"><b>FREE</b><span>·</span><b>NO PASSWORD, EVER</b><span>·</span><span>SAVE FIRST, SIGN IN WHEN YOU’RE READY</span></div>
 </div>
 </section>

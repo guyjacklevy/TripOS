@@ -3,6 +3,20 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 25 Nov 2026 — Round 15.7: one spacing rhythm for the whole landing
+Guy's phone note: margins between sections, text and components aren't
+equivalent — the page reads unorganized. Audit found the cause: sections
+had 58px above their content and 0px below it (content crashed into the
+next band's border), and component gaps used ten one-off values (10–28px).
+Fixed with one documented scale — 12 tight · 16 caption · 24 component ·
+56 section, symmetric: `.sec` now pads 56px top AND bottom, every
+component-level margin (demo, chips, carousel label, passport card,
+ceremony line, gallery, return row, door, btn2) normalized to 24, intros
+and captions keep 12/16, the honest band sits evenly between the shelf
+section and the footer, and the footer hangs 56 under it. Measured in
+the pane: every section boundary now reads identically. No content,
+motion or behavior changed.
+
 ## 25 Nov 2026 — Round 15.6: one language, the carousel promoted, a restless rail
 Guy's next pass: the ask-vignette chat gets the same sender avatars as
 the comparison (one brand language in every conversation). The
