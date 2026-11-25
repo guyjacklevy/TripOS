@@ -147,10 +147,19 @@ html.js .cue{opacity:.9}
 .sec h2{margin:10px 0 0;font-size:clamp(1.3rem,5.4vw,1.8rem);font-weight:900;line-height:1.2;
   letter-spacing:-.01em;text-wrap:balance}
 .sec>p{margin:14px 0 0;color:var(--dim);font-size:.94rem;line-height:1.6;max-width:52ch}
-.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:20px}
-.chips span{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;border:1px solid var(--line);
-  color:var(--soft);border-radius:999px;padding:6px 12px;background:var(--card)}
-.chips span.on{color:var(--green);border-color:var(--green)}
+.chips{display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;margin-top:20px;padding-bottom:4px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;border:1px solid var(--line);
+  color:var(--soft);border-radius:999px;padding:11px 13px;background:var(--card);white-space:nowrap;flex:none;
+  cursor:pointer;transition:color .15s ease,border-color .15s ease,background .15s ease}
+.chips button.on{color:#fff;border-color:var(--green);background:var(--green)}
+.catrows{margin-top:12px;max-width:360px}
+.catrow{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+  border-radius:10px;padding:10px 12px;margin-top:8px;transition:opacity .2s ease,transform .2s ease}
+.catrows.sw .catrow{opacity:0;transform:translateY(6px)}
+.catrow b{font-size:.74rem}
+.catrow .cm{margin-left:auto;font-family:var(--mono);font-size:.46rem;letter-spacing:.06em;color:var(--green);white-space:nowrap}
 .steps{margin:24px 0 0;padding:0;list-style:none;counter-reset:st}
 .steps li{counter-increment:st;display:flex;gap:12px;align-items:baseline;padding:9px 0;
   border-top:1px solid var(--line);font-size:.9rem;color:var(--ink)}
@@ -208,7 +217,7 @@ footer a{color:var(--dim)}
 .secw{position:relative;z-index:1}
 .secw.alt{background:linear-gradient(180deg,#fffdf7 0%,rgba(13,122,94,.05) 100%);
   border-top:1px solid rgba(13,122,94,.1);border-bottom:1px solid rgba(13,122,94,.1)}
-html.js .an{opacity:0;transform:translateY(16px);transition:opacity .55s ease,transform .55s ease;transition-delay:var(--d,0s)}
+html.js .an{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease;transition-delay:var(--d,0s)}
 html.js .secw.in .an{opacity:1;transform:none}
 html.js .place .flag{opacity:0;transform:scale(.4);transition:opacity .4s ease .9s,transform .5s cubic-bezier(.3,1.6,.6,1) .9s}
 html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
@@ -235,6 +244,10 @@ html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
 .cmp{display:flex;gap:14px;flex-wrap:wrap}
 .chatf{flex:1;min-width:236px;background:#efe9dc;border-radius:14px;padding:12px 10px;min-height:150px}
 .chatf .ttl{font-family:var(--mono);font-size:.5rem;letter-spacing:.1em;color:var(--soft);text-align:center;margin-bottom:8px}
+.chatf.bad{filter:grayscale(.85);opacity:.78}
+.chatf.bad .ttl{color:#b05656;font-weight:700}
+.chatf.good{box-shadow:0 0 0 1.5px rgba(13,122,94,.5),0 10px 26px rgba(13,122,94,.12)}
+.chatf.good .ttl{color:var(--green);font-weight:700}
 .bub{display:block;max-width:88%;border-radius:12px;padding:8px 10px;font-size:.68rem;line-height:1.45;margin-top:7px;box-shadow:0 1px 2px rgba(40,30,10,.12);color:var(--ink)}
 .bub.me{background:#dcf5e3;margin-left:auto;border-bottom-right-radius:4px}
 .bub.them{background:#fff;border-bottom-left-radius:4px;margin-right:auto}
@@ -247,27 +260,47 @@ html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
 .prevc .pt b{display:block;font-size:.62rem}
 .prevc .pt i{font-style:normal;font-family:var(--mono);font-size:.46rem;color:var(--green)}
 .mlab{font-family:var(--mono);font-size:.52rem;letter-spacing:.12em;color:var(--soft);margin:28px 0 0}
-/* ── your highlights, but usable (S1) ── */
-.hlrow{display:flex;gap:20px;justify-content:center;margin-top:26px}
-.hl{text-align:center}
-.hl .ring{width:64px;height:64px;border-radius:50%;padding:2.5px;background:linear-gradient(45deg,#f0c06a,#e2766a)}
-.hl .ring img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:2.5px solid var(--paper);display:block}
-.hl span{display:block;font-family:var(--mono);font-size:.5rem;letter-spacing:.08em;color:var(--soft);margin-top:7px}
-.hlturn{font-family:var(--mono);font-size:.56rem;letter-spacing:.05em;color:var(--soft);text-align:center;margin:18px 0 14px}
-.bioc{max-width:300px;margin:0 auto}
-.bioc .prevc{box-shadow:0 10px 26px rgba(40,30,10,.08)}
+/* ── the social passport (3A): one public link, every collection ── */
+.passc{max-width:330px;margin:24px auto 0;background:var(--card);border:1px solid var(--line);
+  border-radius:18px;padding:18px 16px;box-shadow:0 12px 30px rgba(40,30,10,.1)}
+.passc .ring{width:58px;height:58px;border-radius:50%;padding:2.5px;margin:0 auto;background:linear-gradient(45deg,#f0c06a,#e2766a)}
+.passc .ring b{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;
+  background:var(--paper);border:2.5px solid var(--card);font-weight:900;font-size:1.25rem;color:var(--green)}
+.passc .pname{font-weight:900;margin-top:8px}
+.passc .plink{display:inline-block;font-family:var(--mono);font-size:.64rem;color:var(--green);
+  border:1.5px solid rgba(13,122,94,.45);border-radius:999px;padding:10px 15px;margin-top:9px;text-decoration:none;background:var(--card)}
+.passc .plink:active{background:rgba(13,122,94,.08)}
+.pcoll{display:flex;align-items:center;gap:9px;background:var(--paper);border:1px solid var(--line);
+  border-radius:10px;padding:8px 10px;margin-top:14px;text-align:left;text-decoration:none;color:var(--ink)}
+.pcoll img{width:34px;height:34px;border-radius:7px;object-fit:cover}
+.pcoll b{font-size:.72rem;display:block}
+.pcoll .fm2{display:block;font-family:var(--mono);font-size:.42rem;letter-spacing:.06em;color:var(--green);margin-top:2px}
+.pcoll .cm{margin-left:auto;font-family:var(--mono);font-size:.5rem;color:var(--green);white-space:nowrap}
 .place.sm{max-width:300px;margin-top:12px}
 .place.sm>img{aspect-ratio:16/7}
 
-/* ── the premiere (3A) + the journey rail (3B) ── */
-.film{position:relative;max-width:340px;aspect-ratio:8/5}
-.film img{position:absolute;top:8px;width:40%;aspect-ratio:9/13;object-fit:cover;border-radius:11px;border:3px solid #fff;box-shadow:0 7px 18px rgba(40,30,10,.26)}
-.film .f1{left:4%;transform:rotate(-7deg)}
-.film .f2{left:30%;top:0;z-index:2;box-shadow:0 10px 24px rgba(40,30,10,.32)}
-.film .f3{right:4%;transform:rotate(7deg)}
-.film .fcap{position:absolute;left:50%;transform:translateX(-50%);bottom:0;z-index:3;white-space:nowrap;
-  font-weight:900;font-size:.72rem;background:rgba(250,246,238,.85);backdrop-filter:blur(6px);
-  -webkit-backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:999px;padding:5px 13px}
+/* ── the ceremony, replayed in the open (the premiere) ── */
+.cer{position:relative;max-width:250px;margin:0 auto;aspect-ratio:9/13;border-radius:16px;overflow:hidden;
+  background:#17160f;box-shadow:0 14px 34px rgba(40,30,10,.3)}
+.cer img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0}
+.cer .c1{opacity:.92}
+html.js .secw.in .cer img{animation:cerW 9s infinite}
+html.js .secw.in .cer .c2{animation-delay:2.25s}
+html.js .secw.in .cer .c3{animation-delay:4.5s}
+html.js .secw.in .cer .c4{animation-delay:6.75s}
+@keyframes cerW{0%{opacity:0}3%,25%{opacity:.92}29%,100%{opacity:0}}
+.cer .sh{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.5),transparent 38%,rgba(0,0,0,.55));z-index:2}
+.cer .ct{position:absolute;left:0;right:0;top:16px;z-index:3;text-align:center;color:#fff;font-weight:900;
+  font-size:.95rem;text-shadow:0 1px 10px rgba(0,0,0,.6)}
+.cer .ct i{font-style:normal;display:block;font-family:var(--mono);font-weight:500;font-size:.46rem;letter-spacing:.16em;opacity:.9;margin-top:4px}
+.cer .cn{position:absolute;left:10px;right:10px;bottom:14px;z-index:3;height:1.2em}
+.cer .cn span{position:absolute;left:0;right:0;text-align:center;color:#fff;font-weight:900;font-size:.72rem;
+  text-shadow:0 1px 8px rgba(0,0,0,.7);opacity:0}
+.cer .cn .n1{opacity:1}
+html.js .secw.in .cer .cn span{animation:cerW 9s infinite}
+html.js .secw.in .cer .cn .n2{animation-delay:2.25s}
+html.js .secw.in .cer .cn .n3{animation-delay:4.5s}
+html.js .secw.in .cer .cn .n4{animation-delay:6.75s}
 .eline{font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;color:var(--green);margin-top:22px}
 .eline .lv{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);margin:0 2px;animation:lv 2.4s ease-in-out infinite}
 @keyframes lv{0%,100%{opacity:1}50%{opacity:.35}}
@@ -278,22 +311,44 @@ html.js .secw.in .place .flag{opacity:1;transform:scale(1)}
 .rail .st.a{border-color:rgba(176,108,10,.5);color:var(--amber)}
 .rail .rx{font-family:var(--mono);color:var(--soft);font-size:.6rem}
 
-/* ── the living sort (4A opening, 4B rows): photos dock onto their places ── */
-.sortst{position:relative;height:238px;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:28px}
-.sp{position:absolute;z-index:2;width:44px;height:44px;border-radius:8px;object-fit:cover;border:2px solid #fff;
-  box-shadow:0 2px 6px rgba(40,30,10,.2);left:var(--x0);top:var(--y0);transform:rotate(var(--r0))}
-html.js .secw.in .sp{animation:spDock 7s ease-in-out infinite alternate}
-html:not(.js) .sp{left:var(--x1);top:var(--y1);transform:rotate(var(--r1,0deg));border-color:var(--green)}
-@keyframes spDock{
-  0%,14%{left:var(--x0);top:var(--y0);transform:rotate(var(--r0));border-color:#fff;box-shadow:0 2px 6px rgba(40,30,10,.2)}
-  46%,100%{left:var(--x1);top:var(--y1);transform:rotate(var(--r1,0deg));border-color:var(--green);box-shadow:0 0 0 2px rgba(13,122,94,.3),0 2px 6px rgba(40,30,10,.2)}
-}
-.srow{position:absolute;z-index:1;left:12px;right:12px;background:var(--paper);border:1px solid var(--line);border-radius:10px;
-  padding:8px 10px 8px 76px;font-size:.68rem;font-weight:800;color:var(--ink);opacity:0;min-height:48px}
-html.js .secw.in .srow{animation:srowIn 7s ease-in-out infinite alternate}
-html:not(.js) .srow{opacity:1}
-.srow span{display:block;font-family:var(--mono);font-weight:500;font-size:.46rem;letter-spacing:.06em;color:var(--green);margin-top:3px}
-@keyframes srowIn{0%,24%{opacity:0}46%,100%{opacity:1}}
+/* ── the gallery pick (5A): your roll → picks → analyzed → found places ── */
+.galw{max-width:340px;margin-top:26px}
+.gal{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;padding:8px;overflow:hidden}
+.gal .g{position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden}
+.gal .g img{width:100%;height:100%;object-fit:cover;display:block}
+.gal .more{display:flex;align-items:center;justify-content:center;background:#efe9db;font-family:var(--mono);font-size:.56rem;color:var(--soft)}
+.gal .tk{position:absolute;right:4px;top:4px;width:16px;height:16px;border-radius:50%;background:var(--green);
+  color:#fff;font-size:.56rem;line-height:16px;text-align:center;opacity:0;transform:scale(.4)}
+html.js .secw.in .t1 .tk{animation:galTk 16s .5s infinite}
+html.js .secw.in .t2 .tk{animation:galTk 16s 1.1s infinite}
+html.js .secw.in .t3 .tk{animation:galTk 16s 1.7s infinite}
+html.js .secw.in .t4 .tk{animation:galTk 16s 2.3s infinite}
+@keyframes galTk{0%{opacity:0;transform:scale(.4)}2%,86%{opacity:1;transform:scale(1)}92%,100%{opacity:0;transform:scale(.4)}}
+.scan{position:absolute;left:0;right:0;top:0;height:3px;border-radius:2px;z-index:3;opacity:0;
+  background:linear-gradient(90deg,transparent,var(--green),transparent);box-shadow:0 0 12px rgba(13,122,94,.55)}
+html.js .secw.in .scan{animation:galScan 16s infinite}
+@keyframes galScan{0%,17%{opacity:0;top:0}19%{opacity:1;top:0}30%{opacity:1;top:calc(100% - 3px)}32%,100%{opacity:0;top:calc(100% - 3px)}}
+.galst{position:relative;height:1.3em;margin-top:10px;font-family:var(--mono);font-size:.52rem;letter-spacing:.08em;color:var(--green);text-align:center}
+.galst span{position:absolute;left:0;right:0;opacity:0}
+html.js .secw.in .galst .s1{animation:galS1 16s infinite}
+html.js .secw.in .galst .s2{animation:galS2 16s infinite}
+@keyframes galS1{18%,30%{opacity:1}0%,16%,33%,100%{opacity:0}}
+@keyframes galS2{34%,92%{opacity:1}0%,31%,96%,100%{opacity:0}}
+.frows{margin-top:8px;max-width:340px}
+.frow{position:relative;height:52px;margin-top:8px}
+.frow .fi{position:absolute;inset:0;display:flex;align-items:center;gap:10px;background:var(--card);
+  border:1px solid var(--line);border-radius:10px;padding:7px 10px;opacity:0;transform:translateY(8px)}
+.frow img{width:34px;height:34px;border-radius:7px;object-fit:cover;border:2px solid var(--green);box-shadow:0 0 0 2px rgba(13,122,94,.25)}
+.frow b{font-size:.72rem;display:block}
+.frow .fm{display:block;font-family:var(--mono);font-weight:500;font-size:.44rem;letter-spacing:.06em;color:var(--green);margin-top:2px}
+html.js .secw.in .frow .fa{animation:galFa 16s infinite}
+html.js .secw.in .frow .fb{animation:galFb 16s infinite}
+@keyframes galFa{36%,56%{opacity:1;transform:none}0%,33%,60%,100%{opacity:0}33%,60%{transform:translateY(8px)}}
+@keyframes galFb{64%,88%{opacity:1;transform:none}0%,61%,92%,100%{opacity:0}61%,92%{transform:translateY(8px)}}
+html:not(.js) .gal .tk{opacity:1;transform:scale(1)}
+html:not(.js) .galst .s2{opacity:1}
+html:not(.js) .frow .fa{opacity:1;transform:none}
 
 /* ── gates: no JS, or reduced motion → the settled page ── */
 html:not(.js) .band,html:not(.js) .pc,html:not(.js) .chip,html:not(.js) .coll,
@@ -307,8 +362,10 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   .sky::before,.cue i{animation:none}
   html.js .an,html.js .place .flag{opacity:1;transform:none;transition:none}
   .mtrack{animation:none}
-  .sp{animation:none!important;left:var(--x1);top:var(--y1);transform:rotate(var(--r1,0deg));border-color:var(--green)}
-  .srow{animation:none!important;opacity:1}
+  .cer img,.cer .cn span,.gal .tk,.scan,.galst span,.frow .fi{animation:none!important}
+  .gal .tk{opacity:1;transform:scale(1)}
+  .galst .s2{opacity:1}
+  .frow .fa{opacity:1;transform:none}
   .eline .lv{animation:none}
   .marw{overflow-x:auto;mask-image:none;-webkit-mask-image:none}
 }
@@ -380,12 +437,12 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   <h2 class="an" style="--d:.07s">You know this conversation.</h2>
   <p class="an" style="--d:.14s">A place you loved deserves better than a naked link:</p>
   <div class="demo cmp">
-    <div class="chatf an" style="--d:.2s"><div class="ttl">WHAT YOU SEND TODAY</div>
+    <div class="chatf bad an" style="--d:.2s"><div class="ttl">✗ TODAY — STILL LOST</div>
       <div class="bub me"><span class="lnk">maps.app.goo.gl/xK92f…</span><span class="tm">21:38</span></div>
       <div class="bub them">which one is this?? 😅<span class="tm">21:41</span></div>
       <div class="bub them">is it the one near the cliff or…<span class="tm">21:41</span></div>
     </div>
-    <div class="chatf an" style="--d:.32s"><div class="ttl">WITH PREVOYA</div>
+    <div class="chatf good an" style="--d:.32s"><div class="ttl">✓ WITH PREVOYA — BOOKED</div>
       <div class="bub me">
         <span class="prevc"><span class="pstrip"><img src="/x/15d/assets/padang.jpg" alt=""><img src="/x/15d/assets/bingin.jpg" alt=""><img src="/x/15d/assets/amok.jpg" alt=""></span>
         <span class="pt"><b>Guy’s Bali — 51 places saved for you</b><i>prevoya.app/s/guys-bali</i></span></span>
@@ -423,30 +480,34 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
       </div>
     </div>
   </div>
-  <div class="chips an" style="--d:.26s"><span class="on">ALL 51</span><span>FOOD 22</span><span>NIGHTLIFE 16</span><span>CAFE 3</span><span>SURF 3</span><span>BEACH 2</span><span>GYM 1</span></div>
-  <p class="an" style="--d:.34s">One collection per destination, organized by what they ask for — and
-  “✓ been” on almost every row is the proof you actually went. A Bali gift never drags your
-  Tel Aviv along.</p>
+  <div class="chips an" style="--d:.26s" id="catChips" role="group" aria-label="Filter the collection by category">
+    <button class="on" data-cat="all">ALL 51</button><button data-cat="food">FOOD 22</button><button data-cat="nightlife">NIGHTLIFE 16</button><button data-cat="cafe">CAFE 3</button><button data-cat="surf">SURF 3</button><button data-cat="beach">BEACH 2</button><button data-cat="gym">GYM 1</button>
+  </div>
+  <div class="catrows an" style="--d:.34s" id="catRows" aria-live="polite">
+    <div class="catrow"><b>Saltwood Bingin</b><span class="cm">CAFE · ULUWATU · ✓ BEEN</span></div>
+    <div class="catrow"><b>Dreamland Beach</b><span class="cm">BEACH · ULUWATU · ✓ BEEN</span></div>
+  </div>
+  <p class="quiet an" style="--d:.4s">Tap one — a real slice of a real collection.</p>
 </div>
 </section>
 
 <section class="secw">
 <div class="sec" style="text-align:center">
-  <span class="kick an">WHERE YOUR TRIPS ALREADY LIVE</span>
-  <h2 class="an" style="--d:.07s">You already keep highlights.</h2>
-  <p class="an" style="--d:.14s;margin-left:auto;margin-right:auto">Yours should be places people can actually use.</p>
-  <div class="hlrow an" style="--d:.2s" aria-hidden="true">
-    <div class="hl"><div class="ring"><img src="/x/15d/assets/padang.jpg" alt=""></div><span>BALI</span></div>
-    <div class="hl"><div class="ring"><img src="/x/15d/assets/ulufish.jpg" alt=""></div><span>FOOD</span></div>
-    <div class="hl"><div class="ring"><img src="/x/15d/assets/sayan.jpg" alt=""></div><span>VIEWS</span></div>
+  <span class="kick an">YOUR SOCIAL PASSPORT</span>
+  <h2 class="an" style="--d:.07s">One link. Everyone.</h2>
+  <p class="an" style="--d:.14s;margin-left:auto;margin-right:auto">Not a private send — put it in your bio,
+  and every “where was this?” answers itself.</p>
+  <div class="passc an" style="--d:.22s">
+    <div class="ring"><b>G</b></div>
+    <div class="pname">Guy</div>
+    <a class="plink" href="/g/guy">⌲ prevoya.app/g/guy</a>
+    <a class="pcoll" href="/g/guy">
+      <img src="/x/15d/assets/padang.jpg" alt="">
+      <span><b>Guy’s places</b><span class="fm2">51 PLACES · ✓ BEEN TO 49</span></span>
+      <span class="cm">OPEN ⌲</span>
+    </a>
   </div>
-  <div class="hlturn an" style="--d:.28s">HIGHLIGHTS ARE SCREENSHOTS&nbsp;&nbsp;↓&nbsp;&nbsp;COLLECTIONS ARE PLACES</div>
-  <div class="bioc an" style="--d:.36s">
-    <span class="prevc"><span class="pstrip"><img src="/x/15d/assets/padang.jpg" alt=""><img src="/x/15d/assets/ulufish.jpg" alt=""><img src="/x/15d/assets/sayan.jpg" alt=""></span>
-    <span class="pt"><b>Your Bali — 51 places, ✓ been to 49</b><i>one link in bio · prevoya.app/s/…</i></span></span>
-  </div>
-  <p class="quiet an" style="--d:.44s">Same places — now with areas, prices and “✓ been” proof.
-  And every “where was this?” DM is answered by the same link, forever.</p>
+  <p class="quiet an" style="--d:.34s">A real page — tap it. Yours takes one import.</p>
 </div>
 </section>
 
@@ -456,11 +517,19 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
   <h2 class="an" style="--d:.07s">It opens like a premiere.</h2>
   <p class="an" style="--d:.14s">Your link plays a short film of your places — then the list, ready to keep.</p>
   <div class="demo">
-    <div class="film an" style="--d:.2s" aria-hidden="true">
-      <img src="/x/15d/assets/amok.jpg" alt="" class="f1">
-      <img src="/x/15d/assets/saltwood.jpg" alt="" class="f2">
-      <img src="/x/15d/assets/padang.jpg" alt="" class="f3">
-      <div class="fcap">▶ Saltwood Bingin · ✓ been</div>
+    <div class="cer an" style="--d:.2s" aria-hidden="true">
+      <img class="c1" src="/x/15d/assets/amok.jpg" alt="">
+      <img class="c2" src="/x/15d/assets/saltwood.jpg" alt="">
+      <img class="c3" src="/x/15d/assets/padang.jpg" alt="">
+      <img class="c4" src="/x/15d/assets/bingin.jpg" alt="">
+      <div class="sh"></div>
+      <div class="ct">Guy’s Bali<i>A GIFT · 51 PLACES</i></div>
+      <div class="cn">
+        <span class="n1">Amok Sunset · ✓ been</span>
+        <span class="n2">Saltwood Bingin · ✓ been</span>
+        <span class="n3">Padang Padang Beach · ✓ been</span>
+        <span class="n4">Bingin Beach · ✓ been</span>
+      </div>
     </div>
     <div class="eline an" style="--d:.3s">⌲ YOUR BALI LINK <i class="lv"></i> LIVE</div>
     <div class="rail an" style="--d:.36s">
@@ -483,22 +552,40 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
 <div class="sec">
   <span class="kick an">JUST BACK FROM A TRIP?</span>
   <h2 class="an" style="--d:.07s">Pick the photos. We find the places.</h2>
-  <div class="sortst an" style="--d:.16s" aria-hidden="true">
-    <img class="sp" src="/x/15d/assets/bingin.jpg" alt="" style="--x0:16%;--y0:14px;--r0:-11deg;--x1:14px;--y1:118px;--r1:-5deg">
-    <img class="sp" src="/x/15d/assets/padang.jpg" alt="" style="--x0:62%;--y0:8px;--r0:8deg;--x1:24px;--y1:114px;--r1:4deg;animation-delay:.35s">
-    <img class="sp" src="/x/15d/assets/ulufish.jpg" alt="" style="--x0:40%;--y0:46px;--r0:-5deg;--x1:14px;--y1:172px;--r1:-4deg;animation-delay:.7s">
-    <img class="sp" src="/x/15d/assets/sayan.jpg" alt="" style="--x0:78%;--y0:52px;--r0:13deg;--x1:24px;--y1:168px;--r1:5deg;animation-delay:1.05s">
-    <div class="srow" style="top:112px">Bingin Beach<span>FOUND · STAMPED AUG 15</span></div>
-    <div class="srow" style="top:166px">Ulu Fishmarket<span>FOUND · STAMPED AUG 14</span></div>
+  <div class="galw an" style="--d:.16s" aria-hidden="true">
+    <div class="gal">
+      <div class="g t1"><img src="/x/15d/assets/bingin.jpg" alt=""><span class="tk">✓</span></div>
+      <div class="g"><img src="/x/15d/assets/sayan.jpg" alt=""></div>
+      <div class="g t2"><img src="/x/15d/assets/ulufish.jpg" alt=""><span class="tk">✓</span></div>
+      <div class="g"><img src="/x/15d/assets/borabora.jpg" alt=""></div>
+      <div class="g t3"><img src="/x/15d/assets/amok.jpg" alt=""><span class="tk">✓</span></div>
+      <div class="g"><img src="/x/15d/assets/saltwood.jpg" alt=""></div>
+      <div class="g t4"><img src="/x/15d/assets/padang.jpg" alt=""><span class="tk">✓</span></div>
+      <div class="g more">+53</div>
+      <div class="scan"></div>
+    </div>
+    <div class="galst">
+      <span class="s1">READING THE GPS IN YOUR PICKS…</span>
+      <span class="s2">✓ PLACES FOUND — STAMPED</span>
+    </div>
+    <div class="frows">
+      <div class="frow">
+        <div class="fi fa"><img src="/x/15d/assets/bingin.jpg" alt=""><span><b>Bingin Beach</b><span class="fm">FOUND · STAMPED AUG 15</span></span></div>
+        <div class="fi fb"><img src="/x/15d/assets/amok.jpg" alt=""><span><b>Amok Sunset</b><span class="fm">FOUND FROM YOUR PHOTO · ✓ BEEN</span></span></div>
+      </div>
+      <div class="frow">
+        <div class="fi fa" style="animation-delay:.45s"><img src="/x/15d/assets/ulufish.jpg" alt=""><span><b>Ulu Fishmarket</b><span class="fm">FOUND · STAMPED AUG 14</span></span></div>
+        <div class="fi fb" style="animation-delay:.45s"><img src="/x/15d/assets/padang.jpg" alt=""><span><b>Padang Padang Beach</b><span class="fm">FOUND FROM YOUR PHOTO · ✓ BEEN</span></span></div>
+      </div>
+    </div>
   </div>
-  <p class="quiet an" style="--d:.24s">No typing — the GPS in your photos does the rest. Each photo lands
-  on the place it was taken.</p>
+  <p class="quiet an" style="--d:.24s">No typing — the GPS in your photos does the rest.</p>
   <ul class="steps">
-    <li class="an" style="--d:.3s"><div>Pick your trip photos.<small>Up to 60, straight from the roll.</small></div></li>
-    <li class="an" style="--d:.38s"><div>They find their places.<small>Photos cluster by where they were taken — you approve every row.</small></div></li>
-    <li class="an" style="--d:.46s"><div>Giftable in about 3 minutes.<small>Places, dates, and photos — ready to send as one link.</small></div></li>
+    <li class="an" style="--d:.25s"><div>Pick your trip photos.<small>Up to 60, straight from the roll.</small></div></li>
+    <li class="an" style="--d:.7s"><div>They find their places.<small>Photos cluster by where they were taken — you approve every row.</small></div></li>
+    <li class="an" style="--d:1.15s"><div>Giftable in about 3 minutes.<small>Places, dates, and photos — ready to send as one link.</small></div></li>
   </ul>
-  <a class="door an" style="--d:.54s" href="app/">⌲ Import your trip — free</a>
+  <a class="door an" style="--d:1.4s" href="app/">⌲ Import your trip — free</a>
 </div>
 </section>
 
@@ -746,6 +833,34 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
     new IntersectionObserver(function(es){
       es.forEach(function(e){ mar.classList.toggle('off', !e.isIntersecting); });
     }).observe(mar);
+  }
+
+  /* the chips are real: tap a category, see a real slice of the real collection */
+  var CATS = {
+    all:       [['Saltwood Bingin','CAFE · ULUWATU'], ['Dreamland Beach','BEACH · ULUWATU']],
+    food:      [['Ulu Fishmarket','FOOD · ULUWATU'], ['CURE Bali','FOOD · CANGGU']],
+    nightlife: [['Single Fin','NIGHTLIFE · ULUWATU'], ['Savaya Bali','NIGHTLIFE · ULUWATU']],
+    cafe:      [['Saltwood Bingin','CAFE · ULUWATU'], ['NOURISH CAFE ULUWATU','CAFE · ULUWATU']],
+    surf:      [['Padang Padang Beach','SURF · ULUWATU'], ['Bingin Beach','SURF · ULUWATU']],
+    beach:     [['Dreamland Beach','BEACH · ULUWATU'], ['Nyang Nyang Beach','BEACH · ULUWATU']],
+    gym:       [['Bambu Fitness Bali','GYM · ULUWATU']]
+  };
+  var chipBox = document.getElementById('catChips');
+  var rowBox = document.getElementById('catRows');
+  if (chipBox && rowBox){
+    chipBox.addEventListener('click', function(ev){
+      var btn = ev.target.closest('button[data-cat]');
+      if (!btn || btn.classList.contains('on')) return;
+      chipBox.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b === btn); });
+      var rows = CATS[btn.dataset.cat] || [];
+      rowBox.classList.add('sw');
+      setTimeout(function(){
+        rowBox.innerHTML = rows.map(function(r){
+          return '<div class="catrow"><b>' + r[0] + '</b><span class="cm">' + r[1] + ' · ✓ BEEN</span></div>';
+        }).join('');
+        rowBox.classList.remove('sw');
+      }, 190);
+    });
   }
 })();
 </script>
