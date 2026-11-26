@@ -408,7 +408,8 @@ function openComposer(destSlug) {
   if (!CTX || !CTX.user) return;
   let dest = destSlug || (CTX.destList[0] && CTX.destList[0].slug) || null;
   const sheet = $('giftSh');
-  let scope = 'keepers';
+  let scope = null;      /* decided once per collection, then the chips own it */
+  let fieldsFor;         /* which collection the note/photos fields were loaded for */
   let live = null;
 
   const destName = () => dest ? cap(dest) : 'collection';
@@ -422,11 +423,19 @@ function openComposer(destSlug) {
     const scopeD = (live && !live.destination) ? null : dest;
     const all = giftable('all', scopeD);
     const keep = giftable('keepers', scopeD);
-    if (live && (live.scope === 'all' || live.scope === 'keepers')) scope = live.scope;
-    else if (!keep.length) scope = 'all';
+    /* the live row seeds the pick ONCE; after that the chips own it
+       (17.2 fix: re-seeding on every repaint ate the user's tap) */
+    if (scope === null) {
+      scope = (live && (live.scope === 'all' || live.scope === 'keepers'))
+        ? live.scope : (keep.length ? 'keepers' : 'all');
+    }
+    if (!keep.length) scope = 'all';
     const cur = () => (scope === 'all' ? all : keep);
-    $('gcNote').value = live ? (live.note || '') : $('gcNote').value;
-    if (live) $('gcPhotos').checked = live.photos !== false;
+    if (fieldsFor !== dest) {
+      fieldsFor = dest;
+      $('gcNote').value = live ? (live.note || '') : '';
+      $('gcPhotos').checked = live ? live.photos !== false : true;
+    }
 
     const dh = $('gcDests');
     if (CTX.destList.length > 1) {
@@ -437,6 +446,7 @@ function openComposer(destSlug) {
         const c = e.target.closest('.dchip');
         if (!c) return;
         dest = c.getAttribute('data-d');
+        scope = null; /* the new collection's live row re-seeds the pick */
         paint();
       };
     } else dh.hidden = true;
