@@ -171,6 +171,29 @@ img{max-width:100%}
   border-radius:999px;padding:8px 11px;background:none;cursor:pointer}
 .lnk .cp:active{transform:scale(.95)}
 .sh .none{margin:12px 0 0;font-size:.84rem;color:var(--dim)}
+
+/* ── the composer (Round 17.2): make the gift without leaving home ── */
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{flex:1;min-width:120px;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;
+  padding:9px 11px;cursor:pointer;font-family:var(--body);text-align:left}
+.chip b{display:block;font-size:.8rem;font-weight:900;color:var(--ink)}
+.chip span{display:block;font-family:var(--mono);font-size:.48rem;letter-spacing:.05em;color:var(--soft);margin-top:2px}
+.chip.on{border-color:var(--green);background:#e9f6ee}
+.chip.on b{color:#19513f}
+.dchips{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.dchip{background:var(--paper);border:1.5px solid var(--line);border-radius:999px;padding:8px 13px;
+  cursor:pointer;font-family:var(--body);font-weight:800;font-size:.78rem;color:var(--dim)}
+.dchip.on{border-color:var(--green);color:#19513f;background:#e9f6ee}
+.gnote{width:100%;margin-top:12px;background:var(--paper);border:1px solid var(--line);border-radius:11px;
+  padding:10px 12px;font-family:var(--body);font-size:.88rem;color:var(--ink);resize:none;min-height:56px}
+.gnote:focus{outline:2px solid rgba(13,122,94,.4)}
+.gphoto{display:flex;align-items:flex-start;gap:9px;margin-top:12px;font-size:.78rem;color:var(--dim);cursor:pointer}
+.gphoto input{width:18px;height:18px;accent-color:var(--green);margin-top:1px}
+.gmsg{margin-top:12px;background:var(--paper);border:1px dashed var(--line);border-radius:11px;
+  padding:10px 12px;font-size:.82rem;color:var(--dim);line-height:1.5;word-break:break-word}
+.gmsg i{font-style:normal;font-family:var(--mono);font-size:.68rem;color:var(--green)}
+.grevoke{display:block;margin:12px auto 0;background:none;border:0;cursor:pointer;
+  font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--soft);text-decoration:underline}
 </style>
 </head>
 <body>
@@ -239,7 +262,20 @@ img{max-width:100%}
   <h3>Your links</h3>
   <p class="s">ONE LINK ANSWERS “WHERE SHOULD I GO?” — THE ECHO COMES BACK AS COUNTS, NEVER NAMES</p>
   <div id="linkRows"></div>
-  <a class="mid" href="/app/trip/#places">⤴ Make a new gift link</a>
+  <button type="button" class="mid" id="mkLink">⤴ Make a gift link</button>
+</div></div>
+
+<div class="shw" id="giftSh"><div class="sh">
+  <div class="grab"></div>
+  <h3 id="gcH">Gift your collection</h3>
+  <p class="s">ONE LINK, PERSON TO PERSON — THE PLACES ARE THE GIFT</p>
+  <div class="dchips" id="gcDests" hidden></div>
+  <div class="chips" id="gcScope" hidden></div>
+  <textarea class="gnote" id="gcNote" maxlength="280" placeholder="a line from you — “the ones with my photos, don’t skip” (optional)"></textarea>
+  <label class="gphoto"><input type="checkbox" id="gcPhotos" checked><span id="gcPhotosLbl">include my photos — they travel only with this gift</span></label>
+  <div class="gmsg" id="gcMsg"></div>
+  <button type="button" class="mid" id="gcCopy">copy message + link</button>
+  <button type="button" class="grevoke" id="gcRevoke" hidden>revoke the link</button>
 </div></div>
 
 <script src="/shared/supabase-config.js"></script>

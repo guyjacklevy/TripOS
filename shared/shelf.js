@@ -123,32 +123,46 @@ $('linksSh').addEventListener('click', (e) => { if (e.target === $('linksSh')) $
 /* ── signed-in boot ── */
 async function bootSigned(user) {
   await claimAnon(user);
-  const [plR, ckR, shR, ppR] = await Promise.all([
+  const [plR, ckR, shR, ppR, rcR] = await Promise.all([
     sb.from('places').select('id, curated_place_id, name, area, category, created_at, via_token, via_name')
       .eq('user_id', user.id).order('created_at', { ascending: false }).limit(1000),
-    sb.from('checkins').select('place_id').eq('user_id', user.id).limit(2000),
-    sb.from('trip_shares').select('token, destination, scope, created_at')
+    sb.from('checkins').select('place_id, photo_path').eq('user_id', user.id).limit(2000),
+    sb.from('trip_shares').select('id, token, destination, scope, note, photos, created_at')
       .eq('user_id', user.id).eq('kind', 'list').is('revoked_at', null).is('profile_slug', null)
       .order('created_at', { ascending: false }).limit(12),
     sb.from('public_profiles').select('slug').eq('user_id', user.id)
-      .order('created_at', { ascending: true }).limit(1)
+      .order('created_at', { ascending: true }).limit(1),
+    sb.from('place_recs').select('place_id').eq('user_id', user.id).eq('worth_it', true).limit(2000)
   ]);
   const rows = plR.data || [];
-  const beenSet = new Set((ckR.data || []).map((r) => String(r.place_id)));
+  const cks = ckR.data || [];
+  const beenSet = new Set(cks.filter((r) => r.place_id).map((r) => String(r.place_id)));
+  const photoSet = new Set(cks.filter((r) => r.photo_path && r.place_id).map((r) => String(r.place_id)));
+  const worthSet = new Set((rcR.data || []).map((r) => String(r.place_id)));
   const shares = shR.data || [];
   const slug = ppR.data && ppR.data[0] && ppR.data[0].slug;
 
   /* curated lookup for destination + photo, chunked */
-  const ids = [...new Set(rows.map((r) => r.curated_place_id).filter(Boolean).map(String))];
+  const ids = [...new Set(
+    rows.map((r) => r.curated_place_id).filter(Boolean).map(String).concat([...beenSet])
+  )];
   const cmap = new Map();
   for (let i = 0; i < ids.length; i += 100) {
     const { data } = await sb.from('curated_places')
-      .select('id, destination, photo_name').in('id', ids.slice(i, i + 100));
+      .select('id, name, destination, photo_name, category, categories').in('id', ids.slice(i, i + 100));
     (data || []).forEach((c) => cmap.set(String(c.id), c));
   }
 
   const own = rows.filter((r) => !r.via_token);
   const received = rows.filter((r) => r.via_token);
+  const savedSet = new Set(own.filter((r) => r.curated_place_id).map((r) => String(r.curated_place_id)));
+
+  /* composer context — one standing link per collection ('' = legacy) */
+  CTX = {
+    user, cmap, savedSet, stampSet: beenSet, worthSet, photoSet,
+    shares: new Map(shares.map((s) => [String(s.destination || '').toLowerCase(), s])),
+    dominant: null, destList: []
+  };
 
   /* collections = own saves grouped by destination */
   const groups = new Map();
@@ -166,6 +180,9 @@ async function bootSigned(user) {
   const sorted = [...groups.values()].sort((a, b) => b.latest - a.latest);
   const current = sorted[0] || null;
   const rest = sorted.slice(1);
+  const biggest = [...groups.values()].sort((a, b) => b.items.length - a.items.length)[0];
+  CTX.dominant = biggest && biggest.key !== '—' ? biggest.key : null;
+  CTX.destList = sorted.filter((g) => g.key !== '—').map((g) => ({ slug: g.key, title: g.title }));
 
   render({
     signed: true,
@@ -181,6 +198,7 @@ async function bootSigned(user) {
       };
     }),
     weekN: rows.filter((r) => Date.now() - new Date(r.created_at).getTime() < 7 * 864e5).length,
+    currentSlug: current && current.key !== '—' ? current.key : null,
     current: current && {
       title: 'Your ' + current.title,
       dt: monthLbl(current.first) + ' → NOW',
@@ -279,7 +297,8 @@ function render(m) {
       ? m.current.photos.map((n) => '<img alt="" data-pn="' + esc(n) + '" src="' + esc(catSrc('explore')) + '">').join('')
       : '';
     $('curStrip').style.display = m.current.photos.length ? '' : 'none';
-    $('curGift').onclick = openSheet;
+    $('curGift').hidden = !m.signed; /* an anonymous shelf can't mint links */
+    $('curGift').onclick = () => openComposer(m.currentSlug);
     $('cur').hidden = false;
   }
 
@@ -332,6 +351,11 @@ function render(m) {
   } else if (m.signed) {
     $('linkRows').innerHTML = '<p class="none">No links yet — your first gift link is one tap away.</p>';
   }
+  if (m.signed) {
+    $('mkLink').onclick = () => { $('linksSh').classList.remove('on'); openComposer(m.currentSlug); };
+  } else {
+    $('mkLink').hidden = true;
+  }
 
   $('shLoad').hidden = true;
   $('shBody').hidden = false;
@@ -346,6 +370,151 @@ function render(m) {
   }
   track('shelf_view', { signed: !!m.signed });
 }
+
+/* ── THE COMPOSER (Round 17.2): make the gift without leaving home.
+   Same contract as the old app's sheet: one standing link per collection
+   ('' = the legacy unscoped link, serving the dominant collection); a
+   live row is UPDATED and its token re-copied, a fresh link is born
+   scoped; keepers = photo ∪ worth-it ∪ saved; quiet categories never
+   count; share_created carries the origin for generation-2 K. ── */
+let CTX = null;
+const QUIET = new Set(['practical', 'stay', 'health', 'services']);
+const shareSlug = () => {
+  const a = new Uint8Array(16); crypto.getRandomValues(a);
+  return Array.from(a, (b) => (b % 36).toString(36)).join('');
+};
+function giftable(scope, destSlug) {
+  const out = [];
+  const pool = new Set([...CTX.savedSet, ...CTX.stampSet]);
+  pool.forEach((id) => {
+    const c = CTX.cmap.get(id);
+    if (!c) return;
+    if (destSlug && String(c.destination || '').toLowerCase() !== destSlug) return;
+    const cats = (Array.isArray(c.categories) && c.categories.length) ? c.categories : [c.category];
+    if (cats.every((x) => QUIET.has(String(x)))) return;
+    if (scope === 'keepers' &&
+        !CTX.savedSet.has(id) && !CTX.worthSet.has(id) && !CTX.photoSet.has(id)) return;
+    out.push(id);
+  });
+  return out;
+}
+function liveRowFor(destSlug) {
+  const d = String(destSlug || '').toLowerCase();
+  return CTX.shares.get(d) ||
+    (d && d === CTX.dominant ? CTX.shares.get('') : null) ||
+    (!d ? CTX.shares.get('') : null) || null;
+}
+function openComposer(destSlug) {
+  if (!CTX || !CTX.user) return;
+  let dest = destSlug || (CTX.destList[0] && CTX.destList[0].slug) || null;
+  const sheet = $('giftSh');
+  let scope = 'keepers';
+  let live = null;
+
+  const destName = () => dest ? cap(dest) : 'collection';
+  const giftMessage = (n, link) =>
+    (scope === 'all'
+      ? 'My whole ' + destName() + ' — ' + n + ' place' + (n === 1 ? '' : 's') + ' I’ve been to or kept. '
+      : 'I made you a list of my ' + destName() + ' places — ' + n + ' spot' + (n === 1 ? '' : 's') + ' I vouch for. ') + link;
+
+  const paint = () => {
+    live = liveRowFor(dest);
+    const scopeD = (live && !live.destination) ? null : dest;
+    const all = giftable('all', scopeD);
+    const keep = giftable('keepers', scopeD);
+    if (live && (live.scope === 'all' || live.scope === 'keepers')) scope = live.scope;
+    else if (!keep.length) scope = 'all';
+    const cur = () => (scope === 'all' ? all : keep);
+    $('gcNote').value = live ? (live.note || '') : $('gcNote').value;
+    if (live) $('gcPhotos').checked = live.photos !== false;
+
+    const dh = $('gcDests');
+    if (CTX.destList.length > 1) {
+      dh.innerHTML = CTX.destList.map((d) =>
+        '<button type="button" class="dchip' + (d.slug === dest ? ' on' : '') + '" data-d="' + esc(d.slug) + '">' + esc(d.title) + '</button>').join('');
+      dh.hidden = false;
+      dh.onclick = (e) => {
+        const c = e.target.closest('.dchip');
+        if (!c) return;
+        dest = c.getAttribute('data-d');
+        paint();
+      };
+    } else dh.hidden = true;
+
+    const shp = $('gcScope');
+    if (keep.length && keep.length < all.length) {
+      shp.innerHTML =
+        '<button type="button" class="chip' + (scope === 'keepers' ? ' on' : '') + '" data-s="keepers"><b>the keepers · ' + keep.length + '</b><span>PHOTOS · WORTH-ITS · SAVES</span></button>' +
+        '<button type="button" class="chip' + (scope === 'all' ? ' on' : '') + '" data-s="all"><b>everything · ' + all.length + '</b><span>EVERY PLACE BEEN OR KEPT</span></button>';
+      shp.hidden = false;
+      shp.onclick = (e) => {
+        const c = e.target.closest('.chip');
+        if (!c) return;
+        scope = c.getAttribute('data-s');
+        paint();
+      };
+    } else { scope = 'all'; shp.hidden = true; shp.innerHTML = ''; }
+
+    const phN = cur().filter((id) => CTX.photoSet.has(id)).length;
+    const phBox = $('gcPhotos');
+    if (phN) {
+      $('gcPhotosLbl').textContent = 'include my photos (' + phN + ' place' + (phN === 1 ? '' : 's') + ') — they travel only with this gift';
+      phBox.disabled = false;
+    } else {
+      $('gcPhotosLbl').textContent = 'no photos of yours yet — add one to any been place';
+      phBox.checked = false; phBox.disabled = true;
+    }
+    $('gcH').textContent = 'Gift your ' + destName() + ' — ' + cur().length + ' place' + (cur().length === 1 ? '' : 's');
+    $('gcMsg').innerHTML = esc(giftMessage(cur().length, '')) +
+      '<i>' + esc(live ? location.origin + '/s/?t=' + live.token : location.origin + '/s/?t=…') + '</i>';
+    $('gcRevoke').hidden = !live;
+    const btn = $('gcCopy');
+    btn.disabled = !cur().length;
+    btn.textContent = cur().length ? 'copy message + link' : 'nothing giftable here yet';
+    btn.onclick = async () => {
+      if (!cur().length) return;
+      btn.disabled = true;
+      const note = $('gcNote').value.trim().slice(0, 280) || null;
+      const photos = !!$('gcPhotos').checked;
+      if (live) {
+        const { error } = await sb.from('trip_shares').update({ note, photos, scope }).eq('id', live.id);
+        if (error) { btn.disabled = false; btn.textContent = '⚠ didn’t save — retry'; return; }
+        live.note = note; live.photos = photos; live.scope = scope;
+      } else {
+        const ins = await sb.from('trip_shares')
+          .insert({ user_id: CTX.user.id, token: shareSlug(), kind: 'list', note, photos, scope, destination: dest || null })
+          .select().single();
+        if (ins.error) { btn.disabled = false; btn.textContent = '⚠ didn’t save — retry'; return; }
+        live = ins.data;
+        CTX.shares.set(String(live.destination || '').toLowerCase(), live);
+      }
+      const msg = giftMessage(cur().length, location.origin + '/s/?t=' + live.token);
+      try { await navigator.clipboard.writeText(msg); btn.textContent = '✓ copied — paste it anywhere'; }
+      catch (_) { btn.textContent = 'copy failed — long-press the message'; }
+      $('gcMsg').innerHTML = esc(giftMessage(cur().length, '')) +
+        '<i>' + esc(location.origin + '/s/?t=' + live.token) + '</i>';
+      $('gcRevoke').hidden = false;
+      const pay = { kind: 'list', n: cur().length, photos, scope, via: 'shelf' };
+      if (live.destination) pay.dest = String(live.destination).toLowerCase();
+      try { const s = JSON.parse(localStorage.getItem('tripos_via') || 'null'); if (s && s.token) pay.origin = s.token; } catch (_) {}
+      track('share_created', pay);
+      btn.disabled = false;
+    };
+    $('gcRevoke').onclick = async () => {
+      if (!live) return;
+      const { error } = await sb.from('trip_shares')
+        .update({ revoked_at: new Date().toISOString() }).eq('id', live.id);
+      if (error) { $('gcRevoke').textContent = '⚠ couldn’t revoke — retry'; return; }
+      CTX.shares.delete(String(live.destination || '').toLowerCase());
+      live = null;
+      $('gcRevoke').textContent = 'revoke the link';
+      paint();
+    };
+  };
+  paint();
+  sheet.classList.add('on');
+}
+$('giftSh').addEventListener('click', (e) => { if (e.target === $('giftSh')) $('giftSh').classList.remove('on'); });
 
 /* ── boot ── */
 (async function () {

@@ -3,6 +3,16 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 26 Nov 2026 — Round 17.2: the composer lives on the shelf
+The send loop no longer leaves home: "Gift it" and "Make a gift link"
+open the composer as a shelf sheet — collection chips (when you have
+more than one), keepers/everything with live counts, the personal
+note, the photos consent, the exact message preview, copy = mint (or
+update the standing link, same one-link-per-collection contract as
+before), and revoke. Quiet categories still never count; share_created
+still carries origin for generation-2 K. The anonymous shelf hides the
+gift button (it can't mint links).
+
 ## 26 Nov 2026 — Round 17.1: the app opens on the shelf
 The app's home is now the daylight shelf — the "expert cut" (D) two
 blind product reviews prescribed and Guy approved. /app/ renders: the
