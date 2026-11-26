@@ -214,6 +214,34 @@ img{max-width:100%}
 .svrow .sv1:active{transform:scale(.95)}
 .svrow .sv1.done{background:var(--green);color:#fff;border-color:var(--green)}
 .svrow .sv1:disabled{opacity:.55}
+
+/* ── the collection view (Round 17.4): a cover opens, in place ── */
+.cvback{display:inline-flex;align-items:center;gap:6px;background:none;border:0;cursor:pointer;
+  font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;color:var(--dim);padding:6px 0;min-height:40px}
+.cvhero{position:relative;margin-top:12px;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+  box-shadow:0 10px 28px rgba(40,30,10,.14)}
+.cvhero .strip{display:flex;gap:2px;background:#efe9db;min-height:84px}
+.cvhero .strip img{aspect-ratio:1;object-fit:cover;flex:1;min-width:0;width:33%}
+.cvhd{display:flex;align-items:center;gap:10px;margin-top:16px}
+.cvhd h2{margin:0;font-size:1.3rem;font-weight:900;letter-spacing:-.01em}
+.cvhd .gift{flex:none;min-height:40px;padding:0 16px;font-size:.8rem;flex:initial}
+.cvct{font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--green);margin:4px 0 0}
+.cvarea{margin-top:24px}
+.cvarea h3{margin:0;font-size:1rem;font-weight:900}
+.cvarea .cc{font-family:var(--mono);font-size:.52rem;letter-spacing:.08em;color:var(--soft);margin:2px 0 0}
+.cvpl{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:9px 11px;margin-top:8px;box-shadow:0 3px 10px rgba(40,30,10,.08)}
+.cvpl img{width:48px;height:48px;border-radius:9px;object-fit:cover;flex:none;border:2px solid #fff;
+  box-shadow:0 2px 6px rgba(40,30,10,.12);background:#eee7d8}
+.cvpl .n{min-width:0;font-size:.84rem;font-weight:800;line-height:1.25}
+.cvpl .n span{display:block;font-family:var(--mono);font-weight:500;font-size:.5rem;letter-spacing:.05em;color:var(--soft);margin-top:2px}
+.cvpl .mk{margin-left:auto;flex:none;font-family:var(--mono);font-size:.54rem;letter-spacing:.04em;color:var(--green)}
+.cvpl .mk.w{color:var(--amber)}
+.cvpl .mk.s{color:var(--soft)}
+.cvmore{display:flex;align-items:center;justify-content:center;width:100%;margin-top:10px;min-height:44px;
+  background:transparent;border:1.5px dashed var(--line);border-radius:12px;
+  font-weight:800;font-size:.8rem;color:var(--dim);cursor:pointer;font-family:var(--body)}
+.coll .tt .opn{font-family:var(--mono);font-size:.6rem;color:var(--green);font-weight:500}
 </style>
 </head>
 <body>
@@ -245,7 +273,7 @@ img{max-width:100%}
     <div class="coll" id="cur" hidden>
       <div class="strip" id="curStrip"></div>
       <div class="bd">
-        <div class="tt"><b id="curName"></b><span class="dt" id="curDt"></span></div>
+        <div class="tt"><b id="curName"></b><span class="opn" id="curOpn" hidden>OPEN ›</span><span class="dt" id="curDt"></span></div>
         <p class="mt" id="curMt"></p>
         <div class="act">
           <button type="button" class="gift" id="curGift">⤴ Gift it — one link</button>
@@ -260,6 +288,14 @@ img{max-width:100%}
       <b>Keep them safe</b>
       <p>Your saves live only in this browser until you sign in. Free, no password — an email code keeps them forever.</p>
       <a href="/app/trip/">Sign in — keep my places</a>
+    </div>
+
+    <div id="collView" hidden>
+      <button type="button" class="cvback" id="cvBack">‹ YOUR SHELF</button>
+      <div class="cvhero"><div class="strip" id="cvStrip"></div></div>
+      <div class="cvhd"><h2 id="cvName"></h2><button type="button" class="gift" id="cvGift">⤴ Gift it</button></div>
+      <p class="cvct" id="cvCt"></p>
+      <div id="cvAreas"></div>
     </div>
 
     <section class="sec" id="recSec" hidden>

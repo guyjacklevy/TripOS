@@ -3,6 +3,15 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 26 Nov 2026 — Round 17.4: covers open their collections
+Tapping a collection cover (or the current card — it grew an OPEN ›
+cue) opens the collection in place, in daylight: cover strip, counts,
+its own Gift door, and every place grouped by area with its mark
+(✓ been · ♥ worth it · ⚑ saved), folded at five per area. Hash-routed
+(#c/<destination>) so the phone's back button returns to the shelf,
+and a save made while a collection is open keeps the view. The old
+app's planner surfaces stay where 17.1 put them.
+
 ## 26 Nov 2026 — Round 17.3: saving lives on the shelf
 The ⚑ Save a place button opens a sheet instead of leaving home: type
 a name, our curated pool answers first (works signed-out — saves

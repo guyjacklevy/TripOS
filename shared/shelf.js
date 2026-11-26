@@ -111,7 +111,7 @@ function coverCard(g) {
   const img = g.photo_name
     ? '<img alt="" data-pn="' + esc(g.photo_name) + '" src="' + esc(catSrc('explore')) + '">'
     : '<img alt="" src="' + esc(catSrc('explore')) + '">';
-  return '<a class="gc" href="/app/trip/#places">' + img + '<span class="sh"></span>' +
+  return '<a class="gc" href="#c/' + esc(g.slug) + '">' + img + '<span class="sh"></span>' +
     '<span class="nm"><b>' + esc(g.title) + '</b><span>' + g.items.length + ' PLACE' + (g.items.length === 1 ? '' : 'S') +
     ' · ' + esc(g.label) + '</span></span></a>';
 }
@@ -184,6 +184,7 @@ async function bootSigned(user) {
   const biggest = [...groups.values()].sort((a, b) => b.items.length - a.items.length)[0];
   CTX.dominant = biggest && biggest.key !== '—' ? biggest.key : null;
   CTX.destList = sorted.filter((g) => g.key !== '—').map((g) => ({ slug: g.key, title: g.title }));
+  CTX.groups = groups; /* the collection view reads these (17.4) */
 
   render({
     signed: true,
@@ -207,7 +208,7 @@ async function bootSigned(user) {
       been: current.items.filter((r) => beenSet.has(String(r.curated_place_id))).length,
       photos: current.items.slice(0, 40).map((r) => { const c = cmap.get(String(r.curated_place_id)); return c && c.photo_name; }).filter(Boolean).slice(0, 3)
     },
-    rest: rest.map((g) => ({ title: g.title, items: g.items, label: monthLbl(g.first), photo_name: g.photo_name })),
+    rest: rest.map((g) => ({ slug: g.key, title: g.title, items: g.items, label: monthLbl(g.first), photo_name: g.photo_name })),
     shares,
     received: groupReceived(received),
     destinations: sorted.map((g) => g.title)
@@ -291,6 +292,7 @@ function render(m) {
   /* the current collection */
   if (m.current) {
     $('curName').textContent = m.current.title;
+    $('curOpn').hidden = !(m.signed && m.currentSlug);
     $('curDt').textContent = m.current.dt;
     $('curMt').textContent = m.current.n + ' PLACE' + (m.current.n === 1 ? '' : 'S') +
       (m.current.been ? ' · ✓ BEEN TO ' + m.current.been : '');
@@ -300,6 +302,12 @@ function render(m) {
     $('curStrip').style.display = m.current.photos.length ? '' : 'none';
     $('curGift').hidden = !m.signed; /* an anonymous shelf can't mint links */
     $('curGift').onclick = () => openComposer(m.currentSlug);
+    const curOpen = (e) => {
+      if (e.target.closest('.gift') || e.target.closest('.echo')) return;
+      if (m.signed && m.currentSlug) location.hash = '#c/' + m.currentSlug;
+    };
+    $('cur').onclick = curOpen;
+    $('cur').style.cursor = m.signed && m.currentSlug ? 'pointer' : '';
     $('cur').hidden = false;
   }
 
@@ -370,6 +378,7 @@ function render(m) {
     });
   }
   track('shelf_view', { signed: !!m.signed });
+  if (location.hash.indexOf('#c/') === 0) applyHash();
 }
 
 /* ── THE COMPOSER (Round 17.2): make the gift without leaving home.
@@ -623,6 +632,93 @@ $('svRows').addEventListener('click', (e) => {
   const b = e.target.closest('.sv1');
   if (b && !b.disabled) svSave(b, b.getAttribute('data-k'), +b.getAttribute('data-i'));
 });
+
+/* ── THE COLLECTION VIEW (Round 17.4): a cover opens in place.
+   Your places of one destination, grouped by area with their marks,
+   the collection's own gift door on top. Hash-routed (#c/<slug>) so
+   back works and a save re-boot keeps the open view. ── */
+const SHELF_SECTIONS = ['week', 'ask', 'cur', 'shelfGrid', 'signin', 'recSec'];
+function showShelf() {
+  $('collView').hidden = true;
+  SHELF_SECTIONS.forEach((id) => {
+    const el = $(id);
+    if (el && el.dataset.was !== '1') return; /* only restore what we hid */
+    if (el) { el.hidden = false; delete el.dataset.was; }
+  });
+}
+function renderCollection(slug) {
+  if (!CTX || !CTX.groups || !CTX.groups.has(slug)) { location.hash = ''; return; }
+  const g = CTX.groups.get(slug);
+  SHELF_SECTIONS.forEach((id) => {
+    const el = $(id);
+    if (el && !el.hidden) { el.dataset.was = '1'; el.hidden = true; }
+  });
+  $('cvName').textContent = 'Your ' + g.title;
+  $('cvGift').onclick = () => openComposer(slug === '—' ? null : slug);
+  const been = g.items.filter((r) => CTX.stampSet.has(String(r.curated_place_id))).length;
+  $('cvCt').textContent = g.items.length + ' PLACE' + (g.items.length === 1 ? '' : 'S') +
+    (been ? ' · ✓ BEEN TO ' + been : '');
+  const covers = g.items
+    .map((r) => { const c = CTX.cmap.get(String(r.curated_place_id)); return c && c.photo_name; })
+    .filter(Boolean).slice(0, 3);
+  $('cvStrip').innerHTML = covers.map((n) =>
+    '<img alt="" data-pn="' + esc(n) + '" src="' + esc(catSrc('explore')) + '">').join('');
+  $('cvStrip').parentElement.style.display = covers.length ? '' : 'none';
+
+  /* areas, biggest first; fold at 5 */
+  const byArea = new Map();
+  g.items.forEach((r) => {
+    const a = String(r.area || '').trim() || 'Around';
+    if (!byArea.has(a)) byArea.set(a, []);
+    byArea.get(a).push(r);
+  });
+  $('cvAreas').innerHTML = [...byArea.entries()].sort((a, b) => b[1].length - a[1].length)
+    .map(([area, items]) => {
+      const ab = items.filter((r) => CTX.stampSet.has(String(r.curated_place_id))).length;
+      return '<section class="cvarea"><h3>' + esc(area) + '</h3>' +
+        '<p class="cc">' + items.length + ' PLACE' + (items.length === 1 ? '' : 'S') +
+          (ab ? ' · ' + ab + ' VISITED' : '') + '</p>' +
+        items.map((r, i) => {
+          const id = String(r.curated_place_id);
+          const c = CTX.cmap.get(id);
+          const mk = CTX.stampSet.has(id) ? ['✓ BEEN', '']
+            : (CTX.worthSet.has(id) ? ['♥ WORTH IT', ' w'] : ['⚑ SAVED', ' s']);
+          const pn = (c && c.photo_name) ? ' data-pn="' + esc(c.photo_name) + '"' : '';
+          const fold = items.length > 6 && i >= 5 ? ' hidden' : '';
+          return '<div class="cvpl"' + fold + '><img alt="" loading="lazy"' + pn +
+            ' src="' + esc(catSrc(r.category)) + '">' +
+            '<span class="n">' + esc(r.name) +
+              '<span>' + esc(String(r.category || '').toUpperCase()) + '</span></span>' +
+            '<span class="mk' + mk[1] + '">' + mk[0] + '</span></div>';
+        }).join('') +
+        (items.length > 6
+          ? '<button type="button" class="cvmore">Show ' + (items.length - 5) + ' more in ' + esc(area) + ' ↓</button>'
+          : '') +
+      '</section>';
+    }).join('');
+  $('collView').hidden = false;
+  window.scrollTo(0, 0);
+  const names = [...document.querySelectorAll('#collView img[data-pn]')]
+    .map((i) => i.getAttribute('data-pn'));
+  if (names.length) resolvePhotos(names.slice(0, 16)).then(() => {
+    applyPhotos();
+    if (names.length > 16) resolvePhotos(names.slice(16, 32)).then(applyPhotos);
+  });
+  track('collection_view', { dest: slug });
+}
+$('cvAreas').addEventListener('click', (e) => {
+  const b = e.target.closest('.cvmore');
+  if (!b) return;
+  b.parentElement.querySelectorAll('.cvpl[hidden]').forEach((el) => { el.hidden = false; });
+  b.remove();
+});
+$('cvBack').addEventListener('click', () => { location.hash = ''; });
+function applyHash() {
+  const m = location.hash.match(/^#c\/([a-z0-9-]+)/);
+  if (m && CTX && CTX.groups) renderCollection(m[1]);
+  else showShelf();
+}
+window.addEventListener('hashchange', applyHash);
 
 /* ── boot ── */
 (async function () {
