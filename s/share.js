@@ -199,13 +199,14 @@ function renderGift(data, token) {
   const been = places.filter((p) => p.mark === 'been').length;
   const withPh = (data.counts && data.counts.withPhotos) || 0;
   const NAME_U = name.toUpperCase();
-  document.title = name + '\u2019s ' + (DEST || 'places') + ' \u2014 a gift \u00b7 Prevoya';
+  const CAT = data.category ? String(data.category).toLowerCase() : null; /* v17: category-scoped links */
+  document.title = name + '\u2019s ' + ([DEST, CAT].filter(Boolean).join(' ') || 'places') + ' \u2014 a gift \u00b7 Prevoya';
 
   /* ── A · the header + the note ── */
   $('gAva').textContent = (name[0] || 'P').toUpperCase();
   $('gTitle').textContent = DEST
-    ? name + ' saved you their ' + DEST
-    : name + ' saved you ' + n + ' place' + (n === 1 ? '' : 's');
+    ? name + ' saved you their ' + DEST + (CAT ? ' ' + CAT : '')
+    : name + ' saved you ' + n + (CAT ? ' ' + CAT : '') + ' place' + (n === 1 ? '' : 's');
   if (data.note) { $('gNoteTx').textContent = data.note; $('gNoteW').hidden = false; }
   $('gCts').innerHTML = '<b>' + n + ' PLACES</b> \u00b7 ' +
     ((data.counts && data.counts.areas) || 1) + ' AREAS' +
@@ -223,7 +224,7 @@ function renderGift(data, token) {
     const story = $('gStory');
     $('gSava').textContent = (name[0] || 'P').toUpperCase();
     $('gSline').textContent = name + ' was here';
-    $('gSw').textContent = NAME_U + '\u2019S CAMERA ROLL';
+    $('gSw').textContent = ownFr.length ? NAME_U + '\u2019S CAMERA ROLL' : 'THE PLACES, LIVE';
     $('gFrames').innerHTML = frames.map((f) =>
       '<div class="fr"><img alt="' + esc(f.p.name) + '" src="' + esc(f.src) + '"></div>').join('');
     const ticks = $('gTicks');

@@ -128,7 +128,7 @@ async function bootSigned(user) {
     sb.from('places').select('id, curated_place_id, name, area, category, created_at, via_token, via_name')
       .eq('user_id', user.id).order('created_at', { ascending: false }).limit(1000),
     sb.from('checkins').select('place_id, photo_path').eq('user_id', user.id).limit(2000),
-    sb.from('trip_shares').select('id, token, destination, scope, note, photos, created_at')
+    sb.from('trip_shares').select('id, token, destination, scope, note, photos, category, created_at')
       .eq('user_id', user.id).eq('kind', 'list').is('revoked_at', null).is('profile_slug', null)
       .order('created_at', { ascending: false }).limit(12),
     sb.from('public_profiles').select('slug').eq('user_id', user.id)
@@ -185,7 +185,7 @@ async function bootSigned(user) {
   /* composer context — one standing link per collection ('' = legacy) */
   CTX = {
     user, cmap, savedSet, stampSet: beenSet, worthSet, photoSet,
-    shares: new Map(shares.map((s) => [String(s.destination || '').toLowerCase(), s])),
+    shares: new Map(shares.map((s) => [shareKey(s.destination, s.category), s])),
     dominant: null, destList: []
   };
 
@@ -356,7 +356,8 @@ function render(m) {
   /* the links sheet + echo */
   if (m.signed && m.shares.length) {
     $('linkRows').innerHTML = m.shares.map((s) => {
-      const nm = 'Your ' + (s.destination ? cap(s.destination) : 'places') + (s.scope === 'keepers' ? ' — keepers' : '');
+      const nm = 'Your ' + (s.destination ? cap(s.destination) : 'places') +
+        (s.category ? ' — ' + s.category + ' only' : (s.scope === 'keepers' ? ' — keepers' : ''));
       return '<div class="lnk"><span class="n">' + esc(nm) +
         '<span>prevoya.app/s/?t=' + esc(s.token.slice(0, 6)) + '…</span></span>' +
         '<span class="e" data-tok="' + esc(s.token) + '">…</span>' +
@@ -429,12 +430,14 @@ function render(m) {
    count; share_created carries the origin for generation-2 K. ── */
 let CTX = null;
 let GC_DEST = null; /* the composer's open collection (the story card follows it) */
+const shareKey = (dest, cat) => String(dest || '').toLowerCase() +
+  (cat ? '|' + String(cat).toLowerCase() : '');
 const QUIET = new Set(['practical', 'stay', 'health', 'services']);
 const shareSlug = () => {
   const a = new Uint8Array(16); crypto.getRandomValues(a);
   return Array.from(a, (b) => (b % 36).toString(36)).join('');
 };
-function giftable(scope, destSlug) {
+function giftable(scope, destSlug, catSlug) {
   const out = [];
   const pool = new Set([...CTX.savedSet, ...CTX.stampSet]);
   pool.forEach((id) => {
@@ -443,13 +446,30 @@ function giftable(scope, destSlug) {
     if (destSlug && String(c.destination || '').toLowerCase() !== destSlug) return;
     const cats = (Array.isArray(c.categories) && c.categories.length) ? c.categories : [c.category];
     if (cats.every((x) => QUIET.has(String(x)))) return;
+    if (catSlug && !cats.map((x) => String(x).toLowerCase()).includes(catSlug)) return;
     if (scope === 'keepers' &&
         !CTX.savedSet.has(id) && !CTX.worthSet.has(id) && !CTX.photoSet.has(id)) return;
     out.push(id);
   });
   return out;
 }
-function liveRowFor(destSlug) {
+function catTally(destSlug) {
+  const tally = new Map();
+  giftable('all', destSlug, null).forEach((id) => {
+    const c = CTX.cmap.get(id);
+    const cats = (Array.isArray(c.categories) && c.categories.length) ? c.categories : [c.category];
+    cats.forEach((x) => {
+      const k = String(x || '').toLowerCase();
+      if (!k || QUIET.has(k)) return;
+      tally.set(k, (tally.get(k) || 0) + 1);
+    });
+  });
+  return [...tally.entries()].filter(([, n]) => n >= 2)
+    .sort((a, b) => b[1] - a[1]).slice(0, 5);
+}
+function liveRowFor(destSlug, catSlug) {
+  const k = shareKey(destSlug, catSlug);
+  if (catSlug) return CTX.shares.get(k) || null; /* category links never map to legacy */
   const d = String(destSlug || '').toLowerCase();
   return CTX.shares.get(d) ||
     (d && d === CTX.dominant ? CTX.shares.get('') : null) ||
@@ -459,22 +479,24 @@ function openComposer(destSlug) {
   if (!CTX || !CTX.user) return;
   let dest = destSlug || (CTX.destList[0] && CTX.destList[0].slug) || null;
   const sheet = $('giftSh');
-  let scope = null;      /* decided once per collection, then the chips own it */
-  let fieldsFor;         /* which collection the note/photos fields were loaded for */
+  let scope = null;      /* decided once per link, then the chips own it */
+  let gcat = null;       /* 17.8: null = the whole collection; 'food' = that link */
+  let fieldsFor;         /* which link the note/photos fields were loaded for */
   let live = null;
 
   const destName = () => dest ? cap(dest) : 'collection';
+  const subjName = () => destName() + (gcat ? ' ' + gcat : '');
   const giftMessage = (n, link) =>
     (scope === 'all'
-      ? 'My whole ' + destName() + ' — ' + n + ' place' + (n === 1 ? '' : 's') + ' I’ve been to or kept. '
-      : 'I made you a list of my ' + destName() + ' places — ' + n + ' spot' + (n === 1 ? '' : 's') + ' I vouch for. ') + link;
+      ? 'My whole ' + subjName() + ' — ' + n + ' place' + (n === 1 ? '' : 's') + ' I’ve been to or kept. '
+      : 'I made you a list of my ' + subjName() + ' places — ' + n + ' spot' + (n === 1 ? '' : 's') + ' I vouch for. ') + link;
 
   const paint = () => {
     GC_DEST = dest;
-    live = liveRowFor(dest);
-    const scopeD = (live && !live.destination) ? null : dest;
-    const all = giftable('all', scopeD);
-    const keep = giftable('keepers', scopeD);
+    live = liveRowFor(dest, gcat);
+    const scopeD = (live && !live.destination && !gcat) ? null : dest;
+    const all = giftable('all', scopeD, gcat);
+    const keep = giftable('keepers', scopeD, gcat);
     /* the live row seeds the pick ONCE; after that the chips own it
        (17.2 fix: re-seeding on every repaint ate the user's tap) */
     if (scope === null) {
@@ -483,8 +505,8 @@ function openComposer(destSlug) {
     }
     if (!keep.length) scope = 'all';
     const cur = () => (scope === 'all' ? all : keep);
-    if (fieldsFor !== dest) {
-      fieldsFor = dest;
+    if (fieldsFor !== dest + '|' + gcat) {
+      fieldsFor = dest + '|' + gcat;
       $('gcNote').value = live ? (live.note || '') : '';
       $('gcPhotos').checked = live ? live.photos !== false : true;
     }
@@ -498,10 +520,29 @@ function openComposer(destSlug) {
         const c = e.target.closest('.dchip');
         if (!c) return;
         dest = c.getAttribute('data-d');
+        gcat = null;
         scope = null; /* the new collection's live row re-seeds the pick */
         paint();
       };
     } else dh.hidden = true;
+
+    /* 17.8: the category chips — "food only" as its own sendable link */
+    const ch = $('gcCats');
+    const cats = catTally(dest);
+    if (cats.length >= 2) {
+      ch.innerHTML = '<button type="button" class="dchip' + (!gcat ? ' on' : '') + '" data-c="">everything</button>' +
+        cats.map(([k, cn]) =>
+          '<button type="button" class="dchip' + (gcat === k ? ' on' : '') + '" data-c="' + esc(k) + '">' +
+          esc(k) + ' · ' + cn + '</button>').join('');
+      ch.hidden = false;
+      ch.onclick = (e) => {
+        const c = e.target.closest('.dchip');
+        if (!c) return;
+        gcat = c.getAttribute('data-c') || null;
+        scope = null; /* that link's own row re-seeds the pick */
+        paint();
+      };
+    } else { gcat = null; ch.hidden = true; ch.innerHTML = ''; }
 
     const shp = $('gcScope');
     if (keep.length && keep.length < all.length) {
@@ -526,7 +567,7 @@ function openComposer(destSlug) {
       $('gcPhotosLbl').textContent = 'no photos of yours yet — add one to any been place';
       phBox.checked = false; phBox.disabled = true;
     }
-    $('gcH').textContent = 'Gift your ' + destName() + ' — ' + cur().length + ' place' + (cur().length === 1 ? '' : 's');
+    $('gcH').textContent = 'Gift your ' + subjName() + ' — ' + cur().length + ' place' + (cur().length === 1 ? '' : 's');
     $('gcMsg').innerHTML = esc(giftMessage(cur().length, '')) +
       '<i>' + esc(live ? location.origin + '/s/?t=' + live.token : location.origin + '/s/?t=…') + '</i>';
     $('gcRevoke').hidden = !live;
@@ -544,11 +585,11 @@ function openComposer(destSlug) {
         live.note = note; live.photos = photos; live.scope = scope;
       } else {
         const ins = await sb.from('trip_shares')
-          .insert({ user_id: CTX.user.id, token: shareSlug(), kind: 'list', note, photos, scope, destination: dest || null })
+          .insert({ user_id: CTX.user.id, token: shareSlug(), kind: 'list', note, photos, scope, destination: dest || null, category: gcat })
           .select().single();
         if (ins.error) { btn.disabled = false; btn.textContent = '⚠ didn’t save — retry'; return; }
         live = ins.data;
-        CTX.shares.set(String(live.destination || '').toLowerCase(), live);
+        CTX.shares.set(shareKey(live.destination, live.category), live);
       }
       const msg = giftMessage(cur().length, location.origin + '/s/?t=' + live.token);
       try { await navigator.clipboard.writeText(msg); btn.textContent = '✓ copied — paste it anywhere'; }
@@ -558,6 +599,7 @@ function openComposer(destSlug) {
       $('gcRevoke').hidden = false;
       const pay = { kind: 'list', n: cur().length, photos, scope, via: 'shelf' };
       if (live.destination) pay.dest = String(live.destination).toLowerCase();
+      if (live.category) pay.cat = String(live.category).toLowerCase();
       try { const s = JSON.parse(localStorage.getItem('tripos_via') || 'null'); if (s && s.token) pay.origin = s.token; } catch (_) {}
       track('share_created', pay);
       btn.disabled = false;
@@ -567,7 +609,7 @@ function openComposer(destSlug) {
       const { error } = await sb.from('trip_shares')
         .update({ revoked_at: new Date().toISOString() }).eq('id', live.id);
       if (error) { $('gcRevoke').textContent = '⚠ couldn’t revoke — retry'; return; }
-      CTX.shares.delete(String(live.destination || '').toLowerCase());
+      CTX.shares.delete(shareKey(live.destination, live.category));
       live = null;
       $('gcRevoke').textContent = 'revoke the link';
       paint();
@@ -958,7 +1000,7 @@ $('stShare').addEventListener('click', async () => {
 });
 $('stCaption').addEventListener('click', () => {
   const p = ST_PLACES[ST_CUR] || {};
-  const live = liveRowFor(ST_DEST);
+  const live = liveRowFor(ST_DEST, null);
   const cap1 = (p.been ? 'Been. Kept. ' : 'Kept. ') + p.name + ' — on my Prevoya ' +
     (ST_DEST ? cap(ST_DEST) : '') + ' list.' +
     (live ? ' Get all of them: ' + location.origin + '/s/?t=' + live.token : ' Link in bio ⚑');

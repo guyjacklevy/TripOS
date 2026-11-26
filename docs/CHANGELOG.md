@@ -3,6 +3,17 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 26 Nov 2026 — Round 17.8: per-category share links
+"Food only" is now its own sendable link. trip_shares grew a category
+column; the gift endpoint (shared-trip v17) ships only that
+category's places (honoring multi-category tags), and the gift page
+titles it honestly — "Guy saved you their Bali food." The composer
+grew category chips ("everything · food · 12 · nightlife · 9…"), each
+category holding its own standing link with its own note, scope, and
+echo; the links sheet names them ("Your Bali — food only"). Existing
+links are untouched (NULL = whole collection). Also fixed: a story
+with no own photos no longer claims "camera roll."
+
 ## 26 Nov 2026 — Round 17.7: story cards (S3)
 The composer grew "▣ Story card for one place": pick a place from the
 collection (photo-first, been-first), and the app draws a 1080×1920
