@@ -194,6 +194,26 @@ img{max-width:100%}
 .gmsg i{font-style:normal;font-family:var(--mono);font-size:.68rem;color:var(--green)}
 .grevoke{display:block;margin:12px auto 0;background:none;border:0;cursor:pointer;
   font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--soft);text-decoration:underline}
+
+/* ── the save sheet (Round 17.3): catch a place without leaving home ── */
+.svform{display:flex;gap:8px;margin-top:14px}
+.svin{flex:1;min-width:0;background:var(--paper);border:1.5px solid var(--line);border-radius:999px;
+  padding:0 16px;min-height:46px;font-family:var(--body);font-size:.92rem;color:var(--ink)}
+.svin:focus{outline:2px solid rgba(13,122,94,.4)}
+.svgo{flex:none;display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 18px;
+  border-radius:999px;background:#1c1c18;color:var(--paper);font-weight:800;font-size:.88rem;border:0;cursor:pointer;font-family:var(--body)}
+.svgo:active{transform:scale(.96)}
+.svst{margin:12px 0 0;font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--soft);min-height:1em}
+.svst a{color:var(--green);font-weight:700}
+.svrow{display:flex;align-items:center;gap:10px;margin-top:10px;background:var(--paper);
+  border:1px solid var(--line);border-radius:11px;padding:10px 12px}
+.svrow .n{min-width:0;font-size:.84rem;font-weight:800}
+.svrow .n span{display:block;font-family:var(--mono);font-weight:500;font-size:.5rem;letter-spacing:.05em;color:var(--soft);margin-top:2px}
+.svrow .sv1{margin-left:auto;flex:none;font-family:var(--body);font-weight:800;font-size:.78rem;color:var(--green);
+  border:1.5px solid rgba(13,122,94,.4);border-radius:999px;padding:9px 13px;background:none;cursor:pointer;min-height:38px}
+.svrow .sv1:active{transform:scale(.95)}
+.svrow .sv1.done{background:var(--green);color:#fff;border-color:var(--green)}
+.svrow .sv1:disabled{opacity:.55}
 </style>
 </head>
 <body>
@@ -250,7 +270,7 @@ img{max-width:100%}
   </div>
 </div>
 
-<a class="fab" href="/app/trip/#places">⚑ Save a place</a>
+<button type="button" class="fab" id="fabSave">⚑ Save a place</button>
 <nav class="tabs">
   <span class="tb on"><i>▤</i>SHELF</span>
   <a href="/app/trip/#today"><i>◔</i>TRIP</a>
@@ -263,6 +283,18 @@ img{max-width:100%}
   <p class="s">ONE LINK ANSWERS “WHERE SHOULD I GO?” — THE ECHO COMES BACK AS COUNTS, NEVER NAMES</p>
   <div id="linkRows"></div>
   <button type="button" class="mid" id="mkLink">⤴ Make a gift link</button>
+</div></div>
+
+<div class="shw" id="saveSh"><div class="sh">
+  <div class="grab"></div>
+  <h3>Save a place</h3>
+  <p class="s">THE ONE A FRIEND MENTIONED, THE ONE FROM A REEL — CATCH IT BEFORE IT'S GONE</p>
+  <form class="svform" id="svForm">
+    <input class="svin" id="svIn" type="search" placeholder="name of the place…" autocomplete="off">
+    <button type="submit" class="svgo">Find</button>
+  </form>
+  <p class="svst" id="svSt"></p>
+  <div id="svRows"></div>
 </div></div>
 
 <div class="shw" id="giftSh"><div class="sh">

@@ -3,6 +3,16 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 26 Nov 2026 — Round 17.3: saving lives on the shelf
+The ⚑ Save a place button opens a sheet instead of leaving home: type
+a name, our curated pool answers first (works signed-out — saves
+buffer in the browser), and for the signed-in the live Google door
+fetches anywhere on earth and mints the curated row, same ladder as
+the save catcher. A save answers instantly ("On your list ✓") and the
+shelf re-boots quietly, so the new place sits on top of This week —
+home visibly changes with every save, which was the retention
+expert's whole point.
+
 ## 26 Nov 2026 — Round 17.2: the composer lives on the shelf
 The send loop no longer leaves home: "Gift it" and "Make a gift link"
 open the composer as a shelf sheet — collection chips (when you have

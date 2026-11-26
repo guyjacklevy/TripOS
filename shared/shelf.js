@@ -6,7 +6,7 @@
  * everything here reads what the user already owns, plus the public echo. */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { anonList } from './anon-saves.js';
+import { anonList, anonToggle, anonMap } from './anon-saves.js';
 
 const cfg = window.TRIPOS_SUPABASE || {};
 const sb = createClient(cfg.url, cfg.anonKey);
@@ -122,6 +122,7 @@ $('linksSh').addEventListener('click', (e) => { if (e.target === $('linksSh')) $
 
 /* ── signed-in boot ── */
 async function bootSigned(user) {
+  SAVE_USER = user;
   await claimAnon(user);
   const [plR, ckR, shR, ppR, rcR] = await Promise.all([
     sb.from('places').select('id, curated_place_id, name, area, category, created_at, via_token, via_name')
@@ -291,7 +292,7 @@ function render(m) {
   if (m.current) {
     $('curName').textContent = m.current.title;
     $('curDt').textContent = m.current.dt;
-    $('curMt').textContent = m.current.n + ' PLACES' +
+    $('curMt').textContent = m.current.n + ' PLACE' + (m.current.n === 1 ? '' : 'S') +
       (m.current.been ? ' · ✓ BEEN TO ' + m.current.been : '');
     $('curStrip').innerHTML = m.current.photos.length
       ? m.current.photos.map((n) => '<img alt="" data-pn="' + esc(n) + '" src="' + esc(catSrc('explore')) + '">').join('')
@@ -525,6 +526,103 @@ function openComposer(destSlug) {
   sheet.classList.add('on');
 }
 $('giftSh').addEventListener('click', (e) => { if (e.target === $('giftSh')) $('giftSh').classList.remove('on'); });
+
+/* ── THE SAVE SHEET (Round 17.3): catch a place without leaving home.
+   Same ladder as the save catcher: our curated pool first (works
+   anonymous, buffers), then the live Google door for the signed-in
+   (places-search 'search' → 'add' mints the curated row). A save lands
+   in the places table — and on top of the This-week lane, because the
+   whole shelf re-boots after it. ── */
+let SAVE_USER = null;       /* set by bootSigned; null = anonymous */
+let svCurated = [], svGoogle = [];
+function svRow(p, i, kind) {
+  const already = SAVE_USER
+    ? (CTX && CTX.savedSet.has(String(p.id)))
+    : anonMap().has(String(p.id));
+  const sub = kind === 'g'
+    ? esc((p.area || 'found live').toUpperCase()) + ' · NOT IN THE ATLAS YET'
+    : esc([p.category, p.area].filter(Boolean).join(' · ').toUpperCase()) + (p.verified ? ' · ✓' : '');
+  return '<div class="svrow"><span class="n">' + esc(p.name) + '<span>' + sub + '</span></span>' +
+    '<button type="button" class="sv1' + (already ? ' done' : '') + '" data-k="' + kind + '" data-i="' + i + '"' +
+    (already ? ' disabled' : '') + '>' + (already ? 'On your list ✓' : '⚑ Save') + '</button></div>';
+}
+async function svSearch(q) {
+  q = String(q || '').trim();
+  if (!q) return;
+  $('svSt').textContent = 'LOOKING…';
+  $('svRows').innerHTML = '';
+  const { data: hits } = await sb.from('curated_places')
+    .select('id, name, area, category, verified')
+    .ilike('name', '%' + q.replace(/[%_]/g, '') + '%').limit(6);
+  svCurated = hits || [];
+  let html = svCurated.map((p, i) => svRow(p, i, 'c')).join('');
+  svGoogle = [];
+  if (SAVE_USER && svCurated.length < 3) {
+    try {
+      const r = await fetch(cfg.url + '/functions/v1/places-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: cfg.anonKey, Authorization: 'Bearer ' + cfg.anonKey },
+        body: JSON.stringify({ action: 'search', query: q })
+      });
+      const g = r.ok ? await r.json() : null;
+      svGoogle = ((g && g.candidates) || []).filter((c) =>
+        !svCurated.some((p) => p.name.toLowerCase() === String(c.name).toLowerCase())).slice(0, 4);
+    } catch (_) {}
+    html += svGoogle.map((c, i) => svRow(c, i, 'g')).join('');
+  }
+  if (!SAVE_USER && !svCurated.length) {
+    $('svSt').innerHTML = 'NOT IN OUR ATLAS YET — <a href="/app/trip/">SIGN IN</a> AND IT FETCHES LIVE, ANYWHERE ON EARTH.';
+  } else {
+    $('svSt').textContent = html ? '' : 'NOTHING MATCHED — TRY FEWER WORDS.';
+  }
+  $('svRows').innerHTML = html;
+}
+async function svSave(btn, kind, i) {
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  const fail = (t) => { btn.disabled = false; btn.textContent = '⚑ Save'; $('svSt').textContent = t; };
+  let p = kind === 'c' ? svCurated[i] : null;
+  if (kind === 'g') {
+    /* the live door mints the curated row first */
+    try {
+      const r = await fetch(cfg.url + '/functions/v1/places-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: cfg.anonKey, Authorization: 'Bearer ' + cfg.anonKey },
+        body: JSON.stringify({ action: 'add', place_id: svGoogle[i].google_place_id })
+      });
+      const d = r.ok ? await r.json() : null;
+      p = d && d.place;
+    } catch (_) {}
+    if (!p) return fail('COULDN’T ADD THAT ONE — TRY AGAIN.');
+  }
+  if (!p) return fail('');
+  if (SAVE_USER) {
+    const { error } = await sb.from('places').insert({
+      user_id: SAVE_USER.id, curated_place_id: p.id,
+      name: p.name, area: p.area, category: p.category, curated: true
+    });
+    if (error) return fail('DIDN’T SAVE — TRY AGAIN.');
+  } else {
+    anonToggle({ id: p.id, name: p.name, area: p.area, category: p.category });
+  }
+  track('place_saved');
+  btn.classList.add('done');
+  btn.textContent = 'On your list ✓';
+  $('svSt').textContent = 'KEPT — IT’S ON TOP OF YOUR SHELF.';
+  /* the shelf re-boots quietly: the save appears in This week */
+  if (SAVE_USER) bootSigned(SAVE_USER).catch(() => {});
+  else bootAnon();
+}
+$('fabSave').addEventListener('click', () => {
+  $('saveSh').classList.add('on');
+  setTimeout(() => { try { $('svIn').focus(); } catch (_) {} }, 260);
+});
+$('saveSh').addEventListener('click', (e) => { if (e.target === $('saveSh')) $('saveSh').classList.remove('on'); });
+$('svForm').addEventListener('submit', (e) => { e.preventDefault(); svSearch($('svIn').value); });
+$('svRows').addEventListener('click', (e) => {
+  const b = e.target.closest('.sv1');
+  if (b && !b.disabled) svSave(b, b.getAttribute('data-k'), +b.getAttribute('data-i'));
+});
 
 /* ── boot ── */
 (async function () {
