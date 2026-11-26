@@ -3,6 +3,22 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 26 Nov 2026 — Round 17.1: the app opens on the shelf
+The app's home is now the daylight shelf — the "expert cut" (D) two
+blind product reviews prescribed and Guy approved. /app/ renders: the
+This-week lane (your latest saves, so home changes with every save),
+the ask row ("someone asked for recs?" → your links with live echo
+counts and COPY), the current collection with its gift door and echo,
+the older collections as photo covers, the + New collection tile, and
+received gifts in givers' gold lanes. Anonymous visitors (receivers
+who just kept a gift) see their buffered places and a "Keep them
+safe" sign-in door; signing in claims the buffer with provenance
+intact, same as before. The planner moved — intact, untouched — one
+door away to /app/trip/ (TRIP and YOU tabs, the Save FAB, the
+composer all lead there). New RLS policy: a user can read their own
+public_profiles row (their /g link on the shelf header). The PWA
+manifest went daylight and destination-neutral.
+
 ## 26 Nov 2026 — Round 16.1: short chapters, and every place is a door
 Guy's phone notes on the daylight gift. (1) A chapter opens at 3 places
 with "Show N more in <area>" — 50 places no longer mean one long

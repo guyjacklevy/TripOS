@@ -1,20 +1,28 @@
 {
-  "name": "Prevoya — your Bali",
+  "name": "Prevoya — your places",
   "short_name": "Prevoya",
-  "description": "Your destination, decoded — personally.",
+  "description": "Save the places you discover — and give them to the people who ask.",
   "start_url": "/app/",
   "scope": "/app/",
   "display": "standalone",
   "share_target": {
     "action": "/app/save",
     "method": "GET",
-    "params": { "title": "title", "text": "text", "url": "url" }
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
   },
   "shortcuts": [
-    { "name": "Save a place", "url": "/app/save", "description": "Catch a place before the moment passes" }
+    {
+      "name": "Save a place",
+      "url": "/app/save",
+      "description": "Catch a place before the moment passes"
+    }
   ],
-  "background_color": "#0a0a14",
-  "theme_color": "#0a0a14",
+  "background_color": "#faf6ee",
+  "theme_color": "#faf6ee",
   "icons": [
     {
       "src": "/shared/brand/icon-192.png",

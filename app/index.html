@@ -3,705 +3,248 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Prevoya — your places</title>
-  <meta name="description" content="Your personal Bali — your brief, your matched places, your budget pulse.">
+  <title>Prevoya — your shelf</title>
+  <meta name="description" content="Your collections of places — saved, stamped, ready to give.">
   <meta name="robots" content="noindex">
-  <meta name="theme-color" content="#0a0a14">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Prevoya">
-  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#faf6ee">
+  <link rel="manifest" href="/app/manifest.json">
   <link rel="apple-touch-icon" href="/shared/brand/icon-192.png">
   <link rel="icon" href="/shared/brand/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/shared/brand/icon-192.png" type="image/png">
-<link rel="stylesheet" href="../shared/tripos.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* ═══ ROUND 17.1 · THE SHELF — the app's new home (expert cut, D) ═══
+   Skeleton A + C's covers/link pill/new tile + B's links sheet, plus the
+   living This-week lane and the ask row. The planner is one door away at
+   /app/trip/ (the old app, intact). Daylight world.
+   spacing scale: 12 tight · 16 caption · 24 component · 56 section */
+:root{
+  --paper:#faf6ee; --ink:#23231e; --dim:#6b6a5f; --soft:#8a8676;
+  --green:#0d7a5e; --amber:#b06c0a; --line:#e4ddcf; --card:#ffffff;
+  --body:'Nunito',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{overflow-x:hidden;overflow-x:clip}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.5}
+img{max-width:100%}
+::selection{background:rgba(13,122,94,.18)}
+
+.bar{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;gap:7px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-left,0px)) 10px max(16px,env(safe-area-inset-right,0px));
+  background:rgba(250,246,238,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(228,221,207,.6);font-weight:800;font-size:.86rem}
+.bar::before{content:"";width:12px;height:12px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 35% 35%,#2fbf8f,var(--green))}
+
+.wrap{max-width:430px;margin:0 auto;
+  padding:calc(66px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-left,0px)) 150px max(20px,env(safe-area-inset-right,0px))}
+
+.load{min-height:60vh;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;color:var(--soft);animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+
+.hd{display:flex;align-items:center;gap:12px}
+.ava{width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 32% 30%,#ffe9c4,#f0c06a);border:2.5px solid var(--card);
+  box-shadow:0 3px 10px rgba(40,30,10,.18);font-weight:900;font-size:1.15rem;color:#7a4e07}
+.hd h1{margin:0;font-size:1.25rem;font-weight:900;letter-spacing:-.01em}
+.plink{display:inline-flex;align-items:center;gap:6px;margin-top:5px;font-family:var(--mono);font-size:.6rem;
+  color:var(--green);border:1.5px solid rgba(13,122,94,.4);border-radius:999px;padding:7px 12px;cursor:pointer;background:none}
+.plink:active{transform:scale(.97)}
+
+.week{margin-top:24px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:13px 15px;box-shadow:0 4px 14px rgba(40,30,10,.08)}
+.week .t{display:flex;align-items:baseline}
+.week .t b{font-size:.98rem;font-weight:900}
+.week .t span{margin-left:auto;font-family:var(--mono);font-size:.52rem;letter-spacing:.08em;color:var(--soft)}
+.wsave{display:flex;align-items:center;gap:10px;margin-top:10px}
+.wsave img,.wsave .wph{width:40px;height:40px;border-radius:8px;object-fit:cover;flex:none;border:2px solid #fff;box-shadow:0 2px 6px rgba(40,30,10,.12)}
+.wsave .wph{display:flex;align-items:center;justify-content:center;background:#eee7d8;color:var(--soft);font-weight:900;font-size:.85rem}
+.wsave .n{min-width:0;font-size:.82rem;font-weight:800;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wsave .n span{display:block;font-family:var(--mono);font-weight:500;font-size:.5rem;letter-spacing:.05em;color:var(--soft);margin-top:1px}
+.wsave .ago{margin-left:auto;flex:none;font-family:var(--mono);font-size:.5rem;color:var(--soft)}
+.week .inv{margin:10px 0 0;font-size:.84rem;color:var(--dim)}
+.week .inv a{color:var(--green);font-weight:800}
+
+.ask{display:flex;align-items:center;gap:10px;width:100%;margin-top:12px;background:#e9f6ee;border:1px solid #cfe8da;
+  border-radius:13px;padding:12px 14px;cursor:pointer;font-family:var(--body)}
+.ask:active{transform:scale(.985)}
+.ask .q{min-width:0;font-size:.84rem;font-weight:800;color:#19513f;text-align:left}
+.ask .q span{display:block;font-family:var(--mono);font-weight:500;font-size:.52rem;letter-spacing:.06em;color:var(--green);margin-top:2px}
+.ask .chev{margin-left:auto;color:var(--green);font-weight:800}
+
+.coll{margin-top:24px;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+  box-shadow:0 6px 18px rgba(40,30,10,.1)}
+.coll .strip{display:flex;gap:2px;background:#efe9db;min-height:64px}
+.coll .strip img{aspect-ratio:1;object-fit:cover;flex:1;min-width:0;width:33%}
+.coll .bd{padding:12px 14px}
+.coll .tt{display:flex;align-items:baseline;gap:8px}
+.coll .tt b{font-size:1.02rem;font-weight:900}
+.coll .tt .dt{margin-left:auto;font-family:var(--mono);font-size:.54rem;letter-spacing:.08em;color:var(--soft)}
+.coll .mt{font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--green);margin-top:3px}
+.coll .act{display:flex;align-items:center;gap:8px;margin-top:12px}
+.gift{flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:42px;border-radius:999px;
+  background:#1c1c18;color:var(--paper);font-weight:800;font-size:.84rem;border:0;cursor:pointer;font-family:var(--body);text-decoration:none}
+.gift:active{transform:scale(.97)}
+.echo{flex:none;font-family:var(--mono);font-size:.54rem;letter-spacing:.04em;color:var(--dim);cursor:pointer;
+  border:1px solid var(--line);border-radius:999px;padding:11px 12px;background:var(--paper);font-weight:500}
+.echo b{color:var(--green);font-weight:500}
+.echo:active{transform:scale(.97)}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.gc{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);aspect-ratio:1/0.92;
+  box-shadow:0 5px 14px rgba(40,30,10,.1);text-decoration:none;color:#fdfcf7;background:#efe9db;display:block}
+.gc:active{transform:scale(.98)}
+.gc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.gc .sh{position:absolute;inset:0;background:linear-gradient(180deg,transparent 38%,rgba(10,10,8,.72) 100%)}
+.gc .nm{position:absolute;left:10px;right:10px;bottom:9px}
+.gc .nm b{font-size:.92rem;font-weight:900;display:block;line-height:1.2}
+.gc .nm span{font-family:var(--mono);font-size:.5rem;letter-spacing:.08em;color:rgba(253,252,247,.85)}
+.gc.new{border:1.5px dashed var(--line);box-shadow:none;background:var(--paper);display:flex;align-items:center;justify-content:center}
+.gc.new .plus{color:var(--dim);text-align:center;font-weight:800;font-size:.82rem;line-height:1.4}
+.gc.new .plus i{display:block;font-style:normal;font-size:1.4rem;color:var(--green)}
+.gc.new .plus em{display:block;font-style:normal;font-family:var(--mono);font-size:.48rem;letter-spacing:.06em;color:var(--soft);margin-top:2px}
+.gc .rgb{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;padding:2px;background:linear-gradient(45deg,#f0c06a,#e2766a)}
+.gc .rgb i{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;
+  background:var(--card);font-style:normal;font-weight:900;font-size:.8rem;color:var(--amber)}
+
+.sec{margin-top:56px}
+.sec h2{margin:0;font-size:1.1rem;font-weight:900;letter-spacing:-.01em}
+.sec .cc{font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;color:var(--amber);margin-top:3px}
+.lane{display:flex;align-items:center;gap:11px;margin-top:12px;background:var(--card);
+  border:1px solid #ecd9ae;border-radius:13px;padding:11px 13px;box-shadow:0 3px 10px rgba(176,108,10,.08);
+  text-decoration:none;color:var(--ink)}
+.lane:active{transform:scale(.985)}
+.lane .rg{width:40px;height:40px;border-radius:50%;flex:none;padding:2.5px;background:linear-gradient(45deg,#f0c06a,#e2766a)}
+.lane .rg i{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;
+  background:var(--card);font-style:normal;font-weight:900;color:var(--amber)}
+.lane .n{min-width:0;font-size:.86rem;font-weight:800}
+.lane .n span{display:block;font-family:var(--mono);font-weight:500;font-size:.52rem;letter-spacing:.06em;color:var(--soft);margin-top:2px}
+.lane .chev{margin-left:auto;color:var(--soft);font-weight:800}
+
+.signin{margin-top:24px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px 15px;box-shadow:0 4px 14px rgba(40,30,10,.08)}
+.signin b{font-size:.95rem;font-weight:900;display:block}
+.signin p{margin:4px 0 0;font-size:.82rem;color:var(--dim)}
+.signin a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin-top:12px;width:100%;
+  border-radius:999px;background:#1c1c18;color:var(--paper);font-weight:800;font-size:.9rem;text-decoration:none}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;
+  padding:8px max(16px,env(safe-area-inset-left,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));
+  background:rgba(250,246,238,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-top:1px solid rgba(228,221,207,.7)}
+.tabs a,.tabs span.tb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:48px;justify-content:center;
+  font-size:.62rem;font-weight:800;color:var(--soft);text-decoration:none}
+.tabs .on{color:var(--ink)}
+.tabs i{font-style:normal;font-size:1.05rem}
+.fab{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:41;
+  display:flex;align-items:center;gap:7px;min-height:50px;padding:0 18px;border-radius:999px;cursor:pointer;
+  background:var(--green);color:#fff;font-weight:900;font-size:.9rem;font-family:var(--body);text-decoration:none;
+  box-shadow:0 10px 26px rgba(13,122,94,.4)}
+.fab:active{transform:scale(.96)}
+
+.shw{position:fixed;inset:0;z-index:50;background:rgba(35,35,30,.42);display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s ease-out}
+.shw.on{opacity:1;pointer-events:auto}
+.sh{width:100%;max-width:430px;background:var(--card);border-radius:18px 18px 0 0;position:relative;
+  padding:14px 20px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -14px 44px rgba(40,30,10,.3);
+  transform:translateY(24px);transition:transform .25s cubic-bezier(.2,.9,.3,1)}
+.shw.on .sh{transform:none}
+.sh .grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto}
+.sh h3{margin:14px 0 0;font-size:1.05rem;font-weight:900}
+.sh .s{font-family:var(--mono);font-size:.54rem;letter-spacing:.08em;color:var(--soft);margin-top:3px}
+.sh .mid{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin-top:12px;
+  border-radius:999px;background:#1c1c18;border:0;color:var(--paper);font-weight:800;font-size:.88rem;cursor:pointer;
+  font-family:var(--body);text-decoration:none}
+.lnk{display:flex;align-items:center;gap:10px;margin-top:10px;background:var(--paper);
+  border:1px solid var(--line);border-radius:11px;padding:10px 12px}
+.lnk .n{min-width:0;font-size:.82rem;font-weight:800}
+.lnk .n span{display:block;font-family:var(--mono);font-weight:500;font-size:.5rem;letter-spacing:.05em;color:var(--green);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lnk .e{margin-left:auto;flex:none;font-family:var(--mono);font-size:.52rem;color:var(--dim);text-align:right}
+.lnk .e b{color:var(--green);font-weight:500}
+.lnk .cp{flex:none;font-family:var(--mono);font-size:.56rem;color:var(--green);border:1.5px solid rgba(13,122,94,.4);
+  border-radius:999px;padding:8px 11px;background:none;cursor:pointer}
+.lnk .cp:active{transform:scale(.95)}
+.sh .none{margin:12px 0 0;font-size:.84rem;color:var(--dim)}
+</style>
 </head>
 <body>
-  <div class="cosmos"></div>
-  <div class="terrain-tint"></div>
+<div class="bar">Prevoya</div>
 
-  <!-- ─── tab icon sprite (Rachel's tab-icons-v1, inlined — _agents/ is not deployed) ─── -->
-  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
-    <symbol id="tab-today" viewBox="0 0 24 24" fill="none">
-      <line x1="2" y1="16" x2="22" y2="16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M 6 16 A 6 6 0 0 1 18 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="12" y1="7" x2="12" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="7.5" y1="9.1" x2="8.9" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="16.5" y1="9.1" x2="15.1" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </symbol>
-    <symbol id="tab-places" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
-      <circle cx="12" cy="12" r="3" fill="currentColor"/>
-    </symbol>
-    <symbol id="tab-pulse" viewBox="0 0 24 24" fill="none">
-      <path d="M 4.5 18.5 A 8.5 8.5 0 1 1 19.5 18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="12" y1="13.5" x2="17.8" y2="8.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="12" cy="13.5" r="1.5" fill="currentColor"/>
-    </symbol>
-    <!-- saved-places marks (SAVED_PLACES_RULINGS R1 — ours, never unicode) -->
-    <symbol id="icon-save" viewBox="0 0 16 16"><path d="M4 2v12M4 2.5h7l-2 3 2 3H4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></symbol>
-    <symbol id="icon-saved" viewBox="0 0 16 16"><path d="M4 2v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4 2.5h7l-2 3 2 3H4z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
-    <!-- taxonomy v2 icons (LABEL_SYSTEM_RULING R1, Rachel's monoline sprites) -->
-    <symbol id="icon-dayclub" viewBox="0 0 16 16"><path d="M8 3v10M3.5 8.5a4.5 4.5 0 0 1 9 0z M5.5 13.5h5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-    <symbol id="icon-surf" viewBox="0 0 16 16"><path d="M2 10c2-3.5 4-3.5 6 0s4 3.5 6 0M2 13.5c2-2 4-2 6 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
-    <symbol id="icon-practical" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 5.5v5M5.5 8h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
-    <symbol id="icon-stay" viewBox="0 0 16 16"><path d="M3 13V7.5L8 3l5 4.5V13M3 13h10M6 13v-3h4v3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
-    <!-- taxonomy v3 (Rachel §5): rental + services; health keeps the cross -->
-    <symbol id="icon-rental" viewBox="0 0 16 16"><circle cx="4" cy="11.5" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="11.5" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6 11.5h4M10 6l2 5.5M5.5 6H9l1 2.5H6.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
-    <symbol id="icon-services" viewBox="0 0 16 16"><path d="M2.5 8.5 8.5 2.5h5v5L7.5 13.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="10.75" cy="5.25" r="1" fill="currentColor"/></symbol>
-    <symbol id="icon-health" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 5.5v5M5.5 8h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
-    <symbol id="tab-you" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="6" width="20" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="15.5" y1="6" x2="15.5" y2="18" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 1.5"/>
-      <line x1="5" y1="10.5" x2="13" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="5" y1="13.5" x2="11" y2="13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </symbol>
-  </svg>
+<div class="wrap">
+  <div class="load" id="shLoad">OPENING YOUR SHELF…</div>
 
-  <!-- ─── WELCOME — the only door (logged out) ─── -->
-  <section id="welcome" class="welcome" hidden>
-    <div class="w-inner">
-      <span class="orb planet-teal w-orb"></span>
-      <h1 class="w-title">Prevoya</h1>
-      <p class="w-line">Bali, decoded — personally.</p>
-      <!-- R4: the thing being kept stays on screen through the ask -->
-      <div class="w-draft" id="wDraft" hidden></div>
-
-      <button type="button" class="btn btn-primary w-google" id="googleBtn">
-        <svg class="g-mark" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92a8.78 8.78 0 0 0 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
-        Continue with Google
-      </button>
-
-      <button type="button" class="w-email-toggle" id="emailToggle">or continue with email</button>
-
-      <form class="auth-form w-email" id="emailForm" hidden>
-        <input class="auth-input" id="emailInput" type="email" required placeholder="you@email.com" autocomplete="email">
-        <button class="btn btn-primary" type="submit">Email me a sign-in code</button>
-      </form>
-
-      <div id="codeBlock" hidden>
-        <p class="note" style="margin-top:14px">Check your inbox — tap the link, or paste the code if your email shows one:</p>
-        <form class="log-form w-code" id="codeForm">
-          <input class="auth-input log-amt" id="codeInput" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code">
-          <button class="btn btn-primary log-btn" type="submit">Sign in</button>
-        </form>
+  <div id="shBody" hidden>
+    <header class="hd">
+      <div class="ava" id="hAva">·</div>
+      <div>
+        <h1>Your shelf</h1>
+        <button type="button" class="plink" id="hLink" hidden></button>
       </div>
+    </header>
 
-      <p class="auth-status" id="welcomeStatus" role="status"></p>
-      <p class="w-foot">No password, ever. First time? The same door creates your account.</p>
-    </div>
-  </section>
-
-  <!-- ─── PASSENGER RECORD — stage 6, once, ON the pass ─── -->
-  <section id="record" class="record" hidden>
-    <div class="mission-tag"><span class="pulse-dot"></span>Passenger record</div>
-    <p class="rec-ask">How should we address you?</p>
-    <div class="bpass">
-      <div class="bp-main">
-        <div class="bp-air">Prevoya · your personal pass</div>
-        <div class="bp-route">
-          <span class="bp-city">YOU</span><span class="bp-dash"></span><span class="bp-city bp-to">DPS</span>
-        </div>
-        <div class="bp-grid" style="margin-bottom:14px">
-          <div><span>Passenger</span><strong id="recPassenger">—</strong></div>
-          <div><span>Class</span><strong id="recClass">—</strong></div>
-          <div><span>Seat</span><strong>Window</strong></div>
-        </div>
-        <div class="title-chips" id="titleChips">
-          <button type="button" class="chip chip-btn" data-title="Mr.">Mr.</button>
-          <button type="button" class="chip chip-btn" data-title="Ms.">Ms.</button>
-        </div>
-        <input class="auth-input rec-name" id="recName" type="text" placeholder="full name" autocomplete="name">
-        <div class="rec-actions">
-          <button type="button" class="btn btn-primary" id="recSave">That’s me →</button>
-          <button type="button" class="ck-reset" id="recSkip">skip for now</button>
-        </div>
-      </div>
-      <div class="bp-stub"><div class="bp-barcode"></div><span class="bp-code">DPS · BALI</span></div>
-    </div>
-  </section>
-
-  <!-- ─── IN-APP CHECK-IN — stage B: signed in, no brief yet ─── -->
-  <section id="checkinScreen" class="record" hidden>
-    <div class="mission-tag"><span class="pulse-dot"></span>Mission briefing</div>
-    <p class="rec-ask">A few quick questions — everything personalizes.</p>
-    <div class="card checkin mission-card">
-      <div id="appCkMount"></div>
-      <div class="ck-build" id="appCkBuild" hidden>
-        <div class="ck-term" id="appCkTerm"></div>
-        <div class="ck-bar"><div class="ck-bar-fill" id="appCkFill"></div></div>
-      </div>
-      <div class="ck-dots" id="appCkDots"></div>
-    </div>
-  </section>
-
-  <!-- ─── §A · PRE-QUESTIONNAIRE — Bali is already alive (FIRST_OPEN_SPEC) ───
-       Pure corridor (Guy 2026-08-04): exactly ONE action. This screen IS the
-       pre-brief Today (§G) — no separate empty state exists. -->
-  <section id="corridorA" class="corr-a" hidden>
-    <div class="corr-a-inner">
-      <div class="orbit-dial corr-dial" id="corrDial" data-phase="day" style="--od-angle:210deg">
-        <svg viewBox="0 0 48 48" width="64" height="64" aria-hidden="true">
-          <circle cx="24" cy="24" r="20" fill="url(#odSphere)"/>
-          <path d="M12 27 q4-3 8-2 t8 0 q3 0 5 2" stroke="rgba(255,255,255,0.16)" stroke-width="2" stroke-linecap="round" fill="none"/>
-          <g class="od-night"><path d="M24 4 a20 20 0 0 1 0 40 z" fill="rgba(4,5,11,0.78)"/></g>
-          <circle class="od-rim" cx="24" cy="24" r="20.75" fill="none" stroke-width="1.5"/>
-          <circle class="od-pin" cx="31" cy="28" r="2.2"/>
-          <circle class="od-ping" cx="31" cy="28" r="2.2" fill="none" stroke-width="1.5"/>
-        </svg>
-      </div>
-      <div class="inst-strip corr-clock" id="corrClock">BALI · —:— · —</div>
-      <h1 class="corr-h1">Your month here, decoded.</h1>
-      <div class="corr-tonight" id="corrTonight" hidden></div>
-      <p class="corr-counts" id="corrCounts"></p>
-      <button type="button" class="btn btn-primary corr-cta" id="corrCta">PLAN YOUR BALI →</button>
-    </div>
-  </section>
-
-  <!-- ─── §C · REVEAL CEREMONY — the gift being unwrapped ─── -->
-  <section id="ceremony" class="ceremony" hidden>
-    <div class="cer-inner">
-      <div class="ck-build" id="cerBuild" hidden>
-        <div class="ck-term" id="cerTerm"></div>
-        <div class="ck-bar"><div class="ck-bar-fill" id="cerFill"></div></div>
-      </div>
-      <div class="cer-map" id="cerMap" hidden>
-        <svg viewBox="0 0 320 260" width="100%" aria-hidden="true">
-          <path id="cerIsland" d="M31,130 Q43,109 67,103 Q100,91 136,85 Q178,79 217,85 Q253,89.5 277,106 Q289,115 283,125.5 Q271,136 247,139 Q223,142 202,139 Q184,137.5 172,140.5 Q167.5,148 166,157 Q178,163 181,175 Q178,190 163,196 Q145,199 136,187 Q130,175 139,164.5 Q145,158.5 154,157 Q152.5,148 148,142 Q124,136 94,134.5 Q61,133 40,137.5 Q29.5,137.5 31,130 Z"
-            fill="none" stroke="var(--mut)" stroke-width="1.5" opacity="0.55"/>
-          <ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.55"/><g fill="none" stroke="var(--mut)" stroke-width="1.1" opacity="0.45"><circle cx="295" cy="146" r="2"/><circle cx="300" cy="143.5" r="2"/><circle cx="305" cy="146.5" r="2"/><ellipse cx="308" cy="190" rx="11" ry="17" transform="rotate(-8 308 190)"/></g>
-          <path id="cerTrace" d="" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>
-          <g id="cerOrbs"></g>
-        </svg>
-      </div>
-      <div class="cer-legs" id="cerLegs"></div>
-      <div class="cer-summary" id="cerSummary" hidden></div>
-      <div class="cer-pass" id="cerPass" hidden>
-        <div class="bpass">
-          <div class="bp-main">
-            <div class="bp-air">Prevoya · your personal pass</div>
-            <div class="bp-route">
-              <span class="bp-city">YOU</span><span class="bp-dash"></span><span class="bp-city bp-to">DPS</span>
-            </div>
-            <div class="bp-grid" style="margin-bottom:14px">
-              <div><span>Passenger</span><strong id="cerPassenger">—</strong></div>
-              <div><span>Class</span><strong id="cerClass">—</strong></div>
-            </div>
-            <p class="bp-rec-ask">Who’s this route for?</p>
-            <div class="title-chips" id="cerTitleChips">
-              <button type="button" class="chip chip-btn" data-title="Mr.">Mr.</button>
-              <button type="button" class="chip chip-btn" data-title="Ms.">Ms.</button>
-            </div>
-            <input class="auth-input rec-name" id="cerRecName" type="text" placeholder="full name" autocomplete="name">
-            <div class="rec-actions">
-              <button type="button" class="btn btn-primary" id="cerRecSave">That’s me →</button>
-              <button type="button" class="ck-reset" id="cerRecSkip">skip</button>
-            </div>
-          </div>
-          <div class="bp-stub"><div class="bp-barcode"></div><span class="bp-code">DPS · BALI</span></div>
-        </div>
-      </div>
-      <div class="cer-share" id="cerShare" hidden>
-        <button type="button" class="ck-reset cer-share-line" id="cerShareBtn">↗ send it to whoever’s coming</button>
-      </div>
-      <div class="cer-ask" id="cerAsk" hidden>
-        <p class="cer-ask-line">☀ want your day plan each morning?</p>
-        <div class="cer-ask-chips">
-          <button type="button" class="swap-chip" id="cerAskYes">yes</button>
-          <button type="button" class="swap-chip" id="cerAskNo">not now</button>
-        </div>
-      </div>
-      <!-- §C beat 6-7 v2 (Guy 2026-09-13 #3): share + the morning note are a
-           STAGE of their own — two doors, properly lit, then the app -->
-      <div class="cer-extras" id="cerExtras" hidden>
-        <p class="cx-reveal-kicker">// BEFORE YOU WALK IN</p>
-        <h2 class="cer-extras-h">Two things worth having.</h2>
-        <button type="button" class="cer-x-card" id="cerXShare">
-          <span class="cer-x-icon">↗</span>
-          <span class="cer-x-body"><strong>Send it to whoever’s coming</strong>
-          <span>your route as a card — one tap, any chat.</span></span>
-        </button>
-        <button type="button" class="cer-x-card" id="cerXMorning">
-          <span class="cer-x-icon">☀</span>
-          <span class="cer-x-body"><strong>Your day plan, each morning</strong>
-          <span>one note with the day’s picks. Never spam, off any time.</span></span>
-          <span class="cer-x-state" id="cerXMorningState"></span>
-        </button>
-        <button type="button" class="btn btn-primary cer-extras-go" id="cerExtrasGo">take me in →</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── SHELL (logged in) ─── -->
-  <div id="shell" hidden>
-    <nav class="nav app-top">
-      <a class="brand" href="../"><img src="/shared/brand/logo-mark.svg" width="28" height="28" alt="Prevoya" class="nav-mark">Prevoya</a>
-      <a class="nav-auth" id="appLogout" href="#">Log out</a>
-    </nav>
-
-    <div class="arrive-banner" id="arriveBanner" hidden>
-      <span class="ab-tick">✓</span>
-      <span id="arriveText">Aboard.</span>
-      <button type="button" class="ab-x" id="arriveClose" aria-label="Dismiss">✕</button>
+    <div class="week" id="week" hidden>
+      <div class="t"><b>This week</b><span id="weekN"></span></div>
+      <div id="weekRows"></div>
+      <p class="inv" id="weekInv" hidden>Nothing saved yet — <a href="/app/trip/#places">save your first place</a>, or let your <a href="/app/trip/#you">camera roll build the collection (~2 min)</a>.</p>
     </div>
 
-    <main class="panels">
-      <!-- TODAY — the concierge (orbit dial instrument per WAVE3_GLOBE_SPEC) -->
-      <section class="panel" id="panel-today">
-        <!-- Guy's hero globe (2026-08-09): the old app's centerpiece rebuilt in
-             the dial's own grammar — same 48-unit viewBox, same dayState wiring
-             (terminator/pin/rim ids untouched), rendered at hero scale with
-             graticule + glowing land + the BALI pin. Rachel: flagged for pass. -->
-        <div class="today-head today-hero">
-          <div class="orbit-dial orbit-hero" id="orbitDial" data-phase="day" style="--od-angle:210deg">
-            <svg viewBox="0 0 48 48" aria-hidden="true">
-              <defs>
-                <radialGradient id="odSphere" cx="38%" cy="32%" r="75%">
-                  <stop offset="0%" stop-color="#1e2746"/>
-                  <stop offset="70%" stop-color="#101528"/>
-                  <stop offset="100%" stop-color="#0a0a14"/>
-                </radialGradient>
-                <radialGradient id="odLand" cx="50%" cy="50%" r="50%">
-                  <!-- Rachel 2026-08-10: 0.35 peak — light, not landmass -->
-                  <stop offset="0%" stop-color="#3dffd0" stop-opacity="0.35"/>
-                  <stop offset="65%" stop-color="#3dffd0" stop-opacity="0.16"/>
-                  <stop offset="100%" stop-color="#3dffd0" stop-opacity="0"/>
-                </radialGradient>
-              </defs>
-              <circle cx="24" cy="24" r="20" fill="url(#odSphere)"/>
-              <ellipse cx="24" cy="24" rx="20" ry="7.5" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.35"/>
-              <ellipse cx="24" cy="24" rx="20" ry="14.5" fill="none" stroke="rgba(255,255,255,0.045)" stroke-width="0.35"/>
-              <ellipse cx="24" cy="24" rx="7.5" ry="20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.35"/>
-              <ellipse cx="24" cy="24" rx="14.5" ry="20" fill="none" stroke="rgba(255,255,255,0.045)" stroke-width="0.35"/>
-              <ellipse cx="16.5" cy="16.5" rx="7" ry="4.6" fill="url(#odLand)" transform="rotate(-18 16.5 16.5)"/>
-              <ellipse cx="32.5" cy="20" rx="5" ry="3.4" fill="url(#odLand)" transform="rotate(14 32.5 20)" opacity="0.85"/>
-              <ellipse cx="19.5" cy="31.5" rx="4.6" ry="3" fill="url(#odLand)" transform="rotate(8 19.5 31.5)" opacity="0.7"/>
-              <path d="M12 27 q4-3 8-2 t8 0 q3 0 5 2" stroke="rgba(255,255,255,0.14)" stroke-width="0.8" stroke-linecap="round" fill="none"/>
-              <path d="M15 20 q3-1.5 6-1" stroke="rgba(255,255,255,0.09)" stroke-width="0.6" stroke-linecap="round" fill="none"/>
-              <g class="od-night"><path d="M24 4 a20 20 0 0 1 0 40 z" fill="rgba(4,5,11,0.78)"/></g>
-              <circle class="od-rim" cx="24" cy="24" r="20.75" fill="none" stroke-width="0.6"/>
-              <circle class="od-halo" cx="31" cy="28" r="2.6" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.3"/>
-              <circle class="od-pin" cx="31" cy="28" r="1.4"/>
-              <circle class="od-ping" cx="31" cy="28" r="1.4" fill="none" stroke-width="0.55"/>
-              <text class="od-lbl" x="31" y="33.8" text-anchor="middle">BALI</text>
-            </svg>
-          </div>
-          <div class="today-head-text">
-            <div class="inst-strip" id="todayStrip" style="padding:0">— · — · —</div>
-            <div class="inst-strip" id="todayStrip2" style="padding:0">— · —</div>
-            <!-- S1.1 · the plan, demoted: renders only when reality ≠ route -->
-            <div class="today-ctx" id="todayStrip3" hidden></div>
-          </div>
-        </div>
-        <h2 class="panel-h" id="todayGreet">Today</h2>
-        <!-- 1.2 (Guy): the budget strip left Today — money lives in Pulse -->
-        <a class="fuel-strip ready-nudge" href="#you" id="readyNudge" hidden></a>
-
-        <!-- §E · the one re-ask: 'not now' yesterday → this banner, morning of
-             day 2, dismissible forever. Never a push, never a third ask. -->
-        <div class="cer-ask reask" id="reaskBanner" hidden>
-          <p class="cer-ask-line">☀ want your day plan each morning?</p>
-          <div class="cer-ask-chips">
-            <button type="button" class="swap-chip" id="reaskYes">yes</button>
-            <button type="button" class="swap-chip" id="reaskNo">not now</button>
-          </div>
-        </div>
-
-        <!-- MASTER CONTROL (MASTER_CONTROL_SURFACE_SPEC S1/S4): the field is
-             the steering wheel — tell me anything; I'll do it or take you
-             there. The billboard button dies; a send affordance lives inside. -->
-        <form class="cx-form cx-master" id="cxForm" hidden>
-          <input class="auth-input cx-field" id="cxInput" type="text" maxlength="200" autocomplete="off"
-            placeholder="tell me anything">
-          <button class="cx-send" type="submit" aria-label="send">
-            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 3.5 13.5 8 9 12.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </form>
-        <p class="pulse-note cx-line" id="cxNote" hidden></p>
-        <div class="rf-chips mc-chips" id="cxChips" hidden></div>
-
-        <!-- A2 · zero-friction check-in: one tap, nearest places suggested -->
-        <div class="gps-row">
-          <button type="button" class="ri-replan" id="gpsBtn">◉ CHECK IN — I’M HERE</button>
-        </div>
-        <div id="gpsSheet" class="gps-sheet" hidden></div>
-        <!-- S1.3 · the re-flow proposal — the concierge asks, never commands -->
-        <div class="reflow-bubble" id="reflowBubble" hidden></div>
-        <!-- the day scrubber rides ABOVE the plan (Guy 2026-08-28): an index
-             must be visible before the thing it indexes -->
-        <div class="it-strip" id="itStrip" hidden></div>
-        <div class="timeline" id="timeline"></div>
-        <!-- S2 · THE ITINERARY — the days ahead (REALITY_FIRST_SURFACE_SPEC):
-             scrolling down IS scrolling forward in time. No toggle. -->
-        <div class="itinerary" id="itinerary"></div>
-      </section>
-
-      <!-- YOUR BALI — ROUND 6 (Guy: B): the front door is the living
-           collection. Home = your saves, photo-led, gift door on top; the
-           full shelf is one visible door down. On-trip the home wakes: live
-           line + distance sort (painted by app.js, never a permission ask). -->
-      <section class="panel" id="panel-places">
-        <div class="home-bali" id="homeBali" hidden>
-          <h2 class="hb-title">Your places</h2>
-          <p class="hb-counts" id="hbCounts" hidden></p>
-          <!-- ROUND 10: the one-pass photo import — quiet door + background progress -->
-          <button type="button" class="hb-import" id="hbImport" hidden></button>
-          <div class="hb-prog" id="hbProg" hidden></div>
-          <div class="hb-live" id="hbLive" hidden></div>
-          <!-- the gift door (Week 3): your collection has a name and one verb -->
-          <div class="gift-door" id="giftDoor" role="button" hidden></div>
-          <div class="places-grid hb-grid" id="hbGrid"></div>
-          <div class="hb-route" id="hbRoute" role="button" hidden></div>
-          <button type="button" class="hb-browse" id="hbBrowse" hidden>+ find more places — <em>browse the shelf →</em></button>
-          <div class="hb-empty" id="hbEmpty" hidden>
-            <p class="hb-e1">Your collection starts<br>with one save.</p>
-            <p class="hb-e2" id="hbE2"></p>
-            <button type="button" class="hb-e3" id="hbBrowse0">browse the shelf →</button>
-          </div>
-        </div>
-        <div id="shelfWrap" hidden>
-        <button type="button" class="row-back hb-back" id="shelfBack">← your Bali</button>
-        <div class="altitude-bar" style="margin-top:14px">
-          <span class="alt-label">ALTITUDE</span>
-          <span class="alt-value" id="appAlt">-- ft</span>
-          <span class="alt-label">↓ DESCENDING</span>
-        </div>
-        <div class="coord-display">
-          <span>8°S 115°E</span>
-          <span class="coord-sep">·</span>
-          <span id="appCoordArea">ALL AREAS</span>
-        </div>
-        <input class="auth-input place-search" id="appPlaceSearch" type="search" placeholder="🔎 search a place — or find it on Google Maps" autocomplete="off">
-        <div class="area-cards" id="appAreaBar"></div>
-        <div class="filters legend" id="appCatBar"></div>
-        <div class="discover" id="appDiscover" hidden></div>
-        <div class="places-status" id="appPlacesStatus">
-          <div class="scan-state">
-            <div class="scan-line"></div>
-            <p class="scan-text">SCANNING BALI</p>
-            <p class="scan-sub">Pulling curated intel…</p>
-          </div>
-        </div>
-        <div class="places-grid" id="appPlacesGrid"></div>
-        </div><!-- /shelfWrap -->
-      </section>
-
-      <!-- PULSE -->
-      <section class="panel" id="panel-pulse">
-        <div class="inst-strip">FUEL · IDR</div>
-        <h2 class="panel-h">Budget pulse</h2>
-        <div class="card pulse-card">
-          <div class="pulse-row">
-            <div class="cell"><span class="k">Spent today</span><strong id="pulseSpent">0k</strong></div>
-            <button type="button" class="cell cell-edit" id="budgetCell" title="Tap to edit your daily budget">
-              <span class="k">Daily budget</span><strong id="pulseBudget">–</strong>
-              <span class="tap-hint">✎ tap to edit</span>
-            </button>
-            <div class="cell"><span class="k">Still yours</span><strong id="pulseLeft" class="pulse-teal">–</strong></div>
-          </div>
-          <form class="log-form add-form" id="budgetEdit" hidden>
-            <input class="auth-input log-amt" id="budgetInput" type="number" min="50" step="10" placeholder="daily · k IDR" inputmode="numeric">
-            <button class="btn btn-primary log-btn" type="submit">Set</button>
-          </form>
-          <div class="ck-bar"><div class="ck-bar-fill" id="pulseFill"></div></div>
-          <p class="pulse-note" id="pulseNote"></p>
-          <div class="quick-top">
-            <span class="k-head">Quick log</span>
-            <button type="button" class="ck-reset" id="presetEditBtn" style="margin-top:0">✎ edit</button>
-          </div>
-          <p class="sec-context" id="presetHint" hidden>Editing: tap <strong>✕</strong> on a chip to remove it · add your own below.</p>
-          <div class="quick-log" id="quickLog"></div>
-          <form class="preset-add" id="presetAdd" hidden>
-            <input class="auth-input" id="presetLabel" type="text" placeholder="name · 🍜 My warung" maxlength="24">
-            <input class="auth-input" id="presetAmt" type="number" min="1" placeholder="k IDR" inputmode="numeric">
-            <select class="auth-input" id="presetCat" aria-label="preset category">
-              <option value="food">food</option><option value="transport">transport</option>
-              <option value="wellness">wellness</option><option value="nightlife">nightlife</option>
-              <option value="accommodation">stay</option><option value="admin">admin</option>
-            </select>
-            <button class="btn btn-primary log-btn" type="submit">Add</button>
-            <span class="amt-preview" id="presetPreview"></span>
-          </form>
-          <form class="log-form" id="logForm">
-            <input class="auth-input log-amt" id="logAmt" type="number" min="1" step="1" placeholder="k IDR" inputmode="numeric">
-            <select class="auth-input log-cat" id="logCat" aria-label="category">
-              <option value="food">food</option><option value="transport">transport</option>
-              <option value="wellness">wellness</option><option value="nightlife">nightlife</option>
-              <option value="accommodation">stay</option><option value="admin">admin</option>
-            </select>
-            <button class="btn btn-primary log-btn" type="submit">Log</button>
-          </form>
-          <div class="log-extras">
-            <span class="amt-preview" id="amtPreview">amounts are in thousands · 150 = 150,000 IDR</span>
-            <label class="retro-date"><span class="k">date</span><input class="auth-input" id="logDate" type="date"></label>
-          </div>
-          <p class="auth-status" id="logStatus" role="status"></p>
-        </div>
-
-        <!-- pace — v19's soul, restored -->
-        <div class="card pace-card">
-          <div class="pace-top">
-            <span class="k-head">Pace · this month</span>
-            <strong id="paceDelta" class="pace-delta">—</strong>
-          </div>
-          <div class="day-strip" id="dayStrip" aria-hidden="true"></div>
-          <div class="pulse-row">
-            <div class="cell"><span class="k">Month so far</span><strong id="paceSpent">–</strong></div>
-            <div class="cell"><span class="k">Budget to date</span><strong id="paceBudget">–</strong></div>
-            <div class="cell"><span class="k">Projected month</span><strong id="paceProj">–</strong></div>
-          </div>
-          <p class="pulse-note" id="paceNote"></p>
-        </div>
-
-        <!-- where it goes -->
-        <div class="card cat-card">
-          <span class="k-head">Categories · this month</span>
-          <div id="catBars" class="cat-bars"></div>
-        </div>
-
-        <!-- recent, tap ✕ to delete -->
-        <div class="card recent-card">
-          <span class="k-head">Recent</span>
-          <ul class="spend-list" id="spendList"></ul>
-        </div>
-      </section>
-
-      <!-- YOU -->
-      <section class="panel" id="panel-you">
-        <div class="inst-strip">PASSENGER RECORD</div>
-        <h2 class="panel-h">Your pass</h2>
-        <!-- A1: You is the trip's identity page — the index row kills the long scroll -->
-        <div class="you-index" id="youIndex">
-          <button type="button" data-goto="youPassport" class="on">passport</button>
-          <button type="button" data-goto="youPass">pass</button>
-          <button type="button" data-goto="youRoute">route</button>
-          <button type="button" data-goto="readyCard">ready</button>
-          <button type="button" data-goto="packCard">pack</button>
-        </div>
-        <!-- the JUMP (Guy): reach any section from anywhere in the tab —
-             a floating door above the tab bar; menu mirrors the index -->
-        <button type="button" class="you-jump" id="youJump" aria-label="jump to a section">☰</button>
-        <div class="you-jump-menu" id="youJumpMenu" hidden></div>
-        <!-- A1 · THE PASSPORT — the asset, and the tab's headline (Guy
-             2026-09-08: "the most important thing here" — it leads). -->
-        <div class="card passport-card" id="youPassport">
-          <div class="pp-head" id="ppHead">YOUR BALI</div>
-          <!-- A3 · sharing: explicit, revocable, boundary stated plainly -->
-          <div class="pp-share-row">
-            <button type="button" class="ri-replan" id="ppShare">↗ SHARE TRIP</button>
-            <button type="button" class="ri-replan" id="ppReplay" hidden>▶ replay</button>
-            <button type="button" class="ck-reset" id="ppEditBtn">edit stamps</button>
-          </div>
-          <div class="pp-share-sheet" id="ppShareSheet" hidden></div>
-          <div class="pp-toggle" id="ppToggle">
-            <button type="button" data-v="place" class="on">BY PLACE</button>
-            <button type="button" data-v="day">BY DAY</button>
-          </div>
-          <div class="pp-filter" id="ppFilter"></div>
-          <div id="ppBody"></div>
-          <!-- A2 v2 · the stamping SESSION (Guy+Alex fusion, 2026-08-11):
-               sticky day + stepper + type-ahead that stamps instantly.
-               Opened by "+" on any BY DAY row, or by the button below. -->
-          <button type="button" class="ck-reset" id="ppRetro">+ stamp a past day</button>
-        </div>
-        <div class="bpass" id="youPass">
-          <div class="bp-main">
-            <div class="bp-air">Prevoya · your personal pass</div>
-            <div class="bp-route">
-              <span class="bp-city">YOU</span><span class="bp-dash"></span><span class="bp-city bp-to">DPS</span>
-            </div>
-            <p class="bp-sub" id="briefLine">Loading your brief…</p>
-            <div class="bp-grid" id="briefGrid"></div>
-            <!-- F3 (UX audit): the record lives ON the pass — identity is the
-                 victory lap after the route lands, never a toll booth before it -->
-            <div class="bp-record" id="bpRecord" hidden>
-              <p class="bp-rec-ask">Who’s this route for?</p>
-              <div class="title-chips" id="bpTitleChips">
-                <button type="button" class="chip chip-btn" data-title="Mr.">Mr.</button>
-                <button type="button" class="chip chip-btn" data-title="Ms.">Ms.</button>
-              </div>
-              <input class="auth-input rec-name" id="bpRecName" type="text" placeholder="full name" autocomplete="name">
-              <div class="rec-actions">
-                <button type="button" class="btn btn-primary" id="bpRecSave">That’s me →</button>
-                <button type="button" class="ck-reset" id="bpRecSkip">skip</button>
-              </div>
-              <p class="auth-status" id="bpRecStatus" role="status"></p>
-            </div>
-            <div style="display:flex;gap:18px;flex-wrap:wrap">
-              <a class="ck-reset" href="../bali/#checkin" id="briefEdit">↺ change my brief</a>
-              <a class="ck-reset" id="recEdit">✎ update passenger record</a>
-            </div>
-          </div>
-          <div class="bp-stub"><div class="bp-barcode"></div><span class="bp-code">DPS · BALI</span></div>
-        </div>
-
-        <!-- AI-1a · the route instrument: the pass says who you are, the route
-             says the shape of your trip. Suppressed entirely below 2 legs. -->
-        <div id="youRoute" hidden></div>
-
-        <div class="stamp-sheet" id="stampSheet" hidden>
-          <div class="ss-day">
-            <button type="button" class="ss-step" id="ssPrev" aria-label="previous day">◂</button>
-            <span class="ss-date" id="ssDate">—</span>
-            <button type="button" class="ss-step" id="ssNext" aria-label="next day">▸</button>
-            <button type="button" class="ss-close" id="ssClose" aria-label="close">✕</button>
-          </div>
-          <input class="auth-input ss-find" id="ssFind" type="text" placeholder="type a place — tap to stamp" autocomplete="off">
-          <div class="ss-suggest" id="ssSuggest"></div>
-          <div class="ss-chips" id="ssChips"></div>
-        </div>
-
-        <!-- install — the retention lever: on the home screen or forgotten -->
-        <div class="card install-card" id="installCard">
-          <div class="ready-top">
-            <span class="k-head">Take Prevoya home</span>
-            <strong class="pace-delta good" id="installedMark" hidden>✓ installed</strong>
-          </div>
-          <p class="sec-context" id="installWhy">Put it on your home screen — it opens full-screen, instantly, like the app it is. No browser bar, no typing URLs on a scooter.</p>
-          <button class="btn btn-primary" id="installBtn" hidden style="width:100%">➕ Install Prevoya</button>
-          <div id="iosSteps" hidden>
-            <div class="ios-step"><span class="ios-n">1</span><span>Tap <strong>Share</strong> <span class="ios-glyph">⬆</span> in Safari’s toolbar below</span></div>
-            <div class="ios-step"><span class="ios-n">2</span><span>Scroll and choose <strong>Add to Home Screen</strong> <span class="ios-glyph">➕</span></span></div>
-          </div>
-          <p class="sec-context" id="installFallback" hidden>Use your browser’s menu → <strong>Install app</strong> / <strong>Add to Home Screen</strong>.</p>
-        </div>
-
-        <!-- readiness — visa, admin, gear (duration-aware, from the brief) -->
-        <div class="card ready-card" id="readyCard">
-          <div class="ready-top">
-            <span class="k-head">Readiness</span>
-            <strong id="readyPct" class="pace-delta">—</strong>
-          </div>
-          <p class="sec-context">Visa, insurance, gear — generated for <em>your</em> trip length. Tick things off; the pass tracks how ready you are.</p>
-          <ul class="check-list" id="pretripList"></ul>
-          <form class="log-form add-form" id="pretripAdd">
-            <input class="auth-input" id="pretripInput" type="text" placeholder="add your own…" maxlength="80">
-            <button class="btn btn-primary log-btn" type="submit">Add</button>
-          </form>
-        </div>
-
-        <!-- packing — generated from the brief; repack mode on every move -->
-        <div class="card pack-card" id="packCard">
-          <div class="ready-top">
-            <span class="k-head">Packing</span>
-            <button type="button" class="place-maps" id="repackBtn">🎒 Repack mode</button>
-          </div>
-          <p class="sec-context">Your kit for this brief. Moving place? Run <strong>Repack mode</strong> — check things into the bag, and anything left behind lands in the missing log.</p>
-          <form class="log-form add-form" id="repackStart" hidden>
-            <input class="auth-input" id="repackLoc" type="text" placeholder="packing up from where? e.g. Canggu villa" maxlength="60">
-            <button class="btn btn-primary log-btn" type="submit">Start</button>
-          </form>
-          <p class="pulse-note" id="repackHint" hidden>Check things off as they go in the bag. Anything left unchecked lands in the missing log.</p>
-          <ul class="check-list" id="packList"></ul>
-          <form class="log-form add-form" id="packAdd">
-            <input class="auth-input" id="packInput" type="text" placeholder="add an item…" maxlength="80">
-            <button class="btn btn-primary log-btn" type="submit">Add</button>
-          </form>
-          <button class="btn btn-primary" id="repackDone" hidden style="width:100%;margin-top:12px">Done packing — log what's missing</button>
-          <div id="missingWrap" hidden>
-            <span class="k-head" style="margin-top:18px">Missing log</span>
-            <ul class="spend-list" id="missingList"></ul>
-          </div>
-        </div>
-
-        <!-- curation desk — ADMINS ONLY (RLS-gated; hidden for everyone else).
-             The credibility ratchet: discovered ◔ places get reviewed here and
-             promoted to verified ✓, or rejected out of the dataset. -->
-        <div class="card curate-card" id="curateCard" hidden>
-          <div class="ready-top">
-            <span class="k-head">Curation desk</span>
-            <strong class="pace-delta" id="curateCount">—</strong>
-          </div>
-          <p class="sec-context">Places the engine discovered on Google, awaiting your eye. Verify what's real (write the why — that's the product), reject what isn't.</p>
-          <div id="curateList"></div>
-        </div>
-
-        <div class="card acct-card">
-          <div class="acct-row"><span class="k">Signed in as</span><strong id="acctEmail">—</strong></div>
-          <!-- PUSH_SPEC: the user-initiated door to the morning note — the only
-               way to opt in outside §E's ceremony ask + day-2 re-ask -->
-          <div class="acct-row"><span class="k">Morning note</span>
-            <button type="button" class="ck-reset" id="morningToggle" style="margin-top:0">—</button></div>
-          <div class="acct-row"><span class="k">Version</span><span>v3 · wave 2</span></div>
-        </div>
-      </section>
-    </main>
-
-    <!-- F4 (UX audit): stale PWA builds get the quiet chip — no modal, no
-         auto-reload (could eat an in-progress check-in) -->
-    <button type="button" class="update-chip" id="updateChip" hidden>
-      ↻ new version · tap to refresh<span class="uc-x" role="button" aria-label="dismiss">✕</span>
+    <button type="button" class="ask" id="ask" hidden>
+      <span class="q">Someone asked for recs?<span id="askSub">ANSWER WITH ONE LINK</span></span>
+      <span class="chev">›</span>
     </button>
 
-    <!-- ─── tab bar ─── -->
-    <!-- ─── M4 · THE WRAPPED MOMENT (WRAPPED_MOMENT_SPEC) — the map replays.
-         Full-screen film, tab bar stays (the user is home). Tap = skip. -->
-    <section id="wrapReplay" class="wrap-replay" hidden>
-      <div class="wr-stage">
-        <div class="wr-greet" id="wrGreet"></div>
-        <div class="wr-head" id="wrHead"></div>
-        <div class="wr-mapwrap">
-          <svg viewBox="0 0 320 260" width="100%" aria-hidden="true">
-            <path id="wrIsland" d="M31,130 Q43,109 67,103 Q100,91 136,85 Q178,79 217,85 Q253,89.5 277,106 Q289,115 283,125.5 Q271,136 247,139 Q223,142 202,139 Q184,137.5 172,140.5 Q167.5,148 166,157 Q178,163 181,175 Q178,190 163,196 Q145,199 136,187 Q130,175 139,164.5 Q145,158.5 154,157 Q152.5,148 148,142 Q124,136 94,134.5 Q61,133 40,137.5 Q29.5,137.5 31,130 Z"
-              fill="none" stroke="var(--mut)" stroke-width="1.5"/>
-            <ellipse cx="229" cy="175" rx="12" ry="8.25" transform="rotate(-14 229 175)" fill="none" stroke="var(--mut)" stroke-width="1.2" opacity="0.7"/><g fill="none" stroke="var(--mut)" stroke-width="1.1" opacity="0.45"><circle cx="295" cy="146" r="2"/><circle cx="300" cy="143.5" r="2"/><circle cx="305" cy="146.5" r="2"/><ellipse cx="308" cy="190" rx="11" ry="17" transform="rotate(-8 308 190)"/></g>
-            <path id="wrTrace" d="" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>
-            <g id="wrDots"></g>
-            <g id="wrOrbs"></g>
-          </svg>
-          <span class="wr-ticker" id="wrTicker" hidden></span>
-        </div>
-        <div class="wr-counts" id="wrCounts"></div>
-        <div class="wr-records" id="wrRecords"></div>
-        <div class="wr-final" id="wrFinal" hidden>
-          <img class="wr-card" id="wrCard" alt="your journey card" hidden>
-          <p class="wr-truth">built from where you actually went</p>
-          <div class="wr-chips">
-            <button type="button" class="ri-replan" id="wrShareFilm" hidden>↗ SHARE THE FILM</button>
-            <button type="button" class="ri-replan" id="wrShareCard">↗ SHARE THE CARD</button>
-            <button type="button" class="ck-reset" id="wrAgain">↻ replay</button>
-            <button type="button" class="ck-reset" id="wrClose">done</button>
-          </div>
-          <p class="wr-truth" id="wrFilmNote" hidden>this video is yours — once sent, it’s sent.</p>
+    <div class="coll" id="cur" hidden>
+      <div class="strip" id="curStrip"></div>
+      <div class="bd">
+        <div class="tt"><b id="curName"></b><span class="dt" id="curDt"></span></div>
+        <p class="mt" id="curMt"></p>
+        <div class="act">
+          <button type="button" class="gift" id="curGift">⤴ Gift it — one link</button>
+          <button type="button" class="echo" id="curEcho" hidden></button>
         </div>
       </div>
-      <div class="wr-progress"><div class="wr-progress-fill" id="wrFill"></div></div>
-    </section>
-
-    <nav class="tab-bar" id="tabBar">
-      <span class="runway" id="runway"></span>
-      <!-- ROUND 6 (Guy: B, 16 Nov): the collection IS the front door — the
-           tab wears its true name and boots first; Today is one tap over -->
-      <button type="button" class="tab-slot" data-tab="places"><svg class="tab-ic"><use href="#tab-places"/></svg><span>YOUR PLACES</span></button>
-      <button type="button" class="tab-slot" data-tab="today"><svg class="tab-ic"><use href="#tab-today"/></svg><span>TODAY</span></button>
-      <button type="button" class="tab-slot" data-tab="pulse"><svg class="tab-ic"><use href="#tab-pulse"/></svg><span>PULSE</span></button>
-      <button type="button" class="tab-slot" data-tab="you"><svg class="tab-ic"><use href="#tab-you"/></svg><span>YOU</span></button>
-    </nav>
-  </div>
-
-  <!-- the gift composer (Week 3): note + photo consent + prewritten message -->
-  <div class="gift-sheet" id="giftSheet" hidden>
-    <div class="gift-sheet-card">
-      <h3 class="gift-sheet-h" id="giftH">Gift your Bali</h3>
-      <p class="gift-sheet-sub" id="giftSub"></p>
-      <!-- ROUND 9: one light pick — the keepers (default) or everything -->
-      <div class="gift-scope" id="giftScope" hidden></div>
-      <textarea class="gift-note-in" id="giftNote" maxlength="280" placeholder="a note in your words — it leads the page"></textarea>
-      <label class="gift-consent"><input type="checkbox" id="giftPhotos" checked><span id="giftPhotosLbl">include my photos — they travel only with this gift</span></label>
-      <div class="gift-msg" id="giftMsg"></div>
-      <div class="gift-acts">
-        <button type="button" class="btn btn-primary" id="giftCopy">copy message + link</button>
-        <button type="button" class="ck-reset" id="giftRevoke" hidden>revoke the link</button>
-        <button type="button" class="ck-reset" id="giftClose">close</button>
-      </div>
-      <p class="gift-priv" id="giftPriv">revoke any time — the link and the photos die instantly</p>
     </div>
-  </div>
 
-  <script src="../shared/supabase-config.js"></script>
-  <script src="../shared/track.js"></script>
-  <script type="module" src="../shared/app.js"></script>
-  <script defer src="/_vercel/insights/script.js"></script>
+    <div class="grid" id="shelfGrid"></div>
+
+    <div class="signin" id="signin" hidden>
+      <b>Keep them safe</b>
+      <p>Your saves live only in this browser until you sign in. Free, no password — an email code keeps them forever.</p>
+      <a href="/app/trip/">Sign in — keep my places</a>
+    </div>
+
+    <section class="sec" id="recSec" hidden>
+      <h2>Given to you</h2>
+      <p class="cc" id="recCc">THEIR COLLECTIONS STAY THEIRS — TAKE WHAT YOU LOVE</p>
+      <div id="recRows"></div>
+    </section>
+  </div>
+</div>
+
+<a class="fab" href="/app/trip/#places">⚑ Save a place</a>
+<nav class="tabs">
+  <span class="tb on"><i>▤</i>SHELF</span>
+  <a href="/app/trip/#today"><i>◔</i>TRIP</a>
+  <a href="/app/trip/#you"><i>☉</i>YOU</a>
+</nav>
+
+<div class="shw" id="linksSh"><div class="sh">
+  <div class="grab"></div>
+  <h3>Your links</h3>
+  <p class="s">ONE LINK ANSWERS “WHERE SHOULD I GO?” — THE ECHO COMES BACK AS COUNTS, NEVER NAMES</p>
+  <div id="linkRows"></div>
+  <a class="mid" href="/app/trip/#places">⤴ Make a new gift link</a>
+</div></div>
+
+<script src="/shared/supabase-config.js"></script>
+<script src="/shared/track.js"></script>
+<script type="module" src="/shared/shelf.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
