@@ -262,6 +262,21 @@ img{max-width:100%}
 .ydoor.em b{color:var(--green)}
 .yout{display:block;margin:24px auto 0;background:none;border:0;cursor:pointer;
   font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--soft);text-decoration:underline}
+
+/* ── the story card maker (Round 17.7 · S3) ── */
+.mid2{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin-top:10px;
+  border-radius:999px;background:none;border:1.5px solid var(--line);color:var(--ink);font-weight:800;
+  font-size:.88rem;cursor:pointer;font-family:var(--body)}
+.mid2:active{transform:scale(.97)}
+.stpick{display:flex;gap:8px;overflow-x:auto;margin-top:14px;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.stpick button{flex:none;width:92px;background:none;border:0;cursor:pointer;font-family:var(--body);padding:0;text-align:center}
+.stpick img{width:92px;height:92px;border-radius:12px;object-fit:cover;border:2.5px solid transparent;background:#eee7d8}
+.stpick button.on img{border-color:var(--green)}
+.stpick span{display:block;font-size:.62rem;font-weight:800;line-height:1.2;margin-top:4px;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stprev{display:block;width:min(62%,220px);margin:14px auto 0;border-radius:14px;
+  box-shadow:0 10px 30px rgba(40,30,10,.25);border:1px solid var(--line)}
+.stst{margin:10px 0 0;text-align:center;font-family:var(--mono);font-size:.54rem;letter-spacing:.08em;color:var(--soft);min-height:1em}
 </style>
 </head>
 <body>
@@ -385,7 +400,19 @@ img{max-width:100%}
   <label class="gphoto"><input type="checkbox" id="gcPhotos" checked><span id="gcPhotosLbl">include my photos — they travel only with this gift</span></label>
   <div class="gmsg" id="gcMsg"></div>
   <button type="button" class="mid" id="gcCopy">copy message + link</button>
+  <button type="button" class="mid2" id="gcStory">▣ Story card for one place — 9:16</button>
   <button type="button" class="grevoke" id="gcRevoke" hidden>revoke the link</button>
+</div></div>
+
+<div class="shw" id="storySh"><div class="sh">
+  <div class="grab"></div>
+  <h3 id="stH">A story card</h3>
+  <p class="s">9:16 FOR YOUR STORY — “⚑ GET THE PLACE” SENDS THEM TO THE LINK IN YOUR BIO</p>
+  <div class="stpick" id="stPick"></div>
+  <img class="stprev" id="stPrev" alt="Story card preview" hidden>
+  <p class="stst" id="stSt"></p>
+  <button type="button" class="mid" id="stShare" hidden>⤴ Share it</button>
+  <button type="button" class="mid2" id="stCaption" hidden>copy a caption for the post</button>
 </div></div>
 
 <script src="/shared/supabase-config.js"></script>

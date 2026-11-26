@@ -428,6 +428,7 @@ function render(m) {
    scoped; keepers = photo ∪ worth-it ∪ saved; quiet categories never
    count; share_created carries the origin for generation-2 K. ── */
 let CTX = null;
+let GC_DEST = null; /* the composer's open collection (the story card follows it) */
 const QUIET = new Set(['practical', 'stay', 'health', 'services']);
 const shareSlug = () => {
   const a = new Uint8Array(16); crypto.getRandomValues(a);
@@ -469,6 +470,7 @@ function openComposer(destSlug) {
       : 'I made you a list of my ' + destName() + ' places — ' + n + ' spot' + (n === 1 ? '' : 's') + ' I vouch for. ') + link;
 
   const paint = () => {
+    GC_DEST = dest;
     live = liveRowFor(dest);
     const scopeD = (live && !live.destination) ? null : dest;
     const all = giftable('all', scopeD);
@@ -799,6 +801,171 @@ function applyHash() {
   else { $('youView').hidden = true; showShelf(); }
 }
 window.addEventListener('hashchange', applyHash);
+
+/* ── THE STORY CARD (Round 17.7 · S3): a 9:16 card for one place,
+   drawn on canvas in the daylight brand and handed to the OS share
+   sheet. Photos: the place's real Google photo (display-time, credited
+   on the card) with the category art as the honest floor. The card
+   says "link in bio" — the collection link IS the loop's door. ── */
+let ST_DEST = null, ST_PLACES = [], ST_CUR = -1, ST_BLOB = null;
+function openStory(destSlug) {
+  ST_DEST = destSlug;
+  const g = CTX && CTX.groups && CTX.groups.get(destSlug || '—');
+  if (!g) return;
+  /* photo-first, been-first — the card wants a face */
+  ST_PLACES = g.items.slice().map((r) => {
+    const c = CTX.cmap.get(String(r.curated_place_id)) || {};
+    return { id: String(r.curated_place_id), name: r.name, area: r.area,
+      category: r.category, photo_name: c.photo_name || null,
+      been: CTX.stampSet.has(String(r.curated_place_id)),
+      worth: CTX.worthSet.has(String(r.curated_place_id)) };
+  }).sort((a, b) => ((b.photo_name ? 2 : 0) + (b.been ? 1 : 0)) - ((a.photo_name ? 2 : 0) + (a.been ? 1 : 0)))
+    .slice(0, 12);
+  $('stH').textContent = 'A story card — your ' + (destSlug ? cap(destSlug) : 'places');
+  $('stPick').innerHTML = ST_PLACES.map((p, i) =>
+    '<button type="button" data-i="' + i + '"><img alt=""' +
+      (p.photo_name ? ' data-pn="' + esc(p.photo_name) + '"' : '') +
+      ' src="' + esc(catSrc(p.category)) + '"><span>' + esc(p.name) + '</span></button>').join('');
+  $('stPrev').hidden = true;
+  $('stShare').hidden = true;
+  $('stCaption').hidden = true;
+  $('stSt').textContent = 'PICK THE PLACE';
+  $('storySh').classList.add('on');
+  const names = ST_PLACES.map((p) => p.photo_name).filter(Boolean);
+  if (names.length) resolvePhotos(names).then(applyPhotos);
+}
+function loadImg(src, cors) {
+  return new Promise((res, rej) => {
+    const im = new Image();
+    if (cors) im.crossOrigin = 'anonymous';
+    im.onload = () => res(im);
+    im.onerror = rej;
+    im.src = src;
+  });
+}
+async function drawStory(p) {
+  const W = 1080, H = 1920;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  try { await document.fonts.load('900 90px Nunito'); await document.fonts.load('500 34px "JetBrains Mono"'); } catch (_) {}
+  /* the photo, cover-fit; category art is the same-origin floor */
+  let img = null, credited = false;
+  if (p.photo_name && GUR.has(p.photo_name)) {
+    try { img = await loadImg(GUR.get(p.photo_name), true); credited = true; } catch (_) {}
+  }
+  if (!img) { try { img = await loadImg(catSrc(p.category), false); } catch (_) {} }
+  x.fillStyle = '#faf6ee'; x.fillRect(0, 0, W, H);
+  const PH = 1460;
+  if (img) {
+    const s = Math.max(W / img.width, PH / img.height);
+    const dw = img.width * s, dh = img.height * s;
+    x.drawImage(img, (W - dw) / 2, (PH - dh) / 2, dw, dh);
+  }
+  const gr = x.createLinearGradient(0, PH - 420, 0, PH);
+  gr.addColorStop(0, 'rgba(10,10,8,0)'); gr.addColorStop(1, 'rgba(10,10,8,0.55)');
+  x.fillStyle = gr; x.fillRect(0, PH - 420, W, 420);
+  /* the paper band */
+  x.fillStyle = '#faf6ee'; x.fillRect(0, PH, W, H - PH);
+  /* the mark chip on the photo */
+  const mk = p.been ? '✓ BEEN — A REAL VISIT' : (p.worth ? '♥ WORTH IT' : '⚑ SAVED');
+  x.font = '500 30px "JetBrains Mono", monospace';
+  const mw = x.measureText(mk).width + 56;
+  x.fillStyle = 'rgba(13,122,94,0.92)';
+  x.beginPath(); x.roundRect(64, PH - 112, mw, 64, 32); x.fill();
+  x.fillStyle = '#fdfcf7'; x.textBaseline = 'middle';
+  x.fillText(mk, 92, PH - 80);
+  x.textBaseline = 'alphabetic';
+  if (credited) {
+    x.font = '500 22px "JetBrains Mono", monospace';
+    x.fillStyle = 'rgba(253,252,247,0.8)';
+    x.fillText('PHOTO · GOOGLE', 64, PH - 28);
+  }
+  /* the name, wrapped to two lines */
+  x.fillStyle = '#23231e';
+  x.font = '900 86px Nunito, sans-serif';
+  const words = String(p.name).split(' ');
+  let line = '', lines = [];
+  words.forEach((w) => {
+    const t = line ? line + ' ' + w : w;
+    if (x.measureText(t).width > W - 128 && line) { lines.push(line); line = w; }
+    else line = t;
+  });
+  lines.push(line);
+  lines = lines.slice(0, 2);
+  lines.forEach((l, i) => x.fillText(l, 64, PH + 92 + i * 100));
+  const ny = PH + 92 + (lines.length - 1) * 100;
+  x.font = '500 32px "JetBrains Mono", monospace';
+  x.fillStyle = '#8a8676';
+  x.fillText([p.category, p.area].filter(Boolean).join(' · ').toUpperCase(), 64, ny + 86);
+  /* the footer: the loop's door */
+  x.fillStyle = '#1c1c18';
+  x.beginPath(); x.roundRect(64, H - 206, W - 128, 118, 59); x.fill();
+  x.fillStyle = '#faf6ee';
+  x.font = '800 42px Nunito, sans-serif';
+  x.textAlign = 'center';
+  x.textBaseline = 'middle';
+  x.fillText('⚑ GET THE PLACE — LINK IN BIO', W / 2, H - 147);
+  x.textAlign = 'left';
+  x.textBaseline = 'alphabetic';
+  /* the brand: dot + wordmark */
+  x.fillStyle = '#0d7a5e';
+  x.beginPath(); x.arc(78, H - 258, 12, 0, 7); x.fill();
+  x.font = '800 34px Nunito, sans-serif';
+  x.fillStyle = '#23231e';
+  x.fillText('Prevoya', 102, H - 252);
+  return new Promise((res) => cv.toBlob(res, 'image/png'));
+}
+$('gcStory').addEventListener('click', () => {
+  $('giftSh').classList.remove('on');
+  openStory(GC_DEST || (CTX.destList[0] && CTX.destList[0].slug) || null);
+});
+$('storySh').addEventListener('click', (e) => { if (e.target === $('storySh')) $('storySh').classList.remove('on'); });
+$('stPick').addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-i]');
+  if (!b) return;
+  ST_CUR = +b.getAttribute('data-i');
+  [...$('stPick').children].forEach((el) => el.classList.toggle('on', el === b));
+  const p = ST_PLACES[ST_CUR];
+  $('stSt').textContent = 'DRAWING…';
+  if (p.photo_name && !GUR.has(p.photo_name)) await resolvePhotos([p.photo_name]);
+  let blob = null;
+  try { blob = await drawStory(p); } catch (_) {}
+  if (!blob) {
+    /* a tainted or failed photo: redraw on the same-origin floor */
+    try { const q = Object.assign({}, p, { photo_name: null }); blob = await drawStory(q); } catch (_) {}
+  }
+  if (!blob) { $('stSt').textContent = 'COULDN’T DRAW — TRY ANOTHER PLACE.'; return; }
+  ST_BLOB = blob;
+  $('stPrev').src = URL.createObjectURL(blob);
+  $('stPrev').hidden = false;
+  $('stShare').hidden = false;
+  $('stCaption').hidden = false;
+  $('stSt').textContent = '';
+  track('story_card', { dest: ST_DEST || null });
+});
+$('stShare').addEventListener('click', async () => {
+  if (!ST_BLOB) return;
+  const p = ST_PLACES[ST_CUR] || {};
+  const file = new File([ST_BLOB], 'prevoya-story.png', { type: 'image/png' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file] }); return; } catch (_) { /* user closed it */ }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(ST_BLOB);
+  a.download = 'prevoya-' + String(p.name || 'story').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png';
+  a.click();
+});
+$('stCaption').addEventListener('click', () => {
+  const p = ST_PLACES[ST_CUR] || {};
+  const live = liveRowFor(ST_DEST);
+  const cap1 = (p.been ? 'Been. Kept. ' : 'Kept. ') + p.name + ' — on my Prevoya ' +
+    (ST_DEST ? cap(ST_DEST) : '') + ' list.' +
+    (live ? ' Get all of them: ' + location.origin + '/s/?t=' + live.token : ' Link in bio ⚑');
+  const b = $('stCaption');
+  const done = () => { b.textContent = '✓ caption copied'; setTimeout(() => { b.textContent = 'copy a caption for the post'; }, 1400); };
+  try { navigator.clipboard.writeText(cap1).then(done, done); } catch (_) { done(); }
+});
 
 /* ── boot ── */
 (async function () {

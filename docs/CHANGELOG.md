@@ -3,6 +3,18 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 26 Nov 2026 — Round 17.7: story cards (S3)
+The composer grew "▣ Story card for one place": pick a place from the
+collection (photo-first, been-first), and the app draws a 1080×1920
+card in the daylight brand — the place's real photo (Google,
+display-time, credited on the card; category art as the honest
+floor), the mark as a chip ("✓ BEEN — A REAL VISIT"), the name, the
+Prevoya wordmark, and the black "⚑ GET THE PLACE — LINK IN BIO" pill.
+⤴ Share hands the PNG to the phone's share sheet (story-ready);
+"copy a caption" writes a post caption carrying the collection's real
+link. The influencer's content machine now feeds the loop from
+inside the app — before the landing ever claims it.
+
 ## 26 Nov 2026 — Round 17.6: the trip door is contextual
 The TRIP tab and the "On a trip now" surfaces appear only around an
 actual trip — from a week before arrival ("Bali in 5 days — PREP ·
