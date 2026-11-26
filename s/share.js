@@ -308,18 +308,24 @@ function renderGift(data, token) {
       '<p class="cc">' + c.ps.length + ' PLACE' + (c.ps.length === 1 ? '' : 'S') +
         (cb ? ' \u00b7 ' + cb + ' VISITED' : '') +
         (c.areas.length > 1 ? ' \u00b7 ' + esc(c.areas.join(' \u00b7 ').toUpperCase()) : '') + '</p>' +
-      c.ps.map((p) => {
+      c.ps.map((p, i) => {
         const [mk, mc] = MARKC[p.mark] || MARKC.saved;
         const pn = (!p.photo && p.photo_name) ? ' data-pn="' + esc(p.photo_name) + '"' : '';
         const cred = (!p.photo && p.photo_name && p.photo_author)
           ? ' title="photo: ' + esc(p.photo_author) + ' \u00b7 Google"' : '';
-        return '<div class="g-pl">' +
+        /* ROUND 16.1 (Guy): a chapter opens at 3 — the rest wait behind one
+           tap; and every row is a door (the chevron says so) */
+        const fold = c.ps.length > 4 && i >= 3;
+        return '<div class="g-pl" role="button" tabindex="0" data-id="' + esc(String(p.id)) + '"' + (fold ? ' hidden' : '') + '>' +
           '<img alt="" loading="lazy"' + pn + cred + ' src="' + esc(p.photo || catSrc(p.category)) + '">' +
           '<span class="n">' + esc(p.name) + (p.verified ? ' <span class="pv">\u2713</span>' : '') +
             '<span class="s">' + esc([p.category, c.areas.length > 1 ? p.area : null]
               .filter(Boolean).join(' \u00b7 ').toUpperCase()) + '</span></span>' +
-          '<span class="mk' + mc + '">' + mk + '</span></div>';
+          '<span class="mk' + mc + '">' + mk + '</span><span class="chev">\u203a</span></div>';
       }).join('') +
+      (c.ps.length > 4
+        ? '<button type="button" class="g-more">Show ' + (c.ps.length - 3) + ' more in ' + esc(c.title) + ' \u2193</button>'
+        : '') +
     '</section>';
   }).join('');
   if (places.some((p) => !p.photo && p.photo_name)) {
@@ -330,6 +336,70 @@ function renderGift(data, token) {
   $('gColo').textContent = been
     ? 'Made from ' + been + ' real visit' + (been === 1 ? '' : 's') + ', stamped as they happened.'
     : 'Saved one by one \u2014 a collection, not a listicle.';
+
+  /* ── ROUND 16.1: the place sheet — a tap means interest. Answer it
+     (save this one, free), then open the two bigger doors (keep all /
+     start your own). Same anonymous buffer, same provenance. ── */
+  const byId = new Map(places.map((p) => [String(p.id), p]));
+  const sheetW = $('gSheetW');
+  const openSheet = (p, imgSrc) => {
+    $('gShImg').src = imgSrc || p.photo || catSrc(p.category);
+    $('gShName').innerHTML = esc(p.name) + (p.verified ? ' <span class="pv">\u2713</span>' : '');
+    $('gShSub').textContent = [p.category, p.area].filter(Boolean).join(' \u00b7 ').toUpperCase();
+    const mkEl = $('gShMk');
+    const MARKT = {
+      been: '\u2713 ' + NAME_U + '\u2019S BEEN \u2014 A REAL VISIT, STAMPED',
+      worth: '\u2665 ' + NAME_U + ' SAYS IT\u2019S WORTH IT',
+      saved: '\u2691 ON ' + NAME_U + '\u2019S LIST'
+    };
+    mkEl.textContent = MARKT[p.mark] || MARKT.saved;
+    mkEl.className = 'mkl' + (p.mark === 'worth' ? ' w' : '');
+    const sv = $('gShSave');
+    const done1 = () => { sv.classList.add('done'); sv.textContent = 'On your list \u2713'; };
+    sv.classList.remove('done');
+    if (anonMap().has(String(p.id))) done1();
+    else {
+      sv.textContent = '\u2691 Save ' + p.name + ' \u2014 free';
+      sv.onclick = () => {
+        if (!anonMap().has(String(p.id))) anonToggle({
+          id: p.id, name: p.name, area: p.area, category: p.category,
+          via: { t: token, name: name }
+        });
+        seed(p.name);
+        try { window.pvTrack && window.pvTrack('share_save_tap', { kind: 'list', n: 1, t: token, one: p.name }); } catch (_) {}
+        done1();
+      };
+    }
+    $('gShAll').textContent = 'Keep all ' + n + ' instead \u2192';
+    sheetW.classList.add('on');
+    sheetW.setAttribute('aria-hidden', 'false');
+  };
+  const closeSheet = () => { sheetW.classList.remove('on'); sheetW.setAttribute('aria-hidden', 'true'); };
+  sheetW.addEventListener('click', (e) => { if (e.target === sheetW) closeSheet(); });
+  $('gShX').onclick = closeSheet;
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+  $('gShAll').onclick = () => { $('gfSaveAll').click(); closeSheet(); };
+  $('gShOwn').addEventListener('click', () => seed(null));
+  $('gChaps').addEventListener('click', (e) => {
+    const more = e.target.closest('.g-more');
+    if (more) {
+      more.parentElement.querySelectorAll('.g-pl[hidden]').forEach((el) => { el.hidden = false; });
+      more.remove();
+      return;
+    }
+    const row = e.target.closest('.g-pl');
+    if (!row) return;
+    const p = byId.get(row.getAttribute('data-id'));
+    if (p) openSheet(p, row.querySelector('img') && row.querySelector('img').src);
+  });
+  $('gChaps').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const row = e.target.closest('.g-pl');
+    if (!row) return;
+    e.preventDefault();
+    const p = byId.get(row.getAttribute('data-id'));
+    if (p) openSheet(p, row.querySelector('img') && row.querySelector('img').src);
+  });
 
   /* provenance travels into sign-up — same seed the passport share plants */
   const seed = (place) => {

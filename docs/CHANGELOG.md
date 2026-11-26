@@ -3,6 +3,17 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 26 Nov 2026 — Round 16.1: short chapters, and every place is a door
+Guy's phone notes on the daylight gift. (1) A chapter opens at 3 places
+with "Show N more in <area>" — 50 places no longer mean one long
+scroll to the next area. (2) Every place row is tappable (chevron cue):
+a tap means interest, so it opens a bottom sheet with the place, the
+sender's mark spelled out ("✓ Maya's been — a real visit, stamped"),
+and three doors — save this one place (same anonymous buffer, with
+via-token provenance and a share_save_tap n:1 echo), keep the whole
+collection, or start your own. Also killed a 56px padding leak from
+the old stylesheet that doubled the chapter gaps.
+
 ## 26 Nov 2026 — Round 16: the gift opens in daylight
 The receiver's share page (kind=list) leaves the cosmic world and joins
 the daylight landing — Guy's composite of the three /x/16 examples:

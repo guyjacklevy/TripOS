@@ -111,7 +111,7 @@ body.day #shGone .orb{display:none}
 .g-toc a .n{font-family:var(--gmono);font-size:.62rem;color:var(--ggreen);font-weight:500;flex:none}
 .g-toc a:active{opacity:.6}
 
-.g-chap{margin-top:56px;scroll-margin-top:72px}
+.g-chap{margin-top:56px;scroll-margin-top:72px;padding:0}
 .g-chap h2{margin:0;font-size:1.2rem;font-weight:900;letter-spacing:-.01em;color:var(--gi)}
 .g-chap .cc{font-family:var(--gmono);font-size:.58rem;letter-spacing:.1em;color:var(--gsoft);margin:4px 0 0}
 .g-pl{display:flex;align-items:center;gap:11px;background:var(--gcard);border:1px solid var(--gline);
@@ -126,6 +126,49 @@ body.day #shGone .orb{display:none}
 .g-pl .mk.w{color:var(--gamber)}
 .g-pl .mk.s{color:var(--gsoft)}
 .g-gcred{margin:16px 0 0;text-align:center;font-family:var(--gmono);font-size:.5rem;letter-spacing:.08em;color:var(--gsoft)}
+
+/* tappable rows: visible cue + instant answer (TripOS affordance rule) */
+.g-pl{cursor:pointer;transition:transform .12s ease-out;-webkit-tap-highlight-color:transparent}
+.g-pl:active{transform:scale(.985)}
+.g-pl .chev{flex:none;margin-left:2px;color:var(--gsoft);font-weight:800;font-size:1rem;line-height:1}
+.g-more{display:flex;align-items:center;justify-content:center;width:100%;margin-top:12px;min-height:46px;
+  background:transparent;border:1.5px dashed var(--gline);border-radius:12px;
+  font-weight:800;font-size:.82rem;color:var(--gdim);cursor:pointer;font-family:'Nunito',system-ui,sans-serif}
+.g-more:active{transform:scale(.985)}
+
+/* ── the place sheet: a tap means interest — answer it, then open the door ── */
+.g-sheetw{position:fixed;inset:0;z-index:50;background:rgba(35,35,30,.42);
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s ease-out}
+.g-sheetw.on{opacity:1;pointer-events:auto}
+.g-sheet{width:100%;max-width:430px;background:var(--gcard);border-radius:18px 18px 0 0;
+  padding:14px 20px calc(16px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 -14px 44px rgba(40,30,10,.3);
+  transform:translateY(24px);transition:transform .25s cubic-bezier(.2,.9,.3,1)}
+.g-sheetw.on .g-sheet{transform:none}
+.g-sheet .grab{width:38px;height:4px;border-radius:2px;background:var(--gline);margin:0 auto}
+.g-sheet .shx{position:absolute;top:10px;right:14px;width:34px;height:34px;border-radius:50%;
+  border:1px solid var(--gline);background:var(--gp);color:var(--gdim);font-size:1rem;font-weight:800;
+  cursor:pointer;display:flex;align-items:center;justify-content:center}
+.g-sheet .row{display:flex;align-items:center;gap:12px;margin-top:16px}
+.g-sheet .row img{width:64px;height:64px;border-radius:11px;object-fit:cover;flex:none;
+  border:2px solid #fff;box-shadow:0 3px 10px rgba(40,30,10,.16);background:#eee7d8}
+.g-sheet h2{margin:0;font-size:1.05rem;font-weight:900;line-height:1.25;color:var(--gi)}
+.g-sheet h2 .pv{color:var(--ggreen)}
+.g-sheet .sub{margin:3px 0 0;font-family:var(--gmono);font-size:.54rem;letter-spacing:.08em;color:var(--gsoft)}
+.g-sheet .mkl{margin:12px 0 0;font-family:var(--gmono);font-size:.6rem;letter-spacing:.06em;color:var(--ggreen)}
+.g-sheet .mkl.w{color:var(--gamber)}
+.g-save1{display:flex;align-items:center;justify-content:center;width:100%;min-height:50px;margin-top:16px;
+  border-radius:999px;background:#1c1c18;color:var(--gp);font-weight:800;font-size:.98rem;border:0;cursor:pointer;
+  font-family:'Nunito',system-ui,sans-serif;box-shadow:0 8px 22px rgba(40,30,10,.22);transition:transform .15s ease-out}
+.g-save1:active{transform:scale(.97)}
+.g-save1.done{background:var(--ggreen)}
+.g-sheet .fr1{margin:8px 0 0;text-align:center;font-family:var(--gmono);font-size:.5rem;letter-spacing:.1em;color:var(--gsoft)}
+.g-sheet .alt{margin:16px 0 0;text-align:center;font-size:.84rem}
+.g-sheet .alt button{background:none;border:0;padding:0;color:var(--ggreen);font-weight:800;
+  font-size:.84rem;cursor:pointer;font-family:'Nunito',system-ui,sans-serif}
+.g-sheet .alt2{margin:8px 0 0;text-align:center;font-size:.8rem}
+.g-sheet .alt2 a{color:var(--gdim);font-weight:800}
 
 /* ── the colophon + the keep bar ── */
 .g-colo{margin-top:56px;padding-top:24px;border-top:1px solid var(--gline);text-align:center}
@@ -298,6 +341,26 @@ body.day #shGone .orb{display:none}
       <footer class="sh-foot">
         <a href="/bali/plan/" id="shFootCta">plan your own →</a>
       </footer>
+    </div>
+  </div>
+
+  <!-- the place sheet: a tapped place is interest — save it, keep them all, or start your own -->
+  <div class="g-sheetw" id="gSheetW" aria-hidden="true">
+    <div class="g-sheet" role="dialog" aria-modal="true" aria-labelledby="gShName" style="position:relative">
+      <div class="grab" aria-hidden="true"></div>
+      <button type="button" class="shx" id="gShX" aria-label="Close">✕</button>
+      <div class="row">
+        <img id="gShImg" alt="">
+        <div style="min-width:0">
+          <h2 id="gShName"></h2>
+          <p class="sub" id="gShSub"></p>
+        </div>
+      </div>
+      <p class="mkl" id="gShMk"></p>
+      <button type="button" class="g-save1" id="gShSave"></button>
+      <p class="fr1">FREE · NO LOGIN — IT’LL BE WAITING WHEN YOU OPEN PREVOYA</p>
+      <p class="alt"><button type="button" id="gShAll"></button></p>
+      <p class="alt2"><a href="/" id="gShOwn">…or start a collection of your own →</a></p>
     </div>
   </div>
 
