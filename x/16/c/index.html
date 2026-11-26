@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Noa’s Bali — a gift · Prevoya (16-C)</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#faf6ee">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* ═══ 16-C · THE WALKTHROUGH — her photos lead ═══
+   The gift opens as a full-screen story: eight places she stood in, one
+   per beat, tap to advance. The feeling first, the list after. spacing
+   scale: 12 tight · 16 caption · 24 component · 56 section. */
+:root{
+  --paper:#faf6ee; --ink:#23231e; --dim:#6b6a5f; --soft:#8a8676;
+  --green:#0d7a5e; --amber:#b06c0a; --line:#e4ddcf; --card:#ffffff;
+  --body:'Nunito',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden;overflow-x:clip}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.5}
+img{max-width:100%}
+::selection{background:rgba(13,122,94,.18)}
+
+.sky{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 130% 60% at 50% -14%,#fffdf4 0%,transparent 60%),
+    radial-gradient(ellipse 110% 50% at 50% 112%,rgba(13,122,94,.06) 0%,transparent 60%),
+    var(--paper)}
+
+.bar{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;gap:7px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-left,0px)) 10px max(16px,env(safe-area-inset-right,0px));
+  background:rgba(250,246,238,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(228,221,207,.6);font-weight:800;font-size:.86rem}
+.bar::before{content:"";width:12px;height:12px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 35% 35%,#2fbf8f,var(--green))}
+.bar .tag{margin-left:auto;font-family:var(--mono);font-weight:500;font-size:.58rem;letter-spacing:.1em;color:var(--soft)}
+
+.wrap{position:relative;z-index:1;max-width:430px;margin:0 auto;
+  padding:calc(72px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-left,0px)) 56px max(20px,env(safe-area-inset-right,0px))}
+
+/* ── the story: her camera roll, one beat at a time ── */
+.story{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);
+  box-shadow:0 18px 48px rgba(40,30,10,.22);aspect-ratio:4/5.4;cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+.story .fr{position:absolute;inset:0;opacity:0;transition:opacity .55s ease-out}
+.story .fr.on{opacity:1}
+.story .fr img{width:100%;height:100%;object-fit:cover;display:block;
+  transform:scale(1.04);transition:transform 4.6s linear}
+.story .fr.on img{transform:scale(1)}
+.story .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,8,.3) 0%,transparent 26%,transparent 56%,rgba(10,10,8,.62) 100%)}
+.story .top{position:absolute;top:10px;left:12px;right:12px;display:flex;align-items:center;gap:8px;color:#fdfcf7}
+.story .top .ava{width:28px;height:28px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 32% 30%,#ffe9c4,#f0c06a);font-weight:900;font-size:.78rem;color:#7a4e07;border:1.5px solid #fff}
+.story .top b{font-size:.8rem;font-weight:800}
+.story .top .w{font-family:var(--mono);font-size:.52rem;letter-spacing:.08em;color:rgba(253,252,247,.8);margin-left:auto}
+.story .ticks{position:absolute;top:46px;left:12px;right:12px;display:flex;gap:4px}
+.story .ticks i{flex:1;height:2.5px;border-radius:2px;background:rgba(253,252,247,.35)}
+.story .ticks i.done{background:#fdfcf7}
+.story .cap{position:absolute;left:14px;right:14px;bottom:14px;color:#fdfcf7}
+.story .cap h2{margin:0;font-size:1.3rem;font-weight:900;line-height:1.15;letter-spacing:-.01em}
+.story .cap .ar{font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;margin-top:5px;color:rgba(253,252,247,.85)}
+.story .cap .mk{display:inline-flex;margin-top:8px;font-family:var(--mono);font-size:.58rem;
+  background:rgba(13,122,94,.85);border-radius:999px;padding:4px 10px}
+.story .hint{position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  font-family:var(--mono);font-size:.54rem;letter-spacing:.08em;color:rgba(253,252,247,.75);
+  writing-mode:vertical-rl;pointer-events:none}
+.scap{margin-top:12px;text-align:center;font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;color:var(--soft)}
+
+/* ── after the feeling: the counts, the list ── */
+.cts{margin-top:56px;text-align:center}
+.cts h1{margin:0;font-size:1.3rem;font-weight:900;letter-spacing:-.01em;line-height:1.2}
+.cts p{margin:8px 0 0;font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;color:var(--soft)}
+.cts p b{color:var(--green);font-weight:500}
+
+.list{margin-top:24px}
+.pl{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:9px 11px;margin-top:8px;box-shadow:0 3px 10px rgba(40,30,10,.08)}
+.pl img,.pl .ph{width:52px;height:52px;border-radius:9px;object-fit:cover;flex:none;
+  border:2px solid #fff;box-shadow:0 2px 6px rgba(40,30,10,.14)}
+.pl .ph{display:flex;align-items:center;justify-content:center;background:#eee7d8;
+  color:var(--soft);font-weight:900;font-size:1rem}
+.pl .n{min-width:0;font-size:.84rem;font-weight:800;line-height:1.25}
+.pl .n span{display:block;font-family:var(--mono);font-weight:500;font-size:.52rem;letter-spacing:.06em;color:var(--soft);margin-top:2px}
+.pl .mk{margin-left:auto;flex:none;font-family:var(--mono);font-size:.56rem;letter-spacing:.04em;color:var(--green)}
+.pl .mk.w{color:var(--amber)}
+.rest{margin-top:12px;font-size:.82rem;color:var(--dim);text-align:center}
+
+.door{margin-top:56px;text-align:center}
+.keep{display:inline-flex;align-items:center;justify-content:center;min-height:52px;width:100%;
+  padding:0 26px;border-radius:999px;background:#1c1c18;color:var(--paper);font-weight:800;
+  font-size:1.02rem;border:0;cursor:pointer;font-family:var(--body);
+  box-shadow:0 10px 28px rgba(40,30,10,.25);transition:transform .15s ease-out}
+.keep:active{transform:scale(.97)}
+.keep.done{background:var(--green)}
+.keep:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.free{font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;color:var(--soft);margin-top:12px}
+.own{margin-top:24px;font-size:.84rem}
+.own a{color:var(--green);font-weight:800}
+
+footer{position:relative;z-index:1;text-align:center;font-size:.72rem;color:var(--soft);
+  padding:0 20px calc(40px + env(safe-area-inset-bottom,0px))}
+
+@media (prefers-reduced-motion:reduce){
+  .story .fr img{transform:none;transition:none}
+}
+</style>
+</head>
+<body>
+<div class="sky"></div>
+<div class="bar">Prevoya <span class="tag">16-C DEMO · THE WALKTHROUGH</span></div>
+
+<div class="wrap">
+  <div class="story" id="story" role="button" tabindex="0" aria-label="Noa’s photo story — tap to see the next place">
+    <div class="fr" data-n="Padang Padang Beach" data-a="SURF · ULUWATU"><img src="/x/15d/assets/padang.jpg" alt="Padang Padang Beach"></div>
+    <div class="fr" data-n="Saltwood Bingin" data-a="CAFE · ULUWATU"><img src="/x/15d/assets/saltwood.jpg" alt="Saltwood Bingin"></div>
+    <div class="fr" data-n="Ulu Fishmarket" data-a="FOOD · ULUWATU" data-w="1"><img src="/x/15d/assets/ulufish.jpg" alt="Ulu Fishmarket"></div>
+    <div class="fr" data-n="Bingin Beach" data-a="SURF · ULUWATU"><img src="/x/15d/assets/bingin.jpg" alt="Bingin Beach"></div>
+    <div class="fr" data-n="Sayan Ridge" data-a="EXPLORE · UBUD"><img src="/x/15d/assets/sayan.jpg" alt="Sayan ridge walk"></div>
+    <div class="fr" data-n="Amok Sunset" data-a="NIGHTLIFE · ULUWATU" data-w="1"><img src="/x/15d/assets/amok.jpg" alt="Amok sunset bar"></div>
+    <div class="shade"></div>
+    <div class="top"><span class="ava">N</span><b>Noa was here</b><span class="w">HER CAMERA ROLL</span></div>
+    <div class="ticks" id="ticks"></div>
+    <div class="cap">
+      <h2 id="capN"></h2>
+      <p class="ar" id="capA"></p>
+      <span class="mk" id="capM">✓ BEEN · HER PHOTO</span>
+    </div>
+    <span class="hint">TAP FOR THE NEXT ONE →</span>
+  </div>
+  <p class="scap">6 OF HER 8 PHOTOS IN THIS DEMO · THE BUILD PLAYS ALL 8</p>
+
+  <div class="cts">
+    <h1>That was the feeling.<br>Here’s the whole list.</h1>
+    <p><b>50 PLACES</b> · 7 AREAS · 49 SHE’S BEEN TO</p>
+  </div>
+
+  <div class="list">
+    <div class="pl"><span class="ph">S</span><span class="n">Single Fin<span>NIGHTLIFE · ULUWATU</span></span><span class="mk w">♥ WORTH IT</span></div>
+    <div class="pl"><span class="ph">D</span><span class="n">Dreamland Beach<span>BEACH · ULUWATU</span></span><span class="mk">✓ BEEN</span></div>
+    <div class="pl"><span class="ph">U</span><span class="n">Uluwatu Temple &amp; Kecak Fire Dance<span>EXPLORE · ULUWATU</span></span><span class="mk">✓ BEEN</span></div>
+    <div class="pl"><span class="ph">C</span><span class="n">CURE Bali<span>FOOD · CANGGU</span></span><span class="mk">✓ BEEN</span></div>
+    <div class="pl"><span class="ph">A</span><span class="n">Always Happy Hours<span>NIGHTLIFE · GILI TRAWANGAN</span></span><span class="mk">✓ BEEN</span></div>
+    <p class="rest">+ 45 more (demo shows five)</p>
+  </div>
+
+  <div class="door">
+    <button type="button" class="keep" id="keep">Keep all 50 — free</button>
+    <p class="free">NO PASSWORD, EVER · THEY’LL BE ON YOUR LIST WHEN YOU OPEN PREVOYA</p>
+    <p class="own"><a href="/">…or start your own collection →</a></p>
+  </div>
+</div>
+
+<footer>Prevoya · a collection, given person to person</footer>
+
+<script>
+var frs=[].slice.call(document.querySelectorAll('.fr'));
+var ticks=document.getElementById('ticks');
+frs.forEach(function(){ticks.appendChild(document.createElement('i'))});
+var tks=[].slice.call(ticks.children);
+var capN=document.getElementById('capN'),capA=document.getElementById('capA'),capM=document.getElementById('capM');
+var cur=0,timer=null;
+var rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function show(i){
+  cur=(i+frs.length)%frs.length;
+  frs.forEach(function(f,j){f.classList.toggle('on',j===cur)});
+  tks.forEach(function(t,j){t.classList.toggle('done',j<=cur)});
+  var f=frs[cur];
+  capN.textContent=f.dataset.n;
+  capA.textContent=f.dataset.a;
+  capM.textContent=f.dataset.w?'♥ WORTH IT · HER PHOTO':'✓ BEEN · HER PHOTO';
+  if(timer)clearTimeout(timer);
+  if(!rm)timer=setTimeout(function(){show(cur+1)},4600);
+}
+var story=document.getElementById('story');
+story.addEventListener('click',function(){show(cur+1)});
+story.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();show(cur+1)}});
+show(0);
+
+var keep=document.getElementById('keep');
+keep.addEventListener('click',function(){
+  keep.classList.add('done');keep.textContent='Saved to your list ✓';
+  keep.setAttribute('aria-live','polite');
+});
+</script>
+</body>
+</html>
