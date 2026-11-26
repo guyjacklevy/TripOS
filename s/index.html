@@ -2,68 +2,234 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>A Bali passport — Prevoya</title>
-  <meta name="description" content="A traveler's Bali, stamped — real places, really visited. Plan yours from it.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>A gift of places — Prevoya</title>
+  <meta name="description" content="Someone saved places for you — real places, really visited. Keep them free.">
   <meta name="robots" content="noindex">
-  <meta name="theme-color" content="#0a0a14">
+  <meta name="theme-color" content="#faf6ee" id="metaTheme">
   <link rel="apple-touch-icon" href="/shared/brand/icon-192.png">
   <link rel="icon" href="/shared/brand/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/shared/brand/icon-192.png" type="image/png">
-<link rel="stylesheet" href="/shared/tripos.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap">
+  <link rel="stylesheet" href="/shared/tripos.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=JetBrains+Mono:wght@500&family=Caveat:wght@600&display=swap">
+<style>
+/* ═══ ROUND 16 · THE GIFT IN DAYLIGHT (kind=list) ═══
+   Guy's composite of the /x/16 examples: A's header + personal note,
+   C's tappable photo story, B's contents card + area chapters + sticky
+   keep bar. The passport (kind=trip) keeps its cosmic world below —
+   body.day flips the whole page between the two.
+   spacing scale: 12 tight · 16 caption · 24 component · 56 section */
+body.day{background:#faf6ee;color:#23231e;font-family:'Nunito',system-ui,sans-serif;line-height:1.5}
+body.day .cosmos,body.day .nav{display:none}
+body:not(.day) .dsky,body:not(.day) .dbar,body:not(.day) #g16,body:not(.day) #gKeepbar{display:none}
+body.day{--gp:#faf6ee;--gi:#23231e;--gdim:#6b6a5f;--gsoft:#8a8676;--ggreen:#0d7a5e;
+  --gamber:#b06c0a;--gline:#e4ddcf;--gcard:#ffffff;--gmono:'JetBrains Mono',monospace}
+body.day ::selection{background:rgba(13,122,94,.18)}
+
+.dsky{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 130% 60% at 50% -14%,#fffdf4 0%,transparent 60%),
+    radial-gradient(ellipse 110% 50% at 50% 112%,rgba(13,122,94,.06) 0%,transparent 60%),
+    #faf6ee}
+
+.dbar{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;gap:7px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-left,0px)) 10px max(16px,env(safe-area-inset-right,0px));
+  background:rgba(250,246,238,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(228,221,207,.6);font-weight:800;font-size:.86rem;color:var(--gi)}
+.dbar a{color:inherit;text-decoration:none;display:flex;align-items:center;gap:7px}
+.dbar a::before{content:"";width:12px;height:12px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 35% 35%,#2fbf8f,var(--ggreen))}
+.dbar .dcta{margin-left:auto;font-size:.76rem;font-weight:800;color:var(--gp);background:#1c1c18;
+  border-radius:999px;padding:0 14px;min-height:36px;display:inline-flex;align-items:center;text-decoration:none}
+.dbar .dcta::before{display:none}
+.dbar .dcta:focus-visible{outline:3px solid var(--gamber);outline-offset:2px}
+
+body.day .wrap{position:relative;z-index:1;max-width:430px;margin:0 auto;width:auto;padding:0}
+.gwrap{padding:calc(72px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-left,0px)) 120px max(20px,env(safe-area-inset-right,0px))}
+
+/* day loading + gone */
+body.day .sh-center{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:0 20px}
+body.day .pulse-note{font-family:var(--gmono);font-size:.66rem;letter-spacing:.12em;color:var(--gsoft);animation:dpulse 1.4s ease-in-out infinite}
+@keyframes dpulse{0%,100%{opacity:.45}50%{opacity:1}}
+body.day .sh-gone-h{margin:0;font-size:1.3rem;font-weight:900;color:var(--gi)}
+body.day #shGone .sec-context{margin:0;font-size:.9rem;color:var(--gdim)}
+body.day #shGone .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;margin-top:12px;
+  padding:0 24px;border-radius:999px;background:#1c1c18;color:var(--gp);font-weight:800;font-size:.95rem;
+  text-decoration:none;border:0;box-shadow:0 8px 22px rgba(40,30,10,.25)}
+body.day #shGone .orb{display:none}
+
+/* ── A · the header + the note ── */
+.g-from{display:flex;align-items:center;gap:12px}
+.g-ava{width:52px;height:52px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 32% 30%,#ffe9c4,#f0c06a);border:2.5px solid var(--gcard);
+  box-shadow:0 3px 10px rgba(40,30,10,.18);font-weight:900;font-size:1.3rem;color:#7a4e07}
+.g-from h1{margin:0;font-size:1.3rem;font-weight:900;line-height:1.2;letter-spacing:-.01em;color:var(--gi)}
+.g-when{font-family:var(--gmono);font-size:.56rem;letter-spacing:.1em;color:var(--gsoft);margin:3px 0 0}
+.g-note{margin-top:16px;background:#e9f6ee;border:1px solid #cfe8da;border-radius:16px 16px 16px 4px;
+  padding:14px 16px;box-shadow:0 4px 14px rgba(40,30,10,.1)}
+.g-note p{margin:0;font-family:'Caveat',cursive;font-size:1.35rem;line-height:1.35;color:#19513f}
+.g-cts{margin:16px 0 0;font-family:var(--gmono);font-size:.6rem;letter-spacing:.1em;color:var(--gsoft)}
+.g-cts b{color:var(--ggreen);font-weight:500}
+
+/* ── C · the photo story ── */
+.g-story{position:relative;margin-top:24px;border-radius:18px;overflow:hidden;border:1px solid var(--gline);
+  box-shadow:0 18px 48px rgba(40,30,10,.22);aspect-ratio:4/5.2;cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+.g-story .fr{position:absolute;inset:0;opacity:0;transition:opacity .55s ease-out}
+.g-story .fr.on{opacity:1}
+.g-story .fr img{width:100%;height:100%;object-fit:cover;display:block;
+  transform:scale(1.04);transition:transform 4.6s linear}
+.g-story .fr.on img{transform:scale(1)}
+.g-story .g-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,8,.32) 0%,transparent 26%,transparent 54%,rgba(10,10,8,.66) 100%)}
+.g-stop{position:absolute;top:10px;left:12px;right:12px;display:flex;align-items:center;gap:8px;color:#fdfcf7}
+.g-stop .g-sava{width:28px;height:28px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 32% 30%,#ffe9c4,#f0c06a);font-weight:900;font-size:.78rem;color:#7a4e07;border:1.5px solid #fff}
+.g-stop b{font-size:.8rem;font-weight:800;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-stop .g-sw{font-family:var(--gmono);font-size:.5rem;letter-spacing:.08em;color:rgba(253,252,247,.8);margin-left:auto;flex:none}
+.g-ticks{position:absolute;top:46px;left:12px;right:12px;display:flex;gap:4px}
+.g-ticks i{flex:1;height:2.5px;border-radius:2px;background:rgba(253,252,247,.35)}
+.g-ticks i.done{background:#fdfcf7}
+.g-cap{position:absolute;left:14px;right:14px;bottom:14px;color:#fdfcf7}
+.g-cap h2{margin:0;font-size:1.25rem;font-weight:900;line-height:1.15;letter-spacing:-.01em}
+.g-cap .g-ar{font-family:var(--gmono);font-size:.56rem;letter-spacing:.1em;margin:5px 0 0;color:rgba(253,252,247,.85)}
+.g-cap .g-mk{display:inline-flex;margin-top:8px;font-family:var(--gmono);font-size:.56rem;
+  background:rgba(13,122,94,.85);border-radius:999px;padding:4px 10px}
+.g-hint{position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  font-family:var(--gmono);font-size:.54rem;letter-spacing:.08em;color:rgba(253,252,247,.75);
+  writing-mode:vertical-rl;pointer-events:none}
+.g-scap{margin:12px 0 0;text-align:center;font-family:var(--gmono);font-size:.56rem;letter-spacing:.1em;color:var(--gsoft)}
+
+/* ── B · what's inside + the chapters ── */
+.g-toc{margin-top:24px;background:var(--gcard);border:1px solid var(--gline);border-radius:14px;padding:14px 16px;
+  box-shadow:0 4px 14px rgba(40,30,10,.08)}
+.g-toc h2{margin:0;font-size:.95rem;font-weight:900;color:var(--gi)}
+.g-toc a{display:flex;align-items:baseline;gap:8px;margin-top:12px;text-decoration:none;color:var(--gi);
+  font-size:.86rem;font-weight:800;min-height:28px}
+.g-toc a .dots{flex:1;border-bottom:1.5px dotted var(--gline);transform:translateY(-4px)}
+.g-toc a .n{font-family:var(--gmono);font-size:.62rem;color:var(--ggreen);font-weight:500;flex:none}
+.g-toc a:active{opacity:.6}
+
+.g-chap{margin-top:56px;scroll-margin-top:72px}
+.g-chap h2{margin:0;font-size:1.2rem;font-weight:900;letter-spacing:-.01em;color:var(--gi)}
+.g-chap .cc{font-family:var(--gmono);font-size:.58rem;letter-spacing:.1em;color:var(--gsoft);margin:4px 0 0}
+.g-pl{display:flex;align-items:center;gap:11px;background:var(--gcard);border:1px solid var(--gline);
+  border-radius:12px;padding:9px 11px;margin-top:8px;box-shadow:0 3px 10px rgba(40,30,10,.08)}
+.g-chap .g-pl:first-of-type{margin-top:16px}
+.g-pl img{width:52px;height:52px;border-radius:9px;object-fit:cover;flex:none;
+  border:2px solid #fff;box-shadow:0 2px 6px rgba(40,30,10,.14);background:#eee7d8}
+.g-pl .n{min-width:0;font-size:.84rem;font-weight:800;line-height:1.25;color:var(--gi)}
+.g-pl .n .pv{color:var(--ggreen)}
+.g-pl .n span.s{display:block;font-family:var(--gmono);font-weight:500;font-size:.52rem;letter-spacing:.06em;color:var(--gsoft);margin-top:2px}
+.g-pl .mk{margin-left:auto;flex:none;font-family:var(--gmono);font-size:.56rem;letter-spacing:.04em;color:var(--ggreen)}
+.g-pl .mk.w{color:var(--gamber)}
+.g-pl .mk.s{color:var(--gsoft)}
+.g-gcred{margin:16px 0 0;text-align:center;font-family:var(--gmono);font-size:.5rem;letter-spacing:.08em;color:var(--gsoft)}
+
+/* ── the colophon + the keep bar ── */
+.g-colo{margin-top:56px;padding-top:24px;border-top:1px solid var(--gline);text-align:center}
+.g-colo p{margin:0;font-size:.84rem;color:var(--gdim)}
+.g-colo .g-own{margin-top:12px}
+.g-colo .g-own a{color:var(--ggreen);font-weight:800}
+
+#gKeepbar{position:fixed;left:0;right:0;bottom:0;z-index:40;
+  padding:12px max(20px,env(safe-area-inset-left,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-right,0px));
+  background:rgba(250,246,238,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-top:1px solid rgba(228,221,207,.7)}
+#gKeepbar .inner{max-width:430px;margin:0 auto;display:flex;align-items:center;gap:12px}
+#gKeepbar .g-fr{font-family:var(--gmono);font-size:.5rem;letter-spacing:.08em;color:var(--gsoft);line-height:1.5;min-width:0;margin:0}
+.g-keep{flex:none;display:inline-flex;align-items:center;justify-content:center;min-height:48px;
+  padding:0 20px;border-radius:999px;background:#1c1c18;color:var(--gp);font-weight:800;
+  font-size:.92rem;border:0;cursor:pointer;font-family:'Nunito',system-ui,sans-serif;
+  box-shadow:0 8px 22px rgba(40,30,10,.25);transition:transform .15s ease-out}
+.g-keep:active{transform:scale(.97)}
+.g-keep.done{background:var(--ggreen)}
+.g-keep:focus-visible{outline:3px solid var(--gamber);outline-offset:2px}
+
+#dayFoot{position:relative;z-index:1;text-align:center;font-size:.72rem;color:var(--gsoft);
+  border:0;margin:0;padding:0 20px calc(96px + env(safe-area-inset-bottom,0px))}
+
+@media (prefers-reduced-motion:reduce){.g-story .fr img{transform:none;transition:none}}
+</style>
 </head>
-<body>
+<body class="day">
   <div class="cosmos"></div>
+  <div class="dsky"></div>
 
   <div class="wrap share-wrap">
     <nav class="nav">
       <a class="brand" href="../"><img src="/shared/brand/logo-mark.svg" width="28" height="28" alt="Prevoya" class="nav-mark">Prevoya</a>
       <a class="nav-cta" href="/bali/plan/">Plan my Bali</a>
     </nav>
+    <div class="dbar">
+      <a href="/">Prevoya</a>
+      <a class="dcta" href="/" id="gTopCta">Start your own — free</a>
+    </div>
 
     <!-- state: loading -->
     <div id="shLoading" class="sh-center">
-      <p class="pulse-note">opening the passport…</p>
+      <p class="pulse-note">opening the gift…</p>
     </div>
 
     <!-- state: gone (revoked / bad token) — brand voice, not an error screen -->
     <div id="shGone" class="sh-center" hidden>
       <span class="orb planet-teal" style="width:34px;height:34px"></span>
-      <h1 class="sh-gone-h">this passport went private</h1>
-      <p class="sec-context">The traveler closed this link. You can still start your own.</p>
-      <a class="btn btn-primary" href="/bali/plan/">Plan my Bali — free</a>
+      <h1 class="sh-gone-h">this gift went private</h1>
+      <p class="sec-context">The sender closed this link. You can still start a collection of your own.</p>
+      <a class="btn btn-primary" href="/">Start your own — free</a>
     </div>
 
-    <!-- ROUND 8 (Guy, 17 Nov): THE RECEIVER'S CEREMONY — the gift opens
-         playing. 4 beats: the address → the places (sender's photos first,
-         wearing their marks) → the note → the handover. Tap = skip;
-         reduced motion goes straight to the list; plays once per browser. -->
-    <div class="gfc" id="gfCer" hidden>
-      <div class="gfc-stage" id="gfcStage"></div>
-      <div class="gfc-progress"><div class="gfc-fill" id="gfcFill"></div></div>
-      <p class="gfc-skip">tap to skip</p>
-    </div>
-
-    <!-- state: the gift (kind=list) — a collection, given person to person -->
-    <div id="gfBody" hidden>
-      <header class="gf-hero">
-        <p class="gf-eyebrow" id="gfEyebrow">A GIFT · PREVOYA</p>
-        <h1 class="gf-title" id="gfTitle"></h1>
-        <p class="sh-counts" id="gfCounts"></p>
-        <p class="gf-note" id="gfNote" hidden></p>
+    <!-- ROUND 16 (Guy, 26 Nov): THE GIFT IN DAYLIGHT — A's header + note,
+         C's tappable photo story, B's contents + area chapters + keep bar. -->
+    <div id="g16" class="gwrap" hidden>
+      <header class="g-from">
+        <div class="g-ava" id="gAva" aria-hidden="true"></div>
+        <div>
+          <h1 id="gTitle"></h1>
+          <p class="g-when" id="gWhen">OPENS FREE · NO LOGIN</p>
+        </div>
       </header>
-      <div class="gf-mosaic" id="gfMosaic" hidden></div>
-      <p class="gf-moscap" id="gfMosCap" hidden></p>
-      <div class="gf-rows" id="gfRows"></div>
-      <section class="sh-cta gf-door">
-        <button type="button" class="btn btn-primary" id="gfSaveAll"></button>
-        <p class="note" id="gfSaveNote">free · no login — they’ll be on your list when you open Prevoya</p>
-        <p class="gf-own"><a href="/bali/plan/" id="gfOwn">…or start your own collection →</a></p>
-      </section>
-    </div>
+      <div class="g-note" id="gNoteW" hidden><p id="gNoteTx"></p></div>
+      <p class="g-cts" id="gCts"></p>
 
-    <!-- state: the passport -->
+      <div class="g-story" id="gStory" hidden role="button" tabindex="0" aria-label="The sender’s photo story — tap to see the next place">
+        <div id="gFrames"></div>
+        <div class="g-shade"></div>
+        <div class="g-stop"><span class="g-sava" id="gSava" aria-hidden="true"></span><b id="gSline"></b><span class="g-sw" id="gSw"></span></div>
+        <div class="g-ticks" id="gTicks"></div>
+        <div class="g-cap">
+          <h2 id="gCapN"></h2>
+          <p class="g-ar" id="gCapA"></p>
+          <span class="g-mk" id="gCapM"></span>
+        </div>
+        <span class="g-hint">TAP FOR THE NEXT ONE →</span>
+      </div>
+      <p class="g-scap" id="gScap" hidden></p>
+
+      <nav class="g-toc" id="gToc" hidden aria-label="Contents">
+        <h2>What’s inside</h2>
+        <div id="gTocRows"></div>
+      </nav>
+
+      <div id="gChaps"></div>
+
+      <div class="g-colo">
+        <p id="gColo"></p>
+        <p class="g-own"><a href="/" id="gfOwn">…or start your own collection →</a></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="gKeepbar" hidden>
+    <div class="inner">
+      <p class="g-fr">FREE · NO PASSWORD, EVER<br>ON YOUR LIST WHEN YOU OPEN PREVOYA</p>
+      <button type="button" class="g-keep" id="gfSaveAll"></button>
+    </div>
+  </div>
+
+  <div class="wrap share-wrap" id="ppWrap" style="display:contents">
+    <!-- state: the passport (kind=trip, unchanged cosmic world) -->
     <div id="shBody" hidden>
       <!-- beat 1 · hero -->
       <header class="sh-hero">
@@ -134,6 +300,8 @@
       </footer>
     </div>
   </div>
+
+  <footer id="dayFoot" hidden>Prevoya · a collection, given person to person</footer>
 
   <!-- stamp mini-card overlay (save · via <name>) -->
   <div class="sh-mini" id="shMini" hidden>

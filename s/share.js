@@ -124,7 +124,7 @@ async function resolveGPhotos(names) {
 }
 /* lazy loader for the gift rows — only photos that scroll into view resolve */
 function watchRowPhotos() {
-  const imgs = document.querySelectorAll('#gfRows img[data-pn]');
+  const imgs = document.querySelectorAll('#gChaps img[data-pn]');
   if (!imgs.length) return;
   /* swap only once the real photo has decoded — the category art stays
      up until the very frame it's replaced, never a blank or broken box */
@@ -134,7 +134,7 @@ function watchRowPhotos() {
     im.src = uri;
   };
   const apply = () => {
-    document.querySelectorAll('#gfRows img[data-pn]').forEach((img) => {
+    document.querySelectorAll('#gChaps img[data-pn]').forEach((img) => {
       const n = img.getAttribute('data-pn');
       if (n && GUR.has(n)) { swapIn(img, GUR.get(n)); img.removeAttribute('data-pn'); }
     });
@@ -175,141 +175,161 @@ function watchRowPhotos() {
   }, { rootMargin: '300px' });
   imgs.forEach((i) => io.observe(i));
 }
-/* one cascade order for prefetch + ceremony: any photo leads (own first,
-   then a real place photo), then been > worth > saved */
-function cerCascade(places) {
+/* one cascade order for the story: any photo leads (own first, then a
+   real place photo), then been > worth > saved */
+function storyOrder(places) {
   const rank = { been: 0, worth: 1, saved: 2 };
   const ph = (p) => (p.photo ? 2 : (p.photo_name ? 1 : 0));
   return places.slice().sort((a, b) =>
     (ph(b) - ph(a)) ||
-    ((rank[a.mark] != null ? rank[a.mark] : 3) - (rank[b.mark] != null ? rank[b.mark] : 3))
-  ).slice(0, places.some((p) => p.photo || p.photo_name) ? 4 : 3);
+    ((rank[a.mark] != null ? rank[a.mark] : 3) - (rank[b.mark] != null ? rank[b.mark] : 3)));
 }
 
-/* ─── ROUND 8 (Guy, 17 Nov): THE RECEIVER'S CEREMONY — the gift opens
-   playing. Beats: the address → the places (sender's own photos first,
-   each wearing its mark) → the handwritten note → "It's yours." Live
-   page animation only: it shows exactly what the page itself shows
-   (own photos + category art — nothing is exported or stored). Tap =
-   skip · reduced motion = straight to the list · plays once per
-   browser per token, ▶ replays. */
-function giftCeremony(data, token, replay, done) {
-  const DEST = data.destination || null; /* v15: null = places span destinations */
-  const cer = $('gfCer');
-  const stage = $('gfcStage');
-  if (!cer || !stage) { done(); return; }
-  const name = data.name || 'a traveler';
-  const places = (data.places || []).slice();
-  const n = (data.counts && data.counts.places) || places.length;
-  const cascade = cerCascade(places);
-  const MARKL = { been: '✓ been', worth: '♥ worth it', saved: '⚑ saved' };
-  const beats = [];
-  beats.push({ ms: 2300, html:
-    '<div class="gfc-beat"><p class="gfc-t1">' + esc(name) + ' kept ' + n +
-    ' place' + (n === 1 ? '' : 's') + (DEST ? ' in ' + esc(DEST) : '') + '.</p><p class="gfc-t2">for you</p></div>' });
-  cascade.forEach((p) => {
-    /* the photo chain, honest at every rung: sender's own → the real place
-       photo (Google, display-time, credited) → category art */
-    const g = (!p.photo && p.photo_name) ? GUR.get(p.photo_name) : null;
-    beats.push({ ms: 1700, html:
-      '<div class="gfc-beat">' +
-        '<img class="gfc-photo" alt="" src="' + esc(p.photo || g || catSrc(p.category)) + '">' +
-        '<div class="gfc-shade"></div>' +
-        '<p class="gfc-t1">' + esc(p.name) + '</p>' +
-        '<p class="gfc-mark" style="color:' + (MARK[p.mark] || MARK.saved)[1] + '">' +
-          (MARKL[p.mark] || MARKL.saved) + '</p>' +
-        '<p class="gfc-cap">' + esc(p.area || '') +
-          (p.photo ? ' · ' + esc(name) + '’s photo'
-            : (g ? ' · 📷 ' + esc(p.photo_author || 'Google') + ' · Google' : '')) + '</p>' +
-      '</div>' });
-  });
-  if (data.note) beats.push({ ms: 2500, html:
-    '<div class="gfc-beat"><p class="gfc-note">“' + esc(data.note) + '”</p>' +
-    '<p class="gfc-cap">— ' + esc(name) + '</p></div>' });
-  beats.push({ ms: 2200, html:
-    '<div class="gfc-beat"><p class="gfc-t1">It’s yours.</p>' +
-    '<button type="button" class="gfc-take">⚑ take all ' + n + ' →</button></div>' });
-
-  const total = beats.reduce((s, b) => s + b.ms, 0);
-  const timers = [];
-  let ended = false;
-  const end = (how) => {
-    if (ended) return;
-    ended = true;
-    timers.forEach(clearTimeout);
-    try { localStorage.setItem('pv_gcer_' + token, '1'); } catch (_) {}
-    cer.classList.add('gfc-out');
-    setTimeout(() => { cer.hidden = true; cer.classList.remove('gfc-out'); }, 440);
-    done();
-    try { window.pvTrack && window.pvTrack('gift_ceremony', { end: how, n: n, replay: !!replay, t: token }); } catch (_) {}
-    if (how === 'take') {
-      const btn = $('gfSaveAll');
-      if (btn) { btn.click(); btn.scrollIntoView({ block: 'center' }); }
-    }
-  };
-  cer.onclick = (e) => { end(e.target.closest('.gfc-take') ? 'take' : 'skip'); };
-  stage.innerHTML = beats.map((b) => b.html).join('');
-  const els = stage.querySelectorAll('.gfc-beat');
-  let t = 0;
-  beats.forEach((b, i) => {
-    timers.push(setTimeout(() => {
-      els.forEach((el, j) => el.classList.toggle('on', j === i));
-    }, t));
-    t += b.ms;
-  });
-  timers.push(setTimeout(() => end('done'), total + 450));
-  const fill = $('gfcFill');
-  if (fill) { fill.style.transition = 'none'; fill.style.width = '0'; }
-  cer.hidden = false;
-  $('shLoading').hidden = true;
-  requestAnimationFrame(() => {
-    if (fill) { fill.style.transition = 'width ' + total + 'ms linear'; fill.style.width = '100%'; }
-  });
-}
-
+/* ─── ROUND 16 (Guy, 26 Nov): THE GIFT IN DAYLIGHT — his composite of
+   the /x/16 examples. A: the sender's header + handwritten note. C: a
+   tappable photo story (own photos first, then real place photos,
+   display-time + credited). B: a "What's inside" contents card and the
+   list divided by area, with the keep bar riding the bottom. The old
+   4-beat ceremony retired: the story IS the opening. */
 function renderGift(data, token) {
   const DEST = data.destination || null; /* v15: null = places span destinations */
   const name = data.name || 'a traveler';
   const places = data.places || [];
   const n = (data.counts && data.counts.places) || places.length;
-  const COLL = name + '’s ' + (DEST || 'places'); /* named honestly, never a destination the list outgrows */
-  document.title = COLL + ' — a gift · Prevoya';
-  $('gfEyebrow').textContent = 'A GIFT FROM ' + name.toUpperCase() + ' · PREVOYA';
-  $('gfTitle').textContent = COLL + ' — ' + n + ' place' + (n === 1 ? '' : 's') + ' saved for you';
+  const been = places.filter((p) => p.mark === 'been').length;
   const withPh = (data.counts && data.counts.withPhotos) || 0;
-  $('gfCounts').innerHTML = '<em>' + n + '</em> PLACES · <em>' + ((data.counts && data.counts.areas) || 1) + '</em> AREAS' +
-    (withPh ? ' · <em>' + withPh + '</em> WITH ' + name.toUpperCase() + '’S PHOTOS' : '');
-  if (data.note) { $('gfNote').textContent = '“' + data.note + '”'; $('gfNote').hidden = false; }
+  const NAME_U = name.toUpperCase();
+  document.title = name + '\u2019s ' + (DEST || 'places') + ' \u2014 a gift \u00b7 Prevoya';
 
-  /* the mosaic — only their own photos earn it; no own photos, no mosaic */
-  const own = places.filter((p) => p.photo).slice(0, 3);
-  if (own.length) {
-    $('gfMosaic').innerHTML = own.map((p) =>
-      '<img alt="' + esc(p.name) + ' — photo by ' + esc(name) + '" src="' + esc(p.photo) + '">').join('');
-    $('gfMosaic').hidden = false;
-    $('gfMosCap').textContent = 'photos by ' + name + ' — taken standing there';
-    $('gfMosCap').hidden = false;
+  /* ── A · the header + the note ── */
+  $('gAva').textContent = (name[0] || 'P').toUpperCase();
+  $('gTitle').textContent = DEST
+    ? name + ' saved you their ' + DEST
+    : name + ' saved you ' + n + ' place' + (n === 1 ? '' : 's');
+  if (data.note) { $('gNoteTx').textContent = data.note; $('gNoteW').hidden = false; }
+  $('gCts').innerHTML = '<b>' + n + ' PLACES</b> \u00b7 ' +
+    ((data.counts && data.counts.areas) || 1) + ' AREAS' +
+    (been ? ' \u00b7 ' + been + ' BEEN TO' : '') +
+    (withPh ? ' \u00b7 ' + withPh + ' WITH ' + esc(NAME_U) + '\u2019S PHOTOS' : '');
+
+  /* ── C · the photo story — own photos lead; top up with real place
+     photos (Google, display-time, credited) when there are few ── */
+  const ordered = storyOrder(places);
+  const ownFr = ordered.filter((p) => p.photo).slice(0, 10);
+  const gFr = ownFr.length < 4
+    ? ordered.filter((p) => !p.photo && p.photo_name).slice(0, 6 - ownFr.length) : [];
+  const buildStory = (frames) => {
+    if (!frames.length) return;
+    const story = $('gStory');
+    $('gSava').textContent = (name[0] || 'P').toUpperCase();
+    $('gSline').textContent = name + ' was here';
+    $('gSw').textContent = NAME_U + '\u2019S CAMERA ROLL';
+    $('gFrames').innerHTML = frames.map((f) =>
+      '<div class="fr"><img alt="' + esc(f.p.name) + '" src="' + esc(f.src) + '"></div>').join('');
+    const ticks = $('gTicks');
+    ticks.innerHTML = frames.map(() => '<i></i>').join('');
+    const frEls = [].slice.call($('gFrames').children);
+    const tkEls = [].slice.call(ticks.children);
+    const MARKL = { been: '\u2713 BEEN', worth: '\u2665 WORTH IT', saved: '\u2691 SAVED' };
+    let cur = 0, timer = null;
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let inView = true;
+    const show = (i) => {
+      cur = (i + frames.length) % frames.length;
+      frEls.forEach((el, j) => el.classList.toggle('on', j === cur));
+      tkEls.forEach((el, j) => el.classList.toggle('done', j <= cur));
+      const f = frames[cur];
+      $('gCapN').textContent = f.p.name;
+      $('gCapA').textContent = [String(f.p.category || '').toUpperCase(), String(f.p.area || '').toUpperCase()]
+        .filter(Boolean).join(' \u00b7 ');
+      $('gCapM').textContent = (MARKL[f.p.mark] || MARKL.saved) + ' \u00b7 ' +
+        (f.own ? NAME_U + '\u2019S PHOTO' : '\ud83d\udcf7 ' + (f.p.photo_author || 'Google').toUpperCase() + ' \u00b7 GOOGLE');
+      if (timer) clearTimeout(timer);
+      if (!reduced && inView && !document.hidden) timer = setTimeout(() => show(cur + 1), 4600);
+    };
+    story.addEventListener('click', () => show(cur + 1));
+    story.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(cur + 1); }
+    });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver((ents) => {
+        inView = ents[0].isIntersecting;
+        if (inView) show(cur);
+        else if (timer) clearTimeout(timer);
+      }, { threshold: 0.25 }).observe(story);
+    }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) show(cur); });
+    story.hidden = false;
+    $('gScap').textContent = ownFr.length
+      ? frames.length + ' PLACE' + (frames.length === 1 ? '' : 'S') + ' ' + NAME_U + ' STOOD IN \u2014 TAP THROUGH'
+      : 'THE PLACES AS THEY LOOK \u2014 TAP THROUGH';
+    $('gScap').hidden = false;
+    show(0);
+  };
+  const ownFrames = ownFr.map((p) => ({ p, src: p.photo, own: true }));
+  if (gFr.length) {
+    resolveGPhotos(gFr.map((p) => p.photo_name)).then(() => {
+      buildStory(ownFrames.concat(
+        gFr.filter((p) => GUR.has(p.photo_name))
+          .map((p) => ({ p, src: GUR.get(p.photo_name), own: false }))));
+    });
+  } else buildStory(ownFrames);
+
+  /* ── B · what's inside + the chapters — by area, biggest first; the
+     small areas gather into one last chapter so the contents stay short ── */
+  const byArea = new Map();
+  places.forEach((p) => {
+    const a = String(p.area || '').trim() || 'More places';
+    if (!byArea.has(a)) byArea.set(a, []);
+    byArea.get(a).push(p);
+  });
+  const areas = [...byArea.entries()].sort((a, b) => b[1].length - a[1].length);
+  const big = areas.filter(([, ps]) => ps.length >= 3).slice(0, 4);
+  const tail = areas.filter(([a]) => !big.some(([b]) => b === a));
+  const chapters = big.map(([a, ps]) => ({ id: 'ga-' + a.toLowerCase().replace(/[^a-z0-9]+/g, '-'), title: a, areas: [a], ps }));
+  if (tail.length) {
+    const ps = tail.reduce((s, [, p]) => s.concat(p), []);
+    if (ps.length) chapters.push({
+      id: 'ga-further', title: chapters.length ? 'Further out' : (DEST || 'The places'),
+      areas: tail.map(([a]) => a), ps
+    });
   }
-
-  /* the rows — every place with its provenance mark; real place photos
-     resolve lazily as rows scroll into view (own photo already leads) */
-  $('gfRows').innerHTML = places.map((p) => {
-    const [mk, mc] = MARK[p.mark] || MARK.saved;
-    const pn = (!p.photo && p.photo_name) ? ' data-pn="' + esc(p.photo_name) + '"' : '';
-    const cred = (!p.photo && p.photo_name && p.photo_author)
-      ? ' title="photo: ' + esc(p.photo_author) + ' · Google"' : '';
-    return '<div class="gf-row">' +
-      '<img alt="" loading="lazy"' + pn + cred + ' src="' + esc(p.photo || catSrc(p.category)) + '">' +
-      '<div class="gf-row-main"><span class="gf-row-nm">' + esc(p.name) +
-        (p.verified ? ' <span class="place-verified">✓</span>' : '') + '</span>' +
-      '<span class="gf-row-sub">' + esc([p.category, p.area].filter(Boolean).join(' · ')) + '</span></div>' +
-      '<span class="gf-mark" style="color:' + mc + '">' + mk + '</span></div>';
+  if (chapters.length > 1) {
+    $('gTocRows').innerHTML = chapters.map((c) =>
+      '<a href="#' + c.id + '"><span>' + esc(c.areas.join(' \u00b7 ')) + '</span><span class="dots"></span>' +
+      '<span class="n">' + c.ps.length + ' PLACE' + (c.ps.length === 1 ? '' : 'S') + '</span></a>').join('');
+    $('gToc').hidden = false;
+  }
+  const MARKC = { been: ['\u2713 BEEN', ''], worth: ['\u2665 WORTH IT', ' w'], saved: ['\u2691 SAVED', ' s'] };
+  $('gChaps').innerHTML = chapters.map((c) => {
+    const cb = c.ps.filter((p) => p.mark === 'been').length;
+    return '<section class="g-chap" id="' + c.id + '">' +
+      '<h2>' + esc(c.title) + '</h2>' +
+      '<p class="cc">' + c.ps.length + ' PLACE' + (c.ps.length === 1 ? '' : 'S') +
+        (cb ? ' \u00b7 ' + cb + ' VISITED' : '') +
+        (c.areas.length > 1 ? ' \u00b7 ' + esc(c.areas.join(' \u00b7 ').toUpperCase()) : '') + '</p>' +
+      c.ps.map((p) => {
+        const [mk, mc] = MARKC[p.mark] || MARKC.saved;
+        const pn = (!p.photo && p.photo_name) ? ' data-pn="' + esc(p.photo_name) + '"' : '';
+        const cred = (!p.photo && p.photo_name && p.photo_author)
+          ? ' title="photo: ' + esc(p.photo_author) + ' \u00b7 Google"' : '';
+        return '<div class="g-pl">' +
+          '<img alt="" loading="lazy"' + pn + cred + ' src="' + esc(p.photo || catSrc(p.category)) + '">' +
+          '<span class="n">' + esc(p.name) + (p.verified ? ' <span class="pv">\u2713</span>' : '') +
+            '<span class="s">' + esc([p.category, c.areas.length > 1 ? p.area : null]
+              .filter(Boolean).join(' \u00b7 ').toUpperCase()) + '</span></span>' +
+          '<span class="mk' + mc + '">' + mk + '</span></div>';
+      }).join('') +
+    '</section>';
   }).join('');
   if (places.some((p) => !p.photo && p.photo_name)) {
-    $('gfRows').insertAdjacentHTML('afterend',
-      '<p class="gf-gcred">place photos · their Google contributors</p>');
+    $('gChaps').insertAdjacentHTML('beforeend',
+      '<p class="g-gcred">PLACE PHOTOS \u00b7 THEIR GOOGLE CONTRIBUTORS</p>');
     watchRowPhotos();
   }
+  $('gColo').textContent = been
+    ? 'Made from ' + been + ' real visit' + (been === 1 ? '' : 's') + ', stamped as they happened.'
+    : 'Saved one by one \u2014 a collection, not a listicle.';
 
   /* provenance travels into sign-up — same seed the passport share plants */
   const seed = (place) => {
@@ -321,18 +341,21 @@ function renderGift(data, token) {
     } catch (_) {}
   };
   $('gfOwn').addEventListener('click', () => seed(null));
+  const top = $('gTopCta');
+  if (top) top.addEventListener('click', () => seed(null));
 
   /* the door: every place lands in the anonymous buffer — the same buffer
      the public shelf fills, claimed on the first signed-in open */
   const btn = $('gfSaveAll');
   const already = places.length && places.every((p) => anonMap().has(String(p.id)));
   const taken = () => {
-    btn.textContent = '✓ on your list — keep them free →';
+    btn.classList.add('done');
+    btn.textContent = 'On your list \u2713';
     btn.onclick = () => { seed(null); location.href = '/app/'; };
   };
   if (already) taken();
   else {
-    btn.textContent = 'save these ' + n + ' to my list';
+    btn.textContent = 'Keep all ' + n + ' \u2014 free';
     btn.onclick = () => {
       const have = anonMap();
       places.forEach((p) => {
@@ -351,31 +374,10 @@ function renderGift(data, token) {
      lets the SENDER hear the echo as counts, never as identities */
   try { window.pvTrack && window.pvTrack('share_visit', { kind: 'list', t: token }); } catch (_) {}
 
-  /* ROUND 8: the gift opens playing — once per browser; ▶ replays. The
-     list beneath is fully painted first, so skip always lands somewhere. */
-  const addReplay = () => {
-    if (document.getElementById('gfReplay') || !places.length) return;
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.id = 'gfReplay';
-    b.className = 'gf-replay';
-    b.textContent = '▶ play it again';
-    b.onclick = () => giftCeremony(data, token, true, () => {});
-    $('gfCounts').insertAdjacentElement('afterend', b);
-  };
-  const reveal = () => { $('shLoading').hidden = true; $('gfBody').hidden = false; addReplay(); };
-  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let seen = false;
-  try { seen = !!localStorage.getItem('pv_gcer_' + token); } catch (_) {}
-  if (reduced || seen || !places.length) reveal();
-  else {
-    /* prefetch the ceremony's real photos — start within ~a breath either way */
-    const names = cerCascade(places).filter((p) => !p.photo && p.photo_name).map((p) => p.photo_name);
-    const start = () => giftCeremony(data, token, false, reveal);
-    if (names.length) {
-      Promise.race([resolveGPhotos(names), new Promise((r) => setTimeout(r, 900))]).then(start);
-    } else start();
-  }
+  $('shLoading').hidden = true;
+  $('g16').hidden = false;
+  $('gKeepbar').hidden = false;
+  $('dayFoot').hidden = false;
 }
 
 function stampHTML(s, count, viaName, hide) {
@@ -413,6 +415,11 @@ function stampHTML(s, count, viaName, hide) {
   /* the gift — a collection, not a passport: its own render, then done */
   if (data.kind === 'list') { renderGift(data, token); return; }
   if (!data.counts) { gone(); return; }
+
+  /* the passport keeps its cosmic world — flip the page out of daylight */
+  document.body.classList.remove('day');
+  const mt = document.getElementById('metaTheme');
+  if (mt) mt.setAttribute('content', '#0a0a14');
 
   paintDial();
   setInterval(paintDial, 60000);

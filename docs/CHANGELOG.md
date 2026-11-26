@@ -3,6 +3,20 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 26 Nov 2026 — Round 16: the gift opens in daylight
+The receiver's share page (kind=list) leaves the cosmic world and joins
+the daylight landing — Guy's composite of the three /x/16 examples:
+A's header ("<Name> saved you their Bali") with the sender's
+handwritten note, C's tappable photo story (own photos lead, real
+place photos top up, every photo credited), and B's "What's inside"
+contents card with the list divided by area and a sticky "Keep all N —
+free" bar. The old 4-beat ceremony retired — the story IS the opening.
+Everything underneath is unchanged: the anonymous save buffer, the
+tripos_via provenance seed, share_visit / share_save_tap, lazy Google
+photo resolution, the revoked state (now daylight). The old passport
+share (kind=trip) keeps its cosmic world on the same page. Legacy
+mixed-destination links title honestly ("saved you 51 places").
+
 ## 25 Nov 2026 — Round 15.8b: the demo path is persona-clean end to end
 Round 15.8 left one seam: tapping into Maya's Bali collection from
 /g/maya opened the original share page, which still greeted as Guy.
