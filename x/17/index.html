@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Round 17 — the app in three verbs</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#faf6ee">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{
+  --paper:#faf6ee; --ink:#23231e; --dim:#6b6a5f; --soft:#8a8676;
+  --green:#0d7a5e; --amber:#b06c0a; --line:#e4ddcf; --card:#ffffff;
+  --body:'Nunito',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.5;
+  padding:56px max(20px,env(safe-area-inset-left,0px)) 56px max(20px,env(safe-area-inset-right,0px))}
+.wrap{max-width:430px;margin:0 auto}
+h1{margin:0;font-size:1.5rem;font-weight:900;line-height:1.2;letter-spacing:-.01em;text-wrap:balance}
+.sub{margin:12px 0 0;font-size:.9rem;color:var(--dim)}
+.tag{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;color:var(--soft);margin:0 0 12px}
+.opt{display:block;margin-top:24px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px;text-decoration:none;color:var(--ink);box-shadow:0 4px 14px rgba(40,30,10,.08)}
+.opt:active{transform:scale(.985)}
+.opt b{font-size:1.05rem;font-weight:900}
+.opt p{margin:6px 0 0;font-size:.82rem;color:var(--dim);line-height:1.5}
+.opt .go{display:inline-flex;align-items:center;margin-top:12px;font-family:var(--mono);font-size:.66rem;
+  letter-spacing:.08em;color:var(--green);font-weight:500}
+.now{margin-top:56px;padding-top:24px;border-top:1px solid var(--line);font-size:.82rem;color:var(--dim)}
+.now a{color:var(--green);font-weight:800}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="tag">ROUND 17 · EXAMPLES, NOT THE BUILD</p>
+  <h1>The app in three verbs</h1>
+  <p class="sub">The app still wears the planner (Your Places · Today · Pulse · You). These are three ways the home screen and tab bar could read as KEEP · GIVE · PASS ON instead — daylight world, planner behind a door. Same demo user (Maya), same data.</p>
+
+  <a class="opt" href="/x/17/a">
+    <b>A · The shelf</b>
+    <p>Home is your shelf of collections through time — each with its own GIFT door and its echo counts. Received gifts sit below in their givers’ gold lanes. Two tabs + a trip door.</p>
+    <span class="go">OPEN A ⌲</span>
+  </a>
+
+  <a class="opt" href="/x/17/b">
+    <b>B · The three verbs</b>
+    <p>The tab bar IS the loop: KEEP (save, import, your collection) · GIVE (the composer, your links, the echoes) · PASS ON (what you received, in lanes, ready to take from). Nothing else at the top level.</p>
+    <span class="go">OPEN B ⌲</span>
+  </a>
+
+  <a class="opt" href="/x/17/c">
+    <b>C · The passport</b>
+    <p>Home is you, public-first: your avatar, your one link (prevoya.app/g/you), your collections as a grid — the Instagram-highlights mental model. Give is one tap from the top.</p>
+    <span class="go">OPEN C ⌲</span>
+  </a>
+
+  <p class="now">Today’s live app keeps its cosmic planner shell — nothing in-app changed. These examples only decide the shape; you rule, then the build follows.</p>
+</div>
+</body>
+</html>

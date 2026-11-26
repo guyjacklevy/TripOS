@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prevoya app — the shelf (17-A)</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#faf6ee">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* ═══ 17-A · THE SHELF — home is your collections through time ═══
+   Each collection is an object with its own GIFT door and its echo.
+   Received gifts live below, in their givers' gold lanes. The trip
+   tools (planner · today · packing) are ONE door, not three tabs.
+   spacing scale: 12 tight · 16 caption · 24 component · 56 section */
+:root{
+  --paper:#faf6ee; --ink:#23231e; --dim:#6b6a5f; --soft:#8a8676;
+  --green:#0d7a5e; --amber:#b06c0a; --line:#e4ddcf; --card:#ffffff;
+  --body:'Nunito',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden;overflow-x:clip}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.5}
+img{max-width:100%}
+
+.bar{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;gap:7px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-left,0px)) 10px max(16px,env(safe-area-inset-right,0px));
+  background:rgba(250,246,238,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(228,221,207,.6);font-weight:800;font-size:.86rem}
+.bar::before{content:"";width:12px;height:12px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 35% 35%,#2fbf8f,var(--green))}
+.bar .tag{margin-left:auto;font-family:var(--mono);font-weight:500;font-size:.58rem;letter-spacing:.1em;color:var(--soft)}
+
+.wrap{max-width:430px;margin:0 auto;
+  padding:calc(66px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-left,0px)) 150px max(20px,env(safe-area-inset-right,0px))}
+
+/* header: name + the one link */
+.hd{display:flex;align-items:center;gap:12px}
+.ava{width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 32% 30%,#ffe9c4,#f0c06a);border:2.5px solid var(--card);
+  box-shadow:0 3px 10px rgba(40,30,10,.18);font-weight:900;font-size:1.15rem;color:#7a4e07}
+.hd h1{margin:0;font-size:1.25rem;font-weight:900;letter-spacing:-.01em}
+.plink{display:inline-flex;margin-top:2px;font-family:var(--mono);font-size:.6rem;letter-spacing:.04em;color:var(--green);text-decoration:none}
+
+/* a collection on the shelf */
+.coll{margin-top:24px;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+  box-shadow:0 6px 18px rgba(40,30,10,.1)}
+.coll .strip{display:flex;gap:2px;background:#efe9db}
+.coll .strip img{aspect-ratio:1;object-fit:cover;flex:1;min-width:0;width:33%}
+.coll .bd{padding:12px 14px}
+.coll .tt{display:flex;align-items:baseline;gap:8px}
+.coll .tt b{font-size:1.02rem;font-weight:900}
+.coll .tt .dt{margin-left:auto;font-family:var(--mono);font-size:.54rem;letter-spacing:.08em;color:var(--soft)}
+.coll .mt{font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--green);margin-top:3px}
+.coll .act{display:flex;align-items:center;gap:8px;margin-top:12px}
+.gift{flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:42px;border-radius:999px;
+  background:#1c1c18;color:var(--paper);font-weight:800;font-size:.84rem;border:0;cursor:pointer;font-family:var(--body)}
+.gift:active{transform:scale(.97)}
+.echo{flex:none;font-family:var(--mono);font-size:.54rem;letter-spacing:.04em;color:var(--dim);
+  border:1px solid var(--line);border-radius:999px;padding:11px 12px;background:var(--paper)}
+.echo b{color:var(--green);font-weight:500}
+.coll.sm .bd{display:flex;align-items:center;gap:10px}
+.coll.sm .tile{width:44px;height:44px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;
+  font-weight:900;color:#fff;font-size:1rem}
+.coll.sm .gift2{margin-left:auto;flex:none;font-family:var(--mono);font-size:.6rem;color:var(--green);
+  border:1.5px solid rgba(13,122,94,.4);border-radius:999px;padding:9px 13px;background:none;cursor:pointer}
+.tl{background:linear-gradient(135deg,#7fb069,#0d7a5e)}.tt2{background:linear-gradient(135deg,#e2766a,#b05656)}.ta{background:linear-gradient(135deg,#f0c06a,#b06c0a)}
+
+/* the two standing doors */
+.rowd{display:flex;gap:10px;margin-top:24px}
+.door{flex:1;display:flex;flex-direction:column;gap:3px;background:var(--card);border:1px solid var(--line);
+  border-radius:13px;padding:12px 13px;text-decoration:none;color:var(--ink);box-shadow:0 3px 10px rgba(40,30,10,.07)}
+.door:active{transform:scale(.985)}
+.door b{font-size:.85rem;font-weight:900}
+.door span{font-family:var(--mono);font-size:.52rem;letter-spacing:.06em;color:var(--soft)}
+.door.em b{color:var(--green)}
+
+/* received — the givers' lanes */
+.sec{margin-top:56px}
+.sec h2{margin:0;font-size:1.1rem;font-weight:900;letter-spacing:-.01em}
+.sec .cc{font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;color:var(--soft);margin-top:3px}
+.lane{display:flex;align-items:center;gap:11px;margin-top:16px;background:var(--card);
+  border:1px solid #ecd9ae;border-radius:13px;padding:11px 13px;box-shadow:0 3px 10px rgba(176,108,10,.08);
+  text-decoration:none;color:var(--ink)}
+.lane:active{transform:scale(.985)}
+.lane .rg{width:40px;height:40px;border-radius:50%;flex:none;padding:2.5px;background:linear-gradient(45deg,#f0c06a,#e2766a)}
+.lane .rg i{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;
+  background:var(--card);font-style:normal;font-weight:900;color:var(--amber)}
+.lane .n{min-width:0;font-size:.86rem;font-weight:800}
+.lane .n span{display:block;font-family:var(--mono);font-weight:500;font-size:.52rem;letter-spacing:.06em;color:var(--soft);margin-top:2px}
+.lane .chev{margin-left:auto;color:var(--soft);font-weight:800}
+
+/* tab bar: two names and a door */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;
+  padding:8px max(16px,env(safe-area-inset-left,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));
+  background:rgba(250,246,238,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-top:1px solid rgba(228,221,207,.7)}
+.tabs button{flex:1;background:none;border:0;cursor:pointer;font-family:var(--body);
+  display:flex;flex-direction:column;align-items:center;gap:2px;min-height:48px;justify-content:center;
+  font-size:.62rem;font-weight:800;color:var(--soft)}
+.tabs button.on{color:var(--ink)}
+.tabs button i{font-style:normal;font-size:1.05rem}
+.fab{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:41;
+  display:flex;align-items:center;gap:7px;min-height:50px;padding:0 18px;border-radius:999px;border:0;cursor:pointer;
+  background:var(--green);color:#fff;font-weight:900;font-size:.9rem;font-family:var(--body);
+  box-shadow:0 10px 26px rgba(13,122,94,.4)}
+.fab:active{transform:scale(.96)}
+</style>
+</head>
+<body>
+<div class="bar">Prevoya <span class="tag">17-A DEMO · THE SHELF</span></div>
+
+<div class="wrap">
+  <header class="hd">
+    <div class="ava">M</div>
+    <div>
+      <h1>Your shelf</h1>
+      <a class="plink" href="#">⌲ prevoya.app/g/maya — your one link</a>
+    </div>
+  </header>
+
+  <!-- the current collection: full card, photos, gift door + echo -->
+  <div class="coll">
+    <div class="strip">
+      <img src="/x/15d/assets/padang.jpg" alt=""><img src="/x/15d/assets/saltwood.jpg" alt=""><img src="/x/15d/assets/ulufish.jpg" alt="">
+    </div>
+    <div class="bd">
+      <div class="tt"><b>Your Bali</b><span class="dt">AUG ’26 → NOW</span></div>
+      <p class="mt">50 PLACES · ✓ BEEN TO 49 · 8 YOUR PHOTOS</p>
+      <div class="act">
+        <button type="button" class="gift">⤴ Gift it — one link</button>
+        <span class="echo"><b>15</b> OPENED · <b>4</b> KEPT</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- older collections: compact shelf rows -->
+  <div class="coll sm"><div class="bd"><span class="tile tt2">T</span><span class="n" style="min-width:0;font-size:.86rem;font-weight:800">Your Tokyo<span style="display:block;font-family:var(--mono);font-weight:500;font-size:.52rem;letter-spacing:.06em;color:var(--soft);margin-top:2px">34 PLACES · FEB ’26</span></span><button type="button" class="gift2">⤴ GIFT</button></div></div>
+  <div class="coll sm"><div class="bd"><span class="tile tl">L</span><span class="n" style="min-width:0;font-size:.86rem;font-weight:800">Your Lisbon<span style="display:block;font-family:var(--mono);font-weight:500;font-size:.52rem;letter-spacing:.06em;color:var(--soft);margin-top:2px">23 PLACES · MAY ’26</span></span><button type="button" class="gift2">⤴ GIFT</button></div></div>
+  <div class="coll sm"><div class="bd"><span class="tile ta">TA</span><span class="n" style="min-width:0;font-size:.86rem;font-weight:800">Your Tel Aviv<span style="display:block;font-family:var(--mono);font-weight:500;font-size:.52rem;letter-spacing:.06em;color:var(--soft);margin-top:2px">18 PLACES · HOME</span></span><button type="button" class="gift2">⤴ GIFT</button></div></div>
+
+  <!-- the two standing doors: import (TTV weapon) + the trip tools -->
+  <div class="rowd">
+    <a class="door em" href="#"><b>⌲ Camera roll → collection</b><span>JUST BACK? ~2 MINUTES</span></a>
+    <a class="door" href="#"><b>On a trip now →</b><span>TODAY · ROUTE · PACKING</span></a>
+  </div>
+
+  <!-- received: givers' lanes -->
+  <section class="sec">
+    <h2>Given to you</h2>
+    <p class="cc">THEIR COLLECTIONS STAY THEIRS — TAKE WHAT YOU LOVE</p>
+    <a class="lane" href="#"><span class="rg"><i>B</i></span><span class="n">Ben’s Rome<span>12 PLACES · 3 TAKEN</span></span><span class="chev">›</span></a>
+    <a class="lane" href="#"><span class="rg"><i>E</i></span><span class="n">Ella’s Athens<span>9 PLACES · NEW</span></span><span class="chev">›</span></a>
+  </section>
+</div>
+
+<button type="button" class="fab">⚑ Save a place</button>
+<nav class="tabs">
+  <button type="button" class="on"><i>▤</i>SHELF</button>
+  <button type="button"><i>☉</i>YOU</button>
+</nav>
+</body>
+</html>
