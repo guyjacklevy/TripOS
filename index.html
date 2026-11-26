@@ -88,6 +88,7 @@ html.js .hero{height:560vh}
 .chip b{color:var(--amber)}
 .chip.msg{border-radius:14px 14px 14px 4px;background:#e9f6ee;border-color:#cfe8da}
 .chip .src{display:block;font-family:var(--mono);font-size:.46rem;letter-spacing:.08em;color:var(--soft);margin-top:4px}
+button[data-cat]:active{transform:scale(.94)}
 
 /* the collection frame */
 .coll{position:absolute;left:50%;top:50%;width:clamp(210px,62vw,280px);transform:translate(-50%,-46%);
@@ -99,7 +100,7 @@ html.js .hero{height:560vh}
 
 /* the link pill */
 .link{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);opacity:0;will-change:transform,opacity;
-  display:flex;align-items:center;gap:8px;background:var(--card);
+  text-decoration:none;display:flex;align-items:center;gap:8px;background:var(--card);
   border:1.5px solid var(--green);border-radius:999px;padding:13px 20px;
   font-family:var(--mono);font-size:clamp(.72rem,3.4vw,.86rem);color:var(--green);white-space:nowrap;
   box-shadow:0 10px 30px rgba(13,122,94,.2)}
@@ -449,7 +450,7 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
 <div class="sky" aria-hidden="true"></div>
 <nav class="nav">
   <a class="brand" href="./">Prevoya</a>
-  <a class="nav-login" href="app/">Log in</a>
+  <a class="nav-login" href="app/trip/">Log in</a>
   <a class="nav-cta" href="app/">Open app</a>
 </nav>
 
@@ -480,13 +481,13 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
     </div>
 
     <!-- the link -->
-    <div class="link" id="link" aria-hidden="true">⌲ prevoya.app/s/noas-bali</div>
+    <a class="link" id="link" href="/s/?t=4f19f8b4025977b7">⌲ prevoya.app/s/mayas-bali</a>
 
     <!-- the gift -->
     <div class="gift" id="gift" aria-hidden="true">
-      <div class="eb">A GIFT FROM NOA · PREVOYA</div>
-      <h3>Noa’s Bali — 51 places saved for you</h3>
-      <div class="ct">51 PLACES · 8 AREAS · 8 WITH HER OWN PHOTOS</div>
+      <div class="eb">A GIFT FROM MAYA · PREVOYA</div>
+      <h3>Maya’s Bali — 50 places saved for you</h3>
+      <div class="ct">50 PLACES · 7 AREAS · 8 WITH HER OWN PHOTOS</div>
       <div class="grow" data-g="0"><img src="/x/15d/assets/amok.jpg" alt=""><div class="n">Amok Sunset<span>nightlife · Nusa Penida</span></div><div class="bn">✓ been</div></div>
       <div class="grow" data-g="1"><img src="/x/15d/assets/sayan.jpg" alt=""><div class="n">The Sayan House<span>food · Ubud</span></div><div class="bn">✓ been</div></div>
       <div class="grow" data-g="2"><img src="/x/15d/assets/borabora.jpg" alt=""><div class="n">Bora Bora Beach Club<span>nightlife · Gili T</span></div><div class="bn">⚑ saved</div></div>
@@ -566,7 +567,7 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
     <div class="catrow"><b>Saltwood Bingin</b><span class="cm">CAFE · ULUWATU · ✓ BEEN</span></div>
     <div class="catrow"><b>Dreamland Beach</b><span class="cm">BEACH · ULUWATU · ✓ BEEN</span></div>
   </div>
-  <p class="quiet an" style="--d:.4s">Tap one — a real slice of a real collection.</p>
+  <p class="quiet an" style="--d:.4s">Tap a category — a real slice of a real collection.</p>
 </div>
 </section>
 
@@ -689,7 +690,8 @@ html:not(.js) .settle{position:static;transform:none;margin:26vh auto 0}
     <li class="an" style="--d:.7s"><div>They find their places.<small>Photos cluster by where they were taken — you approve every row.</small></div></li>
     <li class="an" style="--d:1.15s"><div>Giftable in about 3 minutes.<small>Places, dates, and photos — ready to send as one link.</small></div></li>
   </ul>
-  <a class="door an" style="--d:1.4s" href="app/">⌲ Import your trip — free</a>
+  <a class="door an" style="--d:1.4s" href="app/trip/#you">⌲ Import your trip — free</a>
+  <p class="quiet an" style="--d:1.5s">sign-in opens first — the import lives in your account</p>
 </div>
 </section>
 

@@ -232,11 +232,13 @@ function renderGift(data, token) {
     const frEls = [].slice.call($('gFrames').children);
     const tkEls = [].slice.call(ticks.children);
     const MARKL = { been: '\u2713 BEEN', worth: '\u2665 WORTH IT', saved: '\u2691 SAVED' };
-    let cur = 0, timer = null;
+    let cur = 0, timer = null, autoLaps = 0;
     const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let inView = true;
-    const show = (i) => {
-      cur = (i + frames.length) % frames.length;
+    const show = (i, auto) => {
+      const next = (i + frames.length) % frames.length;
+      if (auto && next === 0) autoLaps++; /* one full lap, then rest — taps keep it alive */
+      cur = next;
       frEls.forEach((el, j) => el.classList.toggle('on', j === cur));
       tkEls.forEach((el, j) => el.classList.toggle('done', j <= cur));
       const f = frames[cur];
@@ -246,9 +248,10 @@ function renderGift(data, token) {
       $('gCapM').textContent = (MARKL[f.p.mark] || MARKL.saved) + ' \u00b7 ' +
         (f.own ? NAME_U + '\u2019S PHOTO' : '\ud83d\udcf7 ' + (f.p.photo_author || 'Google').toUpperCase() + ' \u00b7 GOOGLE');
       if (timer) clearTimeout(timer);
-      if (!reduced && inView && !document.hidden) timer = setTimeout(() => show(cur + 1), 4600);
+      if (!reduced && inView && !document.hidden && autoLaps < 1) timer = setTimeout(() => show(cur + 1, true), 4600);
     };
-    story.addEventListener('click', () => show(cur + 1));
+    const wake = () => { autoLaps = 0; };
+    story.addEventListener('click', () => { wake(); show(cur + 1); });
     story.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(cur + 1); }
     });
@@ -355,8 +358,16 @@ function renderGift(data, token) {
     };
     mkEl.textContent = MARKT[p.mark] || MARKT.saved;
     mkEl.className = 'mkl' + (p.mark === 'worth' ? ' w' : '');
+    $('gShMaps').href = 'https://www.google.com/maps/search/?api=1&query=' +
+      encodeURIComponent([p.name, p.area, DEST].filter(Boolean).join(' '));
     const sv = $('gShSave');
-    const done1 = () => { sv.classList.add('done'); sv.textContent = 'On your list \u2713'; };
+    /* once kept, the button is a DOOR to the shelf, never a dead status
+       (17.10 testers: a tappable that does nothing reads as broken) */
+    const done1 = () => {
+      sv.classList.add('done');
+      sv.textContent = 'On your list \u2713 \u2014 open your shelf';
+      sv.onclick = () => { seed(p.name); location.href = '/app/'; };
+    };
     sv.classList.remove('done');
     if (anonMap().has(String(p.id))) done1();
     else {
@@ -421,7 +432,7 @@ function renderGift(data, token) {
   const already = places.length && places.every((p) => anonMap().has(String(p.id)));
   const taken = () => {
     btn.classList.add('done');
-    btn.textContent = 'On your list \u2713';
+    btn.textContent = '\u2713 Kept \u2014 open your shelf';
     btn.onclick = () => { seed(null); location.href = '/app/'; };
   };
   if (already) taken();

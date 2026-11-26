@@ -41,7 +41,7 @@ img{max-width:100%}
   background:radial-gradient(circle at 35% 35%,#2fbf8f,var(--green))}
 
 .wrap{max-width:430px;margin:0 auto;
-  padding:calc(66px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-left,0px)) 150px max(20px,env(safe-area-inset-right,0px))}
+  padding:calc(66px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-left,0px)) 210px max(20px,env(safe-area-inset-right,0px))}
 
 .load{min-height:60vh;display:flex;align-items:center;justify-content:center;
   font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;color:var(--soft);animation:pulse 1.4s ease-in-out infinite}
@@ -256,7 +256,7 @@ img{max-width:100%}
   border:1px solid var(--line);border-radius:13px;padding:13px 14px;text-decoration:none;color:var(--ink);
   box-shadow:0 3px 10px rgba(40,30,10,.07);cursor:pointer;font-family:var(--body);text-align:left}
 .ydoor:active{transform:scale(.985)}
-.ydoor b{font-size:.88rem;font-weight:900}
+.ydoor b{font-size:.88rem;font-weight:900;font-family:var(--body)}
 .ydoor span{display:block;font-family:var(--mono);font-size:.5rem;letter-spacing:.06em;color:var(--soft);margin-top:2px}
 .ydoor .chev{margin-left:auto;color:var(--soft);font-weight:800}
 .ydoor.em b{color:var(--green)}
@@ -326,7 +326,7 @@ img{max-width:100%}
 
     <div class="signin" id="signin" hidden>
       <b>Keep them safe</b>
-      <p>Your saves live only in this browser until you sign in. Free, no password — an email code keeps them forever.</p>
+      <p>Your saves live only in this browser until you sign in. Free, no password — an email code keeps them forever, and your own shareable link comes with it.</p>
       <a href="/app/trip/">Sign in — keep my places</a>
     </div>
 
@@ -347,6 +347,7 @@ img{max-width:100%}
         <button type="button" class="plink" id="yLink" hidden></button>
       </div>
       <div class="ydoors">
+        <a class="ydoor em" id="ySign" href="/app/trip/" hidden><span><b>Sign in — keep them forever</b><span>FREE · EMAIL CODE OR GOOGLE · OPENS OUR CLASSIC SIGN-IN SCREEN</span></span><span class="chev">›</span></a>
         <a class="ydoor" id="yPub" href="#" hidden><span><b>Your public page</b><span>WHAT A STRANGER SEES AT YOUR LINK</span></span><span class="chev">›</span></a>
         <a class="ydoor em" href="/app/trip/#you"><span><b>⌲ Camera roll → collection</b><span>JUST BACK? ~2 MINUTES</span></span><span class="chev">›</span></a>
         <a class="ydoor" href="/app/trip/#today"><span><b>On a trip now</b><span>TODAY · ROUTE · CONCIERGE</span></span><span class="chev">›</span></a>

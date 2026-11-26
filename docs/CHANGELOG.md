@@ -3,6 +3,31 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 26 Nov 2026 — Round 17.10: the anonymous testers' round
+Two anonymous evaluator agents walked the live product cold (one as a
+receiver opening a friend's link, one as a stranger from a post),
+tapped everything, and filed full reports. Their converging top
+finding — "I kept 50 places and the app never lets me see them" — is
+fixed: the anonymous shelf's week lane and Your-places card now open
+the full in-browser list, grouped by area with the giver's name on
+every gifted place. The YOU tab is native for everyone: anonymous
+visitors get a daylight passport with a framed "Sign in — keep them
+forever" door instead of a cold jump into the old cosmic wall. Gift
+page: every place sheet has "⌖ Open in Maps"; a kept place's button
+becomes a door to the shelf (never a dead status); "Keep all" ends
+with "✓ Kept — open your shelf"; the photo story rests after one full
+lap and crossfades faster (the caption can no longer sit on the
+previous photo). Landing: the hero's link pill is now REAL (it opens
+Maya's actual gift page, hero renamed to Maya — one real demo thread),
+"Log in" leads to the sign-in door, the import CTA lands at the
+import's home and says sign-in comes first, demo copy points at the
+chips, chips press visibly. Plus: Escape closes sheets, the FAB no
+longer covers the last card, minutes read "5MIN AGO", verified ticks
+say VERIFIED, and the sign-in card names the link that comes with it.
+Known debt the testers confirmed, left for the next rounds: the old
+cosmic surfaces behind the doors (/app/trip, /bali/*) are a second
+visual world, and anonymous global search stays honestly sign-in-gated.
+
 ## 26 Nov 2026 — Round 17.9: the hardening pass
 A full fresh-eyes code review of the day's build (10 findings, 6
 important), all fixed: the old app's composer now ignores category and

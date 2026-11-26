@@ -25,7 +25,7 @@ const catSrc = (c) => '/shared/img/cat-' + (CAT_FILE[c] || 'explore') + '.webp';
 
 function ago(ts) {
   const m = Math.max(1, Math.round((Date.now() - ts) / 60000));
-  if (m < 60) return m + 'M AGO';
+  if (m < 60) return m + 'MIN AGO';
   const h = Math.round(m / 60);
   if (h < 24) return h + 'H AGO';
   const d = Math.round(h / 24);
@@ -259,7 +259,9 @@ function groupReceived(recRows) {
 }
 
 /* ── anonymous boot: the buffer is the shelf ── */
+let ANON_MODE = false;
 function bootAnon() {
+  ANON_MODE = true;
   const buf = anonList();
   const own = buf.filter((s) => !s.via);
   const rec = buf.filter((s) => s.via && s.via.t);
@@ -303,8 +305,12 @@ function render(m) {
     };
   }
 
-  /* the living lane */
+  /* the living lane — anonymous rows open the full in-browser list (17.10) */
   $('week').hidden = false;
+  if (!m.signed) {
+    $('week').style.cursor = 'pointer';
+    $('week').onclick = () => { location.hash = '#c/mine'; };
+  } else { $('week').style.cursor = ''; $('week').onclick = null; }
   if (m.week.length) {
     $('weekInv').hidden = true;
     $('weekRows').innerHTML = m.week.map(weekRow).join('');
@@ -340,9 +346,11 @@ function render(m) {
     const curOpen = (e) => {
       if (e.target.closest('.gift') || e.target.closest('.echo')) return;
       if (m.signed && m.currentSlug) location.hash = '#c/' + slugOf(m.currentSlug);
+      else if (!m.signed) location.hash = '#c/mine'; /* the anonymous list (17.10) */
     };
     $('cur').onclick = curOpen;
-    $('cur').style.cursor = m.signed && m.currentSlug ? 'pointer' : '';
+    $('cur').style.cursor = (m.signed && m.currentSlug) || !m.signed ? 'pointer' : '';
+    $('curOpn').hidden = !((m.signed && m.currentSlug) || !m.signed);
     $('cur').hidden = false;
   }
 
@@ -418,8 +426,9 @@ function render(m) {
       if (names.length > 16) resolvePhotos(names.slice(16, 32)).then(applyPhotos);
     });
   }
-  /* the YOU tab: native passport when signed, the sign-in gate when not */
-  $('tabYou').setAttribute('href', m.signed ? '#you' : '/app/trip/#you');
+  /* the YOU tab is native for everyone now — the sign-in door lives
+     inside it, framed, instead of a cold jump to another world (17.10) */
+  $('tabYou').setAttribute('href', '#you');
 
   /* the contextual trip door (17.6): tab + banner only around a trip */
   const tn = m.signed && CTX && CTX.tripNow;
@@ -652,7 +661,7 @@ function svRow(p, i, kind) {
     : anonMap().has(String(p.id));
   const sub = kind === 'g'
     ? esc((p.area || 'found live').toUpperCase()) + ' · NOT IN THE ATLAS YET'
-    : esc([p.category, p.area].filter(Boolean).join(' · ').toUpperCase()) + (p.verified ? ' · ✓' : '');
+    : esc([p.category, p.area].filter(Boolean).join(' · ').toUpperCase()) + (p.verified ? ' · ✓ VERIFIED' : '');
   return '<div class="svrow"><span class="n">' + esc(p.name) + '<span>' + sub + '</span></span>' +
     '<button type="button" class="sv1' + (already ? ' done' : '') + '" data-k="' + kind + '" data-i="' + i + '"' +
     (already ? ' disabled' : '') + '>' + (already ? 'On your list ✓' : '⚑ Save') + '</button></div>';
@@ -724,6 +733,9 @@ async function svSave(btn, kind, i) {
   if (SAVE_USER) bootSigned(SAVE_USER).catch(() => {});
   else bootAnon();
 }
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') document.querySelectorAll('.shw.on').forEach((w) => w.classList.remove('on'));
+});
 $('fabSave').addEventListener('click', () => {
   $('saveSh').classList.add('on');
   setTimeout(() => { try { $('svIn').focus(); } catch (_) {} }, 260);
@@ -756,6 +768,7 @@ function renderCollection(slug) {
     if (el && !el.hidden) { el.dataset.was = '1'; el.hidden = true; }
   });
   $('cvName').textContent = 'Your ' + g.title;
+  $('cvGift').hidden = false;
   $('cvGift').onclick = () => openComposer(slug === '—' ? false : slug);
   const been = g.items.filter((r) => CTX.stampSet.has(String(r.curated_place_id))).length;
   $('cvCt').textContent = g.items.length + ' PLACE' + (g.items.length === 1 ? '' : 'S') +
@@ -817,14 +830,77 @@ $('cvAreas').addEventListener('click', (e) => {
 $('cvBack').addEventListener('click', () => { location.hash = ''; });
 /* ── THE PASSPORT (Round 17.5): YOU without a scoreboard — the expert
    verdict kept C's header and dropped the opened/kept stats row. ── */
+/* the anonymous list (17.10): everything kept in this browser, viewable —
+   the testers' top finding was 50 kept places with no way to see them */
+function renderAnonList() {
+  const buf = anonList();
+  if (!buf.length) { location.hash = ''; return; }
+  SHELF_SECTIONS.forEach((id) => {
+    const el = $(id);
+    if (el && !el.hidden) { el.dataset.was = '1'; el.hidden = true; }
+  });
+  $('youView').hidden = true;
+  $('cvName').textContent = 'Your places';
+  $('cvGift').hidden = true; /* an anonymous list can't mint links */
+  $('cvCt').textContent = buf.length + ' PLACE' + (buf.length === 1 ? '' : 'S') + ' · KEPT IN THIS BROWSER';
+  $('cvStrip').parentElement.style.display = 'none';
+  const byArea = new Map();
+  buf.forEach((p) => {
+    const a = String(p.area || '').trim() || 'Around';
+    if (!byArea.has(a)) byArea.set(a, []);
+    byArea.get(a).push(p);
+  });
+  $('cvAreas').innerHTML = [...byArea.entries()].sort((a, b) => b[1].length - a[1].length)
+    .map(([area, items]) => {
+      return '<section class="cvarea"><h3>' + esc(area) + '</h3>' +
+        '<p class="cc">' + items.length + ' PLACE' + (items.length === 1 ? '' : 'S') + '</p>' +
+        items.map((p, i) => {
+          const fold = items.length > 6 && i >= 5 ? ' hidden' : '';
+          const sub = [String(p.category || '').toUpperCase(),
+            p.via ? 'FROM ' + String(p.via.name || 'A FRIEND').toUpperCase() : null]
+            .filter(Boolean).join(' · ');
+          return '<div class="cvpl"' + fold + '>' +
+            (p.category && CAT_FILE[p.category]
+              ? '<img alt="" loading="lazy" src="' + esc(catSrc(p.category)) + '">'
+              : '<img alt="" src="' + esc(catSrc('explore')) + '">') +
+            '<span class="n">' + esc(p.name) + '<span>' + esc(sub) + '</span></span>' +
+            '<span class="mk s">⚑ KEPT</span></div>';
+        }).join('') +
+        (items.length > 6
+          ? '<button type="button" class="cvmore">Show ' + (items.length - 5) + ' more in ' + esc(area) + ' ↓</button>'
+          : '') +
+      '</section>';
+    }).join('');
+  $('collView').hidden = false;
+  window.scrollTo(0, 0);
+  track('anon_list_view', { n: buf.length });
+}
+function renderYouAnon() {
+  const n = anonList().length;
+  SHELF_SECTIONS.forEach((id) => {
+    const el = $(id);
+    if (el && !el.hidden) { el.dataset.was = '1'; el.hidden = true; }
+  });
+  $('collView').hidden = true;
+  $('yAva').textContent = '·';
+  $('yName').textContent = 'You';
+  $('yCt').textContent = n + ' PLACE' + (n === 1 ? '' : 'S') + ' KEPT IN THIS BROWSER';
+  $('yLink').hidden = true;
+  $('yPub').hidden = true;
+  $('yOut').hidden = true;
+  $('ySign').hidden = false;
+  $('youView').hidden = false;
+  window.scrollTo(0, 0);
+}
 function renderYou() {
-  if (!CTX || !CTX.me) { location.hash = ''; return; }
+  if (!CTX || !CTX.me) { renderYouAnon(); return; }
   SHELF_SECTIONS.forEach((id) => {
     const el = $(id);
     if (el && !el.hidden) { el.dataset.was = '1'; el.hidden = true; }
   });
   $('collView').hidden = true;
   const me = CTX.me;
+  $('ySign').hidden = true;
   $('yAva').textContent = (me.firstName || me.email || '·')[0].toUpperCase();
   $('yName').textContent = me.firstName || 'You';
   $('yCt').textContent = me.nPlaces + ' PLACE' + (me.nPlaces === 1 ? '' : 'S') +
@@ -857,7 +933,8 @@ $('yBack').addEventListener('click', () => { location.hash = ''; });
 function applyHash() {
   const m = location.hash.match(/^#c\/(.+)/);
   if (m && CTX && CTX.groups) { $('youView').hidden = true; renderCollection(keyOf(m[1])); }
-  else if (location.hash === '#you' && CTX && CTX.me) renderYou();
+  else if (m && !CTX && decodeURIComponent(m[1]) === 'mine') { $('youView').hidden = true; renderAnonList(); }
+  else if (location.hash === '#you') renderYou();
   else { $('youView').hidden = true; showShelf(); }
 }
 window.addEventListener('hashchange', applyHash);
