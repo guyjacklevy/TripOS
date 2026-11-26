@@ -124,7 +124,7 @@ $('linksSh').addEventListener('click', (e) => { if (e.target === $('linksSh')) $
 async function bootSigned(user) {
   SAVE_USER = user;
   await claimAnon(user);
-  const [plR, ckR, shR, ppR, rcR] = await Promise.all([
+  const [plR, ckR, shR, ppR, rcR, pfR] = await Promise.all([
     sb.from('places').select('id, curated_place_id, name, area, category, created_at, via_token, via_name')
       .eq('user_id', user.id).order('created_at', { ascending: false }).limit(1000),
     sb.from('checkins').select('place_id, photo_path').eq('user_id', user.id).limit(2000),
@@ -133,7 +133,8 @@ async function bootSigned(user) {
       .order('created_at', { ascending: false }).limit(12),
     sb.from('public_profiles').select('slug').eq('user_id', user.id)
       .order('created_at', { ascending: true }).limit(1),
-    sb.from('place_recs').select('place_id').eq('user_id', user.id).eq('worth_it', true).limit(2000)
+    sb.from('place_recs').select('place_id').eq('user_id', user.id).eq('worth_it', true).limit(2000),
+    sb.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
   ]);
   const rows = plR.data || [];
   const cks = ckR.data || [];
@@ -142,6 +143,7 @@ async function bootSigned(user) {
   const worthSet = new Set((rcR.data || []).map((r) => String(r.place_id)));
   const shares = shR.data || [];
   const slug = ppR.data && ppR.data[0] && ppR.data[0].slug;
+  const firstName = ((pfR.data && pfR.data.full_name) || '').trim().split(/\s+/)[0] || null;
 
   /* curated lookup for destination + photo, chunked */
   const ids = [...new Set(
@@ -185,6 +187,7 @@ async function bootSigned(user) {
   CTX.dominant = biggest && biggest.key !== '—' ? biggest.key : null;
   CTX.destList = sorted.filter((g) => g.key !== '—').map((g) => ({ slug: g.key, title: g.title }));
   CTX.groups = groups; /* the collection view reads these (17.4) */
+  CTX.me = { firstName, slug, email: user.email || '', nPlaces: own.length, nColl: CTX.destList.length };
 
   render({
     signed: true,
@@ -377,8 +380,10 @@ function render(m) {
       if (names.length > 16) resolvePhotos(names.slice(16, 32)).then(applyPhotos);
     });
   }
+  /* the YOU tab: native passport when signed, the sign-in gate when not */
+  $('tabYou').setAttribute('href', m.signed ? '#you' : '/app/trip/#you');
   track('shelf_view', { signed: !!m.signed });
-  if (location.hash.indexOf('#c/') === 0) applyHash();
+  if (location.hash.indexOf('#c/') === 0 || location.hash === '#you') applyHash();
 }
 
 /* ── THE COMPOSER (Round 17.2): make the gift without leaving home.
@@ -713,10 +718,50 @@ $('cvAreas').addEventListener('click', (e) => {
   b.remove();
 });
 $('cvBack').addEventListener('click', () => { location.hash = ''; });
+/* ── THE PASSPORT (Round 17.5): YOU without a scoreboard — the expert
+   verdict kept C's header and dropped the opened/kept stats row. ── */
+function renderYou() {
+  if (!CTX || !CTX.me) { location.hash = ''; return; }
+  SHELF_SECTIONS.forEach((id) => {
+    const el = $(id);
+    if (el && !el.hidden) { el.dataset.was = '1'; el.hidden = true; }
+  });
+  $('collView').hidden = true;
+  const me = CTX.me;
+  $('yAva').textContent = (me.firstName || me.email || '·')[0].toUpperCase();
+  $('yName').textContent = me.firstName || 'You';
+  $('yCt').textContent = me.nPlaces + ' PLACE' + (me.nPlaces === 1 ? '' : 'S') +
+    ' · ' + me.nColl + ' COLLECTION' + (me.nColl === 1 ? '' : 'S');
+  if (me.slug) {
+    const url = 'prevoya.app/g/' + me.slug;
+    const lk = $('yLink');
+    lk.textContent = '⌲ ' + url + ' · COPY';
+    lk.hidden = false;
+    lk.onclick = () => {
+      const done = () => { lk.textContent = '✓ COPIED'; setTimeout(() => { lk.textContent = '⌲ ' + url + ' · COPY'; }, 1400); };
+      try { navigator.clipboard.writeText('https://' + url).then(done, done); } catch (_) { done(); }
+    };
+    const pub = $('yPub');
+    pub.href = '/g/' + me.slug;
+    pub.hidden = false;
+  }
+  const out = $('yOut');
+  out.hidden = false;
+  out.onclick = async () => {
+    out.textContent = 'signing out…';
+    try { await sb.auth.signOut(); } catch (_) {}
+    location.hash = '';
+    location.reload();
+  };
+  $('youView').hidden = false;
+  window.scrollTo(0, 0);
+}
+$('yBack').addEventListener('click', () => { location.hash = ''; });
 function applyHash() {
   const m = location.hash.match(/^#c\/([a-z0-9-]+)/);
-  if (m && CTX && CTX.groups) renderCollection(m[1]);
-  else showShelf();
+  if (m && CTX && CTX.groups) { $('youView').hidden = true; renderCollection(m[1]); }
+  else if (location.hash === '#you' && CTX && CTX.me) renderYou();
+  else { $('youView').hidden = true; showShelf(); }
 }
 window.addEventListener('hashchange', applyHash);
 

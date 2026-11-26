@@ -3,6 +3,15 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 26 Nov 2026 — Round 17.5: YOU is the passport
+The YOU tab opens natively on the shelf: the ring avatar, your first
+name, places · collections (deliberately NO opened/kept scoreboard —
+both expert reviews warned the echo must never read as a public
+score), your one link with COPY, a door to your public page, and the
+planner-era You surfaces (camera-roll import, trip tools, passport &
+packing) as doors into /app/trip/. Sign out lives here. Signed users
+get the native passport; anonymous taps still reach the sign-in gate.
+
 ## 26 Nov 2026 — Round 17.4: covers open their collections
 Tapping a collection cover (or the current card — it grew an OPEN ›
 cue) opens the collection in place, in daylight: cover strip, counts,

@@ -242,6 +242,26 @@ img{max-width:100%}
   background:transparent;border:1.5px dashed var(--line);border-radius:12px;
   font-weight:800;font-size:.8rem;color:var(--dim);cursor:pointer;font-family:var(--body)}
 .coll .tt .opn{font-family:var(--mono);font-size:.6rem;color:var(--green);font-weight:500}
+
+/* ── the passport (Round 17.5): YOU, without a scoreboard ── */
+.yprof{text-align:center;margin-top:8px}
+.yring{width:86px;height:86px;border-radius:50%;padding:3px;margin:0 auto;background:linear-gradient(45deg,#f0c06a,#e2766a)}
+.yring b{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;
+  background:var(--card);border:3px solid var(--paper);font-size:2rem;font-weight:900;color:var(--green)}
+.yprof h2{margin:12px 0 0;font-size:1.4rem;font-weight:900;letter-spacing:-.01em}
+.yct{font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;color:var(--soft);margin:6px 0 0}
+.yprof .plink{margin-top:12px}
+.ydoors{margin-top:24px}
+.ydoor{display:flex;align-items:center;gap:11px;width:100%;margin-top:10px;background:var(--card);
+  border:1px solid var(--line);border-radius:13px;padding:13px 14px;text-decoration:none;color:var(--ink);
+  box-shadow:0 3px 10px rgba(40,30,10,.07);cursor:pointer;font-family:var(--body);text-align:left}
+.ydoor:active{transform:scale(.985)}
+.ydoor b{font-size:.88rem;font-weight:900}
+.ydoor span{display:block;font-family:var(--mono);font-size:.5rem;letter-spacing:.06em;color:var(--soft);margin-top:2px}
+.ydoor .chev{margin-left:auto;color:var(--soft);font-weight:800}
+.ydoor.em b{color:var(--green)}
+.yout{display:block;margin:24px auto 0;background:none;border:0;cursor:pointer;
+  font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--soft);text-decoration:underline}
 </style>
 </head>
 <body>
@@ -298,6 +318,23 @@ img{max-width:100%}
       <div id="cvAreas"></div>
     </div>
 
+    <div id="youView" hidden>
+      <button type="button" class="cvback" id="yBack">‹ YOUR SHELF</button>
+      <div class="yprof">
+        <div class="yring"><b id="yAva">·</b></div>
+        <h2 id="yName"></h2>
+        <p class="yct" id="yCt"></p>
+        <button type="button" class="plink" id="yLink" hidden></button>
+      </div>
+      <div class="ydoors">
+        <a class="ydoor" id="yPub" href="#" hidden><span><b>Your public page</b><span>WHAT A STRANGER SEES AT YOUR LINK</span></span><span class="chev">›</span></a>
+        <a class="ydoor em" href="/app/trip/#you"><span><b>⌲ Camera roll → collection</b><span>JUST BACK? ~2 MINUTES</span></span><span class="chev">›</span></a>
+        <a class="ydoor" href="/app/trip/#today"><span><b>On a trip now</b><span>TODAY · ROUTE · CONCIERGE</span></span><span class="chev">›</span></a>
+        <a class="ydoor" href="/app/trip/#you"><span><b>Passport, packing & flight prep</b><span>THE TRIP TOOLS, WHERE THEY ALWAYS WERE</span></span><span class="chev">›</span></a>
+      </div>
+      <button type="button" class="yout" id="yOut" hidden>sign out</button>
+    </div>
+
     <section class="sec" id="recSec" hidden>
       <h2>Given to you</h2>
       <p class="cc" id="recCc">THEIR COLLECTIONS STAY THEIRS — TAKE WHAT YOU LOVE</p>
@@ -310,7 +347,7 @@ img{max-width:100%}
 <nav class="tabs">
   <span class="tb on"><i>▤</i>SHELF</span>
   <a href="/app/trip/#today"><i>◔</i>TRIP</a>
-  <a href="/app/trip/#you"><i>☉</i>YOU</a>
+  <a href="/app/trip/#you" id="tabYou"><i>☉</i>YOU</a>
 </nav>
 
 <div class="shw" id="linksSh"><div class="sh">
