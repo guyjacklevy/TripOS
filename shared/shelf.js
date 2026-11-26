@@ -124,7 +124,7 @@ $('linksSh').addEventListener('click', (e) => { if (e.target === $('linksSh')) $
 async function bootSigned(user) {
   SAVE_USER = user;
   await claimAnon(user);
-  const [plR, ckR, shR, ppR, rcR, pfR] = await Promise.all([
+  const [plR, ckR, shR, ppR, rcR, pfR, trR] = await Promise.all([
     sb.from('places').select('id, curated_place_id, name, area, category, created_at, via_token, via_name')
       .eq('user_id', user.id).order('created_at', { ascending: false }).limit(1000),
     sb.from('checkins').select('place_id, photo_path').eq('user_id', user.id).limit(2000),
@@ -134,7 +134,9 @@ async function bootSigned(user) {
     sb.from('public_profiles').select('slug').eq('user_id', user.id)
       .order('created_at', { ascending: true }).limit(1),
     sb.from('place_recs').select('place_id').eq('user_id', user.id).eq('worth_it', true).limit(2000),
-    sb.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
+    sb.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
+    sb.from('trips').select('destination, arrive, depart, duration_days')
+      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(3)
   ]);
   const rows = plR.data || [];
   const cks = ckR.data || [];
@@ -144,6 +146,26 @@ async function bootSigned(user) {
   const shares = shR.data || [];
   const slug = ppR.data && ppR.data[0] && ppR.data[0].slug;
   const firstName = ((pfR.data && pfR.data.full_name) || '').trim().split(/\s+/)[0] || null;
+
+  /* ROUND 17.6: the trip door is CONTEXTUAL — it exists only around an
+     actual trip (arrive−7d … depart/arrive+duration +2d), as the experts
+     ruled: a standing door to a two-weeks-a-year tool is dead weight. */
+  let tripNow = null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  (trR.data || []).some((t) => {
+    if (!t.arrive) return false;
+    const a = new Date(t.arrive + 'T00:00:00');
+    const end = t.depart ? new Date(t.depart + 'T00:00:00')
+      : new Date(a.getTime() + (t.duration_days || 14) * 864e5);
+    const from = new Date(a.getTime() - 7 * 864e5);
+    const to = new Date(end.getTime() + 2 * 864e5);
+    if (today >= from && today <= to) {
+      tripNow = { destination: t.destination ? cap(t.destination) : 'trip',
+        phase: today < a ? Math.round((a - today) / 864e5) : 0 };
+      return true;
+    }
+    return false;
+  });
 
   /* curated lookup for destination + photo, chunked */
   const ids = [...new Set(
@@ -188,6 +210,7 @@ async function bootSigned(user) {
   CTX.destList = sorted.filter((g) => g.key !== '—').map((g) => ({ slug: g.key, title: g.title }));
   CTX.groups = groups; /* the collection view reads these (17.4) */
   CTX.me = { firstName, slug, email: user.email || '', nPlaces: own.length, nColl: CTX.destList.length };
+  CTX.tripNow = tripNow;
 
   render({
     signed: true,
@@ -382,6 +405,18 @@ function render(m) {
   }
   /* the YOU tab: native passport when signed, the sign-in gate when not */
   $('tabYou').setAttribute('href', m.signed ? '#you' : '/app/trip/#you');
+
+  /* the contextual trip door (17.6): tab + banner only around a trip */
+  const tn = m.signed && CTX && CTX.tripNow;
+  $('tabTrip').hidden = !tn;
+  $('tripBand').hidden = !tn;
+  if (tn) {
+    $('tripBandQ').childNodes[0].textContent = tn.phase > 0
+      ? tn.destination + ' in ' + tn.phase + ' day' + (tn.phase === 1 ? '' : 's')
+      : 'On your ' + tn.destination + ' trip';
+    $('tripBandSub').textContent = tn.phase > 0
+      ? 'PREP · PACKING · THE ROUTE' : 'TODAY · ROUTE · CONCIERGE';
+  }
   track('shelf_view', { signed: !!m.signed });
   if (location.hash.indexOf('#c/') === 0 || location.hash === '#you') applyHash();
 }

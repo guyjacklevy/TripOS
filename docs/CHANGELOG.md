@@ -3,6 +3,16 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 26 Nov 2026 — Round 17.6: the trip door is contextual
+The TRIP tab and the "On a trip now" surfaces appear only around an
+actual trip — from a week before arrival ("Bali in 5 days — PREP ·
+PACKING · THE ROUTE") through two days after it ends ("On your Bali
+trip — TODAY · ROUTE · CONCIERGE", as a banner on the shelf). The
+rest of the year the shelf carries no planner chrome at all; the trip
+tools stay reachable through the passport's doors. The experts' line:
+a standing door to a two-weeks-a-year tool is dead weight the other
+fifty.
+
 ## 26 Nov 2026 — Round 17.5: YOU is the passport
 The YOU tab opens natively on the shelf: the ring avatar, your first
 name, places · collections (deliberately NO opened/kept scoreboard —

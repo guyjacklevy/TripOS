@@ -285,6 +285,11 @@ img{max-width:100%}
       <p class="inv" id="weekInv" hidden>Nothing saved yet — <a href="/app/trip/#places">save your first place</a>, or let your <a href="/app/trip/#you">camera roll build the collection (~2 min)</a>.</p>
     </div>
 
+    <a class="ask" id="tripBand" href="/app/trip/#today" hidden style="text-decoration:none">
+      <span class="q" id="tripBandQ">On a trip now<span id="tripBandSub">TODAY · ROUTE · CONCIERGE</span></span>
+      <span class="chev">›</span>
+    </a>
+
     <button type="button" class="ask" id="ask" hidden>
       <span class="q">Someone asked for recs?<span id="askSub">ANSWER WITH ONE LINK</span></span>
       <span class="chev">›</span>
@@ -346,7 +351,7 @@ img{max-width:100%}
 <button type="button" class="fab" id="fabSave">⚑ Save a place</button>
 <nav class="tabs">
   <span class="tb on"><i>▤</i>SHELF</span>
-  <a href="/app/trip/#today"><i>◔</i>TRIP</a>
+  <a href="/app/trip/#today" id="tabTrip" hidden><i>◔</i>TRIP</a>
   <a href="/app/trip/#you" id="tabYou"><i>☉</i>YOU</a>
 </nav>
 
