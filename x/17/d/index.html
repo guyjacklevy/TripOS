@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prevoya app — the shelf, expert cut (17-D)</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#faf6ee">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* ═══ 17-D · THE SHELF, EXPERT CUT — the composite both blind reviews
+   prescribed. Skeleton A, plus: a LIVING LANE on top (this week's saves,
+   so home changes with every save), the ASK ROW (demand-side send
+   trigger), C's photo covers + link pill + new-collection tile, B's
+   live-links sheet + story card inside the gift flow. Dropped: C's
+   stats scoreboard, B's verb tabs, per-row ghost GIFT buttons.
+   spacing scale: 12 tight · 16 caption · 24 component · 56 section */
+:root{
+  --paper:#faf6ee; --ink:#23231e; --dim:#6b6a5f; --soft:#8a8676;
+  --green:#0d7a5e; --amber:#b06c0a; --line:#e4ddcf; --card:#ffffff;
+  --body:'Nunito',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden;overflow-x:clip}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.5}
+img{max-width:100%}
+
+.bar{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;gap:7px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-left,0px)) 10px max(16px,env(safe-area-inset-right,0px));
+  background:rgba(250,246,238,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(228,221,207,.6);font-weight:800;font-size:.86rem}
+.bar::before{content:"";width:12px;height:12px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 35% 35%,#2fbf8f,var(--green))}
+.bar .tag{margin-left:auto;font-family:var(--mono);font-weight:500;font-size:.58rem;letter-spacing:.1em;color:var(--soft)}
+
+.wrap{max-width:430px;margin:0 auto;
+  padding:calc(66px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-left,0px)) 150px max(20px,env(safe-area-inset-right,0px))}
+
+/* header: name + the one link as a real pill (from C) */
+.hd{display:flex;align-items:center;gap:12px}
+.ava{width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 32% 30%,#ffe9c4,#f0c06a);border:2.5px solid var(--card);
+  box-shadow:0 3px 10px rgba(40,30,10,.18);font-weight:900;font-size:1.15rem;color:#7a4e07}
+.hd h1{margin:0;font-size:1.25rem;font-weight:900;letter-spacing:-.01em}
+.plink{display:inline-flex;align-items:center;gap:6px;margin-top:5px;font-family:var(--mono);font-size:.6rem;
+  color:var(--green);text-decoration:none;border:1.5px solid rgba(13,122,94,.4);border-radius:999px;padding:7px 12px;cursor:pointer;background:none}
+.plink:active{transform:scale(.97)}
+
+/* THE LIVING LANE — this week's saves; any save mutates home instantly */
+.week{margin-top:24px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:13px 15px;box-shadow:0 4px 14px rgba(40,30,10,.08)}
+.week .t{display:flex;align-items:baseline}
+.week .t b{font-size:.98rem;font-weight:900}
+.week .t span{margin-left:auto;font-family:var(--mono);font-size:.52rem;letter-spacing:.08em;color:var(--soft)}
+.wsave{display:flex;align-items:center;gap:10px;margin-top:10px}
+.wsave img,.wsave .wph{width:40px;height:40px;border-radius:8px;object-fit:cover;flex:none;border:2px solid #fff;box-shadow:0 2px 6px rgba(40,30,10,.12)}
+.wsave .wph{display:flex;align-items:center;justify-content:center;background:#eee7d8;color:var(--soft);font-weight:900;font-size:.85rem}
+.wsave .n{min-width:0;font-size:.82rem;font-weight:800;line-height:1.25}
+.wsave .n span{display:block;font-family:var(--mono);font-weight:500;font-size:.5rem;letter-spacing:.05em;color:var(--soft);margin-top:1px}
+.wsave .ago{margin-left:auto;flex:none;font-family:var(--mono);font-size:.5rem;color:var(--soft)}
+
+/* THE ASK ROW — the demand-side trigger */
+.ask{display:flex;align-items:center;gap:10px;margin-top:12px;background:#e9f6ee;border:1px solid #cfe8da;
+  border-radius:13px;padding:12px 14px;cursor:pointer}
+.ask:active{transform:scale(.985)}
+.ask .q{min-width:0;font-size:.84rem;font-weight:800;color:#19513f;text-align:left}
+.ask .q span{display:block;font-family:var(--mono);font-weight:500;font-size:.52rem;letter-spacing:.06em;color:var(--green);margin-top:2px}
+.ask .chev{margin-left:auto;color:var(--green);font-weight:800}
+
+/* the current collection: full card, gift door + echo (A's core) */
+.coll{margin-top:24px;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+  box-shadow:0 6px 18px rgba(40,30,10,.1)}
+.coll .strip{display:flex;gap:2px;background:#efe9db}
+.coll .strip img{aspect-ratio:1;object-fit:cover;flex:1;min-width:0;width:33%}
+.coll .bd{padding:12px 14px}
+.coll .tt{display:flex;align-items:baseline;gap:8px}
+.coll .tt b{font-size:1.02rem;font-weight:900}
+.coll .tt .dt{margin-left:auto;font-family:var(--mono);font-size:.54rem;letter-spacing:.08em;color:var(--soft)}
+.coll .mt{font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--green);margin-top:3px}
+.coll .act{display:flex;align-items:center;gap:8px;margin-top:12px}
+.gift{flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:42px;border-radius:999px;
+  background:#1c1c18;color:var(--paper);font-weight:800;font-size:.84rem;border:0;cursor:pointer;font-family:var(--body)}
+.gift:active{transform:scale(.97)}
+.echo{flex:none;font-family:var(--mono);font-size:.54rem;letter-spacing:.04em;color:var(--dim);cursor:pointer;
+  border:1px solid var(--line);border-radius:999px;padding:11px 12px;background:var(--paper)}
+.echo b{color:var(--green);font-weight:500}
+.echo:active{transform:scale(.97)}
+
+/* the shelf: photo-cover cards (C's treatment) + the new tile */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.gc{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);aspect-ratio:1/0.92;
+  box-shadow:0 5px 14px rgba(40,30,10,.1);text-decoration:none;color:#fdfcf7;background:#efe9db;display:block}
+.gc:active{transform:scale(.98)}
+.gc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.gc .sh{position:absolute;inset:0;background:linear-gradient(180deg,transparent 38%,rgba(10,10,8,.72) 100%)}
+.gc .nm{position:absolute;left:10px;right:10px;bottom:9px}
+.gc .nm b{font-size:.92rem;font-weight:900;display:block;line-height:1.2}
+.gc .nm span{font-family:var(--mono);font-size:.5rem;letter-spacing:.08em;color:rgba(253,252,247,.85)}
+.gc.new{border:1.5px dashed var(--line);box-shadow:none;background:var(--paper);display:flex;align-items:center;justify-content:center}
+.gc.new .plus{color:var(--dim);text-align:center;font-weight:800;font-size:.82rem;line-height:1.4}
+.gc.new .plus i{display:block;font-style:normal;font-size:1.4rem;color:var(--green)}
+.gc.new .plus em{display:block;font-style:normal;font-family:var(--mono);font-size:.48rem;letter-spacing:.06em;color:var(--soft);margin-top:2px}
+
+/* received: gold-ringed photo covers + one lineage line */
+.sec{margin-top:56px}
+.sec h2{margin:0;font-size:1.1rem;font-weight:900;letter-spacing:-.01em}
+.sec .cc{font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;color:var(--amber);margin-top:3px}
+.grid .rgb{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;padding:2px;background:linear-gradient(45deg,#f0c06a,#e2766a)}
+.grid .rgb i{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;
+  background:var(--card);font-style:normal;font-weight:900;font-size:.8rem;color:var(--amber)}
+.grid .nw{position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:.5rem;letter-spacing:.08em;
+  color:#fff;background:rgba(176,108,10,.92);border-radius:999px;padding:4px 8px}
+
+/* tab bar + FAB (A's chrome; YOU = the passport, no scoreboard) */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;
+  padding:8px max(16px,env(safe-area-inset-left,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));
+  background:rgba(250,246,238,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-top:1px solid rgba(228,221,207,.7)}
+.tabs button{flex:1;background:none;border:0;cursor:pointer;font-family:var(--body);
+  display:flex;flex-direction:column;align-items:center;gap:2px;min-height:48px;justify-content:center;
+  font-size:.62rem;font-weight:800;color:var(--soft)}
+.tabs button.on{color:var(--ink)}
+.tabs button i{font-style:normal;font-size:1.05rem}
+.fab{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:41;
+  display:flex;align-items:center;gap:7px;min-height:50px;padding:0 18px;border-radius:999px;border:0;cursor:pointer;
+  background:var(--green);color:#fff;font-weight:900;font-size:.9rem;font-family:var(--body);
+  box-shadow:0 10px 26px rgba(13,122,94,.4)}
+.fab:active{transform:scale(.96)}
+
+/* the gift sheet (B's depth, one tap deep) */
+.shw{position:fixed;inset:0;z-index:50;background:rgba(35,35,30,.42);display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s ease-out}
+.shw.on{opacity:1;pointer-events:auto}
+.sh{width:100%;max-width:430px;background:var(--card);border-radius:18px 18px 0 0;position:relative;
+  padding:14px 20px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -14px 44px rgba(40,30,10,.3);
+  transform:translateY(24px);transition:transform .25s cubic-bezier(.2,.9,.3,1)}
+.shw.on .sh{transform:none}
+.sh .grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto}
+.sh h3{margin:14px 0 0;font-size:1.05rem;font-weight:900}
+.sh .s{font-family:var(--mono);font-size:.54rem;letter-spacing:.08em;color:var(--soft);margin-top:3px}
+.sh .big{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:14px;
+  border-radius:999px;background:#1c1c18;color:var(--paper);font-weight:800;font-size:.92rem;border:0;cursor:pointer;font-family:var(--body)}
+.sh .big:active{transform:scale(.97)}
+.sh .mid{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin-top:10px;
+  border-radius:999px;background:none;border:1.5px solid var(--line);color:var(--ink);font-weight:800;font-size:.88rem;cursor:pointer;font-family:var(--body)}
+.lnk{display:flex;align-items:center;gap:10px;margin-top:10px;background:var(--paper);
+  border:1px solid var(--line);border-radius:11px;padding:10px 12px}
+.lnk .n{min-width:0;font-size:.82rem;font-weight:800}
+.lnk .n span{display:block;font-family:var(--mono);font-weight:500;font-size:.5rem;letter-spacing:.05em;color:var(--green);margin-top:2px}
+.lnk .e{margin-left:auto;flex:none;font-family:var(--mono);font-size:.52rem;color:var(--dim)}
+.lnk .e b{color:var(--green);font-weight:500}
+</style>
+</head>
+<body>
+<div class="bar">Prevoya <span class="tag">17-D DEMO · THE EXPERT CUT</span></div>
+
+<div class="wrap">
+  <header class="hd">
+    <div class="ava">M</div>
+    <div>
+      <h1>Your shelf</h1>
+      <button type="button" class="plink" id="cpy">⌲ prevoya.app/g/maya · COPY</button>
+    </div>
+  </header>
+
+  <!-- the living lane: home changes with every save -->
+  <div class="week">
+    <div class="t"><b>This week</b><span>3 SAVES</span></div>
+    <div class="wsave"><span class="wph">K</span><span class="n">Kissa coffee bar<span>FROM AN IG REEL · → YOUR TOKYO</span></span><span class="ago">2H AGO</span></div>
+    <div class="wsave"><img src="/x/15d/assets/amok.jpg" alt=""><span class="n">Amok Sunset<span>DANA’S TIP · → YOUR BALI</span></span><span class="ago">TUE</span></div>
+    <div class="wsave"><span class="wph">O</span><span class="n">OPA Jaffa<span>WALKED PAST · → YOUR TEL AVIV</span></span><span class="ago">MON</span></div>
+  </div>
+
+  <!-- the ask row: sends start when someone asks -->
+  <button type="button" class="ask">
+    <span class="q">Someone asked for recs?<span>ANSWER WITH ONE LINK — BALI · TOKYO · LISBON · TEL AVIV</span></span>
+    <span class="chev">›</span>
+  </button>
+
+  <!-- the current collection -->
+  <div class="coll">
+    <div class="strip">
+      <img src="/x/15d/assets/padang.jpg" alt=""><img src="/x/15d/assets/saltwood.jpg" alt=""><img src="/x/15d/assets/ulufish.jpg" alt="">
+    </div>
+    <div class="bd">
+      <div class="tt"><b>Your Bali</b><span class="dt">AUG ’26 → NOW</span></div>
+      <p class="mt">50 PLACES · ✓ BEEN TO 49 · 8 YOUR PHOTOS</p>
+      <div class="act">
+        <button type="button" class="gift" id="giftBtn">⤴ Gift it — one link</button>
+        <button type="button" class="echo" id="echoBtn"><b>15</b> OPENED · <b>4</b> KEPT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- the shelf: photo covers + the standing invitation -->
+  <div class="grid">
+    <a class="gc" href="#"><img src="/x/15d/assets/sayan.jpg" alt=""><span class="sh"></span><span class="nm"><b>Tokyo</b><span>34 PLACES · FEB ’26</span></span></a>
+    <a class="gc" href="#"><img src="/x/15d/assets/bingin.jpg" alt=""><span class="sh"></span><span class="nm"><b>Lisbon</b><span>23 PLACES · MAY ’26</span></span></a>
+    <a class="gc" href="#"><img src="/x/15d/assets/borabora.jpg" alt=""><span class="sh"></span><span class="nm"><b>Tel Aviv</b><span>18 PLACES · HOME</span></span></a>
+    <a class="gc new" href="#"><span class="plus"><i>＋</i>New collection<em>OR CAMERA ROLL → ~2 MIN</em></span></a>
+  </div>
+
+  <!-- received: gold rings on covers; the lineage lives in the caption -->
+  <section class="sec">
+    <h2>Given to you</h2>
+    <p class="cc">BEN KEPT 3 OF YOURS — HIS ROME CAME BACK. THE CHAIN LIVES.</p>
+    <div class="grid" style="margin-top:16px">
+      <a class="gc" href="#"><img src="/x/15d/assets/ulufish.jpg" alt=""><span class="sh"></span><span class="rgb"><i>B</i></span><span class="nm"><b>Ben’s Rome</b><span>12 PLACES · 3 TAKEN</span></span></a>
+      <a class="gc" href="#"><img src="/x/15d/assets/saltwood.jpg" alt=""><span class="sh"></span><span class="rgb"><i>E</i></span><span class="nw">NEW</span><span class="nm"><b>Ella’s Athens</b><span>9 PLACES</span></span></a>
+    </div>
+  </section>
+</div>
+
+<button type="button" class="fab">⚑ Save a place</button>
+<nav class="tabs">
+  <button type="button" class="on"><i>▤</i>SHELF</button>
+  <button type="button"><i>☉</i>YOU</button>
+</nav>
+
+<!-- the gift sheet: composer + story card; the echo sheet: live links -->
+<div class="shw" id="giftSh"><div class="sh">
+  <div class="grab"></div>
+  <h3>Gift Your Bali</h3>
+  <p class="s">PICK KEEPERS OR EVERYTHING · A NOTE · YOUR PHOTOS, YOUR CALL</p>
+  <button type="button" class="big">⤴ Make the gift link</button>
+  <button type="button" class="mid">▣ Make a story card — 9:16 for your story</button>
+</div></div>
+<div class="shw" id="echoSh"><div class="sh">
+  <div class="grab"></div>
+  <h3>Your live links</h3>
+  <p class="s">THE ECHO COMES BACK AS COUNTS — NEVER NAMES</p>
+  <div class="lnk"><span class="n">Your Bali — everything<span>prevoya.app/s/…ddw</span></span><span class="e"><b>15</b> OPENED · <b>4</b> KEPT</span></div>
+  <div class="lnk"><span class="n">Your Bali — food only<span>prevoya.app/s/…9f2</span></span><span class="e"><b>3</b> OPENED · <b>1</b> KEPT</span></div>
+</div></div>
+
+<script>
+function wire(btn,sh){
+  var w=document.getElementById(sh);
+  document.getElementById(btn).addEventListener('click',function(){w.classList.add('on')});
+  w.addEventListener('click',function(e){if(e.target===w)w.classList.remove('on')});
+}
+wire('giftBtn','giftSh');wire('echoBtn','echoSh');
+var cp=document.getElementById('cpy');
+cp.addEventListener('click',function(){cp.textContent='⌲ COPIED ✓';setTimeout(function(){cp.textContent='⌲ prevoya.app/g/maya · COPY'},1400)});
+</script>
+</body>
+</html>
