@@ -74,6 +74,7 @@ async function claimAnon(user) {
     .select('curated_place_id').eq('user_id', user.id).not('curated_place_id', 'is', null);
   const have = new Set((existing || []).map((r) => String(r.curated_place_id)));
   let claimed = 0;
+  const failed = [];
   for (const s of buf) {
     const id = String(s.id || '');
     if (!id || have.has(id)) continue;
@@ -84,11 +85,16 @@ async function claimAnon(user) {
       name: s.name, area: s.area, category: s.category || null, curated: true,
       via_token: via ? via.token : null, via_name: via ? via.name : null
     });
-    if (error) { console.warn('[Prevoya] shelf claim failed:', error.message); continue; }
+    if (error) { console.warn('[Prevoya] shelf claim failed:', error.message); failed.push(s); continue; }
     have.add(id);
     claimed++;
   }
-  try { localStorage.removeItem('prevoya_saves_anon'); } catch (_) {}
+  /* a failed insert keeps its buffer entry — the next open retries it;
+     only what claimed (or already existed) leaves the browser (17.9) */
+  try {
+    if (failed.length) localStorage.setItem('prevoya_saves_anon', JSON.stringify(failed));
+    else localStorage.removeItem('prevoya_saves_anon');
+  } catch (_) {}
   if (claimed) {
     let viaTok = null;
     try { const s = JSON.parse(localStorage.getItem('tripos_via') || 'null'); viaTok = (s && s.token) || null; } catch (_) {}
@@ -107,11 +113,13 @@ function weekRow(it) {
     '<span class="n">' + esc(it.name) + '<span>' + esc(it.sub) + '</span></span>' +
     '<span class="ago">' + esc(it.when) + '</span></div>';
 }
+const slugOf = (key) => encodeURIComponent(key === '—' ? 'more' : key);
+const keyOf = (slug) => { const d = decodeURIComponent(slug); return d === 'more' ? '—' : d; };
 function coverCard(g) {
   const img = g.photo_name
     ? '<img alt="" data-pn="' + esc(g.photo_name) + '" src="' + esc(catSrc('explore')) + '">'
     : '<img alt="" src="' + esc(catSrc('explore')) + '">';
-  return '<a class="gc" href="#c/' + esc(g.slug) + '">' + img + '<span class="sh"></span>' +
+  return '<a class="gc" href="#c/' + esc(slugOf(g.slug)) + '">' + img + '<span class="sh"></span>' +
     '<span class="nm"><b>' + esc(g.title) + '</b><span>' + g.items.length + ' PLACE' + (g.items.length === 1 ? '' : 'S') +
     ' · ' + esc(g.label) + '</span></span></a>';
 }
@@ -287,10 +295,10 @@ function render(m) {
   if (m.slug) {
     const lk = $('hLink');
     const url = 'prevoya.app/g/' + m.slug;
-    lk.textContent = '⌨ ' + url + ' · COPY';
+    lk.textContent = '⌲ ' + url + ' · COPY';
     lk.hidden = false;
     lk.onclick = () => {
-      const done = () => { lk.textContent = '✓ COPIED'; setTimeout(() => { lk.textContent = '⌨ ' + url + ' · COPY'; }, 1400); };
+      const done = () => { lk.textContent = '✓ COPIED'; setTimeout(() => { lk.textContent = '⌲ ' + url + ' · COPY'; }, 1400); };
       try { navigator.clipboard.writeText('https://' + url).then(done, done); } catch (_) { done(); }
     };
   }
@@ -298,6 +306,7 @@ function render(m) {
   /* the living lane */
   $('week').hidden = false;
   if (m.week.length) {
+    $('weekInv').hidden = true;
     $('weekRows').innerHTML = m.week.map(weekRow).join('');
     $('weekN').textContent = !m.signed
       ? m.weekN + ' SAVE' + (m.weekN === 1 ? '' : 'S') + ' IN THIS BROWSER'
@@ -327,10 +336,10 @@ function render(m) {
       : '';
     $('curStrip').style.display = m.current.photos.length ? '' : 'none';
     $('curGift').hidden = !m.signed; /* an anonymous shelf can't mint links */
-    $('curGift').onclick = () => openComposer(m.currentSlug);
+    $('curGift').onclick = () => openComposer(m.currentSlug || false); /* false = unscoped, never another collection */
     const curOpen = (e) => {
       if (e.target.closest('.gift') || e.target.closest('.echo')) return;
-      if (m.signed && m.currentSlug) location.hash = '#c/' + m.currentSlug;
+      if (m.signed && m.currentSlug) location.hash = '#c/' + slugOf(m.currentSlug);
     };
     $('cur').onclick = curOpen;
     $('cur').style.cursor = m.signed && m.currentSlug ? 'pointer' : '';
@@ -369,6 +378,11 @@ function render(m) {
         try { navigator.clipboard.writeText(b.getAttribute('data-copy')).then(done, done); } catch (_) { done(); }
       });
     });
+    /* the card's pill carries the CURRENT collection's own main link —
+       its destination row without a category, else the legacy row (17.9) */
+    const mainShare =
+      m.shares.find((s) => !s.category && String(s.destination || '').toLowerCase() === (m.currentSlug || '')) ||
+      m.shares.find((s) => !s.category && !s.destination) || null;
     m.shares.forEach((s) => {
       fetch(cfg.url + '/functions/v1/profile?echo=' + encodeURIComponent(s.token))
         .then((r) => (r.ok ? r.json() : null))
@@ -377,7 +391,7 @@ function render(m) {
           if (el && j) el.innerHTML = '<b>' + (j.opened || 0) + '</b> OPENED · <b>' + (j.kept || 0) + '</b> KEPT';
           else if (el) el.textContent = '';
           const ec = $('curEcho');
-          if (j && m.shares[0] && s.token === m.shares[0].token && ec) {
+          if (j && mainShare && s.token === mainShare.token && ec) {
             ec.innerHTML = '<b>' + (j.opened || 0) + '</b> OPENED · <b>' + (j.kept || 0) + '</b> KEPT';
             ec.hidden = false;
             ec.onclick = openSheet;
@@ -477,7 +491,9 @@ function liveRowFor(destSlug, catSlug) {
 }
 function openComposer(destSlug) {
   if (!CTX || !CTX.user) return;
-  let dest = destSlug || (CTX.destList[0] && CTX.destList[0].slug) || null;
+  /* false = explicitly unscoped (the 'More places' card); null/undefined = default */
+  let dest = destSlug === false ? null
+    : (destSlug || (CTX.destList[0] && CTX.destList[0].slug) || null);
   const sheet = $('giftSh');
   let scope = null;      /* decided once per link, then the chips own it */
   let gcat = null;       /* 17.8: null = the whole collection; 'food' = that link */
@@ -603,6 +619,8 @@ function openComposer(destSlug) {
       try { const s = JSON.parse(localStorage.getItem('tripos_via') || 'null'); if (s && s.token) pay.origin = s.token; } catch (_) {}
       track('share_created', pay);
       btn.disabled = false;
+      /* 17.9: the links sheet + echo pill learn the new link right away */
+      if (SAVE_USER) bootSigned(SAVE_USER).catch(() => {});
     };
     $('gcRevoke').onclick = async () => {
       if (!live) return;
@@ -738,7 +756,7 @@ function renderCollection(slug) {
     if (el && !el.hidden) { el.dataset.was = '1'; el.hidden = true; }
   });
   $('cvName').textContent = 'Your ' + g.title;
-  $('cvGift').onclick = () => openComposer(slug === '—' ? null : slug);
+  $('cvGift').onclick = () => openComposer(slug === '—' ? false : slug);
   const been = g.items.filter((r) => CTX.stampSet.has(String(r.curated_place_id))).length;
   $('cvCt').textContent = g.items.length + ' PLACE' + (g.items.length === 1 ? '' : 'S') +
     (been ? ' · ✓ BEEN TO ' + been : '');
@@ -837,8 +855,8 @@ function renderYou() {
 }
 $('yBack').addEventListener('click', () => { location.hash = ''; });
 function applyHash() {
-  const m = location.hash.match(/^#c\/([a-z0-9-]+)/);
-  if (m && CTX && CTX.groups) { $('youView').hidden = true; renderCollection(m[1]); }
+  const m = location.hash.match(/^#c\/(.+)/);
+  if (m && CTX && CTX.groups) { $('youView').hidden = true; renderCollection(keyOf(m[1])); }
   else if (location.hash === '#you' && CTX && CTX.me) renderYou();
   else { $('youView').hidden = true; showShelf(); }
 }
@@ -991,7 +1009,8 @@ $('stShare').addEventListener('click', async () => {
   const p = ST_PLACES[ST_CUR] || {};
   const file = new File([ST_BLOB], 'prevoya-story.png', { type: 'image/png' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file] }); return; } catch (_) { /* user closed it */ }
+    try { await navigator.share({ files: [file] }); } catch (_) { /* the user closed it — that's an answer */ }
+    return;
   }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(ST_BLOB);

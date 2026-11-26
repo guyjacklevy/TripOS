@@ -3064,7 +3064,8 @@ if (!cfg.url || cfg.url.indexOf('YOUR_') !== -1) {
   async function giftRows() {
     if (GIFT_SHARES) return GIFT_SHARES;
     const { data: rows } = await sb.from('trip_shares').select('*')
-      .eq('user_id', user.id).eq('kind', 'list').is('revoked_at', null);
+      .eq('user_id', user.id).eq('kind', 'list').is('revoked_at', null)
+      .is('category', null).is('profile_slug', null); /* 17.9: scoped + persona links belong to the shelf */
     GIFT_SHARES = new Map();
     (rows || []).forEach((r) => GIFT_SHARES.set(String(r.destination || '').toLowerCase(), r));
     return GIFT_SHARES;

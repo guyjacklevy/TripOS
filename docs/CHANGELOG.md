@@ -3,6 +3,21 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 26 Nov 2026 — Round 17.9: the hardening pass
+A full fresh-eyes code review of the day's build (10 findings, 6
+important), all fixed: the old app's composer now ignores category and
+persona link rows (it could have copied the wrong token as the whole
+collection's gift); the current card's echo pill follows the current
+collection's own main link, not simply the newest one; /g pages no
+longer list category links as duplicate collections (profile v7);
+collection slugs are URL-safe (multi-word destinations and the
+"More places" group open correctly); cancelling the phone's share
+sheet no longer downloads the story card; "Nothing saved yet" hides
+after the first save; the claim keeps buffer entries whose insert
+failed instead of losing them; the links sheet learns a fresh mint
+immediately; the "More places" card gifts the unscoped subject; and
+the header pill got its proper ⌲ glyph back.
+
 ## 26 Nov 2026 — Round 17.8: per-category share links
 "Food only" is now its own sendable link. trip_shares grew a category
 column; the gift endpoint (shared-trip v17) ships only that
