@@ -1973,16 +1973,19 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 .place-card .save-flag svg, .place-card .save-flag .sf-check { filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.85)); }
 .place-card .save-flag { color: #d9d9e8; }
 .place-card .save-flag.on { color: var(--teal); }
-/* the quiet fill — the dense-list save ceremony: one line, then gone */
-.kept-note {
-  position: absolute; top: 44px; right: 8px; z-index: 3; pointer-events: none;
-  background: rgba(10, 10, 20, 0.8); border: 1px solid rgba(61, 255, 208, 0.35);
-  color: var(--teal); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+/* the quiet fill — the save ceremony (19.1: a floating line above the bottom
+   bar, never inside the card — in-card it overlapped the card's content) */
+.kept-toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); z-index: 60; pointer-events: none;
+  background: rgba(10, 10, 20, 0.92); border: 1px solid rgba(61, 255, 208, 0.35);
+  color: var(--teal); font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 999px;
+  white-space: nowrap; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   animation: keptIn 2.1s ease forwards;
 }
-@keyframes keptIn { 0% { opacity: 0; transform: translateY(-3px); } 12%, 78% { opacity: 1; transform: none; } 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .kept-note { animation: none; } }
-.kept-note.off { color: var(--mut); border-color: rgba(255, 255, 255, 0.18); }
+@keyframes keptIn { 0% { opacity: 0; transform: translate(-50%, 4px); } 12%, 78% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .kept-toast { animation: none; } }
+.kept-toast.off { color: var(--mut); border-color: rgba(255, 255, 255, 0.18); }
 
 /* the photo breath — the catcher's save ceremony: the place itself, one breath */
 .sv-breath {
@@ -2965,19 +2968,21 @@ html.js .reveal.in { opacity: 1; transform: none; }
    The mark: SVG flag, card top-right, 44px target, always visible. The card
    never tints — saved is a mark ON the card, not a state OF it. */
 .save-flag {
-  position: absolute; top: 2px; right: 2px; z-index: 3;
-  width: 44px; height: 44px;
-  display: flex; align-items: center; justify-content: center;
-  background: none; border: none; padding: 0; cursor: pointer;
-  color: var(--mut);
+  position: absolute; top: 6px; right: 6px; z-index: 3;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  min-height: 36px; padding: 0 12px;
+  background: rgba(10, 10, 20, 0.72); border: 1px solid rgba(217, 217, 232, 0.35);
+  border-radius: 999px; cursor: pointer;
+  color: #d9d9e8; font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
   -webkit-tap-highlight-color: transparent;
 }
-.save-flag.on { color: var(--teal); }
-.save-flag .sf-check { color: var(--teal); font-size: 15px; font-weight: 700; }
+.save-flag.on { color: var(--teal); border-color: rgba(61, 255, 208, 0.45); background: rgba(61, 255, 208, 0.12); }
+.save-flag.done { color: var(--teal); border-color: rgba(61, 255, 208, 0.45); }
+.save-flag .sf-check { color: var(--teal); font-size: 13px; font-weight: 700; }
 .save-flag.sf-ping svg { animation: sfPing 0.45s ease-out; }
 @keyframes sfPing { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
 /* badges yield the corner to the mark (flag precedes badge in the DOM) */
-.save-flag ~ .match-badge, .save-flag ~ .disc-badge { right: 46px; }
+.save-flag ~ .match-badge, .save-flag ~ .disc-badge { right: 92px; }
 /* the bank rail: first row of Places */
 .plb-saved .row-name svg { vertical-align: -1px; margin-right: 2px; color: var(--teal); }
 .plb-saved .row-matched { color: var(--mut); }
@@ -3502,7 +3507,7 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
 }
 .sb-count { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--teal);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.sb-keep { min-height: 40px; white-space: nowrap; flex: none; }
+.sb-keep { min-height: 40px; white-space: nowrap; flex: none; padding: 0 14px; font-size: 13px; }
 
 /* GPS sheet: stamp + save side by side */
 .gps-row { display: flex; gap: 8px; align-items: stretch; }

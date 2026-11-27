@@ -271,10 +271,14 @@ export function mountPlaces(cfg) {
     const on = saves.has(id);
     /* ROUND 9: ✓ marks BEEN — the strongest mark there is, saved or not */
     const done = !!(stampedIds && stampedIds.has(id));
+    /* Round 19.1 (Guy's phone test): the bare 16px flag read as decoration —
+       an anonymous visitor never guessed it saves. The mark is now a labeled
+       pill: the word IS the affordance. */
     return '<button type="button" class="save-flag' + (on ? ' on' : '') + (done ? ' done' : '') +
       '" data-save="' + esc(id) + '" aria-label="' + (on ? 'saved — tap to remove' : 'save for later') + '">' +
-      (done ? '<span class="sf-check">✓</span>'
-        : '<svg width="16" height="16" aria-hidden="true"><use href="#icon-' + (on ? 'saved' : 'save') + '"/></svg>') +
+      (done ? '<span class="sf-check">✓</span><span class="sf-lbl">BEEN</span>'
+        : '<svg width="14" height="14" aria-hidden="true"><use href="#icon-' + (on ? 'saved' : 'save') + '"/></svg>' +
+          '<span class="sf-lbl">' + (on ? 'SAVED' : 'SAVE') + '</span>') +
       '</button>';
   }
 
@@ -1008,23 +1012,22 @@ export function mountPlaces(cfg) {
       sf.classList.toggle('on', !wasOn);
       const use = sf.querySelector('use');
       if (use) use.setAttribute('href', '#icon-' + (wasOn ? 'save' : 'saved'));
+      const lbl = sf.querySelector('.sf-lbl');
+      if (lbl && lbl.textContent !== 'BEEN') lbl.textContent = wasOn ? 'SAVE' : 'SAVED';
       if (!wasOn && !REDUCED) { sf.classList.remove('sf-ping'); void sf.offsetWidth; sf.classList.add('sf-ping'); }
       if (home && !home.host.hidden) renderHome(); /* the front door reflects the bank live */
       if (state.view === 'rows') renderRows(); /* the rail reflects the bank live */
-      /* the quiet fill (brand pivot, 9 Nov): one line on the card, then gone.
-         Round 19: the un-save speaks too — a silent removal reads as a dead
-         tap (anonymous-tester finding). */
+      /* the quiet fill (brand pivot, 9 Nov; moved off the card 19.1 — inside
+         the card it overlapped the card's own content, Guy's phone test):
+         one floating line above the bottom bar, both ways, then gone. */
       {
-        const scope = (home && !home.host.hidden) ? home.grid : els.grid;
-        const anchor = scope.querySelector('.save-flag[data-save="' +
-          (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
-        if (anchor && anchor.parentElement) {
-          const n = document.createElement('span');
-          n.className = 'kept-note' + (wasOn ? ' off' : '');
-          n.textContent = wasOn ? 'Removed — off your list' : 'Kept · in your Bali';
-          anchor.insertAdjacentElement('afterend', n);
-          setTimeout(() => n.remove(), 2200);
-        }
+        const prev = document.querySelector('.kept-toast');
+        if (prev) prev.remove();
+        const n = document.createElement('div');
+        n.className = 'kept-toast' + (wasOn ? ' off' : '');
+        n.textContent = wasOn ? 'Removed — off your list' : '⚑ Kept — on your list';
+        document.body.appendChild(n);
+        setTimeout(() => n.remove(), 2200);
       }
       Promise.resolve(onSave(p, !wasOn)).then((ok) => {
         if (ok !== false) return;

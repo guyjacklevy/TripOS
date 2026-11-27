@@ -3,6 +3,20 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 27 Nov 2026 — Round 19.1: the save mark earns its tap
+Guy's phone notes on Round 19. The save mark on place cards is no
+longer a bare 16px flag an anonymous visitor can't read — it's a
+labeled pill: "⚑ SAVE" on the card, "⚑ SAVED" once kept, "✓ BEEN" for
+stamped places (the word is the affordance). The save/remove note
+moved off the card entirely — inside the card it overlapped the card's
+own content — and is now one floating line above the bottom bar, both
+ways. The bottom bar's button tightened so "⚑ N saved" always shows in
+full at phone width. And for the look of the page itself — still the
+old cosmic brand — a daylight example of the public Bali shelf is up
+at /x/19/a (examples before build): paper, photo-strip hero, white
+place rows with the labeled save pills, chips, daylight keep-bar.
+Guy picks before the real page is repainted.
+
 ## 27 Nov 2026 — Round 19: the same company everywhere
 The rest of the testers' list, with minimal mods (the trip world keeps
 its cosmic look — it now speaks the same language). The classic sign-in
