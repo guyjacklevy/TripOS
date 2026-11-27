@@ -824,6 +824,10 @@ body[data-area="denpasar"] .terrain-tint { opacity: 1; background: radial-gradie
   padding: 2px 0;
 }
 .w-email-toggle:hover { color: var(--teal); }
+/* Round 19: the gate is a door, not a wall — one quiet step back to daylight */
+.w-back { display: inline-block; margin-top: 22px; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.08em; color: var(--mut); text-decoration: none; min-height: 40px; }
+.w-back:hover { color: var(--teal); }
 .w-email { margin-top: 16px; }
 .w-code { max-width: 300px; margin: 10px auto 0; }
 .w-foot { margin-top: 26px; font-size: 12px; color: var(--dim); }
@@ -1978,6 +1982,7 @@ html.js .chaos-wrap.in .artifact { transform: rotate(var(--r, 0deg)); }
 }
 @keyframes keptIn { 0% { opacity: 0; transform: translateY(-3px); } 12%, 78% { opacity: 1; transform: none; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .kept-note { animation: none; } }
+.kept-note.off { color: var(--mut); border-color: rgba(255, 255, 255, 0.18); }
 
 /* the photo breath — the catcher's save ceremony: the place itself, one breath */
 .sv-breath {
@@ -3495,8 +3500,9 @@ button.place-maps { background: none; font-family: inherit; cursor: pointer; -we
   -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
 }
-.sb-count { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--teal); }
-.sb-keep { min-height: 40px; white-space: nowrap; }
+.sb-count { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--teal);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.sb-keep { min-height: 40px; white-space: nowrap; flex: none; }
 
 /* GPS sheet: stamp + save side by side */
 .gps-row { display: flex; gap: 8px; align-items: stretch; }

@@ -3,6 +3,24 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 27 Nov 2026 — Round 19: the same company everywhere
+The rest of the testers' list, with minimal mods (the trip world keeps
+its cosmic look — it now speaks the same language). The classic sign-in
+gate says "Your places — and the trip tools around them" instead of
+"Bali, decoded — personally", and carries a quiet "‹ back to your
+shelf" escape to daylight. On the public Bali browser: un-saving a
+place now says so ("Removed — off your list" — it was silent, reading
+as a dead tap), the floating save bar no longer wraps at phone width
+("⚑ N saved"), and a brief older than 60 days no longer greets a
+visitor with "Matched to your brief" (the page falls back to the honest
+"matching switches on after your brief" line; a fresh brief still
+matches). The landing's category demo now carries the real collection's
+real numbers: ALL 50 with FOOD 21 · NIGHTLIFE 16 · CAFE 3 · EXPLORE 3 ·
+SURF 3 · BEACH 2 · GYM 1 · DAY CLUB 1 — they finally add up, with real
+tap-rows for the two categories that were missing — and the WhatsApp
+demo says "✓ been to 49 of 50". The Bali page's share-preview title
+matches its own daylight promise.
+
 ## 27 Nov 2026 — Round 18: the daylight threshold
 Both testers' biggest coherence break — every "Sign in" door teleported
 the anonymous keeper into the old cosmic world — is closed. Sign-in now

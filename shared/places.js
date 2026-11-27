@@ -40,7 +40,7 @@ const statusEl = document.getElementById('placesStatus');
       if (!bar) return;
       const n = anonCount();
       bar.hidden = n === 0;
-      bar.innerHTML = '<span class="sb-count">⚑ your list · ' + n + ' place' + (n === 1 ? '' : 's') + '</span>' +
+      bar.innerHTML = '<span class="sb-count">⚑ ' + n + ' saved</span>' +
         '<a class="btn btn-primary sb-keep" href="/app/">keep it — free account →</a>';
     };
     paintBar();
@@ -56,7 +56,14 @@ const statusEl = document.getElementById('placesStatus');
         search: document.getElementById('placeSearch')
       },
       places: data,
-      plan: readPlan(),
+      /* Round 19 (anonymous-tester finding): a months-old brief must not
+         greet a visitor as "matched to your brief" — the public page only
+         honors a brief kept in the last 60 days. The signed app passes the
+         account's own brief and is untouched. */
+      plan: (function () {
+        const p = readPlan();
+        return p && p.ts && (Date.now() - p.ts) < 60 * 86400000 ? p : null;
+      })(),
       saves,
       onSave: (p) => { anonToggle(p); paintBar(); return true; },
       /* 12 Nov: visible cards resolve their stored Google photo names in

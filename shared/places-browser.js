@@ -1011,15 +1011,17 @@ export function mountPlaces(cfg) {
       if (!wasOn && !REDUCED) { sf.classList.remove('sf-ping'); void sf.offsetWidth; sf.classList.add('sf-ping'); }
       if (home && !home.host.hidden) renderHome(); /* the front door reflects the bank live */
       if (state.view === 'rows') renderRows(); /* the rail reflects the bank live */
-      /* the quiet fill (brand pivot, 9 Nov): one line on the card, then gone */
-      if (!wasOn) {
+      /* the quiet fill (brand pivot, 9 Nov): one line on the card, then gone.
+         Round 19: the un-save speaks too — a silent removal reads as a dead
+         tap (anonymous-tester finding). */
+      {
         const scope = (home && !home.host.hidden) ? home.grid : els.grid;
         const anchor = scope.querySelector('.save-flag[data-save="' +
           (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
         if (anchor && anchor.parentElement) {
           const n = document.createElement('span');
-          n.className = 'kept-note';
-          n.textContent = 'Kept · in your Bali';
+          n.className = 'kept-note' + (wasOn ? ' off' : '');
+          n.textContent = wasOn ? 'Removed — off your list' : 'Kept · in your Bali';
           anchor.insertAdjacentElement('afterend', n);
           setTimeout(() => n.remove(), 2200);
         }
