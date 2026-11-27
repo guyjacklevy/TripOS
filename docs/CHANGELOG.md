@@ -3,6 +3,21 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 27 Nov 2026 — Round 18: the daylight threshold
+Both testers' biggest coherence break — every "Sign in" door teleported
+the anonymous keeper into the old cosmic world — is closed. Sign-in now
+happens inside the daylight shelf, as a bottom sheet like save and
+gift: "Keep your places forever" with Continue-with-Google and a
+6-digit email code (same auth contract as the classic screen; the
+email code signs you in without ever leaving the page). On success the
+shelf re-boots signed and everything kept in this browser comes along.
+The anonymous passport is now fully daylight: only the sign-in door
+shows (the three classic-world trip doors appear once you're signed
+in). The landing's "Log in" opens the shelf with the sheet on top
+(/app/#signin) — a signed visitor is simply home. The classic sign-in
+screen still exists at /app/trip for the trip world itself; no
+anonymous path leads through it any more.
+
 ## 26 Nov 2026 — Round 17.10: the anonymous testers' round
 Two anonymous evaluator agents walked the live product cold (one as a
 receiver opening a friend's link, one as a stranger from a post),

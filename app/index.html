@@ -130,8 +130,10 @@ img{max-width:100%}
   padding:14px 15px;box-shadow:0 4px 14px rgba(40,30,10,.08)}
 .signin b{font-size:.95rem;font-weight:900;display:block}
 .signin p{margin:4px 0 0;font-size:.82rem;color:var(--dim)}
-.signin a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin-top:12px;width:100%;
-  border-radius:999px;background:#1c1c18;color:var(--paper);font-weight:800;font-size:.9rem;text-decoration:none}
+.signin a,.signin button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin-top:12px;width:100%;
+  border-radius:999px;background:#1c1c18;color:var(--paper);font-weight:800;font-size:.9rem;text-decoration:none;
+  border:0;cursor:pointer;font-family:var(--body)}
+.signin button:active{transform:scale(.98)}
 
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;
   padding:8px max(16px,env(safe-area-inset-left,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));
@@ -214,6 +216,9 @@ img{max-width:100%}
 .svrow .sv1:active{transform:scale(.95)}
 .svrow .sv1.done{background:var(--green);color:#fff;border-color:var(--green)}
 .svrow .sv1:disabled{opacity:.55}
+
+/* ── the sign-in sheet (Round 18): the threshold stays in daylight ── */
+.audiv{margin:14px 0 2px;text-align:center;font-family:var(--mono);font-size:.54rem;letter-spacing:.1em;color:var(--soft)}
 
 /* ── the collection view (Round 17.4): a cover opens, in place ── */
 .cvback{display:inline-flex;align-items:center;gap:6px;background:none;border:0;cursor:pointer;
@@ -327,7 +332,7 @@ img{max-width:100%}
     <div class="signin" id="signin" hidden>
       <b>Keep them safe</b>
       <p>Your saves live only in this browser until you sign in. Free, no password — an email code keeps them forever, and your own shareable link comes with it.</p>
-      <a href="/app/trip/">Sign in — keep my places</a>
+      <button type="button" id="snBtn">Sign in — keep my places</button>
     </div>
 
     <div id="collView" hidden>
@@ -347,11 +352,11 @@ img{max-width:100%}
         <button type="button" class="plink" id="yLink" hidden></button>
       </div>
       <div class="ydoors">
-        <a class="ydoor em" id="ySign" href="/app/trip/" hidden><span><b>Sign in — keep them forever</b><span>FREE · EMAIL CODE OR GOOGLE · OPENS OUR CLASSIC SIGN-IN SCREEN</span></span><span class="chev">›</span></a>
+        <a class="ydoor em" id="ySign" href="#signin" hidden><span><b>Sign in — keep them forever</b><span>FREE · GOOGLE OR A 6-DIGIT EMAIL CODE · RIGHT HERE</span></span><span class="chev">›</span></a>
         <a class="ydoor" id="yPub" href="#" hidden><span><b>Your public page</b><span>WHAT A STRANGER SEES AT YOUR LINK</span></span><span class="chev">›</span></a>
-        <a class="ydoor em" href="/app/trip/#you"><span><b>⌲ Camera roll → collection</b><span>JUST BACK? ~2 MINUTES</span></span><span class="chev">›</span></a>
-        <a class="ydoor" href="/app/trip/#today"><span><b>On a trip now</b><span>TODAY · ROUTE · CONCIERGE</span></span><span class="chev">›</span></a>
-        <a class="ydoor" href="/app/trip/#you"><span><b>Passport, packing & flight prep</b><span>THE TRIP TOOLS, WHERE THEY ALWAYS WERE</span></span><span class="chev">›</span></a>
+        <a class="ydoor em ytrip" href="/app/trip/#you"><span><b>⌲ Camera roll → collection</b><span>JUST BACK? ~2 MINUTES</span></span><span class="chev">›</span></a>
+        <a class="ydoor ytrip" href="/app/trip/#today"><span><b>On a trip now</b><span>TODAY · ROUTE · CONCIERGE</span></span><span class="chev">›</span></a>
+        <a class="ydoor ytrip" href="/app/trip/#you"><span><b>Passport, packing & flight prep</b><span>THE TRIP TOOLS, WHERE THEY ALWAYS WERE</span></span><span class="chev">›</span></a>
       </div>
       <button type="button" class="yout" id="yOut" hidden>sign out</button>
     </div>
@@ -404,6 +409,23 @@ img{max-width:100%}
   <button type="button" class="mid" id="gcCopy">copy message + link</button>
   <button type="button" class="mid2" id="gcStory">▣ Story card for one place — 9:16</button>
   <button type="button" class="grevoke" id="gcRevoke" hidden>revoke the link</button>
+</div></div>
+
+<div class="shw" id="authSh"><div class="sh">
+  <div class="grab"></div>
+  <h3>Keep your places forever</h3>
+  <p class="s">FREE · NO PASSWORD · EVERYTHING KEPT IN THIS BROWSER COMES WITH YOU</p>
+  <button type="button" class="mid" id="auGoogle">Continue with Google</button>
+  <p class="audiv">— or by email —</p>
+  <form class="svform" id="auForm">
+    <input class="svin" id="auEmail" type="email" placeholder="you@email.com" autocomplete="email" required>
+    <button type="submit" class="svgo">Send code</button>
+  </form>
+  <form class="svform" id="auCodeForm" hidden>
+    <input class="svin" id="auCode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="the 6-digit code" maxlength="8" required>
+    <button type="submit" class="svgo">Sign in</button>
+  </form>
+  <p class="svst" id="auSt"></p>
 </div></div>
 
 <div class="shw" id="storySh"><div class="sh">

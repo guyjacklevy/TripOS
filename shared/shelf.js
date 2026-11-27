@@ -442,7 +442,7 @@ function render(m) {
       ? 'PREP · PACKING · THE ROUTE' : 'TODAY · ROUTE · CONCIERGE';
   }
   track('shelf_view', { signed: !!m.signed });
-  if (location.hash.indexOf('#c/') === 0 || location.hash === '#you') applyHash();
+  if (location.hash.indexOf('#c/') === 0 || location.hash === '#you' || location.hash === '#signin') applyHash();
 }
 
 /* ── THE COMPOSER (Round 17.2): make the gift without leaving home.
@@ -747,6 +747,55 @@ $('svRows').addEventListener('click', (e) => {
   if (b && !b.disabled) svSave(b, b.getAttribute('data-k'), +b.getAttribute('data-i'));
 });
 
+/* ── THE SIGN-IN SHEET (Round 18): the threshold stays in daylight.
+   Same auth contract as the old app (Google OAuth, or signInWithOtp +
+   verifyOtp with the 6-digit code — no redirect needed for email). On
+   success a clean reload of /app/ boots signed, and claimAnon carries
+   every place kept in this browser into the account. ── */
+let AU_EMAIL = null;
+function openAuth(src) {
+  $('auSt').textContent = '';
+  $('authSh').classList.add('on');
+  track('signin_open', { via: src || 'shelf' });
+}
+$('authSh').addEventListener('click', (e) => { if (e.target === $('authSh')) $('authSh').classList.remove('on'); });
+$('snBtn').addEventListener('click', () => openAuth('card'));
+$('ySign').addEventListener('click', (e) => { e.preventDefault(); openAuth('passport'); });
+$('auGoogle').addEventListener('click', async () => {
+  $('auSt').textContent = 'Opening Google…';
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: location.origin + '/app/' }
+  });
+  if (error) $('auSt').textContent = '⚠ Google didn’t open — try again, or use the email code.';
+});
+$('auForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = $('auEmail').value.trim();
+  if (!email) return;
+  AU_EMAIL = email;
+  $('auSt').textContent = 'Sending…';
+  const { error } = await sb.auth.signInWithOtp({
+    email, options: { emailRedirectTo: location.origin + '/app/' }
+  });
+  if (error) { $('auSt').textContent = '⚠ ' + error.message; return; }
+  track('signin_sent', {});
+  $('auCodeForm').hidden = false;
+  $('auSt').textContent = '✓ Code sent — check your email. The link in it works too.';
+  setTimeout(() => { try { $('auCode').focus(); } catch (_) {} }, 60);
+});
+$('auCodeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const token = $('auCode').value.trim();
+  if (!token || !AU_EMAIL) return;
+  $('auSt').textContent = 'Signing you in…';
+  const { error } = await sb.auth.verifyOtp({ email: AU_EMAIL, token, type: 'email' });
+  if (error) { $('auSt').textContent = '⚠ That code didn’t match. Codes last 60 minutes — send a fresh one?'; return; }
+  track('signin_ok', { method: 'email' });
+  $('auSt').textContent = '✓ You’re in — bringing your places over…';
+  setTimeout(() => location.replace('/app/'), 700);
+});
+
 /* ── THE COLLECTION VIEW (Round 17.4): a cover opens in place.
    Your places of one destination, grouped by area with their marks,
    the collection's own gift door on top. Hash-routed (#c/<slug>) so
@@ -889,6 +938,8 @@ function renderYouAnon() {
   $('yPub').hidden = true;
   $('yOut').hidden = true;
   $('ySign').hidden = false;
+  /* the trip doors lead to the classic world — signed territory */
+  document.querySelectorAll('.ytrip').forEach((d) => { d.hidden = true; });
   $('youView').hidden = false;
   window.scrollTo(0, 0);
 }
@@ -901,6 +952,7 @@ function renderYou() {
   $('collView').hidden = true;
   const me = CTX.me;
   $('ySign').hidden = true;
+  document.querySelectorAll('.ytrip').forEach((d) => { d.hidden = false; });
   $('yAva').textContent = (me.firstName || me.email || '·')[0].toUpperCase();
   $('yName').textContent = me.firstName || 'You';
   $('yCt').textContent = me.nPlaces + ' PLACE' + (me.nPlaces === 1 ? '' : 'S') +
@@ -935,6 +987,14 @@ function applyHash() {
   if (m && CTX && CTX.groups) { $('youView').hidden = true; renderCollection(keyOf(m[1])); }
   else if (m && !CTX && decodeURIComponent(m[1]) === 'mine') { $('youView').hidden = true; renderAnonList(); }
   else if (location.hash === '#you') renderYou();
+  else if (location.hash === '#signin') {
+    /* the landing's Log in door: shelf first, the sheet on top — and a
+       signed visitor is simply home already */
+    $('youView').hidden = true;
+    showShelf();
+    if (!CTX) openAuth('landing');
+    history.replaceState(null, '', location.pathname);
+  }
   else { $('youView').hidden = true; showShelf(); }
 }
 window.addEventListener('hashchange', applyHash);
