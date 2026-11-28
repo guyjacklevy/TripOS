@@ -3,6 +3,16 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 28 Nov 2026 — Round 22: the cost guide joins the daylight; the app's turn begins
+/bali/cost repainted in the daylight language — every word of the
+article unchanged, the same bar/tokens/cards as the rest of the public
+world. With it, the concierge (/bali/plan/) is the only cosmic page an
+anonymous visitor can still reach. And the app pivot opened the way
+every brand move does — with an example first: x/22/a is the signed
+app's front door (YOUR PLACES: counts, gift door, photo grid of real
+curated places, route, browse door, four-tab bar) in daylight, static,
+touching nothing live. Guy judges the example before any live repaint.
+
 ## 28 Nov 2026 — Round 21: the Bali landing joins the daylight
 The last public surface still wearing the deep-space brand. /bali/
 rebuilt in the daylight language — same bar, paper, photo-strip hero
