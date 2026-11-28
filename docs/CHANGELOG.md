@@ -3,6 +3,20 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 28 Nov 2026 — Round 23: the loop closes in one world
+Guy's audit call: the pivot's core loop must work 100% before anything
+else. Five leaks from the daylight home (/app/) into the old cosmic
+planner, fixed: the "＋ New collection" tile now opens the save sheet
+(collections start themselves — a new one is just a save somewhere
+new); the save sheet's atlas-miss opens the in-page sign-in sheet and
+resumes the same search live after sign-in (sessionStorage handoff);
+the empty state's "save your first place" opens the save sheet and its
+second door goes to the daylight Bali shelf; the three trip doors in
+YOU say plainly that they open the trip planner; and a one-line loop
+lesson (SAVE → IT BECOMES A COLLECTION → GIFT IT WITH ONE LINK) shows
+on first open only, gone the moment anything is saved. No repaints —
+the planner itself is untouched.
+
 ## 28 Nov 2026 — Round 22: the cost guide joins the daylight; the app's turn begins
 /bali/cost repainted in the daylight language — every word of the
 article unchanged, the same bar/tokens/cards as the rest of the public

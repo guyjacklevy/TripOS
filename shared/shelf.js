@@ -123,7 +123,9 @@ function coverCard(g) {
     '<span class="nm"><b>' + esc(g.title) + '</b><span>' + g.items.length + ' PLACE' + (g.items.length === 1 ? '' : 'S') +
     ' · ' + esc(g.label) + '</span></span></a>';
 }
-const NEW_TILE = '<a class="gc new" href="/app/trip/#you"><span class="plus"><i>＋</i>New collection<em>OR CAMERA ROLL → ~2 MIN</em></span></a>';
+/* Round 23: a new collection starts itself the moment you save a place
+   somewhere new — so the tile opens the save sheet, never another world */
+const NEW_TILE = '<button type="button" class="gc new" id="newTile"><span class="plus"><i>＋</i>New collection<em>SAVE A PLACE SOMEWHERE NEW — IT STARTS ITSELF</em></span></button>';
 
 function openSheet() { $('linksSh').classList.add('on'); }
 $('linksSh').addEventListener('click', (e) => { if (e.target === $('linksSh')) $('linksSh').classList.remove('on'); });
@@ -438,11 +440,26 @@ function render(m) {
     $('tripBandQ').childNodes[0].textContent = tn.phase > 0
       ? tn.destination + ' in ' + tn.phase + ' day' + (tn.phase === 1 ? '' : 's')
       : 'On your ' + tn.destination + ' trip';
-    $('tripBandSub').textContent = tn.phase > 0
-      ? 'PREP · PACKING · THE ROUTE' : 'TODAY · ROUTE · CONCIERGE';
+    $('tripBandSub').textContent = (tn.phase > 0
+      ? 'PREP · PACKING · THE ROUTE' : 'TODAY · ROUTE · CONCIERGE') + ' · THE TRIP PLANNER';
   }
+  /* Round 23: the loop, taught once — only while the shelf is empty */
+  $('loopLine').hidden = !!(m.week.length || m.current || (m.rest && m.rest.length));
+
   track('shelf_view', { signed: !!m.signed });
   if (location.hash.indexOf('#c/') === 0 || location.hash === '#you' || location.hash === '#signin') applyHash();
+
+  /* Round 23: a search that hit the atlas wall before sign-in resumes
+     here, live, the moment the signed shelf paints */
+  try {
+    const pq = sessionStorage.getItem('pv_pending_q');
+    if (pq && m.signed) {
+      sessionStorage.removeItem('pv_pending_q');
+      $('svIn').value = pq;
+      openSave('resume');
+      svSearch(pq);
+    }
+  } catch (_) {}
 }
 
 /* ── THE COMPOSER (Round 17.2): make the gift without leaving home.
@@ -691,7 +708,14 @@ async function svSearch(q) {
     html += svGoogle.map((c, i) => svRow(c, i, 'g')).join('');
   }
   if (!SAVE_USER && !svCurated.length) {
-    $('svSt').innerHTML = 'NOT IN OUR ATLAS YET — <a href="/app/trip/">SIGN IN</a> AND IT FETCHES LIVE, ANYWHERE ON EARTH.';
+    /* Round 23: the threshold stays in this room — the in-page sign-in
+       sheet opens, and the search resumes live after the shelf reboots */
+    $('svSt').innerHTML = 'NOT IN OUR ATLAS YET — <button type="button" class="svauth" id="svAuth">SIGN IN</button> AND IT FETCHES LIVE, ANYWHERE ON EARTH.';
+    $('svAuth').onclick = () => {
+      try { sessionStorage.setItem('pv_pending_q', q); } catch (_) {}
+      $('saveSh').classList.remove('on');
+      openAuth('save-sheet');
+    };
   } else {
     $('svSt').textContent = html ? '' : 'NOTHING MATCHED — TRY FEWER WORDS.';
   }
@@ -736,10 +760,18 @@ async function svSave(btn, kind, i) {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') document.querySelectorAll('.shw.on').forEach((w) => w.classList.remove('on'));
 });
-$('fabSave').addEventListener('click', () => {
+function openSave(src) {
   $('saveSh').classList.add('on');
   setTimeout(() => { try { $('svIn').focus(); } catch (_) {} }, 260);
+  track('save_open', { via: src || 'fab' });
+}
+$('fabSave').addEventListener('click', () => openSave('fab'));
+/* Round 23: the new-collection tile and the empty-state line both open
+   the save sheet — the loop starts with a save, never a world-jump */
+$('shelfGrid').addEventListener('click', (e) => {
+  if (e.target.closest('#newTile')) openSave('new-tile');
 });
+$('invSave').addEventListener('click', () => openSave('empty'));
 $('saveSh').addEventListener('click', (e) => { if (e.target === $('saveSh')) $('saveSh').classList.remove('on'); });
 $('svForm').addEventListener('submit', (e) => { e.preventDefault(); svSearch($('svIn').value); });
 $('svRows').addEventListener('click', (e) => {

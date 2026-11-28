@@ -56,6 +56,15 @@ img{max-width:100%}
   color:var(--green);border:1.5px solid rgba(13,122,94,.4);border-radius:999px;padding:7px 12px;cursor:pointer;background:none}
 .plink:active{transform:scale(.97)}
 
+/* ── Round 23: the loop, taught in one line (first-timers only) ── */
+.loopline{margin:14px 0 0;font-family:var(--mono);font-size:.54rem;letter-spacing:.08em;
+  color:var(--soft);line-height:1.9}
+.invb{background:none;border:0;padding:0;font:inherit;color:var(--green);font-weight:800;
+  cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.svauth{background:none;border:0;padding:0;font:inherit;color:var(--green);font-weight:700;
+  cursor:pointer;text-decoration:underline;text-underline-offset:2px;letter-spacing:inherit}
+button.gc{font-family:var(--body);cursor:pointer;padding:0;width:100%;text-align:center}
+
 .week{margin-top:24px;background:var(--card);border:1px solid var(--line);border-radius:14px;
   padding:13px 15px;box-shadow:0 4px 14px rgba(40,30,10,.08)}
 .week .t{display:flex;align-items:baseline}
@@ -299,10 +308,12 @@ img{max-width:100%}
       </div>
     </header>
 
+    <p class="loopline" id="loopLine" hidden>⚑ SAVE A PLACE → IT BECOMES A COLLECTION → GIFT IT WITH ONE LINK</p>
+
     <div class="week" id="week" hidden>
       <div class="t"><b>This week</b><span id="weekN"></span></div>
       <div id="weekRows"></div>
-      <p class="inv" id="weekInv" hidden>Nothing saved yet — <a href="/app/trip/#places">save your first place</a>, or let your <a href="/app/trip/#you">camera roll build the collection (~2 min)</a>.</p>
+      <p class="inv" id="weekInv" hidden>Nothing saved yet — <button type="button" class="invb" id="invSave">save your first place</button>, or <a href="/bali/places">browse the Bali shelf</a>.</p>
     </div>
 
     <a class="ask" id="tripBand" href="/app/trip/#today" hidden style="text-decoration:none">
@@ -354,9 +365,9 @@ img{max-width:100%}
       <div class="ydoors">
         <a class="ydoor em" id="ySign" href="#signin" hidden><span><b>Sign in — keep them forever</b><span>FREE · GOOGLE OR A 6-DIGIT EMAIL CODE · RIGHT HERE</span></span><span class="chev">›</span></a>
         <a class="ydoor" id="yPub" href="#" hidden><span><b>Your public page</b><span>WHAT A STRANGER SEES AT YOUR LINK</span></span><span class="chev">›</span></a>
-        <a class="ydoor em ytrip" href="/app/trip/#you"><span><b>⌲ Camera roll → collection</b><span>JUST BACK? ~2 MINUTES</span></span><span class="chev">›</span></a>
-        <a class="ydoor ytrip" href="/app/trip/#today"><span><b>On a trip now</b><span>TODAY · ROUTE · CONCIERGE</span></span><span class="chev">›</span></a>
-        <a class="ydoor ytrip" href="/app/trip/#you"><span><b>Passport, packing & flight prep</b><span>THE TRIP TOOLS, WHERE THEY ALWAYS WERE</span></span><span class="chev">›</span></a>
+        <a class="ydoor em ytrip" href="/app/trip/#you"><span><b>⌲ Camera roll → collection</b><span>JUST BACK? ~2 MINUTES · OPENS THE TRIP PLANNER</span></span><span class="chev">›</span></a>
+        <a class="ydoor ytrip" href="/app/trip/#today"><span><b>On a trip now</b><span>TODAY · ROUTE · CONCIERGE · OPENS THE TRIP PLANNER</span></span><span class="chev">›</span></a>
+        <a class="ydoor ytrip" href="/app/trip/#you"><span><b>Passport, packing & flight prep</b><span>OPENS THE TRIP PLANNER, WHERE THEY ALWAYS WERE</span></span><span class="chev">›</span></a>
       </div>
       <button type="button" class="yout" id="yOut" hidden>sign out</button>
     </div>
