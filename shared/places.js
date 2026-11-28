@@ -213,9 +213,11 @@ const catsOf = (p) => (Array.isArray(p.categories) && p.categories.length) ? p.c
   }
   function applyFilters() {
     const q = state.q.trim().toLowerCase();
-    /* while a chip or search is live, every area with hits is open — the
-       filter IS the navigation; clearing it restores the accordion */
-    const filtering = !!q || state.cat !== 'all';
+    /* 20.2 (Guy: "if I'm looking for food at Canggu, I don't need Uluwatu
+       to be open"): a CATEGORY chip respects the accordion — headers show
+       the filtered counts, you open the area you care about. Only a typed
+       SEARCH opens every area with hits: a search is one specific thing. */
+    const filtering = !!q;
     let shown = 0;
     document.querySelectorAll('#areas .pl').forEach((el) => {
       const okCat = state.cat === 'all' ||
@@ -336,8 +338,8 @@ const catsOf = (p) => (Array.isArray(p.categories) && p.categories.length) ? p.c
       const sec = ah.closest('.area');
       const r = sec.getAttribute('data-r');
       const wasOpen = !sec.querySelector('.ab').hidden;
-      if (state.q.trim() || state.cat !== 'all') {
-        setOpen(sec, !wasOpen); /* mid-filter: fold just this one */
+      if (state.q.trim()) {
+        setOpen(sec, !wasOpen); /* mid-search: fold just this one */
         return true;
       }
       state.openArea = wasOpen ? null : r;

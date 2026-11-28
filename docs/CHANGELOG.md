@@ -3,6 +3,14 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 28 Nov 2026 — Round 20.2: a chip keeps the shelf folded
+Guy's note: tapping a category opened every area — "if I'm looking
+for food at Canggu, I don't need Uluwatu to be open." A category chip
+now respects the accordion: the shelf stays folded, each area header
+shows its filtered count (FOOD → Uluwatu · 47, Canggu · 22 …), and
+you open the one area you care about. Only a typed search still opens
+every area with hits — a search is one specific thing.
+
 ## 28 Nov 2026 — Round 20.1: areas you can hold, photos up front
 Guy's phone notes on Round 20. The ten area sections became accordion
 cards — closed, the page IS the area nav (Uluwatu … Lombok on one
