@@ -3,6 +3,21 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 28 Nov 2026 — Round 20: the Bali shelf steps into daylight
+Guy picked the /x/19/a example, so the public /bali/places left the
+cosmic world: paper, photo-strip hero, "The Bali shelf", honest counts
+computed from the live data (424 places · 10 areas), category chips,
+and white place rows with the labeled "⚑ SAVE" pills. Every row's ›
+opens a daylight place sheet — the real Google photo (resolved at
+display time, credited), the why, the tip, timing, price, "Open in
+Maps" and the save pill. The anonymous save buffer, the keep-bar, the
+kept/removed toast and the 60-day brief gate all carry over; a fresh
+brief still floats matches to the top of their area with a quiet
+✦ note. The signed trip world keeps its cosmic look untouched —
+shared/places-browser.js is no longer loaded by the public page at
+all. The page's meta left "AI trip planner" for the save-and-share
+voice.
+
 ## 27 Nov 2026 — Round 19.1: the save mark earns its tap
 Guy's phone notes on Round 19. The save mark on place cards is no
 longer a bare 16px flag an anonymous visitor can't read — it's a
