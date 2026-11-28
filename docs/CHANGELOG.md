@@ -3,6 +3,18 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 28 Nov 2026 — Round 20.1: areas you can hold, photos up front
+Guy's phone notes on Round 20. The ten area sections became accordion
+cards — closed, the page IS the area nav (Uluwatu … Lombok on one
+screen, each with its count); one area open at a time, tap to move,
+the app's own proven pattern. A live chip or search opens every area
+that has hits; clearing it folds the shelf back. And the real Google
+photos no longer wait for the sheet: row thumbs resolve lazily in
+batches as they scroll into view (category art holds the floor until
+each photo lands), with the gift page's collective credit line —
+"PLACE PHOTOS · THEIR GOOGLE CONTRIBUTORS" — under the list. The
+per-photo credit still shows in the place sheet.
+
 ## 28 Nov 2026 — Round 20: the Bali shelf steps into daylight
 Guy picked the /x/19/a example, so the public /bali/places left the
 cosmic world: paper, photo-strip hero, "The Bali shelf", honest counts

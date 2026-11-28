@@ -62,9 +62,14 @@
   .chips button.on{color:#fff;border-color:var(--green);background:var(--green)}
   .chips button:active{transform:scale(.94)}
   .status{margin-top:28px;font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;color:var(--soft);text-align:center}
-  .area{margin-top:26px;content-visibility:auto;contain-intrinsic-size:auto 800px}
-  .area h2{margin:0;font-size:1.05rem;font-weight:900}
-  .area .ac{font-family:var(--mono);font-size:.54rem;letter-spacing:.08em;color:var(--soft);margin:2px 0 0}
+  .area{margin-top:12px;content-visibility:auto;contain-intrinsic-size:auto 76px;scroll-margin-top:66px}
+  .ah{display:flex;align-items:center;gap:10px;width:100%;min-height:54px;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer;font-family:var(--body);text-align:left}
+  .ah:active{background:#f6f1e6}
+  .ah .ah-nm{font-size:1.02rem;font-weight:900;color:var(--ink)}
+  .ah .ah-n{margin-left:auto;font-family:var(--mono);font-size:.54rem;letter-spacing:.08em;color:var(--soft);white-space:nowrap}
+  .ah .ah-car{color:var(--green);font-weight:700;font-size:1rem;flex:none}
+  .gcred{margin-top:18px;font-family:var(--mono);font-size:.5rem;letter-spacing:.08em;color:var(--soft);text-align:center}
   .pl{display:flex;align-items:center;gap:11px;margin-top:10px;background:var(--card);
     border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}
   .pl:active{background:#f6f1e6}
@@ -141,6 +146,7 @@
     <div class="chips" id="chips"></div>
     <p class="status" id="placesStatus">Loading the shelf…</p>
     <div id="areas"></div>
+    <p class="gcred" id="gcred" hidden>PLACE PHOTOS · THEIR GOOGLE CONTRIBUTORS</p>
     <footer>Prevoya · save and share places you discover · <a href="/bali/">back to Bali</a></footer>
   </div>
   <div class="kbar" id="saveBar" hidden><span class="kc" id="kc"></span><a href="/app/">keep it — free account →</a></div>

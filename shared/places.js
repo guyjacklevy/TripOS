@@ -121,31 +121,101 @@ const catsOf = (p) => (Array.isArray(p.categories) && p.categories.length) ? p.c
     const sub = esc((LABEL[p.category] || p.category || '').toUpperCase()) +
       (p.source === 'google' && !p.verified ? ' · ◔ DISCOVERED' : '') +
       (bd ? ' · <b class="mm">✦ ' + bd.pct + '%</b>' : '');
+    /* 20.1: the row thumb carries its stored Google photo NAME — the lazy
+       loader below resolves visible ones in batches and swaps them in */
+    const pn = (!p.photo_uri && p.photo_name) ? ' data-pn="' + esc(p.photo_name) + '"' : '';
     return '<div class="pl" role="button" tabindex="0" data-id="' + esc(String(p.id)) +
       '" data-cats="' + esc(catsOf(p).join(' ')) + '" data-search="' + esc(hay) + '">' +
-      '<img alt="" loading="lazy" src="' + catArt(p.category) + '" onerror="this.style.visibility=\'hidden\'">' +
+      '<img alt="" loading="lazy"' + pn + ' src="' +
+      esc(p.photo_uri || catArt(p.category)) + '" onerror="this.style.visibility=\'hidden\'">' +
       '<span class="n"><em>' + esc(p.name) + (p.verified ? ' <b class="pv">✓</b>' : '') + '</em>' +
       '<span>' + sub + '</span></span>' +
       svHTML(p) +
       '<span class="chev">›</span></div>';
   }
-  $('areas').innerHTML = regions.map((r) => {
+  /* 20.1 (Guy's phone test: "too long of a scroll, no way to navigate"):
+     areas are accordion cards — closed, the page IS the area nav (10 rows);
+     one area open at a time, the app's own proven pattern. */
+  $('areas').innerHTML = regions.map((r, i) => {
     const rows = places.filter((p) => region(p.area) === r);
     rows.sort((a, b) => {
       const sa = matched.has(a) ? matched.get(a).score : -1;
       const sb2 = matched.has(b) ? matched.get(b).score : -1;
       return sb2 - sa;
     });
-    return '<section class="area" data-r="' + esc(r) + '"><h2>' + esc(r) + '</h2>' +
-      '<p class="ac">' + rows.length + ' PLACE' + (rows.length === 1 ? '' : 'S') + '</p>' +
-      rows.map(rowHTML).join('') + '</section>';
+    const open = i === 0;
+    return '<section class="area" data-r="' + esc(r) + '">' +
+      '<button type="button" class="ah" aria-expanded="' + (open ? 'true' : 'false') + '">' +
+        '<span class="ah-nm">' + esc(r) + '</span>' +
+        '<span class="ah-n">' + rows.length + ' PLACE' + (rows.length === 1 ? '' : 'S') + '</span>' +
+        '<span class="ah-car">' + (open ? '▾' : '▸') + '</span>' +
+      '</button>' +
+      '<div class="ab"' + (open ? '' : ' hidden') + '>' + rows.map(rowHTML).join('') + '</div>' +
+    '</section>';
   }).join('');
   statusEl.hidden = true;
 
+  /* ── the lazy Google-photo loader (ported from the engine, 20.1): visible
+     thumbs batch their stored photo names through ONE `photos` call; the
+     category floor shows until the real photo lands. The per-photo credit
+     lives in the place sheet; the shelf carries the gift page's collective
+     credit line once the first photo arrives. ── */
+  const PHOTO_CACHE = new Map(); /* photo_name → uri (shared with the sheet) */
+  const phPending = new Set(), phInflight = new Set();
+  let phTimer = null;
+  function phApply(img) {
+    const n = img.getAttribute('data-pn');
+    if (!n || !PHOTO_CACHE.has(n)) return false;
+    const uri = PHOTO_CACHE.get(n);
+    const im = new Image();
+    im.onload = () => { img.src = uri; $('gcred').hidden = false; };
+    im.src = uri;
+    img.removeAttribute('data-pn');
+    return true;
+  }
+  function phFlush() {
+    phTimer = null;
+    const batch = [...phPending].filter((n) => !PHOTO_CACHE.has(n) && !phInflight.has(n)).slice(0, 16);
+    batch.forEach((n) => { phPending.delete(n); phInflight.add(n); });
+    if (!batch.length) return;
+    sb.functions.invoke('places-search', { body: { action: 'photos', names: batch } })
+      .then(({ data: r }) => {
+        batch.forEach((n) => {
+          phInflight.delete(n);
+          const uri = r && r.uris && r.uris[n];
+          if (uri) PHOTO_CACHE.set(n, uri); /* no uri → the honest floor stays */
+        });
+        document.querySelectorAll('#areas img[data-pn]').forEach(phApply);
+        if (phPending.size && !phTimer) phTimer = setTimeout(phFlush, 150);
+      }).catch(() => { batch.forEach((n) => phInflight.delete(n)); });
+  }
+  if ('IntersectionObserver' in window) {
+    const phIO = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        phIO.unobserve(en.target);
+        if (phApply(en.target)) return;
+        const n = en.target.getAttribute('data-pn');
+        if (!n) return;
+        phPending.add(n);
+        if (!phTimer) phTimer = setTimeout(phFlush, 150);
+      });
+    }, { rootMargin: '300px' });
+    document.querySelectorAll('#areas img[data-pn]').forEach((el) => phIO.observe(el));
+  }
+
   /* ── filtering: one chip + the search box; empty sections collapse ── */
-  const state = { cat: 'all', q: '' };
+  const state = { cat: 'all', q: '', openArea: regions[0] };
+  function setOpen(sec, open) {
+    sec.querySelector('.ah').setAttribute('aria-expanded', open ? 'true' : 'false');
+    sec.querySelector('.ah-car').textContent = open ? '▾' : '▸';
+    sec.querySelector('.ab').hidden = !open;
+  }
   function applyFilters() {
     const q = state.q.trim().toLowerCase();
+    /* while a chip or search is live, every area with hits is open — the
+       filter IS the navigation; clearing it restores the accordion */
+    const filtering = !!q || state.cat !== 'all';
     let shown = 0;
     document.querySelectorAll('#areas .pl').forEach((el) => {
       const okCat = state.cat === 'all' ||
@@ -159,7 +229,8 @@ const catsOf = (p) => (Array.isArray(p.categories) && p.categories.length) ? p.c
       let vis = 0;
       sec.querySelectorAll('.pl').forEach((el) => { if (el.style.display !== 'none') vis++; });
       sec.style.display = vis ? '' : 'none';
-      sec.querySelector('.ac').textContent = vis + ' PLACE' + (vis === 1 ? '' : 'S');
+      sec.querySelector('.ah-n').textContent = vis + ' PLACE' + (vis === 1 ? '' : 'S');
+      setOpen(sec, filtering ? true : sec.getAttribute('data-r') === state.openArea);
     });
     statusEl.hidden = shown > 0;
     if (!shown) statusEl.textContent = q
@@ -203,7 +274,6 @@ const catsOf = (p) => (Array.isArray(p.categories) && p.categories.length) ? p.c
      Photo chain: the place's own photo > its Google photo (resolved at
      display time through places-search, credited — never stored) > the
      category floor. One name per open, cached for the session. */
-  const PHOTO_CACHE = new Map();
   function openSheet(p) {
     const bd = matched.get(p);
     const sub = [p.area, (LABEL[p.category] || p.category || '').toUpperCase()]
@@ -260,6 +330,22 @@ const catsOf = (p) => (Array.isArray(p.categories) && p.categories.length) ? p.c
 
   /* ── one delegated handler: the pill saves, the row opens ── */
   function actOn(e) {
+    /* 20.1: an area header toggles its accordion — one open at a time */
+    const ah = e.target.closest('.ah');
+    if (ah) {
+      const sec = ah.closest('.area');
+      const r = sec.getAttribute('data-r');
+      const wasOpen = !sec.querySelector('.ab').hidden;
+      if (state.q.trim() || state.cat !== 'all') {
+        setOpen(sec, !wasOpen); /* mid-filter: fold just this one */
+        return true;
+      }
+      state.openArea = wasOpen ? null : r;
+      document.querySelectorAll('#areas .area').forEach((s) =>
+        setOpen(s, s.getAttribute('data-r') === state.openArea));
+      if (!wasOpen) sec.scrollIntoView({ block: 'start' });
+      return true;
+    }
     const svb = e.target.closest('.sv');
     if (svb) {
       const p = byId.get(svb.getAttribute('data-save'));
