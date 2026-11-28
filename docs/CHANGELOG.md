@@ -3,6 +3,20 @@
 *Newest first. Every ship adds an entry here; test steps live in the chat
 where the ship was reported. "Round" numbers match the decision board.*
 
+## 28 Nov 2026 — Round 21: the Bali landing joins the daylight
+The last public surface still wearing the deep-space brand. /bali/
+rebuilt in the daylight language — same bar, paper, photo-strip hero
+and components as the shelf, the root landing and the gift pages.
+Every approved line of copy carried over word for word (the hero, the
+save ledger, the warung list, the three moves, the concierge card);
+only the world changed. The chaos board survived as a daylight
+collage (browser tabs, the IG saved grid, the 2:14 AM "which beach
+was it??" chat → "47 TABS → ONE COLLECTION"). The flight-metaphor
+furniture — flight bar, boarding stages, boarding pass — retired
+with the cosmic skin; the pass's honest facts (free, no signup) live
+on in the closing card. All six doors kept: shelf, app, concierge,
+/save, /bali/cost, home.
+
 ## 28 Nov 2026 — Round 20.2: a chip keeps the shelf folded
 Guy's note: tapping a category opened every area — "if I'm looking
 for food at Canggu, I don't need Uluwatu to be open." A category chip

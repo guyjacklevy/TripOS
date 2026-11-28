@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Prevoya — save and share places you discover in Bali</title>
   <meta name="description" content="Save and share the places you discover in Bali. 400+ spots already scouted with areas and real prices — your collection starts full. Free. No password, ever.">
   <meta property="og:title" content="Prevoya — save and share places you discover in Bali">
@@ -17,246 +17,201 @@
   <link rel="apple-touch-icon" href="/shared/brand/icon-192.png">
   <link rel="icon" href="/shared/brand/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/shared/brand/icon-192.png" type="image/png">
-<link rel="stylesheet" href="../shared/tripos.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap">
+  <style>
+  /* ─── Round 21: the Bali landing in daylight — same company as the
+     root landing, the shelf, the gift pages and the app. The approved
+     copy carried over word for word; only the world changed. ─── */
+  :root{--paper:#faf6ee;--ink:#23231e;--green:#0d7a5e;--amber:#b06c0a;--line:#e4ddcf;--card:#fff;
+    --body:'Nunito',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+    --soft:#8a8373;--dim:#5d574b}
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+  .bar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:8px;
+    padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));
+    background:rgba(250,246,238,.92);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(228,221,207,.7)}
+  .bar .dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex:none}
+  .bar .brand{font-size:1rem;font-weight:900;color:var(--ink);text-decoration:none}
+  .bar .appcta{margin-left:auto;font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;
+    color:var(--dim);text-decoration:none;min-height:40px;display:inline-flex;align-items:center;padding:0 4px}
+  .wrap{max-width:560px;margin:0 auto;
+    padding:0 max(16px,env(safe-area-inset-left,0px)) 60px max(16px,env(safe-area-inset-right,0px))}
+  .hero{margin-top:16px;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+    box-shadow:0 10px 28px rgba(40,30,10,.14)}
+  .hero .strip{display:flex;gap:2px;background:#efe9db;min-height:96px}
+  .hero .strip img{aspect-ratio:1;object-fit:cover;flex:1;min-width:0;width:33%}
+  h1{margin:20px 0 0;font-size:1.72rem;font-weight:900;letter-spacing:-.01em;line-height:1.2}
+  h1 b{color:var(--green)}
+  .sub{margin:12px 0 0;font-size:.94rem;color:var(--dim)}
+  .ct{font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--green);margin:14px 0 0}
+  .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 22px;
+    border-radius:999px;background:#1c1c18;color:var(--paper);font-weight:800;font-size:.92rem;
+    text-decoration:none;margin-top:16px;text-align:center;line-height:1.25}
+  .btn:active{transform:scale(.97)}
+  .btn.full{width:100%}
+  .note{margin:10px 0 0;font-family:var(--mono);font-size:.54rem;letter-spacing:.08em;color:var(--soft)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 18px;margin-top:16px}
+  .k{font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;color:var(--green);font-weight:700}
+  h2{margin:34px 0 0;font-size:1.25rem;font-weight:900;letter-spacing:-.01em}
+  .lede{margin:8px 0 0;font-size:.9rem;color:var(--dim)}
+  /* the save ledger — value in sentences, not stat tiles */
+  .vl{margin-top:20px;display:flex;flex-direction:column;gap:14px}
+  .vl-row{display:flex;gap:14px;align-items:flex-start}
+  .vl-k{flex:none;width:86px;font-family:var(--mono);font-size:.66rem;font-weight:700;color:var(--green);letter-spacing:.04em}
+  .vl-k em{display:block;font-style:normal;font-size:.5rem;color:var(--soft);margin-top:2px;letter-spacing:.06em}
+  .vl-v{min-width:0;font-size:.86rem;color:var(--dim)}
+  .vl-v strong{display:block;color:var(--ink);font-weight:800}
+  /* tick list */
+  .ticks{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:11px}
+  .ticks li{display:flex;gap:10px;font-size:.88rem;color:var(--dim)}
+  .ticks .tk{flex:none;color:var(--green);font-weight:900}
+  .ticks strong{color:var(--ink)}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px}
+  .chips a{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;border:1px solid var(--line);
+    background:var(--paper);color:var(--dim);border-radius:999px;padding:9px 13px;text-decoration:none;min-height:36px;
+    display:inline-flex;align-items:center}
+  .chips a:active{transform:scale(.94)}
+  /* ── the chaos board: the world before, in its own off-brand clutter ── */
+  .chaos{margin-top:18px;position:relative;display:flex;flex-direction:column;gap:10px}
+  .art{background:#fff;border:1px solid #d8d4c8;border-radius:10px;box-shadow:3px 4px 0 rgba(40,30,10,.14);
+    font-family:system-ui,sans-serif;padding:10px 12px;max-width:88%}
+  .art.r1{transform:rotate(-1.2deg)}
+  .art.r2{transform:rotate(.9deg);align-self:flex-end}
+  .art.r3{transform:rotate(-.6deg)}
+  .tabs{display:flex;gap:5px;flex-wrap:wrap}
+  .tabs span{background:#eceae3;border-radius:6px 6px 0 0;padding:4px 8px;font-size:.6rem;color:#555;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+  .tabs span.on{background:#fff;border:1px solid #d8d4c8;border-bottom:0}
+  .tabs .plus{background:none;color:#999;font-weight:700}
+  .ig-top{font-size:.66rem;font-weight:600;color:#333}
+  .ig-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:6px}
+  .ig-grid i{aspect-ratio:1;background:linear-gradient(135deg,#e8e2d4,#d4cab4);border-radius:2px}
+  .ig-count{margin-top:6px;font-size:.6rem;color:#888}
+  .wa .b{background:#e7ffdb;border-radius:10px;padding:7px 11px;font-size:.74rem;color:#222;max-width:85%;margin-top:6px}
+  .wa .b.me{background:#f0f0f0;margin-left:auto}
+  .wa .t{margin-top:5px;font-size:.56rem;color:#999;text-align:right}
+  .cc{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:18px;
+    font-family:var(--mono);font-size:.64rem;letter-spacing:.06em}
+  .cc .b4{color:var(--soft);text-decoration:line-through}
+  .cc .ar{color:var(--amber);font-weight:700}
+  .cc .af{color:var(--green);font-weight:700}
+  /* three moves */
+  .feat{margin-top:12px}
+  .feat h3{margin:8px 0 0;font-size:1.02rem;font-weight:900}
+  .feat p{margin:6px 0 0;font-size:.86rem;color:var(--dim)}
+  /* the final card */
+  .fin{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-top:16px}
+  .fin div span{display:block;font-family:var(--mono);font-size:.5rem;letter-spacing:.08em;color:var(--soft)}
+  .fin div strong{font-size:.9rem;font-weight:800}
+  footer{margin-top:44px;font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;color:var(--soft);line-height:2}
+  footer a{color:var(--dim)}
+  </style>
 </head>
-<body class="has-flightbar">
-  <div class="cosmos"></div>
-
-  <!-- ─── flight progress — plane flies YOU → DPS as you scroll ─── -->
-  <div class="flightbar" aria-hidden="true">
-    <span class="fb-code">YOU</span>
-    <div class="fb-track">
-      <div class="fb-fill" id="fbFill"></div>
-      <span class="fb-plane" id="fbPlane">✈</span>
-    </div>
-    <span class="fb-code fb-dest">DPS</span>
-    <span class="fb-stage" id="fbStage">BOARDING</span>
+<body>
+  <div class="bar">
+    <span class="dot"></span><a class="brand" href="/">Prevoya</a>
+    <a class="appcta" href="/app/">OPEN APP →</a>
   </div>
-
   <div class="wrap">
-    <nav class="nav">
-      <a class="brand" href="../"><img src="/shared/brand/logo-mark.svg" width="28" height="28" alt="Prevoya" class="nav-mark">Prevoya</a>
-      <a class="nav-cta" href="../app/">Open app</a>
-    </nav>
+    <div class="hero"><div class="strip">
+      <img src="/shared/img/bali-hero-1.jpg" alt=""><img src="/shared/img/bali-hero-2.jpg" alt=""><img src="/shared/img/bali-hero-3.jpg" alt="">
+    </div></div>
+    <h1>Never lose a <b>place</b> again.</h1>
+    <p class="sub">Prevoya is the fastest way to save and share the places you discover in Bali. One tap from any app, and the place is kept — with the area, the real price, what it's actually like. When a friend asks where to go, you send your collection, not a screenshot.</p>
+    <p class="ct">THE SHELF IS OPEN · 400+ PLACES SCOUTED · SAVING IS FREE</p>
+    <a class="btn" href="/bali/places">Start saving places — free</a>
+    <p class="note">NO PASSWORD · NO INSTALL · WORKS ON ANY PHONE</p>
 
-    <!-- ─── stage 01 · boarding call ─── -->
-    <header class="hero" data-stage="BOARDING">
-      <div class="stage-tag"><span class="stage-num">01</span> Boarding call</div>
-      <!-- L3: title completes "now you can…" — says what you CAN, not what we are -->
-      <h1>Never lose a <span class="glow">place</span> again.</h1>
-      <p class="sub">Prevoya is the fastest way to save and share the places you discover in Bali. One tap from any app, and the place is kept — with the area, the real price, what it's actually like. When a friend asks where to go, you send your collection, not a screenshot.</p>
-      <p class="boarding-call">The shelf is open · 400+ places scouted · <span class="blink">saving is free</span></p>
-      <a class="btn btn-primary" href="/bali/places">Start saving places — free</a>
-      <p class="note">No password. No install. Works on any phone.</p>
-      <!-- L4 v3: the save ledger — value in sentences, not stat tiles -->
-      <div class="value-ledger">
-        <div class="vl-head">// WHAT A PREVOYA SAVE CARRIES</div>
-        <div class="vl-row"><span class="vl-k">1 tap<em>not 47 tabs</em></span>
-          <div class="vl-v"><strong>Caught before the moment passes.</strong><span>Share a place from Google Maps or any app — it lands in your collection, named and mapped.</span></div></div>
-        <div class="vl-row"><span class="vl-k">400+<em>already scouted</em></span>
-          <div class="vl-v"><strong>Context, not just a pin.</strong><span>Every save carries the area, the real price, what it's like — a Google Maps star carries nothing.</span></div></div>
-        <div class="vl-row"><span class="vl-k">SEND<em>like a gift</em></span>
-          <div class="vl-v"><strong>“Where should I go?” — answered.</strong><span>Your collection travels as one readable link a friend can actually use.</span></div></div>
+    <div class="card">
+      <p class="k">WHAT A PREVOYA SAVE CARRIES</p>
+      <div class="vl">
+        <div class="vl-row"><span class="vl-k">1 tap<em>NOT 47 TABS</em></span>
+          <div class="vl-v"><strong>Caught before the moment passes.</strong>Share a place from Google Maps or any app — it lands in your collection, named and mapped.</div></div>
+        <div class="vl-row"><span class="vl-k">400+<em>ALREADY SCOUTED</em></span>
+          <div class="vl-v"><strong>Context, not just a pin.</strong>Every save carries the area, the real price, what it's like — a Google Maps star carries nothing.</div></div>
+        <div class="vl-row"><span class="vl-k">SEND<em>LIKE A GIFT</em></span>
+          <div class="vl-v"><strong>“Where should I go?” — answered.</strong>Your collection travels as one readable link a friend can actually use.</div></div>
       </div>
-    </header>
-
-    <div class="hook reveal">
-      First stop — the shelf. Four hundred places, already scouted and priced —
-      <span class="hook-arrow">↓</span>
     </div>
 
-    <!-- ─── stage 02 · check-in — the shelf leads (front-door flip, Nov 2026) ─── -->
-    <section data-stage="CHECK-IN">
-      <div class="card reveal" style="padding:30px 26px">
-        <div class="sec-head" style="margin-bottom:20px">
-          <div class="stage-tag"><span class="stage-num">02</span> Check-in</div>
-          <h2>Curated for Bali, down to the warung.</h2>
-          <p>Your collection doesn't start empty — flag what calls to you.</p>
-        </div>
-        <ul class="dest-list">
-          <li><span class="tick">✓</span><span><strong>Bali areas decoded</strong> — <em>Uluwatu, Canggu, Ubud, Seminyak and the islands, each with its own personality</em></span></li>
-          <li><span class="tick">✓</span><span><strong>Save anything live</strong> — <em>a place we don't have yet is fetched and saved in seconds, with real coordinates</em></span></li>
-          <li><span class="tick">✓</span><span><strong>IDR-native</strong> — <em>amounts in thousands, the way you actually think about them here</em></span></li>
-          <li><span class="tick">✓</span><span><strong>Local presets</strong> — <em>warung, bike rental, laundry — the daily rhythms of island life, one tap each</em></span></li>
-        </ul>
-        <div class="chips">
-          <span class="chip">🍽 Food</span>
-          <span class="chip">☕ Work</span>
-          <span class="chip">💆 Wellness</span>
-          <span class="chip">🏋️ Gym</span>
-          <span class="chip">🎉 Nights</span>
-          <span class="chip">🏖 Beach</span>
-          <span class="chip">🗺 Explore</span>
-        </div>
-        <div style="text-align:center;margin-top:22px">
-          <a class="btn btn-primary" href="/bali/places">Browse the shelf — start saving →</a>
-        </div>
+    <h2>Curated for Bali, down to the warung.</h2>
+    <p class="lede">Your collection doesn't start empty — flag what calls to you.</p>
+    <div class="card">
+      <ul class="ticks">
+        <li><span class="tk">✓</span><span><strong>Bali areas decoded</strong> — Uluwatu, Canggu, Ubud, Seminyak and the islands, each with its own personality</span></li>
+        <li><span class="tk">✓</span><span><strong>Save anything live</strong> — a place we don't have yet is fetched and saved in seconds, with real coordinates</span></li>
+        <li><span class="tk">✓</span><span><strong>IDR-native</strong> — amounts in thousands, the way you actually think about them here</span></li>
+        <li><span class="tk">✓</span><span><strong>Local presets</strong> — warung, bike rental, laundry — the daily rhythms of island life, one tap each</span></li>
+      </ul>
+      <div class="chips">
+        <a href="/bali/places">🍽 Food</a><a href="/bali/places">☕ Work</a><a href="/bali/places">💆 Wellness</a>
+        <a href="/bali/places">🏋️ Gym</a><a href="/bali/places">🎉 Nights</a><a href="/bali/places">🏖 Beach</a>
+        <a href="/bali/places">🗺 Explore</a>
       </div>
-    </section>
-
-    <div class="hook reveal">
-      That's what a kept place looks like. Now — everything you're keeping places in today —
-      <span class="hook-arrow">↓</span>
+      <a class="btn full" href="/bali/places">Browse the shelf — start saving →</a>
     </div>
 
-    <!-- ─── stage 03 · takeoff ─── -->
-    <section data-stage="TAKEOFF">
-      <div class="sec-head reveal">
-        <div class="stage-tag"><span class="stage-num">03</span> Takeoff</div>
-        <h2>Your discoveries are scattered everywhere.</h2>
-        <p>47 Instagram saves. 3 Facebook group screenshots. A Notes list. A 2 AM "which beach was it??" Sound familiar?</p>
-      </div>
-      <!-- L6 · THE CHAOS BOARD — the ONLY place in the product where off-brand
-           styling is permitted (light backgrounds, system-ui, hard shadows,
-           emoji): it IS the clutter of the world before. All styles are scoped
-           under .chaos-* / .artifact in tripos.css — never let them leak. -->
-      <div class="chaos-wrap reveal">
-        <div class="chaos-board" aria-hidden="true">
-          <div class="artifact art-tabs">
-            <div class="tab-strip">
-              <span class="tab">Best Bali cafés 2026</span>
-              <span class="tab">Uluwatu villa price</span>
-              <span class="tab">B211A visa how-to</span>
-              <span class="tab active">bingin warung??</span>
-              <span class="tab-plus">+43</span>
-            </div>
-          </div>
-          <div class="artifact art-sheet">
-            <div class="sheet-cell sheet-h">A</div><div class="sheet-cell sheet-h">B</div><div class="sheet-cell sheet-h">C</div>
-            <div class="sheet-cell">villa</div><div class="sheet-cell">8.5M?</div><div class="sheet-cell err">#REF!</div>
-            <div class="sheet-cell">scooter</div><div class="sheet-cell">1.2M?</div><div class="sheet-cell">=B2*30</div>
-            <div class="sheet-cell">total</div><div class="sheet-cell err">#DIV/0!</div><div class="sheet-cell"></div>
-          </div>
-          <div class="artifact art-ig">
-            <div class="ig-top">📌 Bali 2026 · Saved</div>
-            <div class="ig-grid"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-            <div class="ig-count">214 saved</div>
-          </div>
-          <div class="artifact art-tiktok">
-            <div class="tt-cap">10 SECRET Bali spots 🤫</div>
-            <div class="tt-meta">🔖 1.2M · ▶ 8.4M</div>
-          </div>
-          <div class="artifact art-wa">
-            <div class="wa-bubble">wait which beach was it?? 😭</div>
-            <div class="wa-bubble wa-me">the one with the swing i think</div>
-            <div class="wa-time">2:14 AM · read</div>
-          </div>
-        </div>
-
-        <div class="chaos-caption"><span class="cc-before">47 tabs</span><em class="cc-arrow">→</em><span class="cc-after">one collection</span></div>
-
-        <div class="card brief-card">
-          <div class="intel-bar"><span class="pulse-dot"></span>Your collection</div>
-          <h3>One place. Everything kept.</h3>
-          <p>Every spot you've discovered — named, mapped, priced, sorted by area — on one calm screen. No tabs. No screenshots. No “which beach was it.”</p>
-        </div>
-      </div>
-    </section>
-
-    <div class="hook reveal">
-      All of it, caught in one place. Here's how the two verbs work —
-      <span class="hook-arrow">↓</span>
+    <h2>Your discoveries are scattered everywhere.</h2>
+    <p class="lede">47 Instagram saves. 3 Facebook group screenshots. A Notes list. A 2 AM "which beach was it??" Sound familiar?</p>
+    <div class="chaos" aria-hidden="true">
+      <div class="art r1"><div class="tabs">
+        <span>Best Bali cafés 2026</span><span>Uluwatu villa price</span><span class="on">bingin warung??</span><span class="plus">+43</span>
+      </div></div>
+      <div class="art r2"><div class="ig-top">📌 Bali 2026 · Saved</div>
+        <div class="ig-grid"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="ig-count">214 saved</div></div>
+      <div class="art r3 wa">
+        <div class="b">wait which beach was it?? 😭</div>
+        <div class="b me">the one with the swing i think</div>
+        <div class="t">2:14 AM · read</div></div>
+    </div>
+    <div class="cc"><span class="b4">47 TABS</span><span class="ar">→</span><span class="af">ONE COLLECTION</span></div>
+    <div class="card">
+      <p class="k">YOUR COLLECTION</p>
+      <div class="feat"><h3>One place. Everything kept.</h3>
+      <p>Every spot you've discovered — named, mapped, priced, sorted by area — on one calm screen. No tabs. No screenshots. No “which beach was it.”</p></div>
     </div>
 
-    <!-- ─── stage 04 · cruising — the two verbs + the depth ─── -->
-    <section data-stage="CRUISING">
-      <div class="sec-head reveal">
-        <div class="stage-tag"><span class="stage-num">04</span> Cruising altitude</div>
-        <h2>Save it. Keep the context. Send it.</h2>
-        <p>The whole product in three moves — from “wait, what was that place?” to “here's my list.”</p>
-      </div>
-      <div class="features">
-        <div class="card feat reveal">
-          <span class="orb planet-teal"></span>
-          <span class="step">Move 1 — Save</span>
-          <h3>One tap from anywhere</h3>
-          <p>Share a spot from Google Maps or any app, paste a link, or type a name — the place is caught before the scooter moves again.</p>
-        </div>
-        <div class="card feat reveal">
-          <span class="orb planet-blue"></span>
-          <span class="step">Move 2 — Keep</span>
-          <h3>Every save gets smarter</h3>
-          <p>Your saves join a shelf of 400+ scouted places — area, category, real prices. A new discovery is fetched live with real coordinates.</p>
-        </div>
-        <div class="card feat reveal">
-          <span class="orb planet-purple"></span>
-          <span class="step">Move 3 — Share</span>
-          <h3>Send it like a gift</h3>
-          <p>A friend asks “where should I go?” — you send one link. Readable, sorted, yours. A recommendation, not a data export.</p>
-        </div>
-      </div>
-    </section>
+    <h2>Save it. Keep the context. Send it.</h2>
+    <p class="lede">The whole product in three moves — from “wait, what was that place?” to “here's my list.”</p>
+    <div class="card feat"><p class="k">MOVE 1 — SAVE</p><h3>One tap from anywhere</h3>
+      <p>Share a spot from Google Maps or any app, paste a link, or type a name — the place is caught before the scooter moves again.</p></div>
+    <div class="card feat"><p class="k">MOVE 2 — KEEP</p><h3>Every save gets smarter</h3>
+      <p>Your saves join a shelf of 400+ scouted places — area, category, real prices. A new discovery is fetched live with real coordinates.</p></div>
+    <div class="card feat"><p class="k">MOVE 3 — SHARE</p><h3>Send it like a gift</h3>
+      <p>A friend asks “where should I go?” — you send one link. Readable, sorted, yours. A recommendation, not a data export.</p></div>
 
-    <div class="hook reveal">
-      And when it's time to actually go — your saves become the trip —
-      <span class="hook-arrow">↓</span>
+    <h2>When you're ready to plan, your places lead.</h2>
+    <p class="lede">Prevoya's concierge turns the collection into a trip — bases, day-by-day plans, what a month really costs, how long the island can keep you.</p>
+    <div class="card">
+      <p class="k">CONCIERGE DESK</p>
+      <div class="feat"><p>Tell the concierge what kind of trip you're on — it asks, you answer, and your month gets built in front of you: bases, day-by-day plans, real places. Yours included.</p></div>
+      <a class="btn full" href="/bali/plan/">Talk to my concierge →</a>
+      <p class="note">FREE · NO PASSWORD · A ROUTE YOU CAN ARGUE WITH IN UNDER TWO MINUTES</p>
     </div>
 
-    <!-- ─── stage 05 · final approach — the depth door: concierge & planning ─── -->
-    <section data-stage="APPROACH">
-      <div class="sec-head reveal">
-        <div class="stage-tag"><span class="stage-num">05</span> Final approach</div>
-        <h2>When you're ready to plan, your places lead.</h2>
-        <p>Prevoya's concierge turns the collection into a trip — bases, day-by-day plans, what a month really costs, how long the island can keep you.</p>
+    <div class="card">
+      <p class="k">YOUR BALI, KEPT</p>
+      <div class="fin">
+        <div><span>COLLECTION</span><strong>Starts full</strong></div>
+        <div><span>CONCIERGE</span><strong>Always on</strong></div>
+        <div><span>PRICE</span><strong>Free</strong></div>
+        <div><span>SIGNUP</span><strong>None</strong></div>
       </div>
-      <div class="mission-tag reveal"><span class="pulse-dot"></span>Concierge desk</div>
-      <div class="card checkin mission-card reveal" id="checkin">
-        <p class="ck-q">Tell the concierge what kind of trip you're on — it asks, you answer, and your month gets built in front of you: bases, day-by-day plans, real places. Yours included.</p>
-        <a class="btn btn-primary ck-wide" href="/bali/plan/">Talk to my concierge →</a>
-        <p class="note">free · no password · a route you can argue with in under two minutes</p>
-      </div>
-
-      <!-- L7 · inbound transmission — the system speaking, not a founder.
-           Mono, teal, terse, second person. No quote marks, no attribution. -->
-      <section class="transmission reveal" style="padding-bottom:0">
-        <div class="tx-eyebrow">// INBOUND · DPS</div>
-        <p class="tx-line">Your places land before you do.</p>
-      </section>
-    </section>
-
-    <div class="hook reveal">
-      Your pass is ready —
-      <span class="hook-arrow">↓</span>
+      <a class="btn full" href="/bali/places">Open Prevoya — start your collection</a>
     </div>
-
-    <!-- ─── stage 06 · landed — boarding pass cta ─── -->
-    <section data-stage="LANDED ✓">
-      <div class="bpass reveal">
-        <div class="bp-main">
-          <div class="bp-air">Prevoya Concierge · your Bali pass</div>
-          <div class="bp-route">
-            <span class="bp-city">YOU</span>
-            <span class="bp-dash"></span>
-            <span class="bp-city bp-to">DPS</span>
-          </div>
-          <p class="bp-sub" id="bpSub">Denpasar, Bali · one-way · stay as long as it holds you</p>
-          <div class="bp-grid">
-            <div><span>Collection</span><strong>BALI-01</strong></div>
-            <div><span>Concierge</span><strong>Always on</strong></div>
-            <div><span>Seat</span><strong>Window</strong></div>
-            <div><span>Class</span><strong id="bpClass">Slowmad</strong></div>
-            <div><span>Price</span><strong>Free</strong></div>
-            <div><span>Signup</span><strong>None</strong></div>
-          </div>
-          <a class="btn btn-primary" href="/bali/places">Open Prevoya — start your collection</a>
-        </div>
-        <div class="bp-stub">
-          <div class="bp-barcode"></div>
-          <span class="bp-code">DPS · BALI</span>
-        </div>
-      </div>
-    </section>
 
     <footer>
-      Prevoya · made for slowmads, by a slowmad · <a href="/save">how to save places you discover</a> · <a href="/bali/cost">Bali cost of living 2026</a> · <a href="../">more destinations</a>
+      Prevoya · made for slowmads, by a slowmad<br>
+      <a href="/save">how to save places you discover</a> · <a href="/bali/cost">Bali cost of living 2026</a> · <a href="/">more destinations</a>
     </footer>
   </div>
-
   <script src="../shared/supabase-config.js"></script>
   <script src="../shared/track.js"></script>
-  
-  <script src="../shared/tripos.js"></script>
-  
   <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
